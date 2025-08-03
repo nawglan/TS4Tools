@@ -37,6 +37,109 @@
 > - Use relative paths for project files
 > - Check `Directory.Packages.props` for package versions before adding new packages
 > - Run tests after making changes to verify functionality
+>
+> **🎯 Code Quality & Testability Guidelines:**
+> 
+> **Architecture Principles:**
+> - **Single Responsibility** - Each class/method should have one clear purpose
+> - **Dependency Injection** - Use constructor injection for all dependencies (avoid static dependencies)
+> - **Pure Functions** - Prefer stateless methods that return deterministic results
+> - **Interface Segregation** - Create focused interfaces for better testability
+> - **Composition over Inheritance** - Use composition for complex behaviors
+> 
+> **Unit Testing Best Practices:**
+> - **No Logic Duplication** - Tests should verify behavior, not reimplement logic
+> - **Arrange-Act-Assert** - Structure all tests with clear AAA pattern
+> - **Test Behavior, Not Implementation** - Focus on what the code does, not how
+> - **Use Test Builders** - Create fluent builders for complex test objects
+> - **Mock External Dependencies** - Use interfaces and dependency injection for isolation
+> 
+> **Code Design for Testability:**
+> ```csharp
+> // ✅ GOOD - Testable design
+> public class PackageReader : IPackageReader
+> {
+>     private readonly IFileSystem _fileSystem;
+>     private readonly ILogger<PackageReader> _logger;
+>     
+>     public PackageReader(IFileSystem fileSystem, ILogger<PackageReader> logger)
+>     {
+>         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+>         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+>     }
+>     
+>     public async Task<Package> ReadAsync(string filePath, CancellationToken cancellationToken = default)
+>     {
+>         // Pure business logic - easily testable
+>         var bytes = await _fileSystem.ReadAllBytesAsync(filePath, cancellationToken);
+>         return ParsePackageData(bytes);
+>     }
+>     
+>     private static Package ParsePackageData(ReadOnlySpan<byte> data)
+>     {
+>         // Pure function - deterministic, easy to test
+>         // No dependencies, no side effects
+>     }
+> }
+> 
+> // ❌ BAD - Hard to test
+> public class PackageReader
+> {
+>     public Package Read(string filePath)
+>     {
+>         var bytes = File.ReadAllBytes(filePath); // Static dependency - hard to test
+>         Console.WriteLine($"Reading {filePath}"); // Side effect - hard to verify
+>         
+>         // Complex logic mixed with I/O - test would need real files
+>         if (bytes.Length < 4) throw new Exception("Invalid file");
+>         // ... parsing logic ...
+>     }
+> }
+> ```
+> 
+> **Testing Patterns to Follow:**
+> ```csharp
+> // ✅ GOOD - Tests behavior without duplicating logic
+> [Fact]
+> public void ParsePackageData_WithValidHeader_ReturnsPackageWithCorrectVersion()
+> {
+>     // Arrange - Use test data builders
+>     var validPackageBytes = new PackageDataBuilder()
+>         .WithVersion(2)
+>         .WithResourceCount(5)
+>         .Build();
+>     
+>     // Act
+>     var result = PackageParser.ParsePackageData(validPackageBytes);
+>     
+>     // Assert - Test the outcome, not the implementation
+>     result.Should().NotBeNull();
+>     result.Version.Should().Be(2);
+>     result.Resources.Should().HaveCount(5);
+> }
+> 
+> // ❌ BAD - Duplicates parsing logic in test
+> [Fact]
+> public void ParsePackageData_WithValidHeader_ReturnsCorrectData()
+> {
+>     var bytes = new byte[] { 0x02, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00 };
+>     
+>     var result = PackageParser.ParsePackageData(bytes);
+>     
+>     // This duplicates the parsing logic!
+>     var expectedVersion = BitConverter.ToInt32(bytes, 0);
+>     var expectedCount = BitConverter.ToInt32(bytes, 4);
+>     result.Version.Should().Be(expectedVersion);
+>     result.Resources.Should().HaveCount(expectedCount);
+> }
+> ```
+> 
+> **Essential Testing Tools:**
+> - **FluentAssertions** - For readable test assertions
+> - **NSubstitute** - For mocking dependencies  
+> - **AutoFixture** - For generating test data
+> - **System.IO.Abstractions** - For testable file operations
+> - **Microsoft.Extensions.Logging.Testing** - For verifying log calls
 
 ---
 
@@ -130,8 +233,36 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 
 **Coverage Target:** 90%+
 
+#### **1.2.1 Code Quality & Standards (Week 3 - Critical Path)**
+**Status:** 🚨 **CRITICAL** - Must be completed before Phase 1.3
+
+**Critical Issues Identified by Code Review:**
+- [ ] **Project Configuration Standardization**
+  - [ ] ❌ **CRITICAL**: Fix `LangVersion` inconsistency (`preview` vs `latest`)
+  - [ ] ❌ **CRITICAL**: Standardize `GenerateDocumentationFile` across all projects
+  - [ ] ❌ **CRITICAL**: Add consistent `TreatWarningsAsErrors` configuration
+  - [ ] ❌ **HIGH**: Add `.editorconfig` with consistent coding standards
+
+- [ ] **Security & Quality Analysis**
+  - [ ] ❌ **HIGH**: Enable static code analysis with `<EnableNETAnalyzers>true</EnableNETAnalyzers>`
+  - [ ] ❌ **HIGH**: Add security analyzers and vulnerability scanning
+  - [ ] ❌ **HIGH**: Configure SonarQube or similar code quality metrics
+  - [ ] ❌ **MEDIUM**: Add performance analyzers for hot path detection
+
+- [ ] **Testing & Documentation**
+  - [ ] ❌ **HIGH**: Add BenchmarkDotNet for performance regression testing
+  - [ ] ❌ **MEDIUM**: Extract magic numbers and hard-coded values in tests
+  - [ ] ❌ **MEDIUM**: Add property-based testing for complex scenarios
+  - [ ] ❌ **MEDIUM**: Set up automated API documentation generation
+
+**Acceptance Criteria:**
+- All projects use consistent language version and compiler settings
+- Static analysis passes with zero high-severity issues
+- Performance baseline established with benchmark tests
+- Code coverage reports integrated into build pipeline
+
 #### **1.3 Settings System (Week 3)**
-**Status:** ⏳ Not Started
+**Status:** ⏳ Blocked - Waiting for 1.2.1 completion
 
 **Tasks:**
 - [ ] **s4pi.Settings Migration**
@@ -563,6 +694,38 @@ TS4Tools.Tests/
 
 ---
 
+## 📊 **Code Review Summary - August 3, 2025**
+
+### **Overall Assessment: B+ (Good foundation with improvement opportunities)**
+
+**✅ Strengths:**
+- Modern C# features and nullable reference types throughout
+- Comprehensive test coverage (32/32 tests passing)
+- Well-organized solution structure with clear separation of concerns
+- Central package management and SDK-style projects
+- Thorough documentation and progress tracking
+
+**⚠️ Critical Issues Requiring Immediate Action:**
+1. **Project Configuration Inconsistencies** - `LangVersion` mismatch between projects
+2. **Missing Code Quality Infrastructure** - No static analysis, EditorConfig, or security scanning
+3. **Performance Monitoring Gap** - No benchmarks or performance regression testing
+4. **Documentation Inconsistencies** - XML documentation generation not standardized
+
+**📈 Quality Metrics:**
+- **Test Coverage**: 100% pass rate (32/32 tests)
+- **Build Status**: ✅ All projects building successfully
+- **Code Quality**: B+ (clean code with modern patterns)
+- **Architecture**: B+ (good separation, missing resilience patterns)
+- **Security**: ⚠️ Not assessed (no security analysis configured)
+
+**🎯 Immediate Actions Required:**
+- Complete Phase 1.2.1 (Code Quality & Standards) before proceeding
+- Standardize project configurations across solution
+- Implement static code analysis and security scanning
+- Establish performance baseline with BenchmarkDotNet
+
+---
+
 ## 🎯 **Success Criteria**
 
 1. **Functional Parity** - All original features working in new application
@@ -570,6 +733,8 @@ TS4Tools.Tests/
 3. **Cross-Platform** - Working on Windows, macOS, and Linux
 4. **User Experience** - Modern, intuitive interface
 5. **Maintainability** - Clean, well-documented, testable codebase
+6. **Code Quality** - Static analysis passing with zero high-severity issues
+7. **Security** - Vulnerability scanning integrated into CI/CD pipeline
 6. **Test Coverage** - 92%+ unit test coverage, 80%+ integration coverage
 7. **Extensibility** - Plugin system for future enhancements
 
