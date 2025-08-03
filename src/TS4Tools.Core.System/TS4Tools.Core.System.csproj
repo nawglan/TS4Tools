@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <LangVersion>latest</LangVersion>
+    <WarningsAsErrors>true</WarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyTitle>TS4Tools Core System</AssemblyTitle>
+    <AssemblyDescription>Core system utilities and collections for TS4Tools</AssemblyDescription>
+    <AssemblyCompany>TS4Tools</AssemblyCompany>
+    <AssemblyProduct>TS4Tools</AssemblyProduct>
+    <Copyright>Copyright (c) 2025 TS4Tools Contributors</Copyright>
+    <PackageId>TS4Tools.Core.System</PackageId>
+    <PackageDescription>Core system utilities and collections for The Sims 4 Tools</PackageDescription>
+    <PackageTags>sims4;tools;utilities;collections</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+  </ItemGroup>
+
+</Project>

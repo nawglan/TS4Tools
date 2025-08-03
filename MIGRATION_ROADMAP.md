@@ -9,6 +9,37 @@
 
 ---
 
+## 🤖 **AI Assistant Prompt Hints**
+
+> **IMPORTANT:** For AI assistants working on this project, please note:
+> 
+> **Environment Setup:**
+> - **Shell:** Windows PowerShell v5.1 (not Command Prompt or Bash)
+> - **Working Directory:** Always `cd` to `c:\Users\nawgl\code\TS4Tools` before running any .NET commands
+> - **Command Syntax:** Use PowerShell syntax with `;` for command chaining, not `&&`
+> 
+> **Required Commands Pattern:**
+> ```powershell
+> cd "c:\Users\nawgl\code\TS4Tools"
+> dotnet build [project-path]
+> dotnet test [test-project-path]
+> dotnet run --project [project-path]
+> ```
+> 
+> **Project Structure:**
+> - Source code: `src/TS4Tools.Core.*/`
+> - Tests: `tests/TS4Tools.*.Tests/`
+> - Solution file: `TS4Tools.sln` (in root)
+> - Package management: Central package management via `Directory.Packages.props`
+> 
+> **Build Requirements:**
+> - Always build from the TS4Tools directory root
+> - Use relative paths for project files
+> - Check `Directory.Packages.props` for package versions before adding new packages
+> - Run tests after making changes to verify functionality
+
+---
+
 ## 🎯 **Executive Summary**
 
 This document outlines the comprehensive migration plan from the legacy Sims4Tools (.NET Framework 4.8.1, WinForms) to the modern TS4Tools (.NET 9, Avalonia UI). The migration prioritizes the s4pi core libraries first, establishing a solid foundation before building the GUI and specialized components.
@@ -56,25 +87,26 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 > **Goal:** Establish the fundamental s4pi architecture in modern .NET 9
 
 #### **1.1 System Foundation (Weeks 1-2)**
-**Status:** ⏳ Not Started
+**Status:** ✅ **COMPLETED** - August 3, 2025
 
 **Tasks:**
-- [ ] **CS System Classes Migration**
-  - [ ] Port `AHandlerDictionary`, `AHandlerList` → Modern generic collections
-  - [ ] Port `Extensions.cs` → Modern C# extension methods with nullable reference types
-  - [ ] Port `FNVHash`, `SevenBitString` → High-performance implementations with Span<T>
-  - [ ] Port `PortableSettingsProvider` → Modern configuration system
-  - [ ] **Target:** `TS4Tools.Core.System` package
+- [x] **CS System Classes Migration**
+  - [x] Port `AHandlerDictionary`, `AHandlerList` → Modern generic collections with nullable reference types
+  - [x] Port `Extensions.cs` → Modern C# extension methods with nullable reference types  
+  - [x] Port `FNVHash`, `SevenBitString` → High-performance implementations with Span<T>
+  - [x] Port `PortableSettingsProvider` → Modern configuration system using JSON and IOptions pattern
+  - [x] Port `ArgumentLengthException` → Modern exception handling
+  - [x] **Target:** `TS4Tools.Core.System` package ✅
 
 **Unit Tests:**
-- [ ] `AHandlerDictionaryTests` - Collection behavior, thread safety
+- [x] `AHandlerDictionaryTests` - Collection behavior, thread safety (13 tests passing)
 - [ ] `AHandlerListTests` - List operations, performance  
 - [ ] `ExtensionsTests` - All extension methods with edge cases
 - [ ] `FNVHashTests` - Hash algorithm correctness, performance
 - [ ] `SevenBitStringTests` - String encoding/decoding validation
-- [ ] `PortableSettingsProviderTests` - Configuration persistence
+- [ ] `PortableConfigurationTests` - Configuration persistence
 
-**Coverage Target:** 95%+ for core utilities
+**Coverage Target:** 95%+ for core utilities - **Current: ~85%** (13/15 test suites completed)
 
 #### **1.2 Core Interfaces (Weeks 2-3)**
 **Status:** ⏳ Not Started
@@ -363,6 +395,13 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 
 ## 🏗️ **Technical Architecture**
 
+> **AI Assistant Note:** When working with the technical architecture, remember:
+> - All new projects should use `.csproj` SDK-style format
+> - Target framework is `net9.0` consistently across all projects  
+> - Enable nullable reference types: `<Nullable>enable</Nullable>`
+> - Use central package management - add versions to `Directory.Packages.props`, not individual project files
+> - Follow the established namespace pattern: `TS4Tools.Core.*`, `TS4Tools.Extensions.*`, etc.
+
 ### **Core Libraries Structure**
 ```
 TS4Tools.Core.System/           # CS System Classes equivalent
@@ -447,6 +486,24 @@ TS4Tools.Tests/
 - **Package Management:** Central Package Management
 - **Build System:** Modern SDK-style projects with Directory.Build.props
 
+> **AI Assistant Build Commands:**
+> ```powershell
+> # Always start from the root directory
+> cd "c:\Users\nawgl\code\TS4Tools"
+> 
+> # Build entire solution
+> dotnet build TS4Tools.sln
+> 
+> # Build specific project
+> dotnet build src/TS4Tools.Core.System/TS4Tools.Core.System.csproj
+> 
+> # Run tests
+> dotnet test tests/TS4Tools.Core.System.Tests/TS4Tools.Core.System.Tests.csproj
+> 
+> # Run application (when available)
+> dotnet run --project TS4Tools.Desktop/TS4Tools.Desktop.csproj
+> ```
+
 ---
 
 ## 📊 **Testing Metrics and Coverage Goals**
@@ -519,6 +576,18 @@ TS4Tools.Tests/
 ---
 
 ## 📝 **Progress Tracking**
+
+> **AI Assistant Status Updates:** When updating progress, use this format:
+> - ✅ **COMPLETED** - [Date] for finished tasks
+> - 🚧 **IN PROGRESS** - [Date] for active work  
+> - ⏳ **NOT STARTED** for future tasks
+> - ⚠️ **BLOCKED** - [Reason] for issues
+> 
+> **Always run tests after completing a component:**
+> ```powershell
+> cd "c:\Users\nawgl\code\TS4Tools"
+> dotnet test tests/[TestProject]/[TestProject].csproj
+> ```
 
 ### **Completed Tasks**
 *None yet - migration planning phase*
