@@ -171,7 +171,7 @@ public sealed class Package : IPackage
             throw new InvalidOperationException("Package stream is read-only");
         }
         
-        await SaveToStreamAsync(_packageStream, cancellationToken);
+        await SaveToStreamAsync(_packageStream, cancellationToken).ConfigureAwait(false);
     }
     
     /// <inheritdoc />
@@ -185,7 +185,7 @@ public sealed class Package : IPackage
             throw new ArgumentException("Stream is not writable", nameof(stream));
         }
         
-        await SaveToStreamAsync(stream, cancellationToken);
+        await SaveToStreamAsync(stream, cancellationToken).ConfigureAwait(false);
     }
     
     /// <inheritdoc />
@@ -195,7 +195,7 @@ public sealed class Package : IPackage
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         
         using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous);
-        await SaveToStreamAsync(fileStream, cancellationToken);
+        await SaveToStreamAsync(fileStream, cancellationToken).ConfigureAwait(false);
         
         FileName = filePath;
     }
@@ -225,7 +225,7 @@ public sealed class Package : IPackage
             return null;
         }
         
-        return await LoadResourceAsync(entry, cancellationToken);
+        return await LoadResourceAsync(entry, cancellationToken).ConfigureAwait(false);
     }
     
     /// <inheritdoc />
@@ -304,7 +304,7 @@ public sealed class Package : IPackage
         {
             if (_packageStream != null)
             {
-                await _packageStream.DisposeAsync();
+                await _packageStream.DisposeAsync().ConfigureAwait(false);
             }
             _disposed = true;
         }
@@ -321,10 +321,17 @@ public sealed class Package : IPackage
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
         
         var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
-        var package = new Package(fileStream, filePath);
-        
-        await Task.CompletedTask; // Placeholder for any async initialization
-        return package;
+        try
+        {
+            var package = new Package(fileStream, filePath);
+            await Task.CompletedTask.ConfigureAwait(false); // Placeholder for any async initialization
+            return package;
+        }
+        catch
+        {
+            await fileStream.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
     }
     
     /// <summary>
@@ -423,11 +430,11 @@ public sealed class Package : IPackage
         updatedHeader.Write(writer);
         
         // Write index
-        await WriteIndexAsync(writer, cancellationToken);
+        await WriteIndexAsync(writer, cancellationToken).ConfigureAwait(false);
         
         // TODO: Write resource data
         
-        await stream.FlushAsync(cancellationToken);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         
         _header = updatedHeader;
         _isDirty = false;
