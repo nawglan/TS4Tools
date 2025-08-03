@@ -27,5 +27,14 @@
         <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
         <PackageVersion Include="FluentAssertions" Version="7.0.0" />
         <PackageVersion Include="NSubstitute" Version="5.3.0" />
+        
+        <!-- Performance Testing -->
+        <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+        
+        <!-- Static Analysis & Security -->
+        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+        <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" />
+        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.3.0.106239" />
+        <PackageVersion Include="SecurityCodeScan.VS2019" Version="5.6.7" />
     </ItemGroup>
 </Project>

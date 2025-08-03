@@ -37,7 +37,7 @@ public sealed class ElementPriorityAttribute : Attribute
     /// <summary>
     /// Element priority, lower values are higher priority
     /// </summary>
-    public int Priority { get; set; }
+    public int Priority { get; }
 
     /// <summary>
     /// Return the ElementPriority value for a Content Field.

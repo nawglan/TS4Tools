@@ -27,7 +27,7 @@ namespace TS4Tools.Core.System.Hashing;
 /// Base class implementing <see cref="HashAlgorithm"/> for FNV hash algorithms.
 /// For full documentation, refer to http://www.sims2wiki.info/wiki.php?title=FNV
 /// </summary>
-public abstract class FNVHash : HashAlgorithm
+public abstract class FnvHash : HashAlgorithm
 {
     private readonly ulong prime;
     private readonly ulong offset;
@@ -35,14 +35,19 @@ public abstract class FNVHash : HashAlgorithm
     /// <summary>
     /// Algorithm result, needs casting to appropriate size by concrete classes
     /// </summary>
-    protected ulong hash;
+    private ulong hash;
+    
+    /// <summary>
+    /// Gets the current hash value for derived classes
+    /// </summary>
+    protected new ulong HashValue => hash;
     
     /// <summary>
     /// Initialise the hash algorithm
     /// </summary>
     /// <param name="prime">algorithm-specific value</param>
     /// <param name="offset">algorithm-specific value</param>
-    protected FNVHash(ulong prime, ulong offset) 
+    protected FnvHash(ulong prime, ulong offset) 
     { 
         this.prime = prime; 
         this.offset = offset; 
@@ -104,25 +109,25 @@ public abstract class FNVHash : HashAlgorithm
     /// <returns>The computed hash code.</returns>
     protected override byte[] HashFinal() 
     { 
-        HashValue = BitConverter.GetBytes(hash); 
-        return HashValue; 
+        var hashBytes = BitConverter.GetBytes(hash); 
+        return hashBytes; 
     }
 }
 
 /// <summary>
 /// FNV32 hash routine
 /// </summary>
-public class FNV32 : FNVHash
+public class Fnv32 : FnvHash
 {
     /// <summary>
     /// Initialise the hash algorithm
     /// </summary>
-    public FNV32() : base(0x01000193u, 0x811C9DC5u) { }
+    public Fnv32() : base(0x01000193u, 0x811C9DC5u) { }
     
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
-    public override byte[] Hash => BitConverter.GetBytes((uint)hash);
+    public override byte[] Hash => BitConverter.GetBytes((uint)HashValue);
     
     /// <summary>
     /// Gets the size, in bits, of the computed hash code.
@@ -136,7 +141,7 @@ public class FNV32 : FNVHash
     /// <returns>the hash value</returns>
     public static uint GetHash(string text) 
     { 
-        using var fnv = new FNV32();
+        using var fnv = new Fnv32();
         return BitConverter.ToUInt32(fnv.ComputeHash(text), 0); 
     }
 }
@@ -144,14 +149,14 @@ public class FNV32 : FNVHash
 /// <summary>
 /// FNV24 hash routine
 /// </summary>
-public sealed class FNV24 : FNV32
+public sealed class Fnv24 : Fnv32
 {
     private const uint FNV24Mask = 0xFFFFFF;
     
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
-    public override byte[] Hash => BitConverter.GetBytes(ConvertTo24BitFromUInt32((uint)hash));
+    public override byte[] Hash => BitConverter.GetBytes(ConvertTo24BitFromUInt32((uint)HashValue));
     
     /// <summary>
     /// Get the FNV24 hash for a string of text
@@ -160,7 +165,7 @@ public sealed class FNV24 : FNV32
     /// <returns>the hash value</returns>
     public static new uint GetHash(string text) 
     { 
-        using var fnv = new FNV24();
+        using var fnv = new Fnv24();
         var hash = BitConverter.ToUInt32(fnv.ComputeHash(text), 0);
         return ConvertTo24BitFromUInt32(hash); 
     }
@@ -171,17 +176,17 @@ public sealed class FNV24 : FNV32
 /// <summary>
 /// FNV64 hash routine
 /// </summary>
-public class FNV64 : FNVHash
+public class Fnv64 : FnvHash
 {
     /// <summary>
     /// Initialise the hash algorithm
     /// </summary>
-    public FNV64() : base(0x00000100000001B3ul, 0xCBF29CE484222325ul) { }
+    public Fnv64() : base(0x00000100000001B3ul, 0xCBF29CE484222325ul) { }
     
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
-    public override byte[] Hash => BitConverter.GetBytes(hash);
+    public override byte[] Hash => BitConverter.GetBytes(HashValue);
     
     /// <summary>
     /// Gets the size, in bits, of the computed hash code.
@@ -195,7 +200,7 @@ public class FNV64 : FNVHash
     /// <returns>the hash value</returns>
     public static ulong GetHash(string text) 
     { 
-        using var fnv = new FNV64();
+        using var fnv = new Fnv64();
         return BitConverter.ToUInt64(fnv.ComputeHash(text), 0); 
     }
 }
@@ -203,7 +208,7 @@ public class FNV64 : FNVHash
 /// <summary>
 /// FNV64CLIP hash routine
 /// </summary>
-public sealed class FNV64CLIP : FNV64
+public sealed class Fnv64Clip : Fnv64
 {
     private static readonly string[] AgeOnlyValues = ["a", "o"];
     
@@ -244,7 +249,7 @@ public sealed class FNV64CLIP : FNV64
             }
         }
 
-        var hash = FNV64.GetHash(value);
+        var hash = Fnv64.GetHash(value);
         hash &= 0x7FFFFFFFFFFFFFFF;
         hash ^= mask << 48;
 
@@ -259,7 +264,7 @@ public sealed class FNV64CLIP : FNV64
     public static ulong GetHashGeneric(string text)
     {
         var value = GetGenericValue(text);
-        var hash = FNV64.GetHash(value);
+        var hash = Fnv64.GetHash(value);
         return hash & 0x7FFFFFFFFFFFFFFF;
     }
 

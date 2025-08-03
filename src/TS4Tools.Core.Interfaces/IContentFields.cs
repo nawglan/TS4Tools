@@ -27,7 +27,7 @@ public interface IContentFields
     /// <summary>
     /// The list of content field names
     /// </summary>
-    List<string> ContentFields { get; }
+    IReadOnlyList<string> ContentFields { get; }
 
     /// <summary>
     /// Get the value of a content field by name

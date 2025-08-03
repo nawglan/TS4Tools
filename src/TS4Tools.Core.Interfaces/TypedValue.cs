@@ -98,4 +98,24 @@ public readonly record struct TypedValue(Type Type, object? Value, string Format
             _ => string.Compare(Value.ToString(), other.Value?.ToString(), StringComparison.Ordinal)
         };
     }
+
+    /// <summary>
+    /// Less than operator
+    /// </summary>
+    public static bool operator <(TypedValue left, TypedValue right) => left.CompareTo(right) < 0;
+
+    /// <summary>
+    /// Less than or equal operator
+    /// </summary>
+    public static bool operator <=(TypedValue left, TypedValue right) => left.CompareTo(right) <= 0;
+
+    /// <summary>
+    /// Greater than operator
+    /// </summary>
+    public static bool operator >(TypedValue left, TypedValue right) => left.CompareTo(right) > 0;
+
+    /// <summary>
+    /// Greater than or equal operator
+    /// </summary>
+    public static bool operator >=(TypedValue left, TypedValue right) => left.CompareTo(right) >= 0;
 }

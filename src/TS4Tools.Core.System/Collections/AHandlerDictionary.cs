@@ -21,6 +21,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
+#pragma warning disable S2933 // Fields cannot be readonly due to handler suspension pattern
+
 namespace TS4Tools.Core.System.Collections;
 
 /// <summary>
@@ -38,7 +40,7 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <summary>
     /// Holds the <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerDictionary{TKey, TValue}"/> changes.
     /// </summary>
-    protected EventHandler? handler;
+    private EventHandler? handler;
 
     #region Constructors
     /// <summary>

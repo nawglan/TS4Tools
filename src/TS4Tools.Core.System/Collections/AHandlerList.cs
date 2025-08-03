@@ -20,6 +20,9 @@
 
 using System.Diagnostics;
 
+#pragma warning disable S2933 // Fields cannot be readonly due to handler suspension pattern  
+#pragma warning disable S4035 // Abstract classes are designed for inheritance, not sealing
+
 namespace TS4Tools.Core.System.Collections;
 
 /// <summary>
@@ -28,18 +31,18 @@ namespace TS4Tools.Core.System.Collections;
 /// </summary>
 /// <typeparam name="T"><see cref="Type"/> of list element</typeparam>
 [DebuggerDisplay("Count = {Count}, MaxSize = {MaxSize}")]
-public abstract class AHandlerList<T> : List<T>
+public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IEqualityComparer<T>
     where T : IEquatable<T>
 {
     /// <summary>
     /// Holds the <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerList{T}"/> changes.
     /// </summary>
-    protected EventHandler? handler;
+    private EventHandler? handler;
     
     /// <summary>
     /// The maximum size of the list, or -1 for no limit.
     /// </summary>
-    protected long maxSize = -1;
+    private long maxSize;
 
     #region Constructors
     /// <summary>
@@ -450,5 +453,28 @@ public abstract class AHandlerList<T> : List<T>
         }
         
         return true;
+    }
+    
+    /// <summary>
+    /// Determines whether the specified objects are equal.
+    /// </summary>
+    /// <param name="x">The first object to compare.</param>
+    /// <param name="y">The second object to compare.</param>
+    /// <returns>true if the specified objects are equal; otherwise, false.</returns>
+    public bool Equals(T? x, T? y)
+    {
+        if (ReferenceEquals(x, y)) return true;
+        if (x is null || y is null) return false;
+        return x.Equals(y);
+    }
+    
+    /// <summary>
+    /// Returns a hash code for the specified object.
+    /// </summary>
+    /// <param name="obj">The object for which a hash code is to be returned.</param>
+    /// <returns>A hash code for the specified object.</returns>
+    public int GetHashCode(T obj)
+    {
+        return obj?.GetHashCode() ?? 0;
     }
 }

@@ -95,10 +95,10 @@ public static class ArrayExtensions
         if (elementType is null || !typeof(IConvertible).IsAssignableFrom(elementType))
             throw new InvalidCastException($"{elementType?.Name ?? "Unknown"} is not IConvertible");
 
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(start, array.Length, nameof(start));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(length, array.Length - start, nameof(length));
-        ArgumentOutOfRangeException.ThrowIfNegative(start, nameof(start));
-        ArgumentOutOfRangeException.ThrowIfNegative(length, nameof(length));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(start, array.Length);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(length, array.Length - start);
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfNegative(length);
 
         var result = new TOut[length];
         var list = (IList)array;
