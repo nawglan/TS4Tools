@@ -1,0 +1,16 @@
+{
+  "ApplicationSettings": {
+    "EnableExtraChecking": "not-a-boolean",
+    "MaxResourceCacheSize": -100,
+    "AsyncOperationTimeoutMs": 100000,
+    "Package": {
+      "MaxBackupCount": -5,
+      "CompressionLevel": 15,
+      "IOBufferSize": 1000
+    },
+    "UserInterface": {
+      "RecentFilesCount": 100,
+      "AutoSaveIntervalMinutes": -1
+    }
+  }
+}

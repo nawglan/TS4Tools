@@ -1,0 +1,26 @@
+{
+  "ApplicationSettings": {
+    "EnableExtraChecking": false,
+    "AssumeDataDirty": false,
+    "UseTS4Format": false,
+    "MaxResourceCacheSize": 500,
+    "EnableDetailedLogging": true,
+    "AsyncOperationTimeoutMs": 15000,
+    "EnableCrossPlatformFeatures": false,
+    "Package": {
+      "CreateBackups": false,
+      "MaxBackupCount": 5,
+      "EnableCompression": false,
+      "CompressionLevel": 3,
+      "IOBufferSize": 32768
+    },
+    "UserInterface": {
+      "Theme": "Dark",
+      "EnableAnimations": false,
+      "ShowAdvancedOptions": true,
+      "RecentFilesCount": 20,
+      "EnableAutoSave": true,
+      "AutoSaveIntervalMinutes": 10
+    }
+  }
+}
