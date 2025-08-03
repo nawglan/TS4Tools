@@ -17,25 +17,50 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
-namespace TS4Tools.Core.Interfaces;
+namespace TS4Tools.Core.Resources;
 
 /// <summary>
-/// Minimal resource interface for The Sims 4 resources
+/// Statistics about resource manager performance and usage.
 /// </summary>
-public interface IResource : IApiVersion, IContentFields, IDisposable
+public sealed record ResourceManagerStatistics
 {
     /// <summary>
-    /// The resource content as a <see cref="Stream"/>.
+    /// Total number of resources created since manager initialization.
     /// </summary>
-    Stream Stream { get; }
+    public long TotalResourcesCreated { get; init; }
     
     /// <summary>
-    /// The resource content as a byte array
+    /// Total number of resources loaded from packages.
     /// </summary>
-    byte[] AsBytes { get; }
-
+    public long TotalResourcesLoaded { get; init; }
+    
     /// <summary>
-    /// Raised if the resource is changed
+    /// Number of registered resource factories.
     /// </summary>
-    event EventHandler? ResourceChanged;
+    public int RegisteredFactories { get; init; }
+    
+    /// <summary>
+    /// Cache hit ratio (0.0 to 1.0).
+    /// </summary>
+    public double CacheHitRatio { get; init; }
+    
+    /// <summary>
+    /// Number of items currently in cache.
+    /// </summary>
+    public int CacheSize { get; init; }
+    
+    /// <summary>
+    /// Total memory used by cached resources (in bytes).
+    /// </summary>
+    public long CacheMemoryUsage { get; init; }
+    
+    /// <summary>
+    /// Average time to create a resource (in milliseconds).
+    /// </summary>
+    public double AverageCreationTimeMs { get; init; }
+    
+    /// <summary>
+    /// Average time to load a resource from package (in milliseconds).
+    /// </summary>
+    public double AverageLoadTimeMs { get; init; }
 }

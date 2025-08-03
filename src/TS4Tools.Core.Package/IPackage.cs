@@ -132,6 +132,14 @@ public interface IPackage : IApiVersion, IContentFields, IDisposable, IAsyncDisp
     Task<IResource?> GetResourceAsync(IResourceKey key, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Get raw resource data stream by resource index entry
+    /// </summary>
+    /// <param name="entry">Resource index entry</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Stream containing resource data</returns>
+    Task<Stream?> GetResourceStreamAsync(IResourceIndexEntry entry, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Add a resource to the package
     /// </summary>
     /// <param name="key">Resource key</param>

@@ -17,25 +17,30 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
-namespace TS4Tools.Core.Interfaces;
+namespace TS4Tools.Core.Resources;
 
 /// <summary>
-/// Minimal resource interface for The Sims 4 resources
+/// Defines a factory for creating resource instances of a specific type.
 /// </summary>
-public interface IResource : IApiVersion, IContentFields, IDisposable
+/// <typeparam name="TResource">The type of resource this factory creates</typeparam>
+public interface IResourceFactory<TResource> where TResource : IResource
 {
     /// <summary>
-    /// The resource content as a <see cref="Stream"/>.
+    /// Creates a new resource instance.
     /// </summary>
-    Stream Stream { get; }
+    /// <param name="apiVersion">API version for the resource</param>
+    /// <param name="stream">Optional stream containing resource data</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A new resource instance</returns>
+    Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
     
     /// <summary>
-    /// The resource content as a byte array
+    /// Gets the resource types this factory can create.
     /// </summary>
-    byte[] AsBytes { get; }
-
+    IReadOnlySet<string> SupportedResourceTypes { get; }
+    
     /// <summary>
-    /// Raised if the resource is changed
+    /// Gets the priority of this factory (higher values have priority over lower values).
     /// </summary>
-    event EventHandler? ResourceChanged;
+    int Priority { get; }
 }

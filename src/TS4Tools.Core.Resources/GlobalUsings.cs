@@ -17,25 +17,14 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
-namespace TS4Tools.Core.Interfaces;
-
-/// <summary>
-/// Minimal resource interface for The Sims 4 resources
-/// </summary>
-public interface IResource : IApiVersion, IContentFields, IDisposable
-{
-    /// <summary>
-    /// The resource content as a <see cref="Stream"/>.
-    /// </summary>
-    Stream Stream { get; }
-    
-    /// <summary>
-    /// The resource content as a byte array
-    /// </summary>
-    byte[] AsBytes { get; }
-
-    /// <summary>
-    /// Raised if the resource is changed
-    /// </summary>
-    event EventHandler? ResourceChanged;
-}
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using TS4Tools.Core.Interfaces;
+global using TS4Tools.Core.Package;

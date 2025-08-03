@@ -215,6 +215,41 @@ public sealed class Package : IPackage
     }
     
     /// <inheritdoc />
+    public async Task<Stream?> GetResourceStreamAsync(IResourceIndexEntry entry, CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(entry);
+        
+        // Read raw resource data from the package file
+        var resourceKey = entry as IResourceKey;
+        if (resourceKey == null)
+        {
+            return null;
+        }
+        
+        var indexEntry = entry as ResourceIndexEntry;
+        if (indexEntry == null)
+        {
+            return null;
+        }
+        
+        // Read the raw data from the file at the specified position
+        var buffer = new byte[indexEntry.FileSize];
+        
+        _packageStream!.Seek(indexEntry.ChunkOffset, SeekOrigin.Begin);
+        await _packageStream.ReadExactlyAsync(buffer, cancellationToken).ConfigureAwait(false);
+        
+        // If the resource is compressed, decompress it
+        if (indexEntry.IsCompressed)
+        {
+            // TODO: Implement decompression - for now just return compressed data
+            // This will be handled by the specific resource implementations
+        }
+        
+        return new MemoryStream(buffer);
+    }
+    
+    /// <inheritdoc />
     public async Task<IResource?> GetResourceAsync(IResourceKey key, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

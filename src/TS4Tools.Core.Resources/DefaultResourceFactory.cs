@@ -17,25 +17,29 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
-namespace TS4Tools.Core.Interfaces;
+namespace TS4Tools.Core.Resources;
 
 /// <summary>
-/// Minimal resource interface for The Sims 4 resources
+/// Factory for creating default resource instances.
+/// This factory handles any resource type as a fallback.
 /// </summary>
-public interface IResource : IApiVersion, IContentFields, IDisposable
+internal sealed class DefaultResourceFactory : ResourceFactoryBase<IResource>
 {
     /// <summary>
-    /// The resource content as a <see cref="Stream"/>.
+    /// Initializes a new instance of the <see cref="DefaultResourceFactory"/> class.
     /// </summary>
-    Stream Stream { get; }
+    public DefaultResourceFactory() : base(new[] { "*" }, priority: -1000) // Lowest priority
+    {
+    }
     
-    /// <summary>
-    /// The resource content as a byte array
-    /// </summary>
-    byte[] AsBytes { get; }
-
-    /// <summary>
-    /// Raised if the resource is changed
-    /// </summary>
-    event EventHandler? ResourceChanged;
+    /// <inheritdoc />
+    public override async Task<IResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default)
+    {
+        ValidateApiVersion(apiVersion);
+        
+        // For async consistency, but no actual async work needed for default resource
+        await Task.CompletedTask;
+        
+        return new DefaultResource(apiVersion, stream);
+    }
 }
