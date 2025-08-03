@@ -37,6 +37,31 @@
 > - Use relative paths for project files
 > - Check `Directory.Packages.props` for package versions before adding new packages
 > - Run tests after making changes to verify functionality
+> 
+> **Phase Completion Protocol:**
+> - Generate conventional commit message when completing each phase
+> - Include both **what was done** and **why it was necessary** in commit message
+> - Follow this format for commit messages:
+> ```
+> feat(settings): implement modern IOptions-based settings system
+> 
+> - Replace legacy static Settings class with reactive IOptions pattern
+> - Add cross-platform JSON configuration support replacing Windows Registry
+> - Implement strongly-typed ApplicationSettings model with validation
+> - Add ApplicationSettingsService with change notifications
+> - Create LegacySettingsAdapter for backward compatibility
+> 
+> WHY: Legacy settings system was Windows-only and used static globals.
+> Modern settings enable cross-platform deployment, dependency injection,
+> configuration validation, and reactive updates. Essential foundation
+> for remaining migration phases.
+> 
+> TECHNICAL IMPACT:
+> - 30 unit tests added with 95%+ coverage
+> - Cross-platform JSON/XML configuration support
+> - Type-safe settings with compile-time validation
+> - Backward compatibility maintained via adapter pattern
+> ```
 >
 > **🎯 Code Quality & Testability Guidelines:**
 > 
