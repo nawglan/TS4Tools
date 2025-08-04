@@ -86,7 +86,7 @@ public class DefaultResourceTests
 
         // Act
         var streamData = new byte[data.Length];
-        resource.Stream.Read(streamData, 0, data.Length);
+        resource.Stream.ReadExactly(streamData, 0, data.Length);
 
         // Assert
         streamData.Should().BeEquivalentTo(data);

@@ -192,7 +192,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     // Helper class for testing
-    public class TestResourceFactory : IResourceFactory<IResource>
+    internal class TestResourceFactory : IResourceFactory<IResource>
     {
         public IReadOnlySet<string> SupportedResourceTypes => new HashSet<string> { "0xTEST1234" };
         public int Priority => 100;

@@ -67,7 +67,11 @@ internal sealed class DefaultResource : IResource, IDisposable
     public byte[] AsBytes => _stream.ToArray();
     
     /// <inheritdoc />
-    public event EventHandler? ResourceChanged;
+    public event EventHandler? ResourceChanged
+    {
+        add { /* This event is not triggered by DefaultResource as it represents immutable resource data */ }
+        remove { /* This event is not triggered by DefaultResource as it represents immutable resource data */ }
+    }
     
     /// <inheritdoc />
     public TypedValue this[string index]

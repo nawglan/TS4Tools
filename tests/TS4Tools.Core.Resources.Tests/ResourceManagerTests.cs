@@ -28,7 +28,7 @@ using TS4Tools.Core.Resources;
 
 namespace TS4Tools.Core.Resources.Tests;
 
-public class ResourceManagerTests
+public class ResourceManagerTests : IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IOptionsMonitor<ResourceManagerOptions> _optionsMonitor;
@@ -271,7 +271,7 @@ public class ResourceManagerTests
     }
 
     // Helper class for testing
-    public class TestResourceFactory : IResourceFactory<IResource>
+    internal class TestResourceFactory : IResourceFactory<IResource>
     {
         public IReadOnlySet<string> SupportedResourceTypes => new HashSet<string> { "0xABCDEF12" };
         public int Priority => 100;
@@ -280,6 +280,20 @@ public class ResourceManagerTests
         {
             await Task.CompletedTask;
             return new DefaultResource(apiVersion, stream);
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _resourceManager?.Dispose();
         }
     }
 }

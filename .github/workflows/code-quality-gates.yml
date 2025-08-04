@@ -1,0 +1,332 @@
+name: Code Quality Gates
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # Build and Test - Fundamental quality gate
+  build-and-test:
+    name: Build & Test
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Full history for SonarCloud analysis
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: |
+        dotnet build --no-restore --configuration Release --verbosity minimal
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "Build failed with exit code $LASTEXITCODE"
+          exit $LASTEXITCODE
+        }
+    
+    - name: Run unit tests
+      run: |
+        dotnet test --no-build --configuration Release --verbosity minimal `
+          --logger "trx;LogFileName=test-results.trx" `
+          --logger "console;verbosity=detailed" `
+          --collect:"XPlat Code Coverage" `
+          --results-directory TestResults/ `
+          --settings tests/coverlet.runsettings
+    
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Unit Test Results
+        path: TestResults/*.trx
+        reporter: dotnet-trx
+        fail-on-error: true
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        directory: TestResults/
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: true
+
+  # Static Analysis - Code quality enforcement
+  static-analysis:
+    name: Static Analysis
+    runs-on: windows-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Setup SonarCloud Scanner
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Run SonarCloud analysis
+      run: |
+        dotnet sonarscanner begin `
+          /k:"TS4Tools" `
+          /o:"ts4tools-org" `
+          /d:sonar.login="${{ secrets.SONAR_TOKEN }}" `
+          /d:sonar.host.url="https://sonarcloud.io" `
+          /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" `
+          /d:sonar.coverage.exclusions="**/*.Tests/**,**/benchmarks/**"
+        
+        dotnet build --configuration Release
+        
+        dotnet test --configuration Release `
+          --collect:"XPlat Code Coverage" `
+          --results-directory TestResults/ `
+          --settings tests/coverlet.runsettings
+        
+        dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+    
+    - name: Quality Gate Status Check
+      uses: sonarqube-quality-gate-action@master
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # Performance Regression Testing
+  performance-benchmarks:
+    name: Performance Benchmarks
+    runs-on: windows-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Run performance benchmarks
+      run: |
+        dotnet run --project benchmarks/TS4Tools.Benchmarks `
+          --configuration Release `
+          --framework net9.0 `
+          -- --filter "*" --memory --exporters json html
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmarks/TS4Tools.Benchmarks/BenchmarkDotNet.Artifacts/
+        retention-days: 30
+    
+    - name: Performance regression check
+      run: |
+        # Parse benchmark results and check for regressions
+        $resultsPath = "benchmarks/TS4Tools.Benchmarks/BenchmarkDotNet.Artifacts/results"
+        
+        if (Test-Path "$resultsPath/*-report.json") {
+          $results = Get-Content "$resultsPath/*-report.json" | ConvertFrom-Json
+          
+          foreach ($benchmark in $results.Benchmarks) {
+            $meanMs = $benchmark.Statistics.Mean / 1000000 # Convert ns to ms
+            $method = $benchmark.Method
+            
+            # Define performance budgets (fail if exceeded)
+            $budgets = @{
+              "ModernSettings_Load" = 50    # 50ms budget
+              "ModernResourceCreation" = 100 # 100ms budget for 1000 resources
+              "ModernResourceLookup" = 10   # 10ms budget
+            }
+            
+            if ($budgets.ContainsKey($method) -and $meanMs -gt $budgets[$method]) {
+              Write-Error "Performance regression detected in $method`: $meanMs ms > $($budgets[$method]) ms budget"
+              exit 1
+            }
+          }
+          
+          Write-Host "✅ All performance benchmarks within acceptable limits"
+        }
+
+  # Security Analysis
+  security-analysis:
+    name: Security Analysis
+    runs-on: windows-latest
+    needs: build-and-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        languages: csharp
+
+  # Cross-Platform Compatibility
+  cross-platform-build:
+    name: Cross-Platform Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: build-and-test
+    
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run tests
+      run: dotnet test --no-build --configuration Release --verbosity minimal
+
+  # Documentation Quality
+  documentation-check:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check for required documentation
+      run: |
+        # Check for required documentation files
+        required_docs=(
+          "README.md"
+          "docs/Developer-Onboarding-Guide.md"
+          "docs/architecture/Migration-Strategy-ImmutableKeys.md"
+          "docs/Performance-Analysis-Report.md"
+        )
+        
+        missing_docs=()
+        for doc in "${required_docs[@]}"; do
+          if [[ ! -f "$doc" ]]; then
+            missing_docs+=("$doc")
+          fi
+        done
+        
+        if [[ ${#missing_docs[@]} -gt 0 ]]; then
+          echo "❌ Missing required documentation:"
+          printf '%s\n' "${missing_docs[@]}"
+          exit 1
+        fi
+        
+        echo "✅ All required documentation files present"
+    
+    - name: Check XML documentation coverage
+      run: |
+        # Check that public APIs have XML documentation
+        find src -name "*.cs" -exec grep -L "///" {} \; | wc -l > undocumented_count.txt
+        undocumented=$(cat undocumented_count.txt)
+        
+        if [[ $undocumented -gt 5 ]]; then
+          echo "❌ Too many files without XML documentation: $undocumented"
+          echo "Public APIs should have XML documentation comments"
+          exit 1
+        fi
+        
+        echo "✅ XML documentation coverage acceptable"
+
+  # Final Quality Gate
+  quality-gate:
+    name: Final Quality Gate
+    runs-on: ubuntu-latest
+    needs: [build-and-test, static-analysis, performance-benchmarks, security-analysis, cross-platform-build, documentation-check]
+    if: always()
+    
+    steps:
+    - name: Check all jobs succeeded
+      run: |
+        # Check if any required job failed
+        if [[ "${{ needs.build-and-test.result }}" != "success" ]]; then
+          echo "❌ Build and test failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.static-analysis.result }}" != "success" ]]; then
+          echo "❌ Static analysis failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.performance-benchmarks.result }}" != "success" ]]; then
+          echo "❌ Performance benchmarks failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.security-analysis.result }}" != "success" ]]; then
+          echo "❌ Security analysis failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.cross-platform-build.result }}" != "success" ]]; then
+          echo "❌ Cross-platform build failed"
+          exit 1
+        fi
+        
+        if [[ "${{ needs.documentation-check.result }}" != "success" ]]; then
+          echo "❌ Documentation check failed"
+          exit 1
+        fi
+        
+        echo "✅ All quality gates passed successfully!"
+        echo "🚀 Code is ready for deployment"

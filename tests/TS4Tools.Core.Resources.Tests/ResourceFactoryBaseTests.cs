@@ -134,7 +134,7 @@ public class ResourceFactoryBaseTests
     }
 
     // Test implementation of ResourceFactoryBase
-    public class TestResourceFactory : ResourceFactoryBase<IResource>
+    internal class TestResourceFactory : ResourceFactoryBase<IResource>
     {
         public TestResourceFactory(IEnumerable<string> supportedResourceTypes, int priority = 0)
             : base(supportedResourceTypes, priority)
