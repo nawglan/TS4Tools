@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
         // Register platform services (must be early in the chain)
         services.AddTS4ToolsPlatformServices();
 
-        // Register package management services
+        // Register package management services (from TS4Tools.Core.Package)
         services.AddTS4ToolsPackageServices();
 
         // Register resource management services
@@ -69,21 +69,6 @@ public static class ServiceCollectionExtensions
 
         // Register platform service as singleton
         services.AddSingleton<IPlatformService, PlatformService>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Registers TS4Tools package management services.
-    /// </summary>
-    /// <param name="services">The service collection to register services with.</param>
-    /// <returns>The service collection for fluent configuration.</returns>
-    public static IServiceCollection AddTS4ToolsPackageServices(this IServiceCollection services)
-    {
-        ArgumentNullException.ThrowIfNull(services);
-
-        // Use the extension method from the Package project to register internal services
-        services.AddTS4ToolsPackageServices();
 
         return services;
     }
