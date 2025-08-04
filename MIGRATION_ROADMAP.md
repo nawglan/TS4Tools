@@ -1735,6 +1735,132 @@ The Phase 2.2 implementation establishes a robust foundation of shared utilities
 
 ---
 
+## 🌐 **Cross-Platform Support Analysis & Remediation Plan**
+
+> **COMPREHENSIVE CROSS-PLATFORM CODE REVIEW COMPLETED - August 3, 2025**
+>
+> **Overall Assessment:** ✅ **EXCELLENT** cross-platform foundation with minor issues identified
+>
+> **Architecture Strengths:**
+> - Modern .NET 9 with Avalonia UI provides excellent cross-platform support
+> - JSON-based configuration system replaces Windows Registry dependencies  
+> - Proper use of `Path.Combine()` and platform-neutral file APIs
+> - Central package management ensures consistent cross-platform dependencies
+
+### **🔴 Critical Issues Identified**
+
+**HIGH PRIORITY - Application Manifest Restriction**
+- **Issue:** `TS4Tools.Desktop\app.manifest` limits to Windows 10+ only
+- **Code:** `<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />`
+- **Impact:** Prevents deployment on macOS/Linux despite Avalonia support
+- **Remediation:** Remove Windows-specific `<supportedOS>` declarations or make conditional
+- **Timeline:** Phase 3.2 (immediate priority)
+
+**MEDIUM PRIORITY - Platform-Specific File Handling**
+- **Issue:** `FileNameService.IsReservedName()` only checks Windows reserved names (CON, PRN, AUX, etc.)
+- **Impact:** May allow invalid Windows filenames, reject valid Unix names
+- **Remediation:** Add runtime platform detection with `RuntimeInformation.IsOSPlatform()`
+- **Timeline:** Phase 4.1 (Core GUI implementation)
+
+**MEDIUM PRIORITY - Configuration Directory Strategy**  
+- **Issue:** Uses only `Environment.SpecialFolder.ApplicationData` (Windows-centric)
+- **Impact:** Config files stored in non-standard locations on macOS/Linux
+- **Remediation:** Implement platform-specific config paths (~/.config, ~/Library/Preferences)
+- **Timeline:** Phase 4.1 (Core GUI implementation)
+
+### **🎯 Recommended Cross-Platform Enhancements**
+
+**1. Multi-Target Framework Support**
+```xml
+<TargetFrameworks Condition="'$(BuildingInsideVisualStudio)' != 'true'">net9.0;net9.0-windows;net9.0-macos</TargetFrameworks>
+<TargetFramework Condition="'$(BuildingInsideVisualStudio)' == 'true'">net9.0</TargetFramework>
+```
+
+**2. Runtime Platform Detection Service**
+```csharp
+public interface IPlatformService
+{
+    bool IsWindows { get; }  
+    bool IsMacOS { get; }
+    bool IsLinux { get; }
+    string GetConfigurationDirectory();
+    bool IsFileNameValid(string fileName);
+    char[] GetInvalidFileNameChars();
+}
+```
+
+**3. Cross-Platform File System Abstraction**
+```csharp
+public interface IFileSystemService
+{
+    bool IsCaseSensitive { get; }
+    int MaxPathLength { get; }
+    char[] InvalidFileNameChars { get; }
+    string SanitizeFileName(string fileName);
+}
+```
+
+### **📋 Cross-Platform Integration Timeline**
+
+**Phase 3.2 (Testing Infrastructure) - Immediate Actions:**
+- ✅ **Fix app.manifest platform restrictions** - Remove Windows-only declarations
+- ✅ **Add platform detection service foundation** - IPlatformService interface and basic implementation
+- ✅ **Cross-platform CI/CD pipeline setup** - GitHub Actions for Windows, macOS, Linux builds
+
+**Phase 4.1 (Core GUI) - Near-term Enhancements:**
+- 🎯 **Implement cross-platform configuration directories** - Platform-specific settings storage
+- 🎯 **Add comprehensive file name validation** - Platform-aware filename sanitization
+- 🎯 **Platform-specific UI adaptations** - Menu conventions, keyboard shortcuts
+
+**Phase 5+ (Advanced Features) - Long-term Goals:**
+- 🔮 **Automated cross-platform testing** on Windows, macOS, and Linux
+- 🔮 **Platform-specific performance optimizations** - Native API integrations where beneficial
+- 🔮 **Native platform integrations** - File associations, system tray, etc.
+
+### **🛡️ Quality Assurance for Cross-Platform Support**
+
+**Testing Strategy:**
+```powershell
+# Windows Testing
+cd "c:\Users\nawgl\code\TS4Tools"
+dotnet build
+dotnet test --framework net9.0
+dotnet run --project TS4Tools.Desktop
+
+# Cross-Platform CI/CD Pipeline (GitHub Actions)
+# - Windows Server 2022 (latest)
+# - macOS-latest (Monterey/Ventura)  
+# - Ubuntu 22.04 LTS (latest)
+```
+
+**Verification Checklist:**
+- ✅ **Build Success:** All projects build on Windows, macOS, Linux
+- ✅ **Test Coverage:** Unit tests pass on all target platforms
+- ✅ **File Operations:** Path handling works correctly across file systems
+- ✅ **Configuration:** Settings persist correctly in platform-appropriate locations
+- ✅ **UI Functionality:** Avalonia UI renders and functions on all platforms
+- ⏳ **Performance:** Benchmarks run successfully on all platforms
+- ⏳ **Deployment:** Application packages correctly for each platform
+
+### **🎯 Cross-Platform Success Metrics**
+
+**Immediate (Phase 3.2):**
+- Application successfully builds and runs on Windows, macOS, Linux
+- No platform-specific compilation errors or warnings
+- Basic functionality verified on all three platforms
+
+**Near-term (Phase 4.1):**
+- Configuration stored in platform-appropriate directories
+- File operations handle platform differences correctly
+- UI follows platform conventions (menus, shortcuts, dialogs)
+
+**Long-term (Phase 5+):**
+- Automated testing on all platforms in CI/CD pipeline
+- Platform-specific performance optimizations implemented
+- Native integrations where appropriate (file associations, etc.)
+
+---
+
 **Document Status:** Living Document - Updated as tasks are completed  
-**Last Updated:** August 3, 2025  
-**Next Review:** After Phase 2.2 milestone completion
+**Last Updated:** August 3, 2025 (Cross-Platform Analysis Added)  
+**Next Review:** After Phase 3.2 milestone completion
