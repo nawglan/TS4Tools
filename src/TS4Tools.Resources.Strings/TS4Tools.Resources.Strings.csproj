@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core.System\TS4Tools.Core.System.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
+  </ItemGroup>
+
+</Project>
