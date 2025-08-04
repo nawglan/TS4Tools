@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using TS4Tools.Core.Settings;
 using TS4Tools.Core.Package.DependencyInjection;
 using TS4Tools.Core.Resources;
+using TS4Tools.Core.System.Platform;
 using TS4Tools.Extensions.ResourceTypes;
 using TS4Tools.Extensions.Utilities;
 using TS4Tools.Resources.Common.CatalogTags;
@@ -32,6 +33,9 @@ public static class ServiceCollectionExtensions
         // Register core settings system
         services.AddTS4ToolsSettings(configuration);
 
+        // Register platform services (must be early in the chain)
+        services.AddTS4ToolsPlatformServices();
+
         // Register package management services
         services.AddTS4ToolsPackageServices();
 
@@ -50,6 +54,21 @@ public static class ServiceCollectionExtensions
             builder.AddConsole();
             builder.AddDebug();
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers TS4Tools platform services.
+    /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <returns>The service collection for fluent configuration.</returns>
+    public static IServiceCollection AddTS4ToolsPlatformServices(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Register platform service as singleton
+        services.AddSingleton<IPlatformService, PlatformService>();
 
         return services;
     }

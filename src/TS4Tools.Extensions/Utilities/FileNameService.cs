@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using TS4Tools.Core.System.Platform;
 using TS4Tools.Extensions.ResourceIdentification;
 using TS4Tools.Extensions.ResourceTypes;
 
@@ -14,6 +15,7 @@ public sealed partial class FileNameService : IFileNameService
 {
     private readonly IResourceTypeRegistry _typeRegistry;
     private readonly ILogger<FileNameService> _logger;
+    private readonly IPlatformService _platformService;
 
     // Pre-compiled regex for filename sanitization
     [GeneratedRegex(@"[<>:""/\\|?*\x00-\x1f]", RegexOptions.Compiled)]
@@ -24,9 +26,12 @@ public sealed partial class FileNameService : IFileNameService
     /// </summary>
     /// <param name="typeRegistry">The resource type registry.</param>
     /// <param name="logger">The logger instance.</param>
-    public FileNameService(IResourceTypeRegistry typeRegistry, ILogger<FileNameService> logger)
+    /// <param name="platformService">The platform service for platform-specific operations.</param>
+    public FileNameService(IResourceTypeRegistry typeRegistry, ILogger<FileNameService> logger, IPlatformService? platformService = null)
     {
         _typeRegistry = typeRegistry ?? throw new ArgumentNullException(nameof(typeRegistry));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _platformService = platformService ?? PlatformService.Instance;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -71,32 +76,8 @@ public sealed partial class FileNameService : IFileNameService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
-        // Replace invalid characters with underscores
-        var sanitized = InvalidCharsRegex().Replace(fileName, "_");
-        
-        // Ensure the filename isn't too long (most file systems support 255 chars)
-        const int maxLength = 240; // Leave room for extension
-        if (sanitized.Length > maxLength)
-        {
-            sanitized = sanitized[..maxLength];
-        }
-
-        // Ensure it doesn't end with a space or period (Windows restriction)
-        sanitized = sanitized.TrimEnd(' ', '.');
-
-        // Ensure it's not empty or only replacement characters after sanitization
-        if (string.IsNullOrWhiteSpace(sanitized) || sanitized.All(c => c == '_'))
-        {
-            sanitized = "unnamed";
-        }
-
-        // Check for reserved names on Windows
-        if (IsReservedName(sanitized))
-        {
-            sanitized = $"_{sanitized}";
-        }
-
-        return sanitized;
+        // Use platform service for cross-platform filename sanitization
+        return _platformService.SanitizeFileName(fileName);
     }
 
     /// <inheritdoc />
@@ -157,19 +138,6 @@ public sealed partial class FileNameService : IFileNameService
         }
 
         return fileName + expectedExtension;
-    }
-
-    /// <summary>
-    /// Checks if the given name is a reserved filename on Windows.
-    /// </summary>
-    /// <param name="name">The name to check.</param>
-    /// <returns>True if the name is reserved; otherwise, false.</returns>
-    private static bool IsReservedName(string name)
-    {
-        var upperName = name.ToUpperInvariant();
-        return upperName is "CON" or "PRN" or "AUX" or "NUL" or
-               "COM1" or "COM2" or "COM3" or "COM4" or "COM5" or "COM6" or "COM7" or "COM8" or "COM9" or
-               "LPT1" or "LPT2" or "LPT3" or "LPT4" or "LPT5" or "LPT6" or "LPT7" or "LPT8" or "LPT9";
     }
 
     /// <summary>

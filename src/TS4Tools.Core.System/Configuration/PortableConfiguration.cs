@@ -21,6 +21,7 @@
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using System.Reflection;
+using TS4Tools.Core.System.Platform;
 
 namespace TS4Tools.Core.System.Configuration;
 
@@ -230,7 +231,7 @@ public sealed class PortableConfiguration : IDisposable
 
     private static string GetDefaultConfigurationDirectory()
     {
-        return Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        return PlatformService.Instance.GetConfigurationDirectory();
     }
 
     /// <summary>

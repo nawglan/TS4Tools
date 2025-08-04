@@ -8,7 +8,8 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
   </PropertyGroup>
 
-  <PropertyGroup>
+  <!-- Use manifest only on Windows for DPI awareness and compatibility -->
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
