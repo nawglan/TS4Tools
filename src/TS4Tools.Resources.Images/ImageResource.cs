@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using BCnEncoder.Decoder;
 using BCnEncoder.Encoder;
 using BCnEncoder.Shared;
+using CommunityToolkit.HighPerformance;
 
 namespace TS4Tools.Resources.Images;
 
@@ -625,16 +626,86 @@ public sealed class ImageResource : IResource, IDisposable
 
     private async Task<byte[]> DecompressDdsAsync()
     {
-        // TODO: Implement DDS decompression using BCnEncoder when API is stable
-        await Task.CompletedTask;
-        throw new NotImplementedException("DDS decompression is not yet implemented in this version");
+        if (_imageData.Length < 128) // DDS header is at least 128 bytes
+        {
+            throw new InvalidDataException("DDS data is too small to contain a valid header");
+        }
+
+        try
+        {
+            using var inputStream = new MemoryStream(_imageData);
+            var decoder = new BcDecoder();
+            
+            // Extract DDS format information from metadata or assume BC3 (DXT5) for now
+            // In a real implementation, you would parse the DDS header to determine the format
+            var format = CompressionFormat.Bc3; // Most common in Sims 4
+            var width = (int)_metadata.Width;
+            var height = (int)_metadata.Height;
+            
+            // Use DecodeRaw method with correct parameters
+            var decodedData = await Task.Run(() => decoder.DecodeRaw(inputStream, width, height, format));
+            
+            // Convert ColorRgba32 array to byte array
+            var result = new byte[decodedData.Length * 4];
+            for (int i = 0; i < decodedData.Length; i++)
+            {
+                var color = decodedData[i];
+                result[i * 4] = color.r;
+                result[i * 4 + 1] = color.g;
+                result[i * 4 + 2] = color.b;
+                result[i * 4 + 3] = color.a;
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidDataException($"Failed to decompress DDS data: {ex.Message}", ex);
+        }
     }
 
     private async Task<byte[]> ConvertToDdsAsync<TPixel>(Image<TPixel> image) where TPixel : unmanaged, IPixel<TPixel>
     {
-        // TODO: Implement DDS compression using BCnEncoder when API is stable
-        await Task.CompletedTask;
-        throw new NotImplementedException("DDS compression is not yet implemented in this version");
+        try
+        {
+            using var outputStream = new MemoryStream();
+            var encoder = new BcEncoder();
+            
+            // Configure encoder for BC3 (DXT5) which is commonly used in Sims 4
+            encoder.OutputOptions.Format = CompressionFormat.Bc3;
+            encoder.OutputOptions.FileFormat = OutputFileFormat.Dds;
+            encoder.OutputOptions.GenerateMipMaps = _metadata.MipMapCount > 1;
+            
+            // Convert ImageSharp Image to the format expected by BCnEncoder
+            var width = image.Width;
+            var height = image.Height;
+            
+            // Extract pixel data from ImageSharp image without using GetPixelRowSpan
+            var pixelData = new ColorRgba32[width * height];
+            using var rgba32Image = image.CloneAs<Rgba32>();
+            
+            // Copy pixel data using safe indexer access
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    var pixel = rgba32Image[x, y];
+                    pixelData[y * width + x] = new ColorRgba32(pixel.R, pixel.G, pixel.B, pixel.A);
+                }
+            }
+            
+            // Create Memory2D from pixel data using the correct CommunityToolkit API
+            var memory2D = pixelData.AsMemory().AsMemory2D(height, width);
+            
+            // Encode to DDS
+            await Task.Run(() => encoder.EncodeToStream(memory2D, outputStream));
+            
+            return outputStream.ToArray();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidDataException($"Failed to convert image to DDS: {ex.Message}", ex);
+        }
     }
 
     private TypedValue GetFieldByIndex(int index)

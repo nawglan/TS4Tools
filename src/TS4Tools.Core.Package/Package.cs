@@ -501,14 +501,22 @@ public sealed class Package : IPackage
     
     private IResource? LoadResource(IResourceIndexEntry entry)
     {
-        // TODO: Implement resource loading
-        throw new NotImplementedException("Resource loading not yet implemented");
+        // Package.GetResource is deprecated in favor of ResourceManager.LoadResourceAsync
+        // This maintains interface compatibility while guiding users to the correct API
+        throw new NotSupportedException(
+            "Direct resource loading from Package is not supported. " +
+            "Use IResourceManager.LoadResourceAsync(package, entry, apiVersion) instead. " +
+            "This approach provides proper dependency injection, caching, and factory patterns.");
     }
     
     private async Task<IResource?> LoadResourceAsync(IResourceIndexEntry entry, CancellationToken cancellationToken)
     {
-        // TODO: Implement async resource loading
+        // Package.GetResourceAsync is deprecated in favor of ResourceManager.LoadResourceAsync
+        // This maintains interface compatibility while guiding users to the correct API
         await Task.CompletedTask;
-        return LoadResource(entry);
+        throw new NotSupportedException(
+            "Direct resource loading from Package is not supported. " +
+            "Use IResourceManager.LoadResourceAsync(package, entry, apiVersion) instead. " +
+            "This approach provides proper dependency injection, caching, and factory patterns.");
     }
 }

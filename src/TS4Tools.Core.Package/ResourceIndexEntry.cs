@@ -70,7 +70,28 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
     public ushort Unknown2 { get; set; } = 1;
     
     /// <inheritdoc />
-    public Stream Stream => throw new NotImplementedException("Stream access not yet implemented");
+    public Stream Stream
+    {
+        get
+        {
+            // Create a MemoryStream containing the index entry binary data
+            // This matches the legacy s4pi behavior where Stream provides access to entry metadata
+            var buffer = new byte[EntrySize];
+            
+            // Pack the entry data in DBPF format (little endian)
+            BitConverter.TryWriteBytes(buffer.AsSpan(0, 4), ResourceType);
+            BitConverter.TryWriteBytes(buffer.AsSpan(4, 4), ResourceGroup);
+            BitConverter.TryWriteBytes(buffer.AsSpan(8, 4), (uint)(Instance >> 32));
+            BitConverter.TryWriteBytes(buffer.AsSpan(12, 4), (uint)(Instance & 0xFFFFFFFF));
+            BitConverter.TryWriteBytes(buffer.AsSpan(16, 4), ChunkOffset);
+            BitConverter.TryWriteBytes(buffer.AsSpan(20, 4), FileSize | 0x80000000); // Set high bit as per DBPF spec
+            BitConverter.TryWriteBytes(buffer.AsSpan(24, 4), MemorySize);
+            BitConverter.TryWriteBytes(buffer.AsSpan(28, 2), Compressed);
+            BitConverter.TryWriteBytes(buffer.AsSpan(30, 2), Unknown2);
+            
+            return new MemoryStream(buffer);
+        }
+    }
     
     /// <inheritdoc />
     public bool IsDeleted { get; set; }
