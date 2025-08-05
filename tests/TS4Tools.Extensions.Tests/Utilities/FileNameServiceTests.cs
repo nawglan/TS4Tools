@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Runtime.InteropServices;
 
 namespace TS4Tools.Extensions.Tests.Utilities;
 
@@ -132,9 +133,23 @@ public sealed class FileNameServiceTests
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        result.Should().NotContain("<").And.NotContain(">").And.NotContain(":")
-            .And.NotContain("\"").And.NotContain("|").And.NotContain("?")
-            .And.NotContain("*").And.NotContain("/").And.NotContain("\\");
+        
+        // Platform-specific character validation:
+        // Windows: Many characters are invalid and should be replaced
+        // Unix: Only null, / and \ characters are invalid
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // On Windows, these characters should be removed/replaced
+            result.Should().NotContain("<").And.NotContain(">").And.NotContain(":")
+                .And.NotContain("\"").And.NotContain("|").And.NotContain("?")
+                .And.NotContain("*").And.NotContain("/").And.NotContain("\\");
+        }
+        else
+        {
+            // On Unix, only / and \ should be replaced, other characters are valid
+            result.Should().NotContain("/").And.NotContain("\\");
+            // Null character should also be replaced but not included in test data
+        }
     }
 
     [Theory]
@@ -151,8 +166,17 @@ public sealed class FileNameServiceTests
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        // Result should be different from the reserved name to avoid conflicts
-        result.Should().NotBe(reservedName);
+        
+        // On Windows, reserved names should be modified to avoid conflicts
+        // On Unix systems, these names are not reserved so they remain unchanged
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            result.Should().NotBe(reservedName);
+        }
+        else
+        {
+            result.Should().Be(reservedName);
+        }
     }
 
     [Theory]
@@ -184,16 +208,38 @@ public sealed class FileNameServiceTests
     [Fact]
     public void SanitizeFileName_WithEmptyAfterSanitization_ReturnsUnnamed()
     {
-        // Arrange
-        const string inputWithOnlyInvalidChars = "<>|?*";
+        // Arrange - use characters that are invalid on the respective platforms
+        string inputWithOnlyInvalidChars;
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // On Windows, these characters are all invalid and will be removed
+            inputWithOnlyInvalidChars = "<>|?*";
+        }
+        else
+        {
+            // On Unix, only / and \ (and null) are invalid, so use those
+            inputWithOnlyInvalidChars = "///\\\\\\";
+        }
 
         // Act
         var result = _fileNameService.SanitizeFileName(inputWithOnlyInvalidChars);
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        // The platform service may replace invalid chars with underscores or return "unnamed"
-        result.Should().MatchRegex(@"^[_]+$|^unnamed$");
+        
+        // Platform-specific behavior:
+        // Windows: Invalid chars are removed, if result is empty return "unnamed"
+        // Unix: Invalid chars are replaced with underscores
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // On Windows, the result should be either underscores or "unnamed"
+            result.Should().MatchRegex(@"^[_]+$|^unnamed$");
+        }
+        else
+        {
+            // On Unix, invalid chars should be replaced with underscores
+            result.Should().MatchRegex(@"^[_]+$");
+        }
     }
 
     [Fact]

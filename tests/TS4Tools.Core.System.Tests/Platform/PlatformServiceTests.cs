@@ -188,10 +188,10 @@ public class PlatformServiceTests
     [InlineData("..")]
     public void IsValidFileName_UnixReservedNames_ShouldBeInvalid(string fileName)
     {
-        // Arrange - Only test on Unix-like platforms
+        // Skip test on Windows using early return - this is intentional for cross-platform testing
         if (_platformService.CurrentPlatform == PlatformType.Windows)
         {
-            return; // Skip test on Windows
+            return; // Skip test on Windows - this test only applies to Unix-like platforms
         }
 
         // Act
