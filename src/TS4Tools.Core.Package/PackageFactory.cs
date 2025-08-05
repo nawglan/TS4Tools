@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TS4Tools.Core.Interfaces;
+using TS4Tools.Core.Package.Compression;
 
 namespace TS4Tools.Core.Package;
 
@@ -9,14 +10,17 @@ namespace TS4Tools.Core.Package;
 internal sealed class PackageFactory : IPackageFactory
 {
     private readonly ILogger<PackageFactory> _logger;
+    private readonly ICompressionService _compressionService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PackageFactory"/> class.
     /// </summary>
     /// <param name="logger">Logger instance</param>
-    public PackageFactory(ILogger<PackageFactory> logger)
+    /// <param name="compressionService">Compression service for package operations</param>
+    public PackageFactory(ILogger<PackageFactory> logger, ICompressionService compressionService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _compressionService = compressionService ?? throw new ArgumentNullException(nameof(compressionService));
     }
 
     /// <inheritdoc />
@@ -26,7 +30,7 @@ internal sealed class PackageFactory : IPackageFactory
         
         try
         {
-            var package = await Task.FromResult(new Package());
+            var package = await Task.FromResult(new Package(_compressionService));
             
             _logger.LogInformation("Created new empty package");
             return package;
@@ -50,17 +54,11 @@ internal sealed class PackageFactory : IPackageFactory
         
         _logger.LogDebug("Loading package from file: {FilePath} (ReadOnly: {ReadOnly})", filePath, readOnly);
         
-        // TODO: Implement readOnly mode support in Package class
-        if (readOnly)
-        {
-            _logger.LogWarning("ReadOnly mode requested but not yet implemented - loading in read/write mode");
-        }
-        
         try
         {
-            var package = await Package.LoadFromFileAsync(filePath, cancellationToken);
+            var package = await Package.LoadFromFileAsync(filePath, _compressionService, readOnly, cancellationToken);
             
-            _logger.LogInformation("Successfully loaded package from {FilePath}", filePath);
+            _logger.LogInformation("Successfully loaded package from {FilePath} (ReadOnly: {ReadOnly})", filePath, readOnly);
             return package;
         }
         catch (Exception ex)
@@ -82,17 +80,11 @@ internal sealed class PackageFactory : IPackageFactory
         
         _logger.LogDebug("Loading package from stream (ReadOnly: {ReadOnly})", readOnly);
         
-        // TODO: Implement readOnly mode support in Package class
-        if (readOnly)
-        {
-            _logger.LogWarning("ReadOnly mode requested but not yet implemented - loading in read/write mode");
-        }
-        
         try
         {
-            var package = await Package.LoadFromStreamAsync(stream, null, cancellationToken);
+            var package = await Package.LoadFromStreamAsync(stream, _compressionService, readOnly, null, cancellationToken);
             
-            _logger.LogInformation("Successfully loaded package from stream");
+            _logger.LogInformation("Successfully loaded package from stream (ReadOnly: {ReadOnly})", readOnly);
             return package;
         }
         catch (Exception ex)

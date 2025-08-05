@@ -17,6 +17,8 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
+using TS4Tools.Core.Package.Compression;
+
 namespace TS4Tools.Core.Package;
 
 /// <summary>
@@ -31,6 +33,14 @@ public sealed class Package : IPackage
     private Stream? _packageStream;
     private bool _isDirty;
     private bool _disposed;
+    private readonly ICompressionService _compressionService;
+    private readonly Dictionary<IResourceKey, byte[]> _resourceData = new();
+    
+    /// <summary>
+    /// Gets whether this package is in read-only mode.
+    /// In read-only mode, modification operations will throw exceptions.
+    /// </summary>
+    public bool IsReadOnly { get; private init; }
     
     /// <inheritdoc />
     public int RequestedApiVersion => ApiVersion;
@@ -133,21 +143,29 @@ public sealed class Package : IPackage
     /// <summary>
     /// Creates a new empty package
     /// </summary>
-    public Package()
+    /// <param name="compressionService">The compression service to use for resource compression/decompression</param>
+    /// <param name="readOnly">Whether the package should be opened in read-only mode</param>
+    public Package(ICompressionService compressionService, bool readOnly = false)
     {
+        _compressionService = compressionService ?? throw new ArgumentNullException(nameof(compressionService));
+        IsReadOnly = readOnly;
         _header = PackageHeader.CreateDefault();
         _index = new PackageResourceIndex();
-        _isDirty = true;
+        _isDirty = !readOnly; // Don't mark as dirty if read-only
     }
     
     /// <summary>
     /// Creates a package from a stream
     /// </summary>
     /// <param name="stream">Stream containing package data</param>
+    /// <param name="compressionService">The compression service to use for resource compression/decompression</param>
+    /// <param name="readOnly">Whether the package should be opened in read-only mode</param>
     /// <param name="fileName">Optional filename for the package</param>
-    public Package(Stream stream, string? fileName = null)
+    public Package(Stream stream, ICompressionService compressionService, bool readOnly = false, string? fileName = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
+        _compressionService = compressionService ?? throw new ArgumentNullException(nameof(compressionService));
+        IsReadOnly = readOnly;
         
         _packageStream = stream;
         FileName = fileName;
@@ -160,6 +178,11 @@ public sealed class Package : IPackage
     public async Task SavePackageAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        
+        if (IsReadOnly)
+        {
+            throw new InvalidOperationException("Cannot save a read-only package");
+        }
         
         if (_packageStream == null)
         {
@@ -180,6 +203,11 @@ public sealed class Package : IPackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(stream);
         
+        if (IsReadOnly)
+        {
+            throw new InvalidOperationException("Cannot save a read-only package");
+        }
+        
         if (!stream.CanWrite)
         {
             throw new ArgumentException("Stream is not writable", nameof(stream));
@@ -193,6 +221,11 @@ public sealed class Package : IPackage
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        
+        if (IsReadOnly)
+        {
+            throw new InvalidOperationException("Cannot save a read-only package");
+        }
         
         using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.Read, 4096, FileOptions.Asynchronous);
         await SaveToStreamAsync(fileStream, cancellationToken).ConfigureAwait(false);
@@ -242,8 +275,8 @@ public sealed class Package : IPackage
         // If the resource is compressed, decompress it
         if (indexEntry.IsCompressed)
         {
-            // TODO: Implement decompression - for now just return compressed data
-            // This will be handled by the specific resource implementations
+            var decompressedData = await _compressionService.DecompressAsync(buffer, (int)indexEntry.MemorySize, cancellationToken).ConfigureAwait(false);
+            return new MemoryStream(decompressedData);
         }
         
         return new MemoryStream(buffer);
@@ -269,15 +302,36 @@ public sealed class Package : IPackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         
+        if (IsReadOnly)
+        {
+            throw new InvalidOperationException("Cannot add resources to a read-only package");
+        }
+        
         // Remove existing resource if it exists
         RemoveResource(key);
         
-        // Create new index entry
-        var fileSize = (uint)resource.Length;
-        var memorySize = fileSize;
-        var compressionFlag = compressed ? (ushort)0xFFFF : (ushort)0x0000;
+        // Compress the resource if requested
+        byte[] resourceData;
+        uint fileSize;
+        uint memorySize = (uint)resource.Length;
+        
+        if (compressed && resource.Length > 0)
+        {
+            resourceData = _compressionService.Compress(resource);
+            fileSize = (uint)resourceData.Length;
+        }
+        else
+        {
+            resourceData = resource.ToArray();
+            fileSize = (uint)resourceData.Length;
+        }
+        
+        var compressionFlag = compressed && fileSize != memorySize ? (ushort)0xFFFF : (ushort)0x0000;
         
         var entry = new ResourceIndexEntry(key, fileSize, memorySize, 0, compressionFlag);
+        
+        // Store the resource data for later writing
+        _resourceData[key] = resourceData;
         
         // Add to index
         _index.Add(entry);
@@ -295,6 +349,11 @@ public sealed class Package : IPackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(key);
         
+        if (IsReadOnly)
+        {
+            throw new InvalidOperationException("Cannot remove resources from a read-only package");
+        }
+        
         if (!_index.TryGetValue(key, out var entry))
         {
             return false;
@@ -303,6 +362,8 @@ public sealed class Package : IPackage
         var removed = _index.Remove(key);
         if (removed)
         {
+            // Also remove from resource data storage
+            _resourceData.Remove(key);
             _isDirty = true;
             ResourceRemoved?.Invoke(this, new ResourceEventArgs(key, entry));
         }
@@ -349,16 +410,20 @@ public sealed class Package : IPackage
     /// Load package data from a file
     /// </summary>
     /// <param name="filePath">Path to the package file</param>
+    /// <param name="compressionService">The compression service to use</param>
+    /// <param name="readOnly">Whether to open the package in read-only mode</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>New package instance</returns>
-    public static async Task<Package> LoadFromFileAsync(string filePath, CancellationToken cancellationToken = default)
+    public static async Task<Package> LoadFromFileAsync(string filePath, ICompressionService compressionService, bool readOnly = false, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        ArgumentNullException.ThrowIfNull(compressionService);
         
-        var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
+        var fileAccess = readOnly ? FileAccess.Read : FileAccess.ReadWrite;
+        var fileStream = new FileStream(filePath, FileMode.Open, fileAccess, FileShare.Read, 4096, FileOptions.Asynchronous);
         try
         {
-            var package = new Package(fileStream, filePath);
+            var package = new Package(fileStream, compressionService, readOnly, filePath);
             await Task.CompletedTask.ConfigureAwait(false); // Placeholder for any async initialization
             return package;
         }
@@ -373,14 +438,17 @@ public sealed class Package : IPackage
     /// Load package data from a stream
     /// </summary>
     /// <param name="stream">Stream containing package data</param>
+    /// <param name="compressionService">The compression service to use</param>
+    /// <param name="readOnly">Whether to open the package in read-only mode</param>
     /// <param name="fileName">Optional filename</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>New package instance</returns>
-    public static async Task<Package> LoadFromStreamAsync(Stream stream, string? fileName = null, CancellationToken cancellationToken = default)
+    public static async Task<Package> LoadFromStreamAsync(Stream stream, ICompressionService compressionService, bool readOnly = false, string? fileName = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
+        ArgumentNullException.ThrowIfNull(compressionService);
         
-        var package = new Package(stream, fileName);
+        var package = new Package(stream, compressionService, readOnly, fileName);
         
         await Task.CompletedTask; // Placeholder for any async initialization
         return package;
@@ -467,7 +535,8 @@ public sealed class Package : IPackage
         // Write index
         await WriteIndexAsync(writer, cancellationToken).ConfigureAwait(false);
         
-        // TODO: Write resource data
+        // Write resource data
+        await WriteResourceDataAsync(writer, cancellationToken).ConfigureAwait(false);
         
         await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         
@@ -484,6 +553,50 @@ public sealed class Package : IPackage
             if (entry is ResourceIndexEntry resourceEntry)
             {
                 resourceEntry.Write(writer);
+            }
+            
+            // Check for cancellation periodically
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        
+        await Task.CompletedTask;
+    }
+    
+    private async Task WriteResourceDataAsync(BinaryWriter writer, CancellationToken cancellationToken)
+    {
+        // Calculate the starting position for resource data (after header and index)
+        var resourceDataStart = PackageHeader.HeaderSize + CalculateIndexSize();
+        var currentPosition = resourceDataStart;
+        
+        // Update chunk offsets in the index entries and write resource data
+        foreach (var entry in _index)
+        {
+            if (entry is ResourceIndexEntry resourceEntry)
+            {
+                // Update the chunk offset for this resource
+                resourceEntry.ChunkOffset = (uint)currentPosition;
+                
+                // Write the resource data if we have it
+                if (_resourceData.TryGetValue(entry, out var data))
+                {
+                    await writer.BaseStream.WriteAsync(data, cancellationToken).ConfigureAwait(false);
+                    currentPosition += data.Length;
+                }
+                else if (_packageStream != null)
+                {
+                    // If we don't have new data, copy from the original package stream
+                    var originalData = new byte[resourceEntry.FileSize];
+                    var originalPosition = _packageStream.Position;
+                    
+                    _packageStream.Seek(resourceEntry.ChunkOffset, SeekOrigin.Begin);
+                    await _packageStream.ReadExactlyAsync(originalData, cancellationToken).ConfigureAwait(false);
+                    
+                    await writer.BaseStream.WriteAsync(originalData, cancellationToken).ConfigureAwait(false);
+                    currentPosition += originalData.Length;
+                    
+                    // Restore original position
+                    _packageStream.Position = originalPosition;
+                }
             }
             
             // Check for cancellation periodically

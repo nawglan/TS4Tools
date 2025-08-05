@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 using Microsoft.Extensions.DependencyInjection;
+using TS4Tools.Core.Package.Compression;
 
 namespace TS4Tools.Core.Package.DependencyInjection;
 
@@ -33,6 +34,9 @@ public static class ServiceCollectionExtensions
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddTS4ToolsPackageServices(this IServiceCollection services)
     {
+        // Register compression services
+        services.AddSingleton<ICompressionService, ZlibCompressionService>();
+        
         // Register package services
         services.AddSingleton<IPackageFactory, PackageFactory>();
         services.AddScoped<IPackageService, PackageService>();
