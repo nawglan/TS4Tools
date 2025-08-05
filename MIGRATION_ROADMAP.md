@@ -419,8 +419,9 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 ## 📊 **Progress Overview - AI ACCELERATED**
 
 **🚀 REMARKABLE AI ACCELERATION ACHIEVED!**  
-**Current Status: Phase 4.1.3 Image Resources COMPLETED ✅** ⚡  
+**Current Status: Phase 4.1.4 CI/CD Pipeline Stabilization ⚠️** ⚡  
 ✅ All Foundation Phases (1-3) Complete + Phase 4.1.1-4.1.3 Complete  
+⚠️ **CRITICAL**: CI/CD Pipeline Issues Detected - Immediate Priority
 **Overall Completion: 33% (16/49 total phases completed)**
 
 **⚡ AI ACCELERATION METRICS:**
@@ -437,9 +438,15 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Actual Phase 1-3 Completion:** August 3, 2025
 - **Actual Phase 4.1.3 Completion:** August 4, 2025
 
-**✅ Latest Achievement: Phase 4.1.3 Compilation Clean** - All 38 compilation errors resolved! ⚡  
+**⚠️ CRITICAL BLOCKING ISSUES IDENTIFIED:** 
+**Workflow Status (PR #1):** 
+- ❌ **Code Quality Gates**: Invalid action reference (`sonarqube-quality-gate-action@master`)
+- ❌ **Cross-Platform CI**: 38 test failures in Image Resources module
+- ⚠️ **Code Analysis**: CA2214 warning (virtual method calls in constructors)
+- ✅ **Build**: Successful compilation with warnings
+
 **Last Updated:** August 4, 2025  
-**Progress Commit:** [PENDING] - Complete Phase 4.1.3 implementation with zero compilation errors
+**Progress Commit:** [URGENT] - Fix CI/CD pipeline failures and stabilize test suite
 
 ### ✅ Completed Phases:
 - **Phase 1.1**: System Foundation - Core utilities and collections ✅
@@ -458,11 +465,14 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Phase 4.1.2**: Default Resource Wrapper - Enhanced fallback resource handler ✅
 - **Phase 4.1.3**: Image Resources - Complete DDS, PNG, TGA resource support with modern interfaces ✅
 
+### ⚠️ Critical Blocker:
+- **Phase 4.1.4**: CI/CD Pipeline Stabilization - **URGENT** Fix workflow failures and test suite 
+
 ### 🎯 Current Target:
-- **Phase 4.1.4**: Catalog Resource Wrapper - Essential simulation object metadata system
+- **Phase 4.1.5**: Catalog Resource Wrapper - Essential simulation object metadata system (after CI/CD fix)
 
 ### 🔮 Upcoming Major Milestones:
-- **Phase 4.1.4**: Catalog Resource Wrapper - Essential simulation object metadata system (immediate priority)
+- **Phase 4.1.5**: Catalog Resource Wrapper - Essential simulation object metadata system (after CI/CD fix)
 - **Phase 4.5**: NotImplemented Completion - Complete all temporarily deferred functionality (0.5 weeks)
 - **Phase 5**: Advanced Features & Polish - Core library polish and advanced features (4 weeks)
 - **Phase 6**: s4pe Application Migration - Complete package editor GUI (8 weeks)
@@ -470,9 +480,14 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Phase 8**: Final Integration - Complete system validation (4 weeks)
 
 ### 📊 Sprint Metrics (August 4, 2025):
-- **Tests Passing**: 525/546 (96.2%) ⚡ (21 compilation errors remaining, down from 26)
-- **Code Coverage**: 95%+ ✅ (core packages)
-- **Static Analysis Warnings**: 1 ⚠️ (CA2214 in ResourceFactoryBase constructor)
+**⚠️ CRITICAL PIPELINE STATUS:**
+- **Tests Passing**: 617/655 (94.2%) ⚠️ (38 failing tests in Image Resources)
+- **CI/CD Status**: ❌ 2 workflows failing (Code Quality Gates + Cross-Platform CI)
+- **Build Status**: ✅ Successful compilation 
+- **Code Analysis**: 1 warning ⚠️ (CA2214 in ResourceFactoryBase constructor)
+
+**Overall Project Health:**
+- **Code Coverage**: 95%+ ✅ (core packages) 
 - **Documentation Files**: 14+ comprehensive documents ✅ (4 new in Phase 3.3)
 - **Example Projects**: 2 working examples ✅ (BasicPackageReader, PackageCreator)
 - **Performance Infrastructure**: BenchmarkDotNet integrated ✅
@@ -2398,9 +2413,91 @@ dotnet run --project TS4Tools.Desktop
 
 ---
 
+## ⚠️ **PHASE 4.1.4: CI/CD PIPELINE STABILIZATION** (URGENT)
+
+> **Status:** 🔴 **CRITICAL BLOCKER** - August 4, 2025  
+> **Priority:** **URGENT** - Blocking all further development  
+> **Trigger:** GitHub Actions workflow failures in PR #1
+
+### **🔍 Issue Analysis - August 4, 2025**
+
+**Workflow Failures Identified:**
+1. **Code Quality Gates Workflow** (`code-quality-gates.yml`)
+   - ❌ **Error:** Invalid action reference `sonarqube-quality-gate-action@master`
+   - **Line:** 122, Col: 13
+   - **Expected Format:** `{org}/{repo}[/path][@ref]`
+   - **Impact:** SonarCloud quality gate validation completely blocked
+
+2. **Cross-Platform CI Workflow** (`cross-platform-ci.yml`)
+   - ❌ **Build Failures:** All platforms (Windows, macOS, Linux) exit code 1
+   - ❌ **Test Failures:** 38 failing tests in `TS4Tools.Resources.Images.Tests`
+   - **Build Status:** ✅ Successful compilation with warnings
+   - **Test Status:** 617 passed, 38 failed, 0 skipped
+
+3. **Code Analysis Warnings:**
+   - ⚠️ **CA2214:** Do not call overridable methods in constructors
+   - **File:** `src/TS4Tools.Core.Resources/ResourceFactoryBase.cs:45`
+   - **Impact:** Quality gate warnings across all platforms
+
+### **🎯 Immediate Resolution Tasks**
+
+#### **Task 1: Fix SonarCloud Action Reference**
+- [ ] **Update workflow file** `.github/workflows/code-quality-gates.yml`
+- [ ] **Replace:** `sonarqube-quality-gate-action@master`  
+- [ ] **With:** `sonarqube-quality-gate-action@v1.3.0` (or latest stable)
+- [ ] **Verify:** Action exists and is compatible with current SonarCloud setup
+
+#### **Task 2: Resolve Image Resource Test Failures**
+**Root Cause Analysis:**
+- **Issue:** `ArgumentException` instead of expected `InvalidDataException`
+- **Message:** "Resource type 2F7D0004 is not supported by this factory"
+- **Location:** `ResourceFactoryBase.cs:64` and `:76`
+- **Test Count:** 38 failing tests in Image Resource Factory
+
+**Specific Test Issues:**
+- [ ] **Format Detection Failures:** DDS, BMP, JPEG, PNG format detection returning `ImageFormat.Unknown`
+- [ ] **Resource Creation Failures:** Factory rejecting valid image resource types
+- [ ] **Exception Type Mismatches:** `ArgumentException` vs expected `InvalidDataException`
+- [ ] **SupportedResourceTypes Collection:** Should be read-only but implements `ICollection<string>`
+
+#### **Task 3: Fix CA2214 Static Analysis Warning**
+- [ ] **File:** `src/TS4Tools.Core.Resources/ResourceFactoryBase.cs:45`
+- [ ] **Issue:** Calling virtual method `RegisterResourceTypes()` in constructor
+- [ ] **Solutions:**
+  - **Option A:** Make method sealed/final
+  - **Option B:** Move initialization to separate Initialize() method
+  - **Option C:** Use static factory pattern
+
+### **🧪 Verification Requirements**
+
+**CI/CD Pipeline Health:**
+- [ ] **GitHub Actions:** All workflows green ✅
+- [ ] **SonarCloud:** Quality gate passing ✅
+- [ ] **Tests:** 655/655 tests passing (100%) ✅
+- [ ] **Build:** Clean compilation with zero warnings ✅
+
+**Cross-Platform Validation:**
+- [ ] **Windows:** Build + test success ✅
+- [ ] **macOS:** Build + test success ✅  
+- [ ] **Linux:** Build + test success ✅
+
+### **📊 Success Metrics**
+- **Test Success Rate:** Target 100% (currently 94.2%)
+- **CI/CD Pipeline:** Target 100% green workflows
+- **Code Quality:** Target zero CA rule violations
+- **Platform Coverage:** Target 100% cross-platform success
+
+### **⏰ Timeline**
+- **Start:** August 4, 2025
+- **Target Completion:** August 4, 2025 (same day)
+- **Duration:** 2-4 hours
+- **Next Phase:** Resume Phase 4.1.5 (Catalog Resources)
+
+---
+
 **Document Status:** Living Document - Updated as tasks are completed  
-**Last Updated:** August 3, 2025 (Comprehensive Resource Wrapper Analysis Added)  
-**Next Review:** After Phase 4.1 milestone completion
+**Last Updated:** August 4, 2025 (CI/CD Pipeline Issues Analysis Added)  
+**Next Review:** After Phase 4.1.4 CI/CD fix completion
 
 ---
 
