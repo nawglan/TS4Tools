@@ -119,10 +119,11 @@ jobs:
         dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
     
     - name: Quality Gate Status Check
-      uses: sonarqube-quality-gate-action@master
+      uses: sonarqube-quality-gate-action@v1.3.0
       timeout-minutes: 5
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: https://sonarcloud.io
 
   # Performance Regression Testing
   performance-benchmarks:

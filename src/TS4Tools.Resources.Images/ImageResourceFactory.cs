@@ -23,6 +23,11 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     }.ToHashSet();
 
     /// <summary>
+    /// Resource types that this factory can handle (numeric IDs).
+    /// </summary>
+    public new IReadOnlySet<uint> ResourceTypes { get; }
+
+    /// <summary>
     /// Initializes a new instance of the ImageResourceFactory.
     /// </summary>
     /// <param name="logger">Optional logger for diagnostic information.</param>
@@ -30,6 +35,17 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         : base(SupportedResourceTypeStrings, priority: 100)
     {
         _logger = logger;
+        
+        // Build the correct resource types collection using our override method
+        var resourceTypeIds = new HashSet<uint>();
+        foreach (var typeString in SupportedResourceTypeStrings)
+        {
+            if (TryGetResourceTypeId(typeString, out var id))
+            {
+                resourceTypeIds.Add(id);
+            }
+        }
+        ResourceTypes = resourceTypeIds;
     }
 
     /// <summary>
@@ -89,17 +105,17 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     /// <returns>The detected image format.</returns>
     public static ImageFormat DetectImageFormat(ReadOnlySpan<byte> data)
     {
-        if (data.Length < 4)
+        if (data.Length < 2)
             return ImageFormat.Unknown;
 
-        // Check DDS magic number
-        if (data.Length >= 128 && 
+        // Check DDS magic number - only need 4 bytes
+        if (data.Length >= 4 && 
             data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x53 && data[3] == 0x20) // "DDS "
         {
             return ImageFormat.DDS;
         }
 
-        // Check PNG magic number
+        // Check PNG magic number - need 8 bytes
         if (data.Length >= 8 && 
             data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 &&
             data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A)
@@ -107,19 +123,20 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             return ImageFormat.PNG;
         }
 
-        // Check JPEG magic number
+        // Check JPEG magic number - only need 2 bytes
         if (data.Length >= 2 && data[0] == 0xFF && data[1] == 0xD8)
         {
             return ImageFormat.JPEG;
         }
 
-        // Check BMP magic number
+        // Check BMP magic number - only need 2 bytes
         if (data.Length >= 2 && data[0] == 0x42 && data[1] == 0x4D) // "BM"
         {
             return ImageFormat.BMP;
         }
 
         // Check TGA (basic heuristic - TGA has no standard magic number)
+        // Be more conservative with TGA detection to avoid false positives
         if (data.Length >= 18)
         {
             byte imageType = data[2];
@@ -148,5 +165,39 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             [ImageFormat.JPEG] = "JPEG compressed images (no alpha channel)",
             [ImageFormat.BMP] = "Windows Bitmap format"
         };
+    }
+
+    /// <summary>
+    /// Converts resource type strings to numeric IDs using ImageResource constants.
+    /// </summary>
+    /// <param name="resourceType">Resource type string</param>
+    /// <param name="id">Resulting numeric ID</param>
+    /// <returns>True if conversion was successful</returns>
+    protected override bool TryGetResourceTypeId(string resourceType, out uint id)
+    {
+        // Use ImageResource constants for correct mappings
+        id = resourceType.ToUpperInvariant() switch
+        {
+            "DDS" => ImageResource.DdsResourceType,     // 0x00B2D882
+            "PNG" => ImageResource.PngResourceType,     // 0x2F7D0004  
+            "TGA" => ImageResource.TgaResourceType,     // 0x2F7D0005
+            "JPEG" => ImageResource.JpegResourceType,   // 0x2F7D0002
+            "BMP" => ImageResource.BmpResourceType,     // 0x2F7D0003
+            "IMG" => ImageResource.PngResourceType,     // Use PNG type for generic images
+            "TEX" => ImageResource.DdsResourceType,     // Use DDS type for textures
+            _ => 0
+        };
+        
+        return id != 0;
+    }
+
+    /// <summary>
+    /// Determines if this factory can create resources of the specified type.
+    /// </summary>
+    /// <param name="resourceType">The resource type ID to check</param>
+    /// <returns>True if this factory supports the resource type</returns>
+    public override bool CanCreateResource(uint resourceType)
+    {
+        return ResourceTypes.Contains(resourceType);
     }
 }

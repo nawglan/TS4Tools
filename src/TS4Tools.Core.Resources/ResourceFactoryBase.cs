@@ -28,6 +28,8 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
 {
     private readonly HashSet<string> _supportedResourceTypes;
     private readonly HashSet<uint> _supportedResourceTypeIds;
+    private readonly IReadOnlySet<string> _readOnlySupportedResourceTypes;
+    private readonly IReadOnlySet<uint> _readOnlyResourceTypeIds;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceFactoryBase{TResource}"/> class.
@@ -37,16 +39,19 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     protected ResourceFactoryBase(IEnumerable<string> supportedResourceTypes, int priority = 0)
     {
         _supportedResourceTypes = new HashSet<string>(supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
+        _readOnlySupportedResourceTypes = new HashSet<string>(_supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
         
         // Convert string types to numeric IDs for legacy compatibility
         _supportedResourceTypeIds = new HashSet<uint>();
-        foreach (var type in supportedResourceTypes)
+        var supportedTypesList = supportedResourceTypes.ToList(); // Avoid multiple enumeration
+        foreach (var type in supportedTypesList)
         {
-            if (TryGetResourceTypeId(type, out var id))
+            if (TryGetResourceTypeIdSafe(type, out var id))
             {
                 _supportedResourceTypeIds.Add(id);
             }
         }
+        _readOnlyResourceTypeIds = new HashSet<uint>(_supportedResourceTypeIds);
         
         Priority = priority;
     }
@@ -87,10 +92,10 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     }
     
     /// <inheritdoc />
-    public IReadOnlySet<string> SupportedResourceTypes => _supportedResourceTypes;
+    public IReadOnlySet<string> SupportedResourceTypes => _readOnlySupportedResourceTypes;
     
     /// <inheritdoc />
-    public IReadOnlySet<uint> ResourceTypes => _supportedResourceTypeIds;
+    public IReadOnlySet<uint> ResourceTypes => _readOnlyResourceTypeIds;
     
     /// <inheritdoc />
     public int Priority { get; }
@@ -105,6 +110,30 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     protected virtual bool TryGetResourceTypeId(string resourceType, out uint id)
     {
         // Default mappings for common image types
+        id = resourceType.ToUpperInvariant() switch
+        {
+            "DDS" => 0x00B2D882,   // DDS Resource Type
+            "PNG" => 0x2E75C765,   // PNG Resource Type  
+            "TGA" => 0x2E75C764,   // TGA Resource Type
+            "JPEG" => 0x2E75C766,  // JPEG Resource Type
+            "BMP" => 0x2E75C767,   // BMP Resource Type
+            "IMG" => 0x2E75C768,   // Generic Image Resource Type
+            "TEX" => 0x2E75C769,   // Texture Resource Type
+            _ => 0
+        };
+        
+        return id != 0;
+    }
+
+    /// <summary>
+    /// Non-virtual version for use in constructor to avoid CA2214 warning.
+    /// </summary>
+    /// <param name="resourceType">Resource type string</param>
+    /// <param name="id">Resulting numeric ID</param>
+    /// <returns>True if conversion was successful</returns>
+    private bool TryGetResourceTypeIdSafe(string resourceType, out uint id)
+    {
+        // Use base implementation in constructor to avoid virtual call
         id = resourceType.ToUpperInvariant() switch
         {
             "DDS" => 0x00B2D882,   // DDS Resource Type

@@ -114,6 +114,16 @@ public sealed class ImageResource : IResource, IDisposable
     public const uint DdsResourceType = 0x00B2D882;
 
     /// <summary>
+    /// Common resource type for JPEG images.
+    /// </summary>
+    public const uint JpegResourceType = 0x2F7D0002;
+
+    /// <summary>
+    /// Common resource type for BMP images.
+    /// </summary>
+    public const uint BmpResourceType = 0x2F7D0003;
+
+    /// <summary>
     /// Common resource type for PNG images.
     /// </summary>
     public const uint PngResourceType = 0x2F7D0004;
@@ -471,18 +481,18 @@ public sealed class ImageResource : IResource, IDisposable
             return DetectJpegMetadata(data);
         }
 
-        // Check TGA (simple check - not foolproof)
+        // Check BMP magic number BEFORE TGA (BMP has a definitive magic number)
+        if (data.Length >= 2 && data[0] == 0x42 && data[1] == 0x4D) // "BM"
+        {
+            return DetectBmpMetadata(data);
+        }
+
+        // Check TGA (simple check - not foolproof, so do this last)
         if (data.Length >= 18)
         {
             var metadata = DetectTgaMetadata(data);
             if (metadata.Format != ImageFormat.Unknown)
                 return metadata;
-        }
-
-        // Check BMP magic number
-        if (data.Length >= 2 && data[0] == 0x42 && data[1] == 0x4D) // "BM"
-        {
-            return DetectBmpMetadata(data);
         }
 
         return new ImageMetadata { Format = ImageFormat.Unknown };
