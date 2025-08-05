@@ -11,16 +11,17 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     /// <summary>
     /// Resource types that this factory can handle.
     /// </summary>
-    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings = new HashSet<string>
-    {
-        "DDS",      // DDS Texture
-        "PNG",      // PNG Image
-        "TGA",      // TGA Image
-        "JPEG",     // JPEG Image
-        "BMP",      // BMP Image
-        "IMG",      // Generic Image
-        "TEX",      // Texture
-    }.ToHashSet();
+    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings = 
+        new System.Collections.ObjectModel.ReadOnlySet<string>(new HashSet<string>
+        {
+            "DDS",      // DDS Texture
+            "PNG",      // PNG Image
+            "TGA",      // TGA Image
+            "JPEG",     // JPEG Image
+            "BMP",      // BMP Image
+            "IMG",      // Generic Image
+            "TEX",      // Texture
+        });
 
     /// <summary>
     /// Resource types that this factory can handle (numeric IDs).
@@ -84,8 +85,62 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             if (resource.Metadata.Format == ImageFormat.Unknown)
             {
                 _logger?.LogWarning("Could not detect image format from stream data");
+                throw new InvalidDataException($"Unable to detect image format for resource type 0x{ImageResource.PngResourceType:X8}");
             }
 
+            _logger?.LogDebug("Created {Format} image resource: {Width}x{Height} ({DataSize} bytes)",
+                resource.Metadata.Format, resource.Metadata.Width, resource.Metadata.Height, resource.Metadata.DataSize);
+
+            return resource;
+        }
+        catch (InvalidDataException ex) when (ex.Message.StartsWith("Unable to detect image format"))
+        {
+            // Re-throw our specific format detection errors
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to create image resource from stream");
+            throw new InvalidDataException("Failed to parse image data from stream", ex);
+        }
+    }
+
+    /// <summary>
+    /// Creates an ImageResource from a stream with validation.
+    /// </summary>
+    /// <param name="stream">Stream containing image data.</param>
+    /// <param name="resourceType">Resource type ID.</param>
+    /// <returns>A new ImageResource instance.</returns>
+    public override ImageResource CreateResource(Stream stream, uint resourceType)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        
+        if (!CanCreateResource(resourceType))
+        {
+            throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by ImageResourceFactory", nameof(resourceType));
+        }
+
+        // Read and validate stream data
+        using var memoryStream = new MemoryStream();
+        stream.CopyTo(memoryStream);
+        var data = memoryStream.ToArray();
+        
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Image data cannot be empty", nameof(stream));
+        }
+
+        // Validate that the data is actually valid image data
+        var detectedFormat = DetectImageFormat(data);
+        if (detectedFormat == ImageFormat.Unknown)
+        {
+            throw new InvalidDataException($"Unable to detect image format for resource type 0x{resourceType:X8}");
+        }
+
+        try
+        {
+            var resource = new ImageResource(data, 1, null);
+            
             _logger?.LogDebug("Created {Format} image resource: {Width}x{Height} ({DataSize} bytes)",
                 resource.Metadata.Format, resource.Metadata.Width, resource.Metadata.Height, resource.Metadata.DataSize);
 
@@ -94,7 +149,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Failed to create image resource from stream");
-            throw new InvalidDataException("Failed to parse image data from stream", ex);
+            throw new InvalidDataException($"Unable to detect image format for resource type 0x{resourceType:X8}", ex);
         }
     }
 
@@ -199,5 +254,22 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     public override bool CanCreateResource(uint resourceType)
     {
         return ResourceTypes.Contains(resourceType);
+    }
+
+    /// <summary>
+    /// Creates an empty resource of the specified type.
+    /// </summary>
+    /// <param name="resourceType">The resource type ID</param>
+    /// <returns>A new empty ImageResource instance</returns>
+    /// <exception cref="ArgumentException">Thrown when the resource type is not supported</exception>
+    public override ImageResource CreateEmptyResource(uint resourceType)
+    {
+        if (!CanCreateResource(resourceType))
+        {
+            throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by ImageResourceFactory", nameof(resourceType));
+        }
+        
+        // Use async method synchronously for compatibility
+        return CreateResourceAsync(1, null).GetAwaiter().GetResult();
     }
 }

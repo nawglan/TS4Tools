@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace TS4Tools.Resources.Images;
 
 /// <summary>
@@ -14,6 +16,11 @@ public readonly record struct DdsHeader
     /// Size of the DDS header structure in bytes (124).
     /// </summary>
     public const uint HeaderSize = 124;
+
+    /// <summary>
+    /// Default reserved array for consistent equality comparison.
+    /// </summary>
+    internal static readonly uint[] DefaultReserved1 = new uint[11];
 
     /// <summary>
     /// Size of the header structure. This value must be 124.
@@ -53,7 +60,7 @@ public readonly record struct DdsHeader
     /// <summary>
     /// Unused reserved fields.
     /// </summary>
-    public IReadOnlyList<uint> Reserved1 { get; init; } = new uint[11];
+    public IReadOnlyList<uint> Reserved1 { get; init; } = DefaultReserved1;
 
     /// <summary>
     /// The pixel format of the surface.
@@ -97,7 +104,7 @@ public readonly record struct DdsHeader
         PitchOrLinearSize = 0;
         Depth = 0;
         MipMapCount = 0;
-        Reserved1 = new uint[11];
+        Reserved1 = DefaultReserved1;
         PixelFormat = new DdsPixelFormat();
         Caps = DdsCaps.None;
         Caps2 = DdsCaps2.None;
@@ -122,7 +129,7 @@ public readonly record struct DdsHeader
         PitchOrLinearSize = width * 4, // 4 bytes per pixel for RGBA32
         Depth = 0,
         MipMapCount = mipMapCount,
-        Reserved1 = new uint[11],
+        Reserved1 = DefaultReserved1,
         PixelFormat = DdsPixelFormat.CreateForRGBA32(),
         Caps = DdsCaps.Texture | (mipMapCount > 1 ? DdsCaps.MipMap : 0),
         Caps2 = 0,
@@ -149,7 +156,7 @@ public readonly record struct DdsHeader
         PitchOrLinearSize = linearSize,
         Depth = 0,
         MipMapCount = mipMapCount,
-        Reserved1 = new uint[11],
+        Reserved1 = DefaultReserved1,
         PixelFormat = DdsPixelFormat.CreateForFourCC(fourCC),
         Caps = DdsCaps.Texture | (mipMapCount > 1 ? DdsCaps.MipMap : 0),
         Caps2 = 0,
@@ -201,6 +208,9 @@ public static class DdsHeaderExtensions
             reserved1[i] = reader.ReadUInt32();
         }
 
+        // Use shared default array if all reserved values are zero to ensure record equality
+        IReadOnlyList<uint> reservedArray = reserved1.All(x => x == 0) ? DdsHeader.DefaultReserved1 : reserved1;
+
         // Read pixel format
         var pixelFormat = ReadPixelFormat(reader);
 
@@ -219,7 +229,7 @@ public static class DdsHeaderExtensions
             PitchOrLinearSize = pitchOrLinearSize,
             Depth = depth,
             MipMapCount = mipMapCount,
-            Reserved1 = reserved1,
+            Reserved1 = reservedArray,
             PixelFormat = pixelFormat,
             Caps = caps,
             Caps2 = caps2,

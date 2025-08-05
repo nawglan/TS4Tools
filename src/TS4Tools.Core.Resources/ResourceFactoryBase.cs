@@ -39,7 +39,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     protected ResourceFactoryBase(IEnumerable<string> supportedResourceTypes, int priority = 0)
     {
         _supportedResourceTypes = new HashSet<string>(supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
-        _readOnlySupportedResourceTypes = new HashSet<string>(_supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
+        _readOnlySupportedResourceTypes = new global::System.Collections.ObjectModel.ReadOnlySet<string>(_supportedResourceTypes);
         
         // Convert string types to numeric IDs for legacy compatibility
         _supportedResourceTypeIds = new HashSet<uint>();
@@ -51,7 +51,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
                 _supportedResourceTypeIds.Add(id);
             }
         }
-        _readOnlyResourceTypeIds = new HashSet<uint>(_supportedResourceTypeIds);
+        _readOnlyResourceTypeIds = new global::System.Collections.ObjectModel.ReadOnlySet<uint>(_supportedResourceTypeIds);
         
         Priority = priority;
     }
@@ -66,7 +66,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
         
         if (!CanCreateResource(resourceType))
         {
-            throw new ArgumentException($"Resource type {resourceType:X8} is not supported by this factory", nameof(resourceType));
+            throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
         
         // Use async method synchronously for compatibility
@@ -78,7 +78,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     {
         if (!CanCreateResource(resourceType))
         {
-            throw new ArgumentException($"Resource type {resourceType:X8} is not supported by this factory", nameof(resourceType));
+            throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
         
         // Use async method synchronously for compatibility

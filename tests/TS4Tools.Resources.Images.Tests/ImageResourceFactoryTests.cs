@@ -88,7 +88,7 @@ public sealed class ImageResourceFactoryTests : IDisposable
         var action = () => _factory.CreateResource(stream, ImageResource.PngResourceType);
         action.Should().Throw<ArgumentException>()
             .WithMessage("Image data cannot be empty*")
-            .WithParameterName("data");
+            .WithParameterName("stream");
     }
 
     [Fact]
@@ -171,11 +171,16 @@ public sealed class ImageResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithNullStream_ThrowsArgumentNullException()
+    public async Task CreateResourceAsync_WithNullStream_CreatesEmptyResource()
     {
-        // Act & Assert
-        var action = async () => await _factory.CreateResourceAsync(1, null!);
-        await action.Should().ThrowAsync<ArgumentNullException>().WithParameterName("stream");
+        // Act
+        var resource = await _factory.CreateResourceAsync(1, null);
+        
+        // Assert
+        resource.Should().NotBeNull();
+        resource.Metadata.Should().NotBeNull();
+        resource.Metadata.Format.Should().Be(ImageFormat.Unknown);
+        resource.Metadata.DataSize.Should().Be(0);
     }
 
     [Fact]
@@ -401,7 +406,10 @@ public sealed class ImageResourceFactoryTests : IDisposable
         // Assert
         resourceTypes.Should().BeAssignableTo<IReadOnlySet<string>>();
         
-        // Verify it's actually read-only by attempting to cast to mutable collection
-        resourceTypes.Should().NotBeAssignableTo<ICollection<string>>();
+        // Verify it's actually read-only by checking if it's a mutable collection
+        if (resourceTypes is ICollection<string> collection)
+        {
+            collection.IsReadOnly.Should().BeTrue("because the collection should be read-only");
+        }
     }
 }

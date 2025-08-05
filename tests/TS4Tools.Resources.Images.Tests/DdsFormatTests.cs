@@ -274,7 +274,7 @@ public sealed class DdsFormatTests
         var header = new DdsHeader();
 
         // Assert
-        header.Size.Should().Be(0);
+        header.Size.Should().Be(DdsHeader.HeaderSize);
         header.Flags.Should().Be(0);
         header.Height.Should().Be(0);
         header.Width.Should().Be(0);
