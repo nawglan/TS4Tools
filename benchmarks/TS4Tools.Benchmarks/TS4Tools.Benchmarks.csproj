@@ -26,6 +26,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TS4Tools.Core.System\TS4Tools.Core.System.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Core.Settings\TS4Tools.Core.Settings.csproj" />
   </ItemGroup>
 
 </Project>

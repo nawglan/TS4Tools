@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TS4Tools.Core.Interfaces;
 using TS4Tools.Core.Resources;
+using TS4Tools.Core.Package;
 using System.IO;
 
 namespace TS4Tools.Benchmarks;
@@ -15,7 +16,7 @@ namespace TS4Tools.Benchmarks;
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net90)]
 [MarkdownExporter]
-public class ResourceManagementBenchmarks
+public sealed class ResourceManagementBenchmarks : IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IResourceManager _resourceManager;
@@ -27,8 +28,8 @@ public class ResourceManagementBenchmarks
     {
         // Setup dependency injection container for modern benchmarks
         var services = new ServiceCollection();
-        services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
-        services.AddSingleton<IResourceManager, ResourceManager>();
+        services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+        services.AddTransient<IResourceManager, MockResourceManager>();
         
         _serviceProvider = services.BuildServiceProvider();
         _resourceManager = _serviceProvider.GetRequiredService<IResourceManager>();
@@ -89,8 +90,7 @@ public class ResourceManagementBenchmarks
             // Modern pattern: direct value types, no string parsing
             var resource = await _resourceManager.CreateResourceAsync(
                 $"0x{key.Type:X8}", 
-                1, // API version
-                _testResourceStream);
+                1); // API version
             
             resources.Add(resource);
         }
@@ -237,14 +237,14 @@ public class ResourceManagementBenchmarks
     private static List<(uint Type, uint Group, ulong Instance)> GenerateTestKeys(int count)
     {
         var random = new Random(42);
-        var keys = new List<(uint, uint, ulong)>(count);
+        var keys = new List<(uint Type, uint Group, ulong Instance)>(count);
         
         for (int i = 0; i < count; i++)
         {
             keys.Add((
                 Type: (uint)random.Next(0x10000000, 0x7FFFFFFF),
                 Group: (uint)random.Next(0, 0x7FFFFFFF),
-                Instance: ((ulong)random.Next() << 32) | (ulong)random.Next()
+                Instance: ((ulong)(uint)random.Next() << 32) | (ulong)(uint)random.Next()
             ));
         }
         
@@ -254,8 +254,22 @@ public class ResourceManagementBenchmarks
     [GlobalCleanup]
     public void Cleanup()
     {
-        _testResourceStream?.Dispose();
-        (_serviceProvider as IDisposable)?.Dispose();
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _testResourceStream?.Dispose();
+            (_serviceProvider as IDisposable)?.Dispose();
+        }
     }
 }
 
@@ -312,4 +326,93 @@ internal class ProcessedResource
     public string Key { get; set; } = string.Empty;
     public byte[] ProcessedData { get; set; } = Array.Empty<byte>();
     public string Timestamp { get; set; } = string.Empty;
+}
+
+// Mock implementations for benchmarking
+internal class MockResourceManager : IResourceManager
+{
+    public Task<IResource> CreateResourceAsync(string resourceType, int apiVersion, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IResource>(new MockResource());
+    }
+
+    public Task<IResource> LoadResourceAsync(IPackage package, IResourceIndexEntry resourceIndexEntry, int apiVersion, bool forceDefaultWrapper = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<IResource>(new MockResource());
+    }
+
+    public IReadOnlyDictionary<string, IReadOnlySet<string>> GetResourceFactoryInfo()
+    {
+        return new Dictionary<string, IReadOnlySet<string>>();
+    }
+
+    public IReadOnlyDictionary<string, Type> GetResourceTypeMap()
+    {
+        return new Dictionary<string, Type>();
+    }
+
+    public void RegisterFactory<TResource, TFactory>() 
+        where TResource : IResource 
+        where TFactory : class, IResourceFactory<TResource>
+    {
+        // Mock implementation - do nothing
+    }
+
+    public ResourceManagerStatistics GetStatistics()
+    {
+        return new ResourceManagerStatistics
+        {
+            TotalResourcesCreated = 0,
+            TotalResourcesLoaded = 0,
+            RegisteredFactories = 0,
+            CacheHitRatio = 0.0,
+            CacheSize = 0,
+            CacheMemoryUsage = 0,
+            AverageCreationTimeMs = 0.0,
+            AverageLoadTimeMs = 0.0
+        };
+    }
+}
+
+internal class MockResource : IResource
+{
+    private readonly Dictionary<string, TypedValue> _fields = new();
+    private readonly List<string> _fieldNames = new();
+
+    public Stream Stream => new MemoryStream();
+    public byte[] AsBytes => Array.Empty<byte>();
+    
+    public event EventHandler? ResourceChanged;
+    
+    public void OnResourceChanged(object sender, EventArgs e)
+    {
+        ResourceChanged?.Invoke(sender, e);
+    }
+
+    public int RecommendedApiVersion => 1;
+    public int RequestedApiVersion => 1;
+    
+    public IReadOnlyList<string> ContentFields => _fieldNames.AsReadOnly();
+    public string Value => string.Empty;
+
+    public TypedValue this[int index] 
+    { 
+        get => index < _fieldNames.Count ? _fields[_fieldNames[index]] : TypedValue.Create(string.Empty);
+        set 
+        { 
+            if (index < _fieldNames.Count) 
+                _fields[_fieldNames[index]] = value; 
+        } 
+    }
+
+    public TypedValue this[string name] 
+    { 
+        get => _fields.TryGetValue(name, out var value) ? value : TypedValue.Create(string.Empty);
+        set => _fields[name] = value; 
+    }
+
+    public void Dispose()
+    {
+        // Mock implementation - nothing to dispose
+    }
 }

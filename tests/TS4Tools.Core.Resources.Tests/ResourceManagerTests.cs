@@ -274,12 +274,28 @@ public class ResourceManagerTests : IDisposable
     internal class TestResourceFactory : IResourceFactory<IResource>
     {
         public IReadOnlySet<string> SupportedResourceTypes => new HashSet<string> { "0xABCDEF12" };
+        public IReadOnlySet<uint> ResourceTypes => new HashSet<uint> { 0xABCDEF12u };
         public int Priority => 100;
 
         public async Task<IResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default)
         {
             await Task.CompletedTask;
             return new DefaultResource(apiVersion, stream);
+        }
+
+        public IResource CreateResource(Stream stream, uint resourceType)
+        {
+            return new DefaultResource(1, stream);
+        }
+
+        public IResource CreateEmptyResource(uint resourceType)
+        {
+            return new DefaultResource(1, null);
+        }
+
+        public bool CanCreateResource(uint resourceType)
+        {
+            return resourceType == 0xABCDEF12u;
         }
     }
 

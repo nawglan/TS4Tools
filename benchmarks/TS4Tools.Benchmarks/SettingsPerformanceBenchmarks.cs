@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using TS4Tools.Core.Interfaces;
 using TS4Tools.Core.System;
+using TS4Tools.Core.Settings;
 
 namespace TS4Tools.Benchmarks;
 
@@ -23,26 +24,24 @@ public class SettingsPerformanceBenchmarks
     {
         _testSettings = new Dictionary<string, object>
         {
-            ["PackageCacheSize"] = 1000,
-            ["EnableResourceCaching"] = true,
-            ["DefaultResourceType"] = "0x12345678",
-            ["MaxConcurrentOperations"] = 8,
-            ["LogLevel"] = "Information",
-            ["CrossPlatformCompatibility"] = true,
-            ["MemoryOptimizationLevel"] = 2,
-            ["AsyncTimeoutMs"] = 30000
+            ["MaxResourceCacheSize"] = 1000,
+            ["EnableDetailedLogging"] = true,
+            ["AsyncOperationTimeoutMs"] = 30000,
+            ["EnableCrossPlatformFeatures"] = true,
+            ["EnableExtraChecking"] = true,
+            ["AssumeDataDirty"] = false,
+            ["UseTS4Format"] = true
         };
         
         _modernSettings = new ApplicationSettings
         {
-            PackageCacheSize = 1000,
-            EnableResourceCaching = true,
-            DefaultResourceType = "0x12345678",
-            MaxConcurrentOperations = 8,
-            LogLevel = "Information",
-            CrossPlatformCompatibility = true,
-            MemoryOptimizationLevel = 2,
-            AsyncTimeoutMs = 30000
+            MaxResourceCacheSize = 1000,
+            EnableDetailedLogging = true,
+            AsyncOperationTimeoutMs = 30000,
+            EnableCrossPlatformFeatures = true,
+            EnableExtraChecking = true,
+            AssumeDataDirty = false,
+            UseTS4Format = true
         };
         
         _tempJsonFile = Path.GetTempFileName();
@@ -62,15 +61,14 @@ public class SettingsPerformanceBenchmarks
             // Simulate type conversion (performance bottleneck in legacy)
             var convertedValue = kvp.Key switch
             {
-                "PackageCacheSize" => int.Parse(stringValue),
-                "EnableResourceCaching" => bool.Parse(stringValue),
-                "DefaultResourceType" => stringValue,
-                "MaxConcurrentOperations" => int.Parse(stringValue),
-                "LogLevel" => stringValue,
-                "CrossPlatformCompatibility" => bool.Parse(stringValue),
-                "MemoryOptimizationLevel" => int.Parse(stringValue),
-                "AsyncTimeoutMs" => int.Parse(stringValue),
-                _ => stringValue
+                "MaxResourceCacheSize" => (object)int.Parse(stringValue),
+                "EnableDetailedLogging" => (object)bool.Parse(stringValue),
+                "AsyncOperationTimeoutMs" => (object)int.Parse(stringValue),
+                "EnableCrossPlatformFeatures" => (object)bool.Parse(stringValue),
+                "EnableExtraChecking" => (object)bool.Parse(stringValue),
+                "AssumeDataDirty" => (object)bool.Parse(stringValue),
+                "UseTS4Format" => (object)bool.Parse(stringValue),
+                _ => (object)stringValue
             };
             
             settings[kvp.Key] = convertedValue;
@@ -83,14 +81,13 @@ public class SettingsPerformanceBenchmarks
         // Modern JSON deserialization with System.Text.Json (zero-allocation)
         var json = """
         {
-            "PackageCacheSize": 1000,
-            "EnableResourceCaching": true,
-            "DefaultResourceType": "0x12345678",
-            "MaxConcurrentOperations": 8,
-            "LogLevel": "Information",
-            "CrossPlatformCompatibility": true,
-            "MemoryOptimizationLevel": 2,
-            "AsyncTimeoutMs": 30000
+            "MaxResourceCacheSize": 1000,
+            "EnableDetailedLogging": true,
+            "AsyncOperationTimeoutMs": 30000,
+            "EnableCrossPlatformFeatures": true,
+            "EnableExtraChecking": true,
+            "AssumeDataDirty": false,
+            "UseTS4Format": true
         }
         """;
         
@@ -130,19 +127,14 @@ public class SettingsPerformanceBenchmarks
         {
             switch (kvp.Key)
             {
-                case "PackageCacheSize":
+                case "MaxResourceCacheSize":
                     if (kvp.Value is int cacheSize && (cacheSize < 10 || cacheSize > 10000))
-                        errors.Add("PackageCacheSize must be between 10 and 10000");
+                        errors.Add("MaxResourceCacheSize must be between 10 and 10000");
                     break;
                     
-                case "MaxConcurrentOperations":
-                    if (kvp.Value is int maxOps && (maxOps < 1 || maxOps > 32))
-                        errors.Add("MaxConcurrentOperations must be between 1 and 32");
-                    break;
-                    
-                case "AsyncTimeoutMs":
-                    if (kvp.Value is int timeout && (timeout < 1000 || timeout > 300000))
-                        errors.Add("AsyncTimeoutMs must be between 1000 and 300000");
+                case "AsyncOperationTimeoutMs":
+                    if (kvp.Value is int timeout && (timeout < 1000 || timeout > 60000))
+                        errors.Add("AsyncOperationTimeoutMs must be between 1000 and 60000");
                     break;
             }
         }
