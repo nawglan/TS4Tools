@@ -141,6 +141,307 @@ public class DefaultResourceTests
         resource.Dispose();
         resource.Dispose();
     }
+
+    #region Phase 4.1.2 Enhancement Tests
+
+    [Fact]
+    public void Constructor_WithInvalidApiVersion_ShouldThrowArgumentOutOfRangeException()
+    {
+        // Act & Assert
+        var act = () => new DefaultResource(0);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+           .WithMessage("*API version must be 1 or greater*");
+    }
+
+    [Fact]
+    public void Constructor_WithValidData_ShouldPopulateMetadata()
+    {
+        // Arrange
+        var data = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        var stream = new MemoryStream(data);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.Metadata.Should().NotBeEmpty();
+        resource.Metadata.Should().ContainKey("CreatedAt");
+        resource.Metadata.Should().ContainKey("OriginalSize");
+        resource.Metadata.Should().ContainKey("ApiVersion");
+        resource.Metadata.Should().ContainKey("DataLength");
+        resource.Metadata["OriginalSize"].Should().Be(4L);
+        resource.Metadata["ApiVersion"].Should().Be(1);
+    }
+
+    [Fact]
+    public void DetectedResourceTypeHint_WithSTBLData_ShouldDetectStringTable()
+    {
+        // Arrange
+        var stblData = new byte[] { 0x53, 0x54, 0x42, 0x4C, 0x00, 0x00, 0x00, 0x01 }; // "STBL" + version
+        var stream = new MemoryStream(stblData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.DetectedResourceTypeHint.Should().Be("StringTableResource");
+    }
+
+    [Fact]
+    public void DetectedResourceTypeHint_WithDATAResource_ShouldDetectDataResource()
+    {
+        // Arrange
+        var dataSignature = new byte[] { 0x44, 0x41, 0x54, 0x41, 0x00, 0x00, 0x00, 0x01 }; // "DATA" + version
+        var stream = new MemoryStream(dataSignature);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.DetectedResourceTypeHint.Should().Be("DataResource");
+    }
+
+    [Fact]
+    public void DetectedResourceTypeHint_WithPNGData_ShouldDetectImageResource()
+    {
+        // Arrange
+        var pngSignature = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }; // PNG signature
+        var stream = new MemoryStream(pngSignature);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.DetectedResourceTypeHint.Should().Be("ImageResource");
+    }
+
+    [Fact]
+    public void DetectedResourceTypeHint_WithXMLData_ShouldDetectXmlResource()
+    {
+        // Arrange
+        var xmlData = Encoding.UTF8.GetBytes("<?xml version=\"1.0\"?><root></root>");
+        var stream = new MemoryStream(xmlData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.DetectedResourceTypeHint.Should().Be("XmlResource");
+    }
+
+    [Fact]
+    public void DetectedResourceTypeHint_WithUnknownData_ShouldReturnNull()
+    {
+        // Arrange
+        var unknownData = new byte[] { 0x12, 0x34, 0x56, 0x78 };
+        var stream = new MemoryStream(unknownData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.DetectedResourceTypeHint.Should().BeNull();
+    }
+
+    [Fact]
+    public void OriginalSize_ShouldReturnCorrectSize()
+    {
+        // Arrange
+        var data = new byte[1024];
+        for (int i = 0; i < data.Length; i++)
+        {
+            data[i] = (byte)(i % 256);
+        }
+        var stream = new MemoryStream(data);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.OriginalSize.Should().Be(1024);
+    }
+
+    [Fact]
+    public void CreatedAt_ShouldBeRecentTimestamp()
+    {
+        // Arrange
+        var beforeCreation = DateTime.UtcNow;
+
+        // Act
+        var resource = new DefaultResource(1);
+        var afterCreation = DateTime.UtcNow;
+
+        // Assert
+        resource.CreatedAt.Should().BeOnOrAfter(beforeCreation);
+        resource.CreatedAt.Should().BeOnOrBefore(afterCreation);
+    }
+
+    [Fact]
+    public void GetDiagnosticInfo_ShouldProvideDetailedInformation()
+    {
+        // Arrange
+        var data = new byte[] { 0x44, 0x41, 0x54, 0x41, 0x00, 0x00, 0x00, 0x01 }; // "DATA" + version
+        var stream = new MemoryStream(data);
+        var resource = new DefaultResource(2, stream);
+
+        // Act
+        var diagnosticInfo = resource.GetDiagnosticInfo();
+
+        // Assert
+        diagnosticInfo.Should().Contain("API Version: 2");
+        diagnosticInfo.Should().Contain("Original Size: 8 bytes");
+        diagnosticInfo.Should().Contain("Current Size: 8 bytes");
+        diagnosticInfo.Should().Contain("Detected Type Hint: DataResource");
+        diagnosticInfo.Should().Contain("Metadata Count:");
+    }
+
+    [Fact]
+    public void ToString_ShouldIncludeEnhancedInformation()
+    {
+        // Arrange
+        var data = new byte[] { 0x53, 0x54, 0x42, 0x4C }; // "STBL"
+        var stream = new MemoryStream(data);
+        var resource = new DefaultResource(1, stream);
+
+        // Act
+        var result = resource.ToString();
+
+        // Assert
+        result.Should().Contain("DefaultResource");
+        result.Should().Contain("StringTableResource");
+        result.Should().Contain("4 bytes");
+        result.Should().Contain("API v1");
+    }
+
+    [Fact]
+    public void ToString_WithUnknownType_ShouldShowUnknown()
+    {
+        // Arrange
+        var data = new byte[] { 0x12, 0x34 };
+        var stream = new MemoryStream(data);
+        var resource = new DefaultResource(1, stream);
+
+        // Act
+        var result = resource.ToString();
+
+        // Assert
+        result.Should().Contain("DefaultResource");
+        result.Should().Contain("Unknown");
+        result.Should().Contain("2 bytes");
+    }
+
+    [Fact]
+    public void DisposedResource_PropertyAccess_ShouldThrowObjectDisposedException()
+    {
+        // Arrange
+        var resource = new DefaultResource(1);
+        resource.Dispose();
+
+        // Act & Assert
+        var streamAct = () => resource.Stream;
+        var bytesAct = () => resource.AsBytes;
+        var metadataAct = () => resource.Metadata;
+        var sizeAct = () => resource.OriginalSize;
+        var createdAct = () => resource.CreatedAt;
+        var hintAct = () => resource.DetectedResourceTypeHint;
+        var diagnosticAct = () => resource.GetDiagnosticInfo();
+        var indexerStringAct = () => resource["test"];
+        var indexerIntAct = () => resource[0];
+
+        streamAct.Should().Throw<ObjectDisposedException>();
+        bytesAct.Should().Throw<ObjectDisposedException>();
+        metadataAct.Should().Throw<ObjectDisposedException>();
+        sizeAct.Should().Throw<ObjectDisposedException>();
+        createdAct.Should().Throw<ObjectDisposedException>();
+        hintAct.Should().Throw<ObjectDisposedException>();
+        diagnosticAct.Should().Throw<ObjectDisposedException>();
+        indexerStringAct.Should().Throw<ObjectDisposedException>();
+        indexerIntAct.Should().Throw<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public void DisposedResource_ToString_ShouldIndicateDisposed()
+    {
+        // Arrange
+        var resource = new DefaultResource(1);
+        resource.Dispose();
+
+        // Act
+        var result = resource.ToString();
+
+        // Assert
+        result.Should().Be("DefaultResource (Disposed)");
+    }
+
+    [Fact]
+    public void Metadata_WithBinaryData_ShouldDetectBinaryCharacteristics()
+    {
+        // Arrange
+        var binaryData = new byte[] { 0x00, 0x01, 0x02, 0xFF, 0xFE, 0x80 }; // Binary data with null bytes
+        var stream = new MemoryStream(binaryData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.Metadata.Should().ContainKey("ContainsNullBytes");
+        resource.Metadata.Should().ContainKey("LikelyTextData");
+        resource.Metadata["ContainsNullBytes"].Should().Be(true);
+        resource.Metadata["LikelyTextData"].Should().Be(false);
+    }
+
+    [Fact]
+    public void Metadata_WithTextData_ShouldDetectTextCharacteristics()
+    {
+        // Arrange
+        var textData = Encoding.UTF8.GetBytes("Hello, World! This is text data.");
+        var stream = new MemoryStream(textData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.Metadata.Should().ContainKey("ContainsNullBytes");
+        resource.Metadata.Should().ContainKey("LikelyTextData");
+        resource.Metadata["ContainsNullBytes"].Should().Be(false);
+        resource.Metadata["LikelyTextData"].Should().Be(true);
+    }
+
+    [Fact]
+    public void Constructor_WithLargeStream_ShouldHandlePerformanceOptimization()
+    {
+        // Arrange - Create a stream larger than 1MB to trigger async copying
+        var largeData = new byte[2 * 1024 * 1024]; // 2MB
+        for (int i = 0; i < largeData.Length; i++)
+        {
+            largeData[i] = (byte)(i % 256);
+        }
+        var stream = new MemoryStream(largeData);
+
+        // Act
+        var resource = new DefaultResource(1, stream);
+
+        // Assert
+        resource.OriginalSize.Should().Be(2 * 1024 * 1024);
+        resource.AsBytes.Should().HaveCount(2 * 1024 * 1024);
+        resource.AsBytes.Should().BeEquivalentTo(largeData);
+    }
+
+    [Fact]
+    public void Constructor_WithCorruptedStream_ShouldThrowInvalidDataException()
+    {
+        // Arrange
+        var mockStream = Substitute.For<Stream>();
+        mockStream.Length.Returns(_ => throw new IOException("Stream error"));
+        mockStream.CanRead.Returns(true);
+
+        // Act & Assert
+        var act = () => new DefaultResource(1, mockStream);
+        act.Should().Throw<InvalidDataException>()
+           .WithMessage("*Failed to initialize DefaultResource from stream*");
+    }
+
+    #endregion
 }
 
 public class DefaultResourceFactoryTests
