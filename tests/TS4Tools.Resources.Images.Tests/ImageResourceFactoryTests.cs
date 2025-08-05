@@ -276,7 +276,7 @@ public sealed class ImageResourceFactoryTests : IDisposable
         resource.Should().NotBeNull();
         resource.Metadata.Format.Should().Be(ImageFormat.Unknown);
         resource.IsModified.Should().BeTrue();
-        resource.ImageData.Should().BeEmpty();
+        resource.RawData.Should().BeEmpty();
     }
 
     [Fact]

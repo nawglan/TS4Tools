@@ -27,6 +27,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     where TResource : IResource
 {
     private readonly HashSet<string> _supportedResourceTypes;
+    private readonly HashSet<uint> _supportedResourceTypeIds;
     
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceFactoryBase{TResource}"/> class.
@@ -36,6 +37,17 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     protected ResourceFactoryBase(IEnumerable<string> supportedResourceTypes, int priority = 0)
     {
         _supportedResourceTypes = new HashSet<string>(supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
+        
+        // Convert string types to numeric IDs for legacy compatibility
+        _supportedResourceTypeIds = new HashSet<uint>();
+        foreach (var type in supportedResourceTypes)
+        {
+            if (TryGetResourceTypeId(type, out var id))
+            {
+                _supportedResourceTypeIds.Add(id);
+            }
+        }
+        
         Priority = priority;
     }
     
@@ -43,10 +55,70 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     public abstract Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
     
     /// <inheritdoc />
+    public virtual TResource CreateResource(Stream stream, uint resourceType)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        
+        if (!CanCreateResource(resourceType))
+        {
+            throw new ArgumentException($"Resource type {resourceType:X8} is not supported by this factory", nameof(resourceType));
+        }
+        
+        // Use async method synchronously for compatibility
+        return CreateResourceAsync(1, stream).GetAwaiter().GetResult();
+    }
+    
+    /// <inheritdoc />
+    public virtual TResource CreateEmptyResource(uint resourceType)
+    {
+        if (!CanCreateResource(resourceType))
+        {
+            throw new ArgumentException($"Resource type {resourceType:X8} is not supported by this factory", nameof(resourceType));
+        }
+        
+        // Use async method synchronously for compatibility
+        return CreateResourceAsync(1, null).GetAwaiter().GetResult();
+    }
+    
+    /// <inheritdoc />
+    public virtual bool CanCreateResource(uint resourceType)
+    {
+        return _supportedResourceTypeIds.Contains(resourceType);
+    }
+    
+    /// <inheritdoc />
     public IReadOnlySet<string> SupportedResourceTypes => _supportedResourceTypes;
     
     /// <inheritdoc />
+    public IReadOnlySet<uint> ResourceTypes => _supportedResourceTypeIds;
+    
+    /// <inheritdoc />
     public int Priority { get; }
+    
+    /// <summary>
+    /// Attempts to convert a resource type string to its numeric ID.
+    /// Override this method to provide custom type mappings.
+    /// </summary>
+    /// <param name="resourceType">Resource type string</param>
+    /// <param name="id">Resulting numeric ID</param>
+    /// <returns>True if conversion was successful</returns>
+    protected virtual bool TryGetResourceTypeId(string resourceType, out uint id)
+    {
+        // Default mappings for common image types
+        id = resourceType.ToUpperInvariant() switch
+        {
+            "DDS" => 0x00B2D882,   // DDS Resource Type
+            "PNG" => 0x2E75C765,   // PNG Resource Type  
+            "TGA" => 0x2E75C764,   // TGA Resource Type
+            "JPEG" => 0x2E75C766,  // JPEG Resource Type
+            "BMP" => 0x2E75C767,   // BMP Resource Type
+            "IMG" => 0x2E75C768,   // Generic Image Resource Type
+            "TEX" => 0x2E75C769,   // Texture Resource Type
+            _ => 0
+        };
+        
+        return id != 0;
+    }
     
     /// <summary>
     /// Validates that the provided API version is supported.

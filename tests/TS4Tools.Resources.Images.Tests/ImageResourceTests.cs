@@ -43,7 +43,7 @@ public sealed class ImageResourceTests : IDisposable
         resource.RequestedApiVersion.Should().Be(1);
         resource.Metadata.Format.Should().Be(ImageFormat.Unknown);
         resource.IsModified.Should().BeTrue();
-        resource.ImageData.Should().BeEmpty();
+        resource.RawData.Should().BeEmpty();
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class ImageResourceTests : IDisposable
         resource.Metadata.MipMapCount.Should().Be(1);
         resource.Metadata.HasAlpha.Should().BeTrue();
         resource.IsModified.Should().BeFalse();
-        resource.ImageData.Length.Should().Be(pngData.Length);
+        resource.RawData.Length.Should().Be(pngData.Length);
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public sealed class ImageResourceTests : IDisposable
 
         // Assert
         resource.Metadata.Format.Should().Be(ImageFormat.JPEG);
-        resource.ImageData.ToArray().Should().Equal(jpegData);
+        resource.RawData.ToArray().Should().Equal(jpegData);
     }
 
     [Fact]
@@ -449,11 +449,11 @@ public sealed class ImageResourceTests : IDisposable
         var resource = CreateResource(pngData);
 
         // Act
-        var imageData = resource.ImageData;
+        var imageData = resource.RawData;
 
         // Assert
         imageData.Length.Should().Be(pngData.Length);
-        imageData.ToArray().Should().Equal(pngData);
+        imageData.Should().Equal(pngData);
     }
 
     [Fact]

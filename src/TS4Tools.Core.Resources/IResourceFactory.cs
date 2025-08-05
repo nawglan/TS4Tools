@@ -26,7 +26,7 @@ namespace TS4Tools.Core.Resources;
 public interface IResourceFactory<TResource> where TResource : IResource
 {
     /// <summary>
-    /// Creates a new resource instance.
+    /// Creates a new resource instance asynchronously.
     /// </summary>
     /// <param name="apiVersion">API version for the resource</param>
     /// <param name="stream">Optional stream containing resource data</param>
@@ -35,9 +35,36 @@ public interface IResourceFactory<TResource> where TResource : IResource
     Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Creates a new resource instance synchronously.
+    /// </summary>
+    /// <param name="stream">Stream containing resource data</param>
+    /// <param name="resourceType">Resource type identifier</param>
+    /// <returns>A new resource instance</returns>
+    TResource CreateResource(Stream stream, uint resourceType);
+    
+    /// <summary>
+    /// Creates an empty resource instance.
+    /// </summary>
+    /// <param name="resourceType">Resource type identifier</param>
+    /// <returns>A new empty resource instance</returns>
+    TResource CreateEmptyResource(uint resourceType);
+    
+    /// <summary>
+    /// Determines if this factory can create resources of the specified type.
+    /// </summary>
+    /// <param name="resourceType">Resource type identifier</param>
+    /// <returns>True if the factory can create this resource type</returns>
+    bool CanCreateResource(uint resourceType);
+    
+    /// <summary>
     /// Gets the resource types this factory can create.
     /// </summary>
     IReadOnlySet<string> SupportedResourceTypes { get; }
+    
+    /// <summary>
+    /// Gets the resource types this factory can create (legacy compatibility).
+    /// </summary>
+    IReadOnlySet<uint> ResourceTypes { get; }
     
     /// <summary>
     /// Gets the priority of this factory (higher values have priority over lower values).
