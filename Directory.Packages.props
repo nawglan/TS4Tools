@@ -42,7 +42,6 @@
     <!-- Image Processing -->
     <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.11" />
     <PackageVersion Include="BCnEncoder.Net" Version="2.2.1" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Testing" Version="0.0.1-alpha" />
     <!-- Static Analysis & Security -->
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" />

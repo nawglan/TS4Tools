@@ -109,6 +109,14 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     /// <returns>True if conversion was successful</returns>
     protected virtual bool TryGetResourceTypeId(string resourceType, out uint id)
     {
+        id = 0;
+        
+        // Handle hex string format first
+        if (resourceType.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            return uint.TryParse(resourceType[2..], global::System.Globalization.NumberStyles.HexNumber, null, out id);
+        }
+        
         // Default mappings for common image types
         id = resourceType.ToUpperInvariant() switch
         {
@@ -133,6 +141,14 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     /// <returns>True if conversion was successful</returns>
     private bool TryGetResourceTypeIdSafe(string resourceType, out uint id)
     {
+        id = 0;
+        
+        // Handle hex string format first
+        if (resourceType.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            return uint.TryParse(resourceType[2..], global::System.Globalization.NumberStyles.HexNumber, null, out id);
+        }
+        
         // Use base implementation in constructor to avoid virtual call
         id = resourceType.ToUpperInvariant() switch
         {
