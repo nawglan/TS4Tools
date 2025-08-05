@@ -1,53 +1,52 @@
 <Project>
-    <!-- https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management -->
-    <PropertyGroup>
-        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    </PropertyGroup>
-    <ItemGroup>
-        <!-- Avalonia packages -->
-        <!-- Important: keep version in sync! -->
-        <PackageVersion Include="Avalonia" Version="11.3.2" />
-        <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.2" />
-        <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.2" />
-        <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.2" />
-        <PackageVersion Include="Avalonia.Desktop" Version="11.3.2" />
-
-        <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-        
-        <!-- System packages -->
-        <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
-        <PackageVersion Include="System.ComponentModel.Annotations" Version="5.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-        <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
-        
-        <!-- Test packages -->
-        <PackageVersion Include="coverlet.collector" Version="6.0.2" />
-        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-        <PackageVersion Include="xunit" Version="2.9.2" />
-        <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-        <PackageVersion Include="FluentAssertions" Version="7.0.0" />
-        <PackageVersion Include="NSubstitute" Version="5.3.0" />
-        
-        <!-- Performance Testing -->
-        <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
-        
-        <!-- Static Analysis & Security -->
-        <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
-        <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" />
-        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.3.0.106239" />
-        <PackageVersion Include="SecurityCodeScan.VS2019" Version="5.6.7" />
-    </ItemGroup>
+  <!-- https://learn.microsoft.com/en-us/nuget/consume-packages/central-package-management -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Avalonia packages -->
+    <!-- Important: keep version in sync! -->
+    <PackageVersion Include="Avalonia" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.2" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.2" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <!-- System packages -->
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+    <PackageVersion Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <!-- Test packages -->
+    <PackageVersion Include="coverlet.collector" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
+    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <!-- Performance Testing -->
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <!-- Image Processing -->
+    <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.11" />
+    <PackageVersion Include="BCnEncoder.Net" Version="2.2.1" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Testing" Version="0.0.1-alpha" />
+    <!-- Static Analysis & Security -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.3.0.106239" />
+    <PackageVersion Include="SecurityCodeScan.VS2019" Version="5.6.7" />
+  </ItemGroup>
 </Project>
