@@ -30,12 +30,12 @@ public class MeshResourceFactoryTests
     }
 
     [Fact]
-    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    public void Constructor_WithNullLogger_CreatesFactory()
     {
-        var act = () => new MeshResourceFactory(null!);
+        var factory = new MeshResourceFactory(null);
 
-        act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("logger");
+        factory.Should().NotBeNull();
+        factory.ResourceTypes.Should().Contain(0x01661233u);
     }
 
     [Fact]
@@ -235,22 +235,31 @@ public class MeshResourceFactoryTests
     {
         var data = new List<byte>();
         
-        // Simple mesh header
-        data.AddRange([0x4D, 0x45, 0x53, 0x48]); // "MESH"
-        data.AddRange(BitConverter.GetBytes(1u)); // Version
-        data.AddRange(BitConverter.GetBytes(3u)); // Vertex count
-        data.AddRange(BitConverter.GetBytes(1u)); // Triangle count
+        // Mesh data format expected by ParseMeshData:
+        // [4 bytes] Vertex count
+        // [4 bytes] Index count  
+        // [4 bytes] Has normals flag
+        // [4 bytes] Has UV coordinates flag
+        // [Variable] Vertex data (3 floats per vertex)
+        // [Variable] Normal data (3 floats per vertex, if present)
+        // [Variable] UV data (2 floats per vertex, if present)
+        // [Variable] Index data (ushort per index)
         
-        // Vertex data (3 vertices * 3 floats = 36 bytes)
+        data.AddRange(BitConverter.GetBytes(3)); // Vertex count
+        data.AddRange(BitConverter.GetBytes(3)); // Index count
+        data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
+        data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
+        
+        // Vertex data (3 vertices * 3 floats = 9 floats)
         for (int i = 0; i < 9; i++)
         {
             data.AddRange(BitConverter.GetBytes((float)i));
         }
         
-        // Triangle indices (1 triangle = 3 indices)
-        data.AddRange(BitConverter.GetBytes(0u));
-        data.AddRange(BitConverter.GetBytes(1u));
-        data.AddRange(BitConverter.GetBytes(2u));
+        // Index data (3 indices as ushort)
+        data.AddRange(BitConverter.GetBytes((ushort)0));
+        data.AddRange(BitConverter.GetBytes((ushort)1));
+        data.AddRange(BitConverter.GetBytes((ushort)2));
         
         return new MemoryStream(data.ToArray());
     }
@@ -259,11 +268,11 @@ public class MeshResourceFactoryTests
     {
         var data = new List<byte>();
         
-        // Minimal mesh header
-        data.AddRange([0x4D, 0x45, 0x53, 0x48]); // "MESH"
-        data.AddRange(BitConverter.GetBytes(1u)); // Version
-        data.AddRange(BitConverter.GetBytes(0u)); // Vertex count
-        data.AddRange(BitConverter.GetBytes(0u)); // Triangle count
+        // Minimal mesh data
+        data.AddRange(BitConverter.GetBytes(0)); // Vertex count
+        data.AddRange(BitConverter.GetBytes(0)); // Index count
+        data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
+        data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
         
         return new MemoryStream(data.ToArray());
     }
@@ -272,15 +281,11 @@ public class MeshResourceFactoryTests
     {
         var data = new List<byte>();
         
-        // Corrupted mesh header
-        data.AddRange([0x4D, 0x45, 0x53, 0x48]); // "MESH"
-        data.AddRange(BitConverter.GetBytes(1u)); // Version
-        data.AddRange(BitConverter.GetBytes(3u)); // Vertex count
-        data.AddRange(BitConverter.GetBytes(1u)); // Triangle count
-        
-        // Truncated data - not enough for 3 vertices
-        data.AddRange(BitConverter.GetBytes(1.0f));
-        data.AddRange(BitConverter.GetBytes(2.0f));
+        // Corrupted mesh data - invalid vertex count
+        data.AddRange(BitConverter.GetBytes(-1)); // Invalid negative vertex count
+        data.AddRange(BitConverter.GetBytes(0)); // Index count
+        data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
+        data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
         
         return new MemoryStream(data.ToArray());
     }

@@ -75,51 +75,66 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
     /// <param name="stream">The stream containing geometry data.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
     /// <returns>A new GeometryResource instance.</returns>
-    /// <exception cref="ArgumentException">Thrown when the stream contains invalid data.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when stream is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the stream contains invalid data.</exception>
     public override async Task<GeometryResource> CreateResourceAsync(int apiVersion, Stream? stream, CancellationToken cancellationToken = default)
     {
         if (stream == null)
-        {
-            _logger?.LogDebug("Creating empty geometry resource with API version {ApiVersion}", apiVersion);
-            return new GeometryResource();
-        }
+            throw new ArgumentNullException(nameof(stream));
 
         try
         {
             _logger?.LogDebug("Creating geometry resource from stream (length: {Length} bytes)", stream.Length);
             
             // Validate stream has minimum required size
-            if (stream.Length < 24)
+            if (stream.Length == 0)
             {
-                throw new ArgumentException("Stream too small to contain valid geometry data", nameof(stream));
+                _logger?.LogError("Failed to create geometry resource from stream: Stream is empty");
+                throw new InvalidOperationException("Stream is empty");
+            }
+            else if (stream.Length < 24)
+            {
+                _logger?.LogError("Failed to create geometry resource from stream: Invalid format - stream too small");
+                throw new InvalidOperationException("Invalid format - stream too small to contain valid geometry data");
             }
 
-            // Peek at the stream to validate GEOM tag without consuming data
-            var originalPosition = stream.Position;
-            var buffer = new byte[4];
-            var bytesRead = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
-            stream.Position = originalPosition;
-
-            if (bytesRead == 4)
+            // Peek at the stream to validate GEOM tag without consuming data (only for seekable streams)
+            long originalPosition = 0;
+            if (stream.CanSeek)
             {
-                var tag = BitConverter.ToUInt32(buffer, 0);
-                if (tag != 0x47454F4D) // "GEOM"
+                originalPosition = stream.Position;
+                var buffer = new byte[4];
+                var bytesRead = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                stream.Position = originalPosition;
+
+                if (bytesRead == 4)
                 {
-                    _logger?.LogWarning("Invalid GEOM tag found: 0x{Tag:X8}", tag);
-                    throw new ArgumentException($"Invalid GEOM tag: 0x{tag:X8}", nameof(stream));
+                    var tag = BitConverter.ToUInt32(buffer, 0);
+                    if (tag != 0x47454F4D) // "GEOM"
+                    {
+                        _logger?.LogWarning("Invalid GEOM tag found: 0x{Tag:X8}", tag);
+                        _logger?.LogError("Failed to create geometry resource from stream: Invalid GEOM tag: 0x{Tag:X8}", tag);
+                        throw new InvalidOperationException($"Invalid GEOM tag: 0x{tag:X8}");
+                    }
                 }
             }
 
-            var resource = new GeometryResource(stream);
-            _logger?.LogDebug("Successfully created geometry resource with {VertexCount} vertices and {FaceCount} faces", 
+            var resource = new GeometryResource(stream, apiVersion);
+            _logger?.LogDebug("Created geometry resource with {VertexCount} vertices and {FaceCount} faces", 
                 resource.VertexCount, resource.Faces.Count);
+            
+            // Reset stream position if seekable
+            if (stream.CanSeek)
+            {
+                stream.Position = originalPosition;
+            }
             
             return resource;
         }
-        catch (Exception ex) when (!(ex is ArgumentException))
+        catch (Exception ex) when (!(ex is ArgumentNullException || ex is InvalidOperationException))
         {
             _logger?.LogError(ex, "Failed to create geometry resource from stream");
-            throw new ArgumentException("Failed to parse geometry data from stream", nameof(stream), ex);
+            throw new InvalidOperationException("Failed to parse geometry data from stream", ex);
         }
     }
 

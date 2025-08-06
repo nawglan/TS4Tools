@@ -76,39 +76,51 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
     /// <param name="stream">The stream containing mesh data.</param>
     /// <param name="cancellationToken">Cancellation token for async operations.</param>
     /// <returns>A new MeshResource instance.</returns>
-    /// <exception cref="ArgumentException">Thrown when the stream contains invalid data.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when stream is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the stream contains invalid data.</exception>
     public override async Task<MeshResource> CreateResourceAsync(int apiVersion, Stream? stream, CancellationToken cancellationToken = default)
     {
         await Task.Yield(); // Make this truly async
         
         if (stream == null)
-        {
-            _logger?.LogDebug("Creating empty mesh resource with API version {ApiVersion}", apiVersion);
-            return new MeshResource(apiVersion);
-        }
+            throw new ArgumentNullException(nameof(stream));
 
+        var originalPosition = stream.CanSeek ? stream.Position : 0;
+        
         try
         {
             _logger?.LogDebug("Creating mesh resource from stream (length: {Length} bytes)", stream.Length);
             
             // Validate stream has minimum required size
-            if (stream.Length < 16)
+            if (stream.Length == 0)
             {
-                throw new ArgumentException("Stream too small to contain valid mesh data", nameof(stream));
+                _logger?.LogError("Failed to create mesh resource from stream: Stream is empty");
+                throw new InvalidOperationException("Stream is empty");
+            }
+            else if (stream.Length < 16)
+            {
+                _logger?.LogError("Failed to create mesh resource from stream: Invalid format - stream too small");
+                throw new InvalidOperationException("Invalid format - stream too small to contain valid mesh data");
             }
 
             // For mesh resources, we'll try to parse the simple format first
             // If that fails, we might try to extract mesh data from other formats
             var resource = new MeshResource(stream, apiVersion);
-            _logger?.LogDebug("Successfully created mesh resource with {VertexCount} vertices and {TriangleCount} triangles", 
+            _logger?.LogDebug("Created mesh resource with {VertexCount} vertices and {TriangleCount} triangles", 
                 resource.VertexCount, resource.TriangleCount);
+            
+            // Reset stream position if seekable
+            if (stream.CanSeek)
+            {
+                stream.Position = originalPosition;
+            }
             
             return resource;
         }
-        catch (Exception ex) when (!(ex is ArgumentException))
+        catch (Exception ex) when (!(ex is ArgumentNullException || ex is InvalidOperationException))
         {
             _logger?.LogError(ex, "Failed to create mesh resource from stream");
-            throw new ArgumentException("Failed to parse mesh data from stream", nameof(stream), ex);
+            throw new InvalidOperationException("Failed to parse mesh data from stream", ex);
         }
     }
 
