@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Tuning>
+    <Instance type="Achievement">
+        <TunableTuple name="achievement_data">
+            <TunableResourceKey name="icon" type="image" default="none" />
+            <TunableLocalizedString name="achievement_name" default="0x00000000" />
+            <TunableLocalizedString name="achievement_description" default="0x00000000" />
+            <TunableFloat name="points" default="10.0" />
+        </TunableTuple>
+    </Instance>
+</Tuning>

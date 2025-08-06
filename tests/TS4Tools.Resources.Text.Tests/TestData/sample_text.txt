@@ -1,0 +1,6 @@
+This is a sample plain text file.
+It contains multiple lines of text.
+Some lines have different content.
+
+This line has a different line ending style.
+And this is the final line.

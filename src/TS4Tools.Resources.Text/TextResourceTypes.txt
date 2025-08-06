@@ -1,0 +1,85 @@
+0x0069453E TS4 XML -- objective
+0x029E333B Audio controllers
+0x02C9EFF2 Audio Submix
+0x03B33DDF TS4 XML tuning
+0x03E9D964 TS4 XML -- pie_menu_category
+0x04D2B465 TS4 XML -- achievement_collection
+0x074DFB83 TS4 XML -- relbit
+0x0904DF10 TS4 XML -- relbit socialcontextbit
+0x0C772E27 TS4 XML -- action
+0x0CA4C78B TS4 XML -- sim_template
+0x0E4D15FB TS4 XML -- role_state
+0x0EEB823A Renderer_FadeTuning
+0x11E72A63 TS4 XML -- notebook_entry
+0x122FC66A Lot type event map
+0x12496650 TS4 XML -- camera
+0x1A8506C5 Modal music wrappings
+0x1B25A024 Sound properties
+0x1C12D458 TS4 XML -- tagcategoriesmetadata
+0x1F886EAD Various configuration bits
+0x2451C101 TS4 XML -- achievement_category
+0x2553F435 TS4 XML -- drama_node
+0x2673076D TS4 XML -- client_tutorial
+0x28B64675 TS4 XML -- aspiration
+0x2C01BC15 Renderer_GlobalHighlightSettings
+0x2C70ADF8 TS4 XML -- career_level
+0x2E47A104 TS4 XML -- social_group
+0x2F59B437 TS4 XML -- club_seed
+0x31397645 Client_RegionSortTuning
+0x339BC5BD TS4 XML -- statistic
+0x37B999F1 Renderer_GlobalShadowSettings
+0x37EF2EE7 TS4 XML -- royalty
+0x3C1D8799 TS4 XML -- zonemodifier tuning
+0x3F163505 TS4 XML -- slot_type_set
+0x3FD6243E TS4 XML -- walk_by
+0x4115F9D5 Various sound configs
+0x457FC032 Renderer_CensorTuning
+0x48C2D5ED TS4 XML -- template_chooser
+0x48C75CE3 TS4 XML -- career_track
+0x49395302 TS4 XML -- tag_set
+0x4DB8251E Renderer_GlobalDofSettings
+0x4F739CEE TS4 XML -- test_based_score
+0x51077643 TS4 XML -- scommodity
+0x51E7A18D TS4 XML -- region
+0x54BD4618 Automation_AssetVersion
+0x598F28E7 TS4 XML -- situation_goal
+0x5B02819E TS4 XML -- object_state
+0x6017E896 TS4 XML -- buff
+0x6224C9D6 TS4 XML -- strategy
+0x669499DC TS4 XML -- UI
+0x6E56335A TS4 XML -- situation
+0x71C6A5DF TS4 XML -- spell
+0x7312D0F9 TS4 XML -- career_gig
+0x75CF3B61 TS4 XML -- trait
+0x7A9A4B3F Renderer_GlobalShaderSettings
+0x7B0075FE TS4 XML -- mood
+0x80F6F76C Renderer_TerrainTextureTuning
+0x808D2EFD TS4 XML -- recipe
+0x83B63675 TS4 XML -- interaction
+0x84C07553 TS4 XML -- snippet
+0x86E1A65F TS4 XML -- venue
+0x8A4E3E94 TS4 XML -- mood_dimension
+0x8ED5B5DE TS4 XML -- cas_preference_item
+0x8FD5F1A8 TS4 XML -- retail_perk
+0x9B0A0CAF TS4 XML -- lifestyle
+0x9C5F16D7 TS4 XML -- terrain_paint_brush
+0x9D1FFBCD TS4 XML -- club_bucks_perk
+0x9DC5DFBA TS4 XML -- preference
+0xA96BFC5E TS4 XML -- skill
+0xAACE5DD3 TS4 XML -- sim_filter
+0xB4F762C9 TS4 XML -- object_part
+0xB61DE6BE TS4 XML -- business_perk
+0xBACCF779 TS4 XML -- floor_feature
+0xC3F8FB86 TS4 XML -- career_story_progression
+0xC7A40635 TS4 XML -- animation_element
+0xCF2C22D4 TS4 XML -- game_ruleset
+0xD063A2D1 TS4 XML -- object_type
+0xD1E5D8B1 TS4 XML -- away_action
+0xD82D2415 TS4 XML -- mannequin
+0xDF18631E TS4 XML -- photo_style
+0xE6BFA406 TS4 XML -- weather_forecast
+0xE8F3CE30 TS4 XML -- weather_season_tuning
+0xEC411DA1 TS4 XML -- broadcasters
+0xF0F5C4F4 TS4 XML -- lunar_cycle
+0xF0F5C4F6 TS4 XML -- broadcaster
+0xF0F5C4F7 TS4 XML -- fire_starter

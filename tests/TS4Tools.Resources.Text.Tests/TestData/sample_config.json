@@ -1,0 +1,15 @@
+{
+  "config": {
+    "version": "1.0",
+    "settings": {
+      "audio": {
+        "enabled": true,
+        "volume": 0.8
+      },
+      "graphics": {
+        "resolution": "1920x1080",
+        "fullscreen": false
+      }
+    }
+  }
+}
