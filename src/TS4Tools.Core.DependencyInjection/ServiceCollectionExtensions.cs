@@ -41,6 +41,12 @@ public static class ServiceCollectionExtensions
 
         // Register resource management services
         services.AddResourceManager(configuration);
+        
+        // Register resource wrapper registry for automatic factory discovery
+        services.AddResourceWrapperRegistry();
+        
+        // Register all available resource factories
+        services.AddAllResourceFactories();
 
         // Register extension services
         services.AddTS4ToolsExtensions();

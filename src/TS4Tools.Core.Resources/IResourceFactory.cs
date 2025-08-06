@@ -20,10 +20,35 @@
 namespace TS4Tools.Core.Resources;
 
 /// <summary>
+/// Non-generic base interface for all resource factories.
+/// </summary>
+public interface IResourceFactory
+{
+    /// <summary>
+    /// Creates a new resource instance asynchronously.
+    /// </summary>
+    /// <param name="apiVersion">API version for the resource</param>
+    /// <param name="stream">Optional stream containing resource data</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>A new resource instance</returns>
+    Task<IResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets the resource types this factory can create.
+    /// </summary>
+    IReadOnlySet<string> SupportedResourceTypes { get; }
+    
+    /// <summary>
+    /// Gets the priority of this factory (higher values have priority over lower values).
+    /// </summary>
+    int Priority { get; }
+}
+
+/// <summary>
 /// Defines a factory for creating resource instances of a specific type.
 /// </summary>
 /// <typeparam name="TResource">The type of resource this factory creates</typeparam>
-public interface IResourceFactory<TResource> where TResource : IResource
+public interface IResourceFactory<TResource> : IResourceFactory where TResource : IResource
 {
     /// <summary>
     /// Creates a new resource instance asynchronously.

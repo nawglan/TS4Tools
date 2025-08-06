@@ -60,6 +60,12 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     public abstract Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
     
     /// <inheritdoc />
+    async Task<IResource> IResourceFactory.CreateResourceAsync(int apiVersion, Stream? stream, CancellationToken cancellationToken)
+    {
+        return await CreateResourceAsync(apiVersion, stream, cancellationToken);
+    }
+    
+    /// <inheritdoc />
     public virtual TResource CreateResource(Stream stream, uint resourceType)
     {
         ArgumentNullException.ThrowIfNull(stream);

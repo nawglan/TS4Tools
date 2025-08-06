@@ -46,6 +46,9 @@ public static class ServiceCollectionExtensions
         // Register core services
         services.AddSingleton<IResourceManager, ResourceManager>();
         
+        // Register resource wrapper registry
+        services.AddSingleton<IResourceWrapperRegistry, ResourceWrapperRegistry>();
+        
         // Register default factory
         services.AddSingleton<DefaultResourceFactory>();
         
@@ -95,5 +98,37 @@ public static class ServiceCollectionExtensions
         services.Add(new ServiceDescriptor(typeof(TFactory), typeof(TFactory), lifetime));
         
         return services;
+    }
+    
+    /// <summary>
+    /// Adds and configures resource wrapper registry with automatic factory discovery.
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    /// <returns>Service collection for chaining</returns>
+    public static IServiceCollection AddResourceWrapperRegistry(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        
+        // Register resource wrapper registry (if not already registered)
+        services.AddSingleton<IResourceWrapperRegistry, ResourceWrapperRegistry>();
+        
+        return services;
+    }
+    
+    /// <summary>
+    /// Initializes the resource wrapper registry by discovering and registering all available factories.
+    /// Call this method after building the service provider to complete factory registration.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Task representing the initialization process</returns>
+    public static async Task<ResourceWrapperRegistryResult> InitializeResourceWrapperRegistryAsync(
+        this IServiceProvider serviceProvider,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+        
+        var registry = serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
+        return await registry.DiscoverAndRegisterFactoriesAsync(cancellationToken);
     }
 }

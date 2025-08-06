@@ -208,7 +208,7 @@ internal sealed class ResourceManager : IResourceManager, IDisposable
             foreach (var supportedType in factory.SupportedResourceTypes)
             {
                 // Use priority to handle conflicts - higher priority wins
-                if (_resourceFactories.TryGetValue(supportedType, out var existingObj) && existingObj is IResourceFactory<TResource> existing)
+                if (_resourceFactories.TryGetValue(supportedType, out var existingObj) && existingObj is IResourceFactory existing)
                 {
                     if (factory.Priority > existing.Priority)
                     {
@@ -263,16 +263,19 @@ internal sealed class ResourceManager : IResourceManager, IDisposable
         }
     }
     
-    private IResourceFactory<IResource> GetFactoryForResourceType(string resourceType)
+    private IResourceFactory GetFactoryForResourceType(string resourceType)
     {
         // Try exact match first
-        if (_resourceFactories.TryGetValue(resourceType, out var factoryObj) && factoryObj is IResourceFactory<IResource> factory)
+        if (_resourceFactories.TryGetValue(resourceType, out var factoryObj))
         {
-            return factory;
+            if (factoryObj is IResourceFactory factory)
+            {
+                return factory;
+            }
         }
         
         // Fallback to default factory
-        if (_resourceFactories.TryGetValue("*", out var defaultFactoryObj) && defaultFactoryObj is IResourceFactory<IResource> defaultFactory)
+        if (_resourceFactories.TryGetValue("*", out var defaultFactoryObj) && defaultFactoryObj is IResourceFactory defaultFactory)
         {
             return defaultFactory;
         }

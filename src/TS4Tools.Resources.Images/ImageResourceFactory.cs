@@ -33,7 +33,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     /// </summary>
     /// <param name="logger">Optional logger for diagnostic information.</param>
     public ImageResourceFactory(ILogger<ImageResourceFactory>? logger = null)
-        : base(SupportedResourceTypeStrings, priority: 100)
+        : base(BuildSupportedResourceTypes(), priority: 100)
     {
         _logger = logger;
         
@@ -47,6 +47,37 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             }
         }
         ResourceTypes = resourceTypeIds;
+    }
+
+    /// <summary>
+    /// Builds the complete list of supported resource types including both string names and hex equivalents.
+    /// </summary>
+    private static IEnumerable<string> BuildSupportedResourceTypes()
+    {
+        var supportedTypes = new HashSet<string>(SupportedResourceTypeStrings);
+        
+        // Add hex equivalents
+        foreach (var typeString in SupportedResourceTypeStrings)
+        {
+            var hexValue = typeString.ToUpperInvariant() switch
+            {
+                "DDS" => $"0x{ImageResource.DdsResourceType:X8}",     // 0x00B2D882
+                "PNG" => $"0x{ImageResource.PngResourceType:X8}",     // 0x2F7D0004  
+                "TGA" => $"0x{ImageResource.TgaResourceType:X8}",     // 0x2F7D0005
+                "JPEG" => $"0x{ImageResource.JpegResourceType:X8}",   // 0x2F7D0002
+                "BMP" => $"0x{ImageResource.BmpResourceType:X8}",     // 0x2F7D0003
+                "IMG" => $"0x{ImageResource.PngResourceType:X8}",     // Use PNG type for generic images
+                "TEX" => $"0x{ImageResource.DdsResourceType:X8}",     // Use DDS type for textures
+                _ => null
+            };
+            
+            if (hexValue != null)
+            {
+                supportedTypes.Add(hexValue);
+            }
+        }
+        
+        return supportedTypes;
     }
 
     /// <summary>

@@ -14,6 +14,8 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="NSubstitute" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +26,11 @@
     <ProjectReference Include="..\..\src\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Core.DependencyInjection\TS4Tools.Core.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Strings\TS4Tools.Resources.Strings.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Images\TS4Tools.Resources.Images.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Catalog\TS4Tools.Resources.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Text\TS4Tools.Resources.Text.csproj" />
   </ItemGroup>
 
 </Project>
