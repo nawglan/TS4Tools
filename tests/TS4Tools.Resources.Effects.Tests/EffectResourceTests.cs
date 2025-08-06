@@ -4,7 +4,7 @@ using Xunit;
 
 namespace TS4Tools.Resources.Effects.Tests;
 
-public class EffectResourceTests : IDisposable
+public sealed class EffectResourceTests : IDisposable
 {
     private readonly EffectResource _effectResource;
 
@@ -16,6 +16,7 @@ public class EffectResourceTests : IDisposable
     public void Dispose()
     {
         _effectResource?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
