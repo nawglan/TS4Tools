@@ -10,3 +10,5 @@ global using FluentAssertions;
 global using Xunit;
 global using TS4Tools.Core.Interfaces;
 global using TS4Tools.Resources.Strings;
+global using TS4Tools.Resources.Strings.Tests.TestBuilders;
+global using TS4Tools.Resources.Strings.Tests.TestExtensions;

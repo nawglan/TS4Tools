@@ -261,50 +261,36 @@ public class StringTableResourceTests
     [Fact]
     public async Task ToBinaryAsync_WithEmptyResource_CreatesValidSTBLHeader()
     {
-        // Arrange
-        var resource = new StringTableResource();
+        // Arrange - Use builder pattern for test object creation
+        var resource = StringTableBuilder.Empty.Build();
 
         // Act
         var binaryData = await resource.ToBinaryAsync();
 
-        // Assert
+        // Assert - Test behavior outcomes, not implementation details
         binaryData.Should().NotBeEmpty();
-        binaryData.Length.Should().BeGreaterOrEqualTo(19); // Minimum header size
-
-        // Verify magic number
-        var magic = BitConverter.ToUInt32(binaryData, 0);
-        magic.Should().Be(StringTableResource.MagicNumber);
-
-        // Verify version
-        var version = BitConverter.ToUInt16(binaryData, 4);
-        version.Should().Be(StringTableResource.SupportedVersion);
-
-        // Verify entry count
-        var entryCount = BitConverter.ToUInt64(binaryData, 7);
-        entryCount.Should().Be(0);
+        binaryData.As<object>().Should().BeValidSTBLFormat();
+        binaryData.As<object>().Should().StartWithSTBLMagicNumber();
+        binaryData.As<object>().Should().ContainStringEntryCount(0);
     }
 
     [Fact]
     public async Task ToBinaryAsync_WithStrings_CreatesValidSTBLData()
     {
-        // Arrange
-        var resource = new StringTableResource();
-        resource.SetString(0x12345678u, "Test String");
-        resource.SetString(0x87654321u, "Another String");
+        // Arrange - Use builder pattern for test object creation
+        var resource = StringTableBuilder.Empty
+            .WithString(0x12345678u, "Test String")
+            .WithString(0x87654321u, "Another String")
+            .Build();
 
         // Act
         var binaryData = await resource.ToBinaryAsync();
 
-        // Assert
+        // Assert - Test behavior outcomes, not implementation details
         binaryData.Should().NotBeEmpty();
-
-        // Verify magic number
-        var magic = BitConverter.ToUInt32(binaryData, 0);
-        magic.Should().Be(StringTableResource.MagicNumber);
-
-        // Verify entry count
-        var entryCount = BitConverter.ToUInt64(binaryData, 7);
-        entryCount.Should().Be(2);
+        binaryData.As<object>().Should().BeValidSTBLFormat();
+        binaryData.As<object>().Should().StartWithSTBLMagicNumber();
+        binaryData.As<object>().Should().ContainStringEntryCount(2);
     }
 
     [Fact]
@@ -628,20 +614,19 @@ public class StringTableResourceTests
     [Fact]
     public void AsBytes_Property_ReturnsValidByteArray()
     {
-        // Arrange
-        var resource = new StringTableResource();
-        resource.SetString(0x12345678u, "Test");
+        // Arrange - Use builder pattern for test object creation
+        var resource = StringTableBuilder.Empty
+            .WithString(0x12345678u, "Test")
+            .Build();
 
         // Act
         var bytes = resource.AsBytes;
 
-        // Assert
+        // Assert - Test behavior outcomes, not implementation details
         bytes.Should().NotBeNull();
         bytes.Length.Should().BeGreaterThan(0);
-        
-        // Verify magic number in bytes
-        var magic = BitConverter.ToUInt32(bytes, 0);
-        magic.Should().Be(StringTableResource.MagicNumber);
+        bytes.As<object>().Should().StartWithSTBLMagicNumber();
+        bytes.As<object>().Should().BeValidSTBLFormat();
     }
 
     #endregion
