@@ -187,6 +187,25 @@ public class SomeClass
 
 ## 📋 Phase Completion Protocol
 
+### Pre-Commit Requirements
+**MANDATORY:** Before making any commit, ensure the build is completely clean:
+
+```powershell
+cd "c:\Users\nawgl\code\TS4Tools"
+dotnet build --no-restore
+```
+
+**Build must succeed with:**
+- ✅ **Zero errors** - All compilation errors must be resolved
+- ✅ **Zero warnings** - All compiler warnings must be addressed (use `new` keyword for intentional hiding, `#pragma` for justified cases with documentation)
+- ✅ **All projects building** - Every project in the solution must compile successfully
+
+**If warnings exist:**
+1. **Fix the root cause** - Prefer fixing the underlying issue over suppression
+2. **Use `new` keyword** - For intentional member hiding in interfaces/classes
+3. **Document suppressions** - If using `#pragma warning disable`, include clear justification
+4. **Scope suppressions** - Use the narrowest possible scope for any warning suppressions
+
 ### Commit Message Format
 Follow this format for commit messages:
 ```
@@ -234,12 +253,23 @@ TECHNICAL IMPACT:
 
 ### Quality Assurance Process
 ```powershell
-# Required verification steps after each phase
+# MANDATORY verification steps after each phase - ALL must pass
 cd "c:\Users\nawgl\code\TS4Tools"
-dotnet build                    # Verify all projects build
+
+# 1. CLEAN BUILD REQUIRED (Zero errors, zero warnings)
+dotnet build --no-restore       # Must complete with no warnings or errors
+
+# 2. All tests must pass
 dotnet test --verbosity minimal # Verify all tests pass
+
+# 3. Performance validation (when applicable)
 dotnet run --project benchmarks/TS4Tools.Benchmarks # Run performance benchmarks
 ```
+
+**Build Quality Gates:**
+- ❌ **DO NOT COMMIT** if any warnings or errors exist
+- ✅ **Clean build** is a prerequisite for all commits
+- 🔧 **Fix warnings first**, suppress only as last resort with documentation
 
 ### Documentation Consolidation
 - Move detailed accomplishments to `CHANGELOG.md` for historical tracking

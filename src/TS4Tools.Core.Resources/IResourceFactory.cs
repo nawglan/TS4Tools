@@ -57,7 +57,7 @@ public interface IResourceFactory<TResource> : IResourceFactory where TResource 
     /// <param name="stream">Optional stream containing resource data</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A new resource instance</returns>
-    Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
+    new Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Creates a new resource instance synchronously.
@@ -84,7 +84,7 @@ public interface IResourceFactory<TResource> : IResourceFactory where TResource 
     /// <summary>
     /// Gets the resource types this factory can create.
     /// </summary>
-    IReadOnlySet<string> SupportedResourceTypes { get; }
+    new IReadOnlySet<string> SupportedResourceTypes { get; }
     
     /// <summary>
     /// Gets the resource types this factory can create (legacy compatibility).
@@ -94,5 +94,5 @@ public interface IResourceFactory<TResource> : IResourceFactory where TResource 
     /// <summary>
     /// Gets the priority of this factory (higher values have priority over lower values).
     /// </summary>
-    int Priority { get; }
+    new int Priority { get; }
 }
