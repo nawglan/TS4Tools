@@ -10,7 +10,9 @@
 
 ## 🎯 **Project Overview**
 
-TS4Tools is a comprehensive migration and modernization of the popular Sims4Tools package editor. The project transforms the legacy .NET Framework 4.8.1 WinForms application into a modern, cross-platform application using .NET 9 and Avalonia UI.
+TS4Tools is a comprehensive migration and modernization of the popular Sims4Tools package editor, originally created by [s4ptacle](https://github.com/s4ptacle). This project transforms the legacy .NET Framework 4.8.1 WinForms application into a modern, cross-platform application using .NET 9 and Avalonia UI.
+
+> **📝 Attribution:** This project is a modernization fork of the original [Sims4Tools](https://github.com/s4ptacle/Sims4Tools) project. All credit for the original design, concepts, and foundational code goes to s4ptacle and the original contributors.
 
 ### **Key Improvements**
 - ✅ **Cross-Platform**: Runs on Windows, macOS, and Linux
@@ -194,8 +196,8 @@ This project is currently in active development by the core team. Once the found
 
 ## 🔗 **Related Projects**
 
-- [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Legacy .NET Framework version
-- [s4pe](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe) - Original package editor
+- [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Original .NET Framework version by s4ptacle
+- [s4pe Package Editor](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe) - Original package editor component
 - [Avalonia UI](https://github.com/AvaloniaUI/Avalonia) - Cross-platform UI framework
 
 ## 📜 **License**
@@ -204,7 +206,8 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## 🙏 **Acknowledgments**
 
-- **Original Sims4Tools Team** - Peter L Jones, Keyi Zhang, and all contributors
+- **[s4ptacle](https://github.com/s4ptacle)** - Original author and creator of [Sims4Tools](https://github.com/s4ptacle/Sims4Tools), without whom this modernization project would not exist
+- **Original Sims4Tools Contributors** - Peter L Jones, Keyi Zhang, and all other contributors to the original project
 - **The Sims 4 Modding Community** - For continuous support and feedback
 - **Avalonia UI Team** - For the excellent cross-platform UI framework
 
