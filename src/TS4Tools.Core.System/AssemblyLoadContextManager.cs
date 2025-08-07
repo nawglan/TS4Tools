@@ -67,6 +67,11 @@ public sealed class AssemblyLoadContextManager : IAssemblyLoadContextManager
     private readonly object _lockObject = new();
     private volatile bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AssemblyLoadContextManager"/> class.
+    /// </summary>
+    /// <param name="logger">The logger instance for tracking assembly loading operations and diagnostics.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="logger"/> is null.</exception>
     public AssemblyLoadContextManager(ILogger<AssemblyLoadContextManager> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
