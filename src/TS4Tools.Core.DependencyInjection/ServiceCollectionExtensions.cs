@@ -6,6 +6,7 @@ using TS4Tools.Core.Settings;
 using TS4Tools.Core.Package.DependencyInjection;
 using TS4Tools.Core.Resources;
 using TS4Tools.Core.System.Platform;
+using TS4Tools.Core.System;
 using TS4Tools.Extensions.ResourceTypes;
 using TS4Tools.Extensions.Utilities;
 using TS4Tools.Resources.Common.CatalogTags;
@@ -75,6 +76,9 @@ public static class ServiceCollectionExtensions
 
         // Register platform service as singleton
         services.AddSingleton<IPlatformService, PlatformService>();
+        
+        // Register modern assembly loading service (Phase 0.3 - Critical Fix)
+        services.AddSingleton<IAssemblyLoadContextManager, AssemblyLoadContextManager>();
 
         return services;
     }
