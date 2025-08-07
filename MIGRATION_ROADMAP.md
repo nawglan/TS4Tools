@@ -36,9 +36,10 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 ### **Migration Priorities**
 1. **s4pi Core Libraries** → Modern .NET 9 equivalents
 2. **Comprehensive Unit Testing** → Business logic validation
-3. **Cross-Platform Compatibility** → Windows, macOS, Linux support
-4. **Performance Optimization** → Equal or better performance
-5. **Modern Architecture** → MVVM, DI, async patterns
+3. **Business Logic Review** → Pre-GUI migration validation and risk mitigation
+4. **Cross-Platform Compatibility** → Windows, macOS, Linux support
+5. **Performance Optimization** → Equal or better performance
+6. **Modern Architecture** → MVVM, DI, async patterns
 
 ---
 
@@ -77,7 +78,7 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 ✅ All Foundation Phases (1-3) Complete + Phase 4.1.1-4.1.7 + Phase 4.3 + Phase 4.4 + Phase 4.5 + Phase 4.6-4.8 + Phase 4.7 Complete  
 ✅ **INTEGRATION & REGISTRY COMPLETE**: Resource Wrapper Registry with automatic factory discovery  
 ✅ **ANIMATION SYSTEM COMPLETE**: Complete animation, character, and rig resource system with practical validation  
-**Overall Completion: 57% (28/49 total phases completed)**
+**Overall Completion: 56% (28/50 total phases completed)**
 
 **⚡ AI ACCELERATION METRICS:**
 - **Phases 1-3 Planned Duration:** 14 weeks (98 days)
@@ -86,7 +87,7 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Time Saved:** 100+ days (14+ weeks) with AI assistance
 
 **📅 REVISED TIMELINE PROJECTIONS:**
-- **Original Estimate:** 50 weeks total (updated with new focused sub-phases)
+- **Original Estimate:** 63.25 weeks total (updated with business logic review phase)
 - **With AI Acceleration:** Potentially **12-15 weeks** for entire project
 - **New Target Completion:** October-November 2025
 
@@ -94,7 +95,7 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Timeline Comparison:** Original Phases 1-3 Estimate: 14 weeks (98 days) → Actual AI-Assisted Completion: 4 days
 - **Overall Acceleration Factor:** 24.5x faster than planned across completed phases
 - **Time Saved:** 94 days (13.4 weeks) in first 3 phases alone
-- **Project Trajectory:** Original 50 weeks → Revised 12-15 weeks total (optimized with focused sub-phases)
+- **Project Trajectory:** Original 63.25 weeks → Revised 12-15 weeks total (optimized with focused sub-phases)
 - **Actual Project Start:** August 2, 2025
 - **Actual Phase 1-3 Completion:** August 3, 2025
 - **Actual Phase 4.1.3 Completion:** August 4, 2025
@@ -160,6 +161,7 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Phase 5**: Core Library Polish - Performance and robustness (2 weeks)
 - **Phase 5.3**: Advanced Features Implementation - Power user features (1 week)
 - **Phase 5.4**: Plugin System and Extensibility - Community extensions (1 week)
+- **Phase 5.5**: Business Logic Review - Comprehensive review of all core business logic before s4pe migration (1.5 weeks)
 - **Phase 5.X**: NotImplemented Completion - Address deferred NotImplementedException items (0.5 week) *[Deferred from original Phase 4.5]*
 - **Phase 6**: s4pe Application Migration - Complete package editor GUI (16 weeks, 8 focused sub-phases)
 - **Phase 7**: s4pe Helpers Migration - 7 specialized helper tools (8 weeks, 4 focused sub-phases)
@@ -1838,6 +1840,92 @@ public void ToBinary_WithValidStringTable_ProducesValidSTBLFormat()
 **Coverage Target:** 85%+
 **Estimated Effort:** 5-7 days
 
+### **Phase 5.5: Business Logic Review (Week 35)**
+> **Goal:** Comprehensive review of all core business logic before s4pe migration
+
+**Status:** ⏳ Not Started  
+**Duration:** 1.5 weeks (11.5 days)
+
+**Overview:**
+This critical phase conducts a thorough review of all business logic across TS4Tools projects to ensure correctness, performance, and readiness for the complex s4pe application migration. This systematic review identifies potential issues, performance bottlenecks, and gaps before beginning GUI development.
+
+**Strategic Importance:**
+- **Risk Mitigation**: Identify critical issues before they impact GUI development
+- **Performance Baseline**: Establish performance expectations for s4pe integration
+- **API Validation**: Ensure all interfaces needed for s4pe are complete and correct
+- **Documentation**: Fill knowledge gaps that would slow down Phase 6
+- **Quality Assurance**: Validate business logic correctness across 60+ resource types
+
+**Review Phases:**
+- [ ] **Days 1-2: Core System & Interfaces Review**
+  - [ ] Foundation libraries validation (TS4Tools.Core.System, Core.Interfaces)
+  - [ ] Collections, hashing, and utility logic verification
+  - [ ] Interface design and type system validation
+  - [ ] Thread safety and performance analysis
+
+- [ ] **Days 3-4: Configuration & Package Management Review**  
+  - [ ] Settings system cross-platform compatibility
+  - [ ] Package file operations and integrity checking
+  - [ ] Compression/decompression accuracy validation
+  - [ ] Memory usage optimization for large files
+
+- [ ] **Days 5-6: Resource Management Review**
+  - [ ] Resource factory system validation
+  - [ ] Async loading patterns and thread safety
+  - [ ] Caching strategies and memory management
+  - [ ] Extension system and service registration
+
+- [ ] **Days 7-8: Resource Wrapper Deep Dive**
+  - [ ] Critical wrappers: String tables, images, catalogs
+  - [ ] 3D geometry, animation, and audio systems
+  - [ ] Business logic correctness across all 60+ types
+  - [ ] Performance characteristics and bottlenecks
+
+- [ ] **Days 9-10: Integration & API Validation**
+  - [ ] s4pe migration readiness assessment
+  - [ ] GUI integration point validation
+  - [ ] Performance benchmarking and scaling analysis
+  - [ ] Cross-platform compatibility verification
+
+- [ ] **Days 10-11: Documentation & Gap Analysis**
+  - [ ] Architecture decision documentation
+  - [ ] API completeness assessment
+  - [ ] Risk identification and mitigation planning
+  - [ ] Phase 6 execution plan refinement
+
+**Deliverables:**
+- [ ] **Business Logic Audit Report** - Comprehensive findings and recommendations
+- [ ] **Performance Baseline Report** - Benchmark results and s4pe comparison  
+- [ ] **API Readiness Assessment** - Gaps and requirements for Phase 6
+- [ ] **Risk Register Update** - Migration risks with mitigation strategies
+- [ ] **Phase 6 Execution Plan** - Updated approach based on review findings
+
+**Success Criteria:**
+- 100% of core business logic reviewed and validated
+- Performance benchmarks established for all critical paths
+- All high-risk items identified with mitigation plans
+- Complete API assessment for s4pe migration needs
+- Development team confident in Phase 6 approach
+
+**Documentation Reference:**  
+📋 **Detailed tracking**: [`BUSINESS_LOGIC_REVIEW.md`](./BUSINESS_LOGIC_REVIEW.md)
+
+**Estimated Effort:** 11.5 days (1.5 weeks)
+
+### **Phase 5.X: NotImplemented Completion (Week 36)**
+> **Goal:** Address deferred NotImplementedException items
+
+**Status:** ⏳ Not Started  
+**Duration:** 0.5 week
+
+*[Deferred from original Phase 4.5 to focus on higher-priority resource wrapper implementations]*
+
+**Tasks:**
+- [ ] Review all NotImplementedException instances across codebase
+- [ ] Implement or properly document each deferred item
+- [ ] Validate that all missing functionality is either implemented or safely deferred
+- [ ] Update documentation to reflect current implementation status
+
 **Phase 6 Deliverables:**
 - **Feature-complete application** with full Sims4Tools parity
 - **Production-ready release** with comprehensive resource wrapper support
@@ -1992,11 +2080,11 @@ TS4Tools.Tests/
 | **Phase 4** | 16 weeks | Complete resource wrapper ecosystem (60+ types) | 🔄 **IN PROGRESS** |
 | **Phase 4.7** | 0.25 weeks | **Testing Quality Remediation** | ✅ **COMPLETED** |
 | **Phase 4.5** | 0.5 weeks | Effect and Visual Wrappers implementation | ✅ **COMPLETED** |
-| **Phase 5** | 4 weeks | Core library polish and advanced features | ⏳ Not Started |
+| **Phase 5** | 5.5 weeks | Core library polish, advanced features, and business logic review | ⏳ Not Started |
 | **Phase 6** | 16 weeks | **s4pe application migration (8 sub-phases)** | ⏳ Not Started |
 | **Phase 7** | 8 weeks | **s4pe helpers migration (4 sub-phases)** | ⏳ Not Started |
 | **Phase 8** | 4 weeks | **Final integration and polish** | ⏳ Not Started |
-| **Total** | **61.75 weeks** | **Complete TS4Tools with s4pe + helpers migration** | 🔄 **In Progress (51% complete - 25 phases done)** |
+| **Total** | **63.25 weeks** | **Complete TS4Tools with s4pe + helpers migration** | 🔄 **In Progress (56% complete - 28 phases done)** |
 
 ### **🎯 STRATEGIC RESTRUCTURING: PHASE SUB-DIVISION**
 
@@ -2105,7 +2193,7 @@ TS4Tools.Tests/
    - 🎯 **Memory:** 20%+ reduction in memory usage
    - 🎯 **Validation:** BenchmarkDotNet tests for all 60+ resource wrapper types
 
-### **Phase 7-9: Complete s4pe Migration (Weeks 39-58)**
+### **Phase 7-9: Complete s4pe Migration (Weeks 41-60)**
 3. **Application Migration** - Complete s4pe package editor functionality
    - 🎯 **GUI Migration:** All s4pe UI components in modern Avalonia
    - 🎯 **Feature Parity:** Package browsing, editing, property grids
@@ -2943,25 +3031,25 @@ public sealed class EnhancedResourceTypeRegistry : IResourceTypeRegistry {
 
 ---
 
-### **Phase 6: s4pe Application Migration (Weeks 35-50) - BROKEN INTO SUB-PHASES**
+### **Phase 6: s4pe Application Migration (Weeks 37-52) - BROKEN INTO SUB-PHASES**
 > **Goal:** Migrate the complete s4pe package editor application to TS4Tools.Desktop
 > 
 > **⚠️ PHASE RESTRUCTURING:** Breaking the monolithic 8-week Phase 6 into focused 2-week sub-phases for better tracking, quality control, and deliverable management.
 
-#### **6.1 Application Foundation and Shell (Weeks 35-36)**
+#### **6.1 Application Foundation and Shell (Weeks 37-38)**
 **Status:** ⏳ Not Started  
 **Duration:** 2 weeks  
 **Focus:** Core application infrastructure and modern architecture setup
 
 **Tasks:**
-- [ ] **Week 35: Modern Application Shell**
+- [ ] **Week 37: Modern Application Shell**
   - [ ] Create `TS4Tools.Desktop` project with Avalonia UI 11.3+
   - [ ] Port `Program.cs` → Modern .NET 9 startup with dependency injection
   - [ ] Port `MainForm.cs` → `MainWindow` with MVVM pattern
   - [ ] Integrate `TS4Tools.Core.DependencyInjection` for service orchestration
   - [ ] **Target:** Working application shell with modern architecture
 
-- [ ] **Week 36: Settings and Configuration Migration**
+- [ ] **Week 38: Settings and Configuration Migration**
   - [ ] Port legacy `Settings.cs` → Integration with `TS4Tools.Core.Settings`
   - [ ] Migrate Windows Registry → Cross-platform JSON configuration
   - [ ] Port `App.config` → Modern `appsettings.json` configuration
@@ -3183,7 +3271,7 @@ public sealed class EnhancedResourceTypeRegistry : IResourceTypeRegistry {
 
 ---
 
-### **Phase 7: s4pe Helpers Migration (Weeks 51-58) - BROKEN INTO SUB-PHASES**
+### **Phase 7: s4pe Helpers Migration (Weeks 53-60) - BROKEN INTO SUB-PHASES**
 > **Goal:** Migrate all specialized helper tools to modern cross-platform implementations
 > 
 > **⚠️ PHASE RESTRUCTURING:** Breaking the monolithic 8-week Phase 7 into focused 2-week sub-phases for better tracking and specialized tool development.
