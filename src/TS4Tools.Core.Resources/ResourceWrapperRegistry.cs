@@ -38,7 +38,10 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
     private readonly ConcurrentDictionary<string, FactoryRegistration> _registrations = new();
     private readonly ConcurrentDictionary<string, long> _creationMetrics = new();
     private readonly object _metricsLock = new();
+    private readonly SemaphoreSlim _discoveryLock = new(1, 1);
     private readonly Timer? _metricsTimer;
+    private volatile bool _factoriesDiscovered = false;
+    private ResourceWrapperRegistryResult? _cachedResult;
     private bool _disposed;
 
     /// <summary>
@@ -69,66 +72,84 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        
-        var stopwatch = Stopwatch.StartNew();
-        var result = new ResourceWrapperRegistryResult();
+
+        // Use a lock to ensure only one discovery process runs at a time
+        await _discoveryLock.WaitAsync(cancellationToken);
 
         try
         {
-            _logger.LogInformation("Starting resource factory discovery and registration");
-
-            // Discover factories from all loaded assemblies
-            var factoryTypes = await DiscoverFactoryTypesAsync(cancellationToken);
-            _logger.LogDebug("Discovered {FactoryCount} factory types", factoryTypes.Count);
-
-            // Group by priority for registration order
-            var prioritizedFactories = factoryTypes
-                .GroupBy(f => f.Priority)
-                .OrderByDescending(g => g.Key);
-
-            foreach (var priorityGroup in prioritizedFactories)
+            // If factories have already been discovered and registered, return the cached result
+            if (_factoriesDiscovered && _cachedResult != null)
             {
-                _logger.LogDebug("Registering {FactoryCount} factories with priority {Priority}",
-                    priorityGroup.Count(), priorityGroup.Key);
-
-                // Register factories in parallel within the same priority level
-                var registrationTasks = priorityGroup.Select(async factory =>
-                {
-                    try
-                    {
-                        await RegisterFactoryAsync(factory, cancellationToken);
-                        result.AddSuccessfulRegistration(factory.FactoryType.Name);
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to register factory {FactoryType}", factory.FactoryType.Name);
-                        result.AddFailedRegistration(factory.FactoryType.Name, ex.Message);
-                        return false;
-                    }
-                });
-
-                await Task.WhenAll(registrationTasks);
+                _logger.LogDebug("Returning cached factory discovery result with {SuccessfulCount} successful registrations",
+                    _cachedResult.SuccessfulRegistrations.Count);
+                return _cachedResult;
             }
 
-            stopwatch.Stop();
-            result.RegistrationDuration = stopwatch.Elapsed;
-            result.TotalFactoriesDiscovered = factoryTypes.Count;
+            var stopwatch = Stopwatch.StartNew();
+            var result = new ResourceWrapperRegistryResult();
 
-            _logger.LogInformation(
-                "Factory registration completed in {Duration:F2}ms. " +
-                "Successful: {Successful}, Failed: {Failed}",
-                stopwatch.Elapsed.TotalMilliseconds,
-                result.SuccessfulRegistrations.Count,
-                result.FailedRegistrations.Count);
+            try
+            {
+                _logger.LogInformation("Starting resource factory discovery and registration");
 
-            return result;
+                // Discover factories from all loaded assemblies
+                var factoryTypes = await DiscoverFactoryTypesAsync(cancellationToken);
+                _logger.LogDebug("Discovered {FactoryCount} factory types", factoryTypes.Count);
+
+                // Group by priority for registration order
+                var prioritizedFactories = factoryTypes
+                    .GroupBy(f => f.Priority)
+                    .OrderByDescending(g => g.Key);
+
+                foreach (var priorityGroup in prioritizedFactories)
+                {
+                    _logger.LogDebug("Registering {FactoryCount} factories with priority {Priority}",
+                        priorityGroup.Count(), priorityGroup.Key);
+
+                    // Register factories sequentially to avoid race conditions during registration
+                    foreach (var factory in priorityGroup)
+                    {
+                        try
+                        {
+                            await RegisterFactoryAsync(factory, cancellationToken);
+                            result.AddSuccessfulRegistration(factory.FactoryType.Name);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to register factory {FactoryType}", factory.FactoryType.Name);
+                            result.AddFailedRegistration(factory.FactoryType.Name, ex.Message);
+                        }
+                    }
+                }
+
+                stopwatch.Stop();
+                result.RegistrationDuration = stopwatch.Elapsed;
+                result.TotalFactoriesDiscovered = factoryTypes.Count;
+
+                _logger.LogInformation(
+                    "Factory registration completed in {Duration:F2}ms. " +
+                    "Successful: {Successful}, Failed: {Failed}",
+                    stopwatch.Elapsed.TotalMilliseconds,
+                    result.SuccessfulRegistrations.Count,
+                    result.FailedRegistrations.Count);
+
+                // Cache the result and mark as discovered
+                _cachedResult = result;
+                _factoriesDiscovered = true;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Critical error during factory discovery and registration");
+                result.AddFailedRegistration("DISCOVERY_ERROR", ex.Message);
+                return result;
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            _logger.LogError(ex, "Critical error during factory discovery and registration");
-            result.AddFailedRegistration("DISCOVERY_ERROR", ex.Message);
-            return result;
+            _discoveryLock.Release();
         }
     }
 
@@ -193,7 +214,7 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
                 {
                     // Create factory instance to check if it can handle the resource type
                     var factory = ActivatorUtilities.CreateInstance(_serviceProvider, registration.FactoryType);
-                    
+
                     // Use reflection to call CanCreateResource if available
                     var canCreateMethod = registration.FactoryType.GetMethod("CanCreateResource", new[] { typeof(uint) });
                     if (canCreateMethod != null)
@@ -226,7 +247,7 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
             return uint.TryParse(resourceType.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out id);
         }
 
-        // Handle plain hex like "00B2D882" 
+        // Handle plain hex like "00B2D882"
         return uint.TryParse(resourceType, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out id);
     }
 
@@ -300,20 +321,20 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
 
             // Create a temporary instance to get priority and supported types
             var tempInstance = ActivatorUtilities.CreateInstance(_serviceProvider, factoryType);
-            
+
             if (tempInstance == null)
                 return null;
 
             // Get SupportedResourceTypes and Priority using reflection since we don't have a common non-generic interface
             var supportedTypesProperty = factoryType.GetProperty("SupportedResourceTypes");
             var priorityProperty = factoryType.GetProperty("Priority");
-            
+
             if (supportedTypesProperty == null || priorityProperty == null)
                 return null;
 
             var supportedTypesValue = supportedTypesProperty.GetValue(tempInstance);
             var priorityValue = priorityProperty.GetValue(tempInstance);
-            
+
             if (supportedTypesValue is not IEnumerable<string> supportedTypesEnumerable || priorityValue is not int priority)
                 return null;
 
@@ -380,7 +401,7 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
         {
             // Get current resource manager statistics to update usage metrics
             var resourceStats = _resourceManager.GetStatistics();
-            
+
             // This is a simplified metric collection - in a real implementation,
             // you would track individual factory usage through events or callbacks
             lock (_metricsLock)
@@ -429,6 +450,7 @@ public sealed class ResourceWrapperRegistry : IResourceWrapperRegistry, IDisposa
             return;
 
         _metricsTimer?.Dispose();
+        _discoveryLock?.Dispose();
         _disposed = true;
     }
 

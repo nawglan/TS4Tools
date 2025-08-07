@@ -484,3 +484,9 @@ $RECYCLE.BIN/
 **/bin/**/win-x86/
 **/bin/**/linux-arm64/
 **/bin/**/osx-arm64/
+
+# Configuration files - prevent personal settings from being committed
+appsettings.json
+appsettings.*.json
+!appsettings.template.json
+!appsettings.template.jsonc

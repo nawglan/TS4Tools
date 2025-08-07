@@ -76,6 +76,12 @@ public sealed class ApplicationSettings
     public bool EnableCrossPlatformFeatures { get; init; } = true;
 
     /// <summary>
+    /// Configuration for game-related settings.
+    /// </summary>
+    [Required]
+    public GameSettings Game { get; init; } = new();
+
+    /// <summary>
     /// Configuration for package-related settings.
     /// </summary>
     [Required]
@@ -86,6 +92,44 @@ public sealed class ApplicationSettings
     /// </summary>
     [Required]
     public UserInterfaceSettings UserInterface { get; init; } = new();
+}
+
+/// <summary>
+/// Game-specific configuration settings for The Sims 4.
+/// </summary>
+public sealed class GameSettings
+{
+    /// <summary>
+    /// Path to The Sims 4 installation directory.
+    /// This is typically found at:
+    /// - Steam: C:\Program Files (x86)\Steam\steamapps\common\The Sims 4
+    /// - Origin: C:\Program Files (x86)\Origin Games\The Sims 4
+    /// - EA Desktop: C:\Program Files\EA Games\The Sims 4
+    /// </summary>
+    public string? InstallationDirectory { get; init; }
+
+    /// <summary>
+    /// Path to The Sims 4 game data directory (typically InstallationDirectory\Data).
+    /// If not specified, defaults to InstallationDirectory\Data.
+    /// </summary>
+    public string? DataDirectory { get; init; }
+
+    /// <summary>
+    /// Path to The Sims 4 client package files (typically InstallationDirectory\Data\Client).
+    /// If not specified, defaults to InstallationDirectory\Data\Client.
+    /// </summary>
+    public string? ClientDataDirectory { get; init; }
+
+    /// <summary>
+    /// Enable automatic detection of The Sims 4 installation directory.
+    /// When true, the application will attempt to locate the game installation automatically.
+    /// </summary>
+    public bool EnableAutoDetection { get; init; } = true;
+
+    /// <summary>
+    /// Verify that the installation directory exists and contains expected game files.
+    /// </summary>
+    public bool ValidateInstallation { get; init; } = true;
 }
 
 /// <summary>

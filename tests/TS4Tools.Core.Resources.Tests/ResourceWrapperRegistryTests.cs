@@ -303,11 +303,17 @@ public sealed class ResourceWrapperRegistryPerformanceTests : IDisposable
         results.Should().OnlyContain(r => r.IsSuccess, 
             "All concurrent registrations should succeed");
         
-        // All results should be consistent
+        // All results should be consistent - same factories found, regardless of order
         var firstResult = results[0];
         results.Should().OnlyContain(r => 
             r.SuccessfulRegistrations.Count == firstResult.SuccessfulRegistrations.Count,
             "All registration attempts should find the same number of factories");
+            
+        // Verify all results have the same set of factories (order-independent)
+        var expectedFactoryNames = firstResult.SuccessfulRegistrations.ToHashSet();
+        results.Should().OnlyContain(r => 
+            r.SuccessfulRegistrations.ToHashSet().SetEquals(expectedFactoryNames),
+            "All registration attempts should find the same factories");
     }
 
     [Fact]

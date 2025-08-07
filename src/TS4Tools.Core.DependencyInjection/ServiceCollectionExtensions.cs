@@ -42,10 +42,10 @@ public static class ServiceCollectionExtensions
 
         // Register resource management services
         services.AddResourceManager(configuration);
-        
+
         // Register resource wrapper registry for automatic factory discovery
         services.AddResourceWrapperRegistry();
-        
+
         // Register all available resource factories
         services.AddAllResourceFactories();
 
@@ -76,7 +76,7 @@ public static class ServiceCollectionExtensions
 
         // Register platform service as singleton
         services.AddSingleton<IPlatformService, PlatformService>();
-        
+
         // Register modern assembly loading service (Phase 0.3 - Critical Fix)
         services.AddSingleton<IAssemblyLoadContextManager, AssemblyLoadContextManager>();
 

@@ -1,9 +1,9 @@
 {
   // TS4Tools Application Configuration
   // This file contains all configurable settings for the TS4Tools application
-  
+
   "ApplicationSettings": {
-    
+
     // Core Application Settings
     "EnableExtraChecking": true,          // Enable additional validation checks during operations
     "AssumeDataDirty": true,              // Assume resource data has changed (legacy compatibility)
@@ -12,7 +12,16 @@
     "EnableDetailedLogging": false,       // Enable verbose logging for debugging
     "AsyncOperationTimeoutMs": 30000,     // Timeout for async operations (30 seconds)
     "EnableCrossPlatformFeatures": true,  // Enable cross-platform compatibility features
-    
+
+    // Game Installation Settings
+    "Game": {
+      "InstallationDirectory": null,      // Path to The Sims 4 installation directory (auto-detected if null)
+      "DataDirectory": null,              // Path to game data directory (defaults to InstallationDirectory\Data)
+      "ClientDataDirectory": null,        // Path to client package files (defaults to InstallationDirectory\Data\Client)
+      "EnableAutoDetection": true,        // Enable automatic detection of game installation
+      "ValidateInstallation": true        // Verify installation directory contains expected files
+    },
+
     // Package Management Settings
     "Package": {
       "CreateBackups": true,              // Automatically create backups when saving
@@ -21,7 +30,7 @@
       "CompressionLevel": 6,              // Compression level (0-9, 9 = maximum)
       "IOBufferSize": 65536               // I/O buffer size in bytes (64KB)
     },
-    
+
     // User Interface Settings
     "UserInterface": {
       "Theme": "System",                  // Theme: "System", "Light", or "Dark"
@@ -32,7 +41,7 @@
       "AutoSaveIntervalMinutes": 5        // Auto-save interval in minutes
     }
   },
-  
+
   // Logging Configuration
   "Logging": {
     "LogLevel": {
