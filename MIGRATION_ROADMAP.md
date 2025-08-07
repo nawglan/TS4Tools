@@ -29,17 +29,107 @@
 
 ---
 
+## 🚨 **CRITICAL SIMS4TOOLS ALIGNMENT (August 7, 2025)**
+
+### **MANDATORY MIGRATION APPROACH VALIDATION**
+
+Following comprehensive analysis of [`SIMS4TOOLS_MIGRATION_DOCUMENTATION.md`](../Sims4Tools/SIMS4TOOLS_MIGRATION_DOCUMENTATION.md), this project has been validated against critical migration requirements:
+
+#### ✅ **GREENFIELD APPROACH CONFIRMED CORRECT**
+
+The TS4Tools approach aligns with SIMS4TOOLS recommendations:
+- **Business Logic Extraction**: ✅ Modern implementation with identical external behavior  
+- **API Compatibility Preservation**: ✅ All public interfaces maintained for backward compatibility
+- **Assembly Loading Modernization**: ✅ AssemblyLoadContext implementation planned for Phase 5.4
+- **Golden Master Testing**: 🚨 **MANDATORY ADDITION** - Now required for all phases
+
+#### 🚨 **CRITICAL NEW REQUIREMENTS ADDED**
+
+1. **MANDATORY Golden Master Testing**
+   - **Implementation**: Every migrated component must pass byte-perfect compatibility tests
+   - **Validation Data**: Real Sims 4 .package files from Steam installation required
+   - **Timeline Impact**: Phase 5.5 extended from 1.5 to 2 weeks for comprehensive testing
+
+2. **Assembly Loading Crisis Resolution**
+   - **Priority**: P0 BLOCKING - Must replace Assembly.LoadFile() throughout codebase
+   - **Implementation**: Modern AssemblyLoadContext with plugin isolation
+   - **Phase**: 5.4 Plugin System and Extensibility elevated to critical priority
+
+3. **External Interface Compatibility**
+   - **Requirement**: 100% backward compatibility for existing tools and plugins
+   - **Implementation**: Legacy adapter pattern for AResourceHandler plugins
+   - **Validation**: Helper tool integration must work without changes
+
+#### 📊 **UPDATED RISK ASSESSMENT**
+
+| Risk Category | Original Level | Updated Level | Mitigation Status |
+|---------------|----------------|---------------|-------------------|
+| **Assembly Loading Compatibility** | Medium | **CRITICAL** | **Phase 5.4 - AssemblyLoadContext implementation** |
+| **File Format Compatibility** | High | **CRITICAL** | **Phase 5.5 - Golden master testing mandatory** |
+| **Plugin System Compatibility** | Medium | **HIGH** | **Legacy adapter pattern in Phase 5.4** |
+| **Helper Tool Integration** | Low | **HIGH** | **Cross-platform helper execution in Phase 7** |
+| **Performance Regression** | Medium | **HIGH** | **Streaming I/O implementation in Phase 5** |
+
+#### 🎯 **SUCCESS CRITERIA UPDATES**
+
+**Before declaring any phase complete:**
+- [ ] **Golden Master Tests**: All round-trip operations produce byte-identical results
+- [ ] **Performance Validation**: Startup, load, save times ≤ original + 10%
+- [ ] **Plugin Compatibility**: Existing resource wrappers work via adapters  
+- [ ] **API Preservation**: All public method signatures remain identical
+- [ ] **Cross-Platform**: Core functionality verified on Windows, Linux, macOS
+- [ ] **Third-Party Tool Testing**: All existing community tools work unchanged
+- [ ] **Helper Integration**: All .helper files execute and integrate properly
+
+**MANDATORY Quality Gates:**
+- **100% Test Pass Rate**: All existing and new tests must pass
+- **Byte-Perfect Compatibility**: Golden master tests with real Sims 4 packages
+- **Memory Efficiency**: Multi-GB file handling without excessive memory usage
+- **External Tool Compatibility**: Helper applications launch and integrate correctly
+- **Plugin System Compatibility**: WrapperDealer-based plugins load and function correctly
+- **Performance Validation**: Multi-GB file handling ≤ original memory usage
+- **Native Fallback**: DDS/compression performance within 20% of native implementations
+
+### **TIMELINE IMPACT ANALYSIS**
+
+**Original Completion Estimate**: 63.25 weeks  
+**With AI Acceleration**: 12-15 weeks (based on current 24.5x acceleration factor)
+**SIMS4TOOLS Alignment Impact**: +4.5 weeks for external compatibility requirements
+
+**Revised Timeline**: 16.5-19.5 weeks total
+- **Golden Master Testing**: +1.5 weeks across multiple phases
+- **Assembly Loading Modernization**: +0.5 weeks in Phase 5.4
+- **WrapperDealer Compatibility Layer**: +1 week in Phase 4.14
+- **External Compatibility Validation**: +1 week in Phase 5.6
+- **Native DLL Replacement Strategy**: +0.5 weeks in Phase 5.7
+- **Enhanced Documentation**: Ongoing parallel effort
+
+---
+
 ## 🎯 **Executive Summary**
 
 This document outlines the comprehensive migration plan from the legacy Sims4Tools (.NET Framework 4.8.1, WinForms) to the modern TS4Tools (.NET 9, Avalonia UI). The migration prioritizes the s4pi core libraries first, establishing a solid foundation before building the GUI and specialized components.
 
-### **Migration Priorities**
-1. **s4pi Core Libraries** → Modern .NET 9 equivalents
-2. **Comprehensive Unit Testing** → Business logic validation
-3. **Business Logic Review** → Pre-GUI migration validation and risk mitigation
-4. **Cross-Platform Compatibility** → Windows, macOS, Linux support
-5. **Performance Optimization** → Equal or better performance
-6. **Modern Architecture** → MVVM, DI, async patterns
+### **🚨 SIMS4TOOLS ALIGNMENT - GREENFIELD REWRITE APPROACH**
+
+**CRITICAL UPDATE (August 7, 2025)**: This migration has been aligned with comprehensive SIMS4TOOLS_MIGRATION_DOCUMENTATION.md requirements:
+
+**Core Philosophy**: **Business Logic Extraction, NOT Code Migration**
+- Extract domain knowledge from 114+ legacy projects
+- Modern .NET 9 implementation with identical external behavior  
+- 100% backward compatibility for existing tools and plugins
+- Golden master testing mandatory for every component
+
+### **Migration Priorities (UPDATED)**
+
+1. **🚨 CRITICAL: Assembly Loading Crisis Resolution** → Modern AssemblyLoadContext replacing Assembly.LoadFile()
+2. **🚨 CRITICAL: Golden Master Testing Framework** → Byte-perfect compatibility validation with real Sims 4 packages  
+3. **s4pi Core Libraries** → Modern .NET 9 equivalents with API preservation
+4. **Comprehensive Unit Testing** → Business logic validation + golden master tests
+5. **Business Logic Review** → Pre-GUI migration validation and risk mitigation
+6. **Cross-Platform Compatibility** → Windows, macOS, Linux support with streaming I/O
+7. **Performance Optimization** → Equal or better performance with multi-GB file support
+8. **Modern Architecture** → MVVM, DI, async patterns with legacy compatibility adapters
 
 ---
 
@@ -149,18 +239,601 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 - **Phase 4.7**: Testing Quality Remediation - Critical testing debt eliminated ✅
 - **Phase 4.8**: Animation Resource System - Complete animation system with practical validation ✅
 
-### 🎯 Current Target:
+### 🚨 **CRITICAL PRIORITY REORDERING REQUIRED**
+
+**Current approach is missing P0 CRITICAL requirements from SIMS4TOOLS_MIGRATION_DOCUMENTATION.md**
+
+### ⚠️ **IMMEDIATE ACTION REQUIRED - BEFORE Phase 4.9:**
+- **Phase 4.8.1**: **CRITICAL - Golden Master Test Framework** (1 week)
+  - 🚨 **P0 BLOCKING**: Implement byte-perfect compatibility testing infrastructure
+  - **Requirements**: Real Sims 4 package collection, automated round-trip tests
+  - **Status**: ❌ **MISSING - MUST COMPLETE BEFORE CONTINUING**
+
+- **Phase 4.8.2**: **CRITICAL - Assembly Loading Crisis Validation** (0.5 week)  
+  - 🚨 **P0 BLOCKING**: Early validation of AssemblyLoadContext compatibility
+  - **Requirements**: Test current plugin loading, identify breaking patterns
+  - **Status**: ❌ **DEFERRED TOO LATE - MOVE TO IMMEDIATE**
+
+### 🎯 Current Target (UPDATED):
+- **Phase 4.8.1**: Golden Master Test Framework - CRITICAL missing requirement
+- **Phase 4.8.2**: Assembly Loading Crisis Validation - CRITICAL early validation  
 - **Phase 4.9**: World Building Wrappers - Scene and environment support phase
 
-### 🔮 Upcoming Major Milestones:
+### � **CRITICAL MISSING PHASES FROM SIMS4TOOLS REQUIREMENTS**
+
+**The following phases MUST be added before continuing with Phase 4.9:**
+
+#### **Phase 0: CRITICAL Foundation Requirements (NEW - URGENT)**
+
+- **Phase 0.1: Real Package Data Collection** (3 days)
+  - 🚨 **P0 CRITICAL**: Collect 100+ real Sims 4 packages from Steam installation
+  - **Location**: `C:\Program Files (x86)\Steam\steamapps\common\The Sims 4\Data\Client\*.package`
+  - **Requirements**: Diverse package types covering all resource wrappers
+  - **Deliverable**: Test data repository with real-world validation packages
+
+- **Phase 0.2: Golden Master Test Framework** (1 week)
+  - 🚨 **P0 BLOCKING**: Mandatory byte-perfect compatibility testing infrastructure
+  - **Pattern**: `[Theory] [MemberData(nameof(RealSims4Packages))] byte-perfect validation`
+  - **Requirements**: 
+    - [ ] Round-trip testing (load → save → compare bytes)
+    - [ ] Automated test generation for all collected packages
+    - [ ] Performance baseline capture for all operations
+    - [ ] Memory usage profiling during large file operations
+
+- **Phase 0.3: Assembly Loading Crisis Assessment** (0.5 week)
+  - 🚨 **P0 CRITICAL**: Early validation of current plugin loading patterns
+  - **Current Risk**: WrapperDealer.cs:89 Assembly.LoadFile() breaks in .NET 9
+  - **Requirements**:
+    - [ ] Inventory all Assembly.LoadFile() usage in codebase
+    - [ ] Test AssemblyLoadContext compatibility with current plugins
+    - [ ] Design modern plugin architecture with legacy compatibility
+    - [ ] Validate resource wrapper registration patterns
+
+- **Phase 0.4: Business Logic Inventory** (4 days) 
+  - 🚨 **CRITICAL**: Systematic analysis of domain logic from 114+ legacy projects
+  - **Scope**: Complete mapping of business rules that must be preserved
+  - **Focus Areas**:
+    - [ ] DBPF file format specifications
+    - [ ] Resource wrapper parsing algorithms
+    - [ ] Compression/decompression logic
+    - [ ] Plugin registration and discovery patterns
+    - [ ] Helper tool integration protocols
+
+### � **IMMEDIATE PROJECT HALT - CRITICAL FOUNDATION MISSING**
+
+**STOP ALL PHASE 4.9+ WORK UNTIL PHASE 0 COMPLETE**
+
+**Current Status: PROJECT BLOCKED** - Missing P0 CRITICAL requirements identified from SIMS4TOOLS alignment
+
+### �🔄 **REORDERED IMMEDIATE PRIORITIES (ACTIONABLE):**
+
+### 🚨 **CRITICAL PHASE 0 IMPLEMENTATION REQUIREMENTS**
+
+**🛑 PROJECT STATUS: BLOCKED UNTIL PHASE 0 COMPLETE**
+
+All Phase 4.9+ work must STOP immediately. The project has correctly identified P0 CRITICAL requirements but has NOT implemented them. This is the #1 blocking issue.
+
+#### **Phase 0.1: Real Package Data Collection** (3 days - START NOW)
+**Priority**: P0 CRITICAL BLOCKING | **Status**: ❌ NOT STARTED | **Owner**: Any available developer
+
+**Immediate Actions Required:**
+```powershell
+# Execute these commands immediately in PowerShell:
+cd "c:\Users\nawgl\code\TS4Tools"
+
+# Create test data directories
+New-Item -ItemType Directory -Force -Path "test-data\real-packages"
+New-Item -ItemType Directory -Force -Path "test-data\package-metadata"
+
+# Locate Steam Sims 4 installation
+$steamPath = "C:\Program Files (x86)\Steam\steamapps\common\The Sims 4\Data\Client"
+$eaPath = "$env:USERPROFILE\Documents\Electronic Arts\The Sims 4\Mods"
+
+# Copy official game packages (50 files)
+if (Test-Path $steamPath) {
+    Get-ChildItem "$steamPath\*.package" | Select-Object -First 50 | 
+        Copy-Item -Destination "test-data\real-packages\" -Verbose
+}
+
+# Copy community mod packages (50 files)  
+if (Test-Path $eaPath) {
+    Get-ChildItem "$eaPath\**\*.package" -Recurse -ErrorAction SilentlyContinue | 
+        Select-Object -First 50 | Copy-Item -Destination "test-data\real-packages\" -Verbose
+}
+
+# Generate package inventory
+$packages = Get-ChildItem "test-data\real-packages\*.package" | ForEach-Object {
+    @{
+        FileName = $_.Name
+        Size = $_.Length
+        SizeCategory = if ($_.Length -lt 1MB) {"Small"} elseif ($_.Length -lt 10MB) {"Medium"} else {"Large"}
+        LastModified = $_.LastWriteTime
+    }
+}
+$packages | ConvertTo-Json | Out-File "test-data\package-metadata\inventory.json"
+Write-Host "SUCCESS: Collected $($packages.Count) packages for golden master testing"
+```
+
+**Success Criteria:**
+- [ ] 100+ real .package files collected from Steam/EA installations
+- [ ] Package inventory JSON metadata generated
+- [ ] Files categorized by size and content type
+- [ ] Test data directory structure created
+
+#### **Phase 0.2: Golden Master Test Framework** (4 days - CRITICAL)
+**Priority**: P0 BLOCKING | **Status**: ❌ NOT STARTED | **Owner**: Senior developer required
+
+**Implementation Required (EXACT PATTERN from SIMS4TOOLS):**
+
+Create new test project:
+```bash
+dotnet new xunit -n "TS4Tools.Tests.GoldenMaster" -o "tests/TS4Tools.Tests.GoldenMaster"
+dotnet sln add "tests/TS4Tools.Tests.GoldenMaster/TS4Tools.Tests.GoldenMaster.csproj"
+```
+
+**Critical Test Implementation:**
+```csharp
+// tests/TS4Tools.Tests.GoldenMaster/PackageCompatibilityTests.cs
+namespace TS4Tools.Tests.GoldenMaster;
+
+[Collection("GoldenMaster")]
+public class PackageCompatibilityTests
+{
+    [Theory]
+    [MemberData(nameof(GetRealSims4Packages))]
+    public async Task NewImplementation_LoadSaveRoundTrip_ProducesIdenticalOutput(string packagePath)
+    {
+        // STEP 1: Load original bytes (reference)
+        var originalBytes = await File.ReadAllBytesAsync(packagePath);
+        
+        // STEP 2: Load with new TS4Tools implementation
+        var package = await PackageService.LoadPackageAsync(packagePath);
+        
+        // STEP 3: Save with new implementation
+        var newBytes = await package.SerializeToBytesAsync();
+        
+        // STEP 4: CRITICAL - Must be byte-identical
+        Assert.Equal(originalBytes.Length, newBytes.Length);
+        Assert.Equal(originalBytes, newBytes); // This WILL fail initially - that's expected
+    }
+    
+    public static IEnumerable<object[]> GetRealSims4Packages()
+    {
+        var testDataPath = Path.Combine("test-data", "real-packages");
+        return Directory.GetFiles(testDataPath, "*.package")
+                       .Select(f => new object[] { f });
+    }
+}
+```
+
+**Success Criteria:**
+- [ ] Golden master test project created and compiling
+- [ ] Byte-perfect compatibility tests implemented
+- [ ] All tests initially FAILING (expected - new implementation not ready)
+- [ ] Performance baseline tests implemented
+- [ ] Framework ready for future validation
+
+#### **Phase 0.3: Assembly Loading Crisis Assessment** (0.5 week - BLOCKING)
+**Priority**: P0 BLOCKING | **Status**: ❌ NOT STARTED | **Critical Issue**: WrapperDealer.cs:89 breaks in .NET 9
+
+**Current Breaking Pattern (MUST FIX):**
+```csharp
+// WRONG - This breaks completely in .NET 9:
+Assembly assembly = Assembly.LoadFile(path);
+
+// CORRECT - Required modern implementation:
+var context = AssemblyLoadContext.Default;
+var assembly = context.LoadFromAssemblyPath(path);
+```
+
+**Implementation Required:**
+```csharp
+public interface IAssemblyLoadContextManager
+{
+    Assembly LoadFromPath(string assemblyPath);
+    void UnloadContext(string contextName);
+}
+
+public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
+{
+    private readonly ConcurrentDictionary<string, AssemblyLoadContext> _contexts = new();
+    
+    public Assembly LoadFromPath(string assemblyPath)
+    {
+        var contextName = Path.GetFileNameWithoutExtension(assemblyPath);
+        var context = _contexts.GetOrAdd(contextName, 
+            _ => new AssemblyLoadContext(contextName, isCollectible: true));
+        return context.LoadFromAssemblyPath(assemblyPath);
+    }
+}
+```
+
+#### **Phase 0.4: Business Logic Inventory** (4 days - CRITICAL ANALYSIS)
+**Priority**: CRITICAL | **Status**: ❌ NOT STARTED | **Scope**: Document 114+ legacy projects
+
+**Analysis Required:**
+- [ ] DBPF file format parsing requirements (byte-level precision)
+- [ ] Resource wrapper business rules (20+ different types) 
+- [ ] Compression/decompression algorithms
+- [ ] Plugin registration patterns
+- [ ] Helper tool integration protocols
+- [ ] WrapperDealer API behavior requirements
+
+---
+
+### 🚨 **EXECUTION PRIORITY ORDER**
+
+**WEEK 1 (Days 1-7):**
+1. **Days 1-3**: Phase 0.1 (Real Package Collection) - START IMMEDIATELY
+2. **Days 4-7**: Phase 0.2 (Golden Master Framework)
+
+**WEEK 2 (Days 8-14):**  
+3. **Days 8-10**: Phase 0.3 (Assembly Loading Fix)
+4. **Days 11-14**: Phase 0.4 (Business Logic Inventory)
+
+**WEEK 3+:**
+5. **Resume Phase 4.9** ONLY after all Phase 0 requirements validated ✅
+
+### 📋 **DETAILED IMPLEMENTATION GUIDE**
+
+**📖 CRITICAL: See [`PHASE_0_IMPLEMENTATION_GUIDE.md`](./PHASE_0_IMPLEMENTATION_GUIDE.md)**
+
+This dedicated document provides step-by-step implementation instructions for all Phase 0 requirements including:
+
+- **PowerShell commands** ready to execute for package collection
+- **Complete C# code samples** for golden master test framework  
+- **Assembly loading crisis** resolution with modern .NET 9 patterns
+- **Business logic inventory** templates and analysis framework
+- **Success criteria checklists** for each phase
+- **Quality gate validation** procedures
+
+**🚨 MANDATORY READING**: All developers must review the implementation guide before starting Phase 0 work.
+
+### 🎯 **POST-PHASE 0 PROJECT ROADMAP UPDATES**
+
+Once Phase 0 is complete, the following roadmap modifications will take effect:
+
+#### **Enhanced Quality Gates (NEW)**
+- **Golden Master Validation**: All future phases must pass byte-perfect compatibility tests
+- **Performance Benchmarking**: All implementations must meet or exceed legacy performance
+- **Plugin Compatibility Testing**: All resource wrapper changes must validate with collected test data
+- **Memory Efficiency Validation**: Large file handling must use streaming patterns established in Phase 0
+
+#### **Revised Phase Completion Criteria (ENHANCED)**  
+**Before ANY phase can be marked complete:**
+- [ ] All golden master tests passing for affected components
+- [ ] Performance benchmarks within 10% of baseline
+- [ ] Real Sims 4 package compatibility validated
+- [ ] Assembly loading patterns use modern AssemblyLoadContext
+- [ ] API signatures preserved exactly for backward compatibility
+
+#### **CI/CD Pipeline Integration (NEW)**
+- **Automated Golden Master Testing**: Run compatibility tests on every commit
+- **Performance Regression Detection**: Alert on performance degradation
+- **Package Collection Updates**: Periodic refresh of test data from community
+- **Cross-Platform Validation**: Test on Windows, Linux, macOS with real data
+
+#### **Risk Mitigation Enhancements (NEW)**
+- **Early Compatibility Validation**: Catch breaking changes immediately  
+- **Real-World Testing**: Use actual Sims 4 packages, not synthetic test data
+- **Community Integration**: Validate with existing community tools and plugins
+- **Rollback Readiness**: Always maintain working legacy compatibility layer
+
+### 🚨 **PROJECT BLOCKING STATUS SUMMARY**
+
+**CURRENT STATE**: 🔴 **BLOCKED** - Phase 0 requirements identified but not implemented  
+**REQUIRED ACTION**: Immediate Phase 0 implementation as detailed in implementation guide  
+**ESTIMATED TIMELINE**: 2 weeks for complete Phase 0 implementation  
+**RISK LEVEL**: 🚨 **CRITICAL** - Project cannot succeed without Phase 0 foundation
+
+**SUCCESS DEPENDENCIES**:
+1. ✅ Strategic analysis complete (excellent work done)
+2. ❌ **Phase 0 implementation** (critical gap)
+3. ⏳ Golden master testing framework (depends on #2)
+4. ⏳ Assembly loading modernization (depends on #2)  
+5. ⏳ Business logic validation (depends on #2)
+
+The project has done **EXCELLENT** strategic work identifying requirements from SIMS4TOOLS documentation. The critical gap is **execution of the identified requirements**.
+3. **Move Assembly Loading to Phase 4.14** instead of Phase 5.4 (too late)
+
+**CRITICAL ALIGNMENT WITH SIMS4TOOLS MIGRATION DOCUMENTATION:**
+> All upcoming phases now align with SIMS4TOOLS_MIGRATION_DOCUMENTATION.md requirements for 100% external interface compatibility, golden master testing, and greenfield rewrite approach.
+
 - **Phase 4.9**: World Building Wrappers - World building support (0.5-1 week)
-- **Phase 4.10**: Visual Enhancement Wrappers - Advanced visual effects and materials (0.5-1 week) *[Note: Core effects completed in Phase 4.5]*
+  - 🚨 **NEW REQUIREMENT**: Golden master testing with real Sims 4 packages mandatory
+  - **Focus**: Scene, environment, and world data with byte-perfect compatibility
+  
+- **Phase 4.10**: Visual Enhancement Wrappers - Advanced visual effects and materials (0.5-1 week)
+  - 🚨 **NEW REQUIREMENT**: Visual effect wrapper compatibility with existing tools
+  - **Focus**: Shader, material, and lighting resources with API preservation
+  
 - **Phase 4.11**: Utility and Data Wrappers - Data management support (0.5-1 week)
+  - 🚨 **NEW REQUIREMENT**: Data wrapper plugin compatibility via adapter pattern
+  - **Focus**: Configuration, metadata, and utility resources
+  
 - **Phase 4.12**: Helper Tool Integration - Tool integration support (0.5-1 week)
+  - 🚨 **CRITICAL**: External helper tool compatibility must be preserved 100%
+  - **Focus**: Cross-platform helper execution with identical integration
+  
 - **Phase 4.13**: Final Specialized Wrappers - Legacy and edge cases (0.5-1 week)
-- **Phase 5**: Core Library Polish - Performance and robustness (2 weeks)
+  - 🚨 **CRITICAL**: All legacy resource types must work via compatibility adapters
+  - **Focus**: Edge case resources with backward compatibility preservation
+
+- **Phase 4.14: WrapperDealer Compatibility Layer (ENHANCED)** - Critical plugin compatibility (1 week)
+  - 🚨 **CRITICAL**: Implement legacy WrapperDealer API compatibility for existing plugins
+  - 🚨 **NEW CRITICAL REQUIREMENTS FROM SIMS4TOOLS**:
+    - [ ] **Exact API Signature Preservation**: All static methods must match exactly
+      - `WrapperDealer.GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)`
+      - `WrapperDealer.GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie, bool AlwaysDefault)`
+      - `WrapperDealer.CreateNewResource(int APIversion, string resourceType)`
+      - `WrapperDealer.TypeMap` - Collection of all resource type mappings  
+      - `WrapperDealer.Disabled` - Collection of disabled wrapper types
+    - [ ] **Plugin Registration Compatibility**: `AResourceHandler.Add(Type, List<string>)` pattern
+    - [ ] **Assembly Loading Replacement**: Modern AssemblyLoadContext with legacy facades
+    - [ ] **Compatibility Testing**: All existing community wrappers must work unchanged
+
+  **Pattern Required**:
+  ```csharp
+  // Preserve existing static class for backward compatibility  
+  public static class WrapperDealer 
+  {
+      private static IResourceWrapperService _service = ServiceProvider.GetService<IResourceWrapperService>();
+      
+      // EXACT same signature as original - CRITICAL for compatibility
+      public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie) 
+          => _service.GetResource(APIversion, pkg, rie);
+  }
+  ```
+
+#### 🚨 **CRITICAL API COMPATIBILITY REQUIREMENTS (FROM SIMS4TOOLS)**
+
+**The following APIs MUST be preserved exactly for 100% compatibility:**
+
+##### **1. Package Management APIs (MANDATORY PRESERVATION)**
+- `IPackage.SavePackage()` - Save package to original location
+- `IPackage.SaveAs(Stream s)` - Save package to stream  
+- `IPackage.SaveAs(string path)` - Save package to file path
+- `Package.OpenPackage(int APIversion, string filename, bool readWrite)` - Load package
+- `Package.NewPackage(int APIversion)` - Create new empty package
+
+##### **2. Resource Management APIs (MANDATORY PRESERVATION)**
+- `WrapperDealer.GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)` - Get resource with wrapper
+- `WrapperDealer.GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie, bool AlwaysDefault)` - Get resource with optional default wrapper
+- `WrapperDealer.CreateNewResource(int APIversion, string resourceType)` - Create new resource
+- `AResource.Stream` - Access resource data as stream
+- `AResource.AsBytes` - Access resource data as byte array
+
+##### **3. Type System APIs (MANDATORY PRESERVATION)**
+- `WrapperDealer.TypeMap` - Collection of all resource type mappings
+- `WrapperDealer.Disabled` - Collection of disabled wrapper types  
+- `AResourceHandler.Add(Type, List<string>)` - Register resource type handler
+
+##### **4. s4pe Main Editor APIs (HIGH COMPATIBILITY)**
+- `MainForm.FileNew()` - Create new package
+- `MainForm.FileOpen()` - Open package with read/write
+- `MainForm.FileOpenReadOnly()` - Open package as read-only
+- `MainForm.FileSave()` - Save current package
+- `MainForm.FileSaveAs()` - Save package to new location
+- `MainForm.ResourceAdd()` - Add new resource to package
+- `MainForm.ResourceCopy()` - Copy resource to clipboard
+- `MainForm.ResourcePaste()` - Paste resource from clipboard
+- `MainForm.ResourceDuplicate()` - Create duplicate of resource
+- `MainForm.ResourceDelete()` - Remove resource from package
+- `MainForm.ResourceImport()` - Import resource from external file
+- `MainForm.ResourceExport()` - Export resource to external file
+
+**🚨 ANY CHANGES TO THESE METHOD SIGNATURES WILL BREAK COMPATIBILITY**
+  - 🚨 **NEW REQUIREMENT**: Performance must match or exceed original benchmarks
+  - **Focus**: Streaming I/O implementation for multi-GB files from day 1
+
+### 🚨 **CRITICAL MISSING IMPLEMENTATION REQUIREMENTS**
+
+Following comprehensive analysis of SIMS4TOOLS_MIGRATION_DOCUMENTATION.md, the following critical components must be added to ensure successful migration:
+
+#### **User Data Migration Service (NEW - CRITICAL)**
+**Priority**: HIGH | **Target Phase**: 5.6 | **Status**: ❌ MISSING FROM ROADMAP
+
+**Required Implementation:**
+```csharp
+public interface IUserDataMigrationService
+{
+    Task<MigrationResult> MigrateUserSettingsAsync(string oldVersion, string newVersion);
+    Task<MigrationResult> MigrateRecentFilesAsync();
+    Task<MigrationResult> MigrateCustomPluginConfigAsync();
+    Task<MigrationResult> MigrateWindowLayoutAsync();
+    Task ValidateMigrationIntegrityAsync();
+}
+
+public class UserDataMigrationService : IUserDataMigrationService
+{
+    public async Task<MigrationResult> MigrateUserSettingsAsync(string oldVersion, string newVersion)
+    {
+        // Migrate user preferences, window positions, recent files, etc.
+        var oldSettingsPath = GetLegacySettingsPath();
+        var oldSettings = await ReadLegacySettingsAsync(oldSettingsPath);
+        var newSettings = ConvertToNewFormat(oldSettings);
+        await WriteNewSettingsAsync(newSettings);
+        
+        return new MigrationResult { 
+            Success = true, 
+            ItemsMigrated = oldSettings.Count,
+            BackupCreated = true 
+        };
+    }
+}
+```
+
+**Business Case**: Users have years of accumulated settings, recent files, window layouts, and custom configurations that must be preserved during migration to ensure adoption.
+
+#### **Rollback Strategy Service (NEW - CRITICAL)**  
+**Priority**: HIGH | **Target Phase**: 5.7 | **Status**: ❌ MISSING FROM ROADMAP
+
+**Required Implementation:**
+```csharp
+public interface IRollbackService
+{
+    Task<bool> CanRollbackAsync(Version fromVersion, Version toVersion);
+    Task<RollbackResult> RollbackToVersionAsync(Version targetVersion);
+    Task CreateRollbackPointAsync(string description);
+    Task<IEnumerable<RollbackPoint>> GetAvailableRollbackPointsAsync();
+}
+
+public class RollbackService : IRollbackService
+{
+    public async Task<RollbackResult> RollbackToVersionAsync(Version targetVersion)
+    {
+        // Create backup of current state
+        await CreateBackupAsync("pre-rollback");
+        
+        // Restore previous version's binaries and settings
+        await RestoreVersionBinariesAsync(targetVersion);
+        await RestoreVersionSettingsAsync(targetVersion);
+        
+        return new RollbackResult { 
+            Success = true, 
+            RestoredVersion = targetVersion,
+            BackupLocation = GetBackupPath() 
+        };
+    }
+}
+```
+
+**Business Case**: Enterprise adoption requires ability to quickly rollback if migration issues are discovered in production use.
+
+#### **Progressive Feature Rollout Service (NEW - HIGH)**
+**Priority**: HIGH | **Target Phase**: 6.1 | **Status**: ❌ MISSING FROM ROADMAP
+
+**Required Implementation:**
+```csharp
+public interface IFeatureFlagService
+{
+    bool IsFeatureEnabled(string featureName);
+    Task EnableFeatureAsync(string featureName, bool enabled);
+    Task<FeatureCompatibilityReport> ValidateFeatureCompatibilityAsync();
+    Task<Dictionary<string, bool>> GetAllFeatureFlagsAsync();
+}
+
+public class FeatureFlagService : IFeatureFlagService
+{
+    private readonly Dictionary<string, bool> _featureFlags = new()
+    {
+        { "StreamingPackageLoading", false }, // Off by default, user can opt-in
+        { "AvaloniaUI", false },             // Falls back to WinForms if disabled  
+        { "AsyncFileOperations", true },      // Enabled by default for performance
+        { "CrossPlatformHelpers", false },   // Platform-specific by default
+        { "ModernPluginSystem", false },     // Legacy plugins by default
+        { "GoldenMasterValidation", true }   // Always enabled for compatibility
+    };
+}
+```
+
+**Business Case**: Allow users to gradually adopt new features, reducing migration risk and providing fallback options if issues occur.
+
+#### **Updated Phase Integration Requirements**
+
+**Phase 5.6: External Compatibility Validation (ENHANCED)**
+- **Add**: User data migration implementation and testing
+- **Add**: Settings preservation validation with real user data  
+- **Add**: Recent files and preferences migration testing
+
+**Phase 5.7: Native DLL Replacement Strategy (ENHANCED)**  
+- **Add**: Rollback service implementation
+- **Add**: Version management and backup strategies
+- **Add**: Emergency rollback testing scenarios
+
+**Phase 6.1: s4pe Application Migration - UI Foundation (NEW SUB-PHASE)**
+- **Add**: Progressive feature rollout implementation
+- **Add**: Feature flag management UI
+- **Add**: User preference migration during first launch
+
+### 🎯 **ENHANCED SUCCESS CRITERIA**
+
+**Before declaring migration complete, ALL of the following must be validated:**
+
+**Core Compatibility (MANDATORY):**
+- [ ] 100% round-trip compatibility with real Sims 4 packages
+- [ ] Performance parity (startup, load, save times ≤ original + 10%)
+- [ ] Plugin compatibility (all existing resource wrappers work via adapters)
+- [ ] API preservation (all public method signatures identical)
+- [ ] Helper integration (all .helper files execute correctly)
+
+**User Experience (CRITICAL):**
+- [ ] **User data migration working** (settings, recent files, window layouts)
+- [ ] **One-click rollback capability** (return to legacy version if needed)
+- [ ] **Progressive feature adoption** (users can enable new features gradually)
+- [ ] **Zero data loss** during migration process
+- [ ] **Intuitive migration process** with clear progress indicators
+
+**Enterprise Readiness (HIGH):**
+- [ ] **Backup and restore** functionality validated
+- [ ] **Multi-user environment** compatibility tested
+- [ ] **Network drive compatibility** verified for corporate environments
+- [ ] **Security scanning** passed for corporate deployment
+- [ ] **Documentation** complete for IT administrators
+  
 - **Phase 5.3**: Advanced Features Implementation - Power user features (1 week)
+  - **Focus**: Advanced package manipulation with API compatibility
+  
 - **Phase 5.4**: Plugin System and Extensibility - Community extensions (1 week)
+  - 🚨 **CRITICAL**: Modern plugin system with legacy AResourceHandler adapter support
+  - **Focus**: AssemblyLoadContext implementation replacing Assembly.LoadFile()
+  
+- **Phase 5.5**: Business Logic Review - Comprehensive review of all core business logic before s4pe migration (2 weeks - EXTENDED)
+  - 🚨 **CRITICAL EXPANSION**: Now includes MANDATORY golden master validation phase
+  - **Focus**: Byte-perfect compatibility testing with 100+ real Sims 4 packages
+  - **NEW**: Assembly loading context validation and plugin compatibility testing
+  
+- **Phase 5.6: External Compatibility Validation (NEW)** - Third-party tool compatibility (1 week)
+  - 🚨 **CRITICAL**: Validate third-party tool and plugin compatibility
+  - **Focus**: External tool integration and community plugin support
+  - **Requirements**:
+    - [ ] Test existing helper tools with new implementation
+    - [ ] Validate WrapperDealer plugin compatibility with community wrappers
+    - [ ] Test third-party resource wrapper compatibility
+    - [ ] Ensure .helper file format preservation and execution
+    - [ ] Integration testing with real community tools
+
+- **Phase 5.7: Native DLL Replacement Strategy (NEW)** - Cross-platform performance (0.5 week)
+  - 🚨 **CRITICAL**: Implement cross-platform replacements for native DLL dependencies
+  - **Focus**: DDS compression and performance validation
+  - **Requirements**:
+    - [ ] Cross-platform DDS compression implementation
+    - [ ] Performance benchmarking vs native squishinterface_*.dll
+    - [ ] Managed fallback validation for compression quality
+    - [ ] Multi-GB file streaming performance validation
+  
+- **Phase 5.X**: NotImplemented Completion - Address deferred NotImplementedException items (0.5 week)
+  - **Focus**: Complete deferred functionality with compatibility preservation
+  
+- **Phase 6**: s4pe Application Migration - Complete package editor GUI (16 weeks, 8 focused sub-phases)
+  - 🚨 **NEW APPROACH**: Greenfield Avalonia UI with optional WinForms Windows compatibility
+  - **Focus**: 100% feature parity with original s4pe but modern cross-platform architecture
+  - **CRITICAL**: All existing workflows must work identically
+  
+- **Phase 7**: s4pe Helpers Migration - 7 specialized helper tools (8 weeks, 4 focused sub-phases)
+  - 🚨 **CRITICAL**: Helper integration must work without changes for existing tools
+  - **Focus**: Cross-platform ModelViewer, ThumbnailHelper, DDSHelper with native performance
+  - **NEW REQUIREMENTS**:
+    - [ ] **7.1: Helper Integration Compatibility** (2 weeks)
+      - 100% .helper file format preservation
+      - IRunHelper interface compatibility layer
+      - Cross-platform helper execution strategy
+      - Integration testing with existing helper tools
+    - [ ] **7.2: Cross-Platform Helper Implementation** (4 weeks)
+      - ModelViewer cross-platform replacement (WPF → Avalonia)
+      - ThumbnailHelper, DDSHelper modern implementations
+      - Native performance preservation on Windows
+    - [ ] **7.3: Native Performance Validation** (1 week)
+      - Native DLL performance benchmarking
+      - Managed fallback implementation testing
+      - Cross-platform performance validation
+    - [ ] **7.4: Helper Tool Integration Testing** (1 week)
+      - Real-world helper tool compatibility testing
+      - Community tool integration validation
+  
+- **Phase 8**: Final Integration - Complete system validation (4 weeks)
+  - 🚨 **MANDATORY**: Comprehensive golden master testing with real-world packages
+  - **Focus**: 99.9%+ compatibility validation with existing user packages and workflows Community extensions (1 week)
 - **Phase 5.5**: Business Logic Review - Comprehensive review of all core business logic before s4pe migration (1.5 weeks)
 - **Phase 5.X**: NotImplemented Completion - Address deferred NotImplementedException items (0.5 week) *[Deferred from original Phase 4.5]*
 - **Phase 6**: s4pe Application Migration - Complete package editor GUI (16 weeks, 8 focused sub-phases)

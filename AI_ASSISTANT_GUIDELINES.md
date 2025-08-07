@@ -1,8 +1,17 @@
 # AI Assistant Guidelines for TS4Tools Project
 
 > **ROLE:** You are an expert .NET migration specialist working on the TS4Tools project  
-> **MISSION:** Modernize legacy Sims 4 modding tools from .NET Framework to .NET 8+  
-> **CONTEXT:** Large-scale codebase migration requiring high code quality, comprehensive testing, and architectural modernization
+> **MISSION:** Modernize legacy Sims 4 modding tools from .NET Framework to .NET 9 via **GREENFIELD REWRITE**  
+> **CONTEXT:** Large-scale business logic migration with **100% external interface compatibility** requirement  
+> **APPROACH:** Extract domain knowledge, NOT code migration - modern implementation with identical external behavior
+
+## 🚨 CRITICAL MIGRATION PHILOSOPHY
+
+### **GREENFIELD REWRITE - NOT IN-PLACE MIGRATION**
+- **Extract business logic patterns**, never copy code structures
+- **Preserve 100% API compatibility** for existing tools and plugins
+- **Modern .NET 9 implementation** with identical external behavior
+- **Golden Master Testing** mandatory for every migrated component
 
 ## ⚡ CRITICAL DIRECTIVES (Read First)
 
@@ -13,6 +22,27 @@ cd "c:\Users\nawgl\code\TS4Tools"
 dotnet build --no-restore  # Must be ZERO errors/warnings
 dotnet test --verbosity minimal  # Must be 100% pass rate
 ```
+
+### 🎯 CRITICAL SUCCESS FACTORS (MANDATORY)
+
+1. **ASSEMBLY LOADING CRISIS RESOLUTION**
+   - Replace `Assembly.LoadFile()` with `AssemblyLoadContext.LoadFromAssemblyPath()`
+   - Priority P0 - BLOCKING issue that breaks .NET 9 compatibility
+   
+2. **GOLDEN MASTER TESTING MANDATORY**
+   - Every migrated component must pass byte-perfect compatibility tests
+   - Use real Sims 4 .package files for validation
+   - Round-trip operations must produce identical output
+
+3. **API COMPATIBILITY PRESERVATION**
+   - ALL public method signatures must remain identical
+   - Existing third-party tools must work without changes
+   - Plugin system must support legacy handlers via adapters
+
+4. **BUSINESS LOGIC MIGRATION RULES**
+   - Extract domain knowledge from 114+ projects
+   - Never copy-paste old code structures
+   - Modern async/DI implementation with identical behavior
 
 ### 🎯 DECISION TREE: When to Use Which Approach
 - **New feature/class** → Create with tests first (TDD)
@@ -59,6 +89,7 @@ dotnet test [test-project] --verbosity minimal
 5. **Cancellation** - CancellationToken support throughout
 
 ### Code Quality Standards
+
 ```csharp
 // ✅ REQUIRED PATTERN - Always use this structure
 public class [ServiceName] : I[ServiceName]
@@ -71,6 +102,92 @@ public class [ServiceName] : I[ServiceName]
     public async Task<Result> DoWorkAsync(Parameters parameters, CancellationToken cancellationToken = default)
     {
         // Implementation with proper error handling
+    }
+}
+```
+
+### 🚨 CRITICAL MIGRATION PATTERNS (MANDATORY)
+
+#### Pattern 1: Business Logic Extraction (NOT Code Copying)
+
+```csharp
+// ❌ FORBIDDEN: Direct code copying from legacy codebase
+public class WrapperDealer { /* copy-pasted from Sims4Tools */ }
+
+// ✅ REQUIRED: Extract business logic with modern implementation
+public interface IResourceWrapperService
+{
+    Task<IResource> GetResourceAsync(int apiVersion, IPackage package, IResourceIndexEntry entry);
+    IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry); // Sync compatibility
+}
+
+public class ResourceWrapperService : IResourceWrapperService
+{
+    private readonly IServiceProvider _serviceProvider;
+    
+    // Modern async implementation extracting WrapperDealer business logic
+    public async Task<IResource> GetResourceAsync(int apiVersion, IPackage package, IResourceIndexEntry entry)
+    {
+        // EXTRACT business rules from original WrapperDealer.GetResource()
+        // MODERN implementation but IDENTICAL behavior
+        var resourceType = entry.ResourceType.ToString("X8");
+        var wrapperType = await GetWrapperTypeAsync(resourceType);
+        
+        return wrapperType == null 
+            ? await CreateDefaultResourceAsync(apiVersion, package, entry)
+            : await CreateTypedResourceAsync(wrapperType, apiVersion, package, entry);
+    }
+    
+    // Compatibility wrapper - MANDATORY for existing consumers
+    public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry)
+        => GetResourceAsync(apiVersion, package, entry).GetAwaiter().GetResult();
+}
+```
+
+#### Pattern 2: Golden Master Testing (MANDATORY)
+
+```csharp
+[Theory]
+[MemberData(nameof(GetRealSims4Packages))]
+public async Task MigratedComponent_ProducesIdenticalOutput(string packagePath)
+{
+    // STEP 1: Test new implementation
+    var newPackage = await NewPackageService.LoadPackageAsync(packagePath);
+    var newBytes = await newPackage.SerializeToBytesAsync();
+    
+    // STEP 2: Byte-perfect validation (MANDATORY)
+    var referenceBytes = await LoadReferenceBytes(packagePath);
+    Assert.Equal(referenceBytes, newBytes);
+}
+
+public static IEnumerable<object[]> GetRealSims4Packages()
+{
+    // CRITICAL: Must use real Sims 4 packages from Steam installation
+    var steamPath = @"C:\Program Files (x86)\Steam\steamapps\common\The Sims 4\Data\Client";
+    if (Directory.Exists(steamPath))
+        return Directory.GetFiles(steamPath, "*.package").Take(10).Select(p => new object[] { p });
+    
+    return Directory.GetFiles("test-packages", "*.package").Select(p => new object[] { p });
+}
+```
+
+#### Pattern 3: Assembly Loading Context (CRITICAL FIX)
+
+```csharp
+// ❌ BREAKS IN .NET 9: Original WrapperDealer.cs:89
+Assembly assembly = Assembly.LoadFile(path);
+
+// ✅ MODERN SOLUTION: Use AssemblyLoadContext
+public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
+{
+    private readonly ConcurrentDictionary<string, AssemblyLoadContext> _contexts = new();
+    
+    public Assembly LoadFromPath(string assemblyPath)
+    {
+        var contextName = Path.GetFileNameWithoutExtension(assemblyPath);
+        var context = _contexts.GetOrAdd(contextName, 
+            _ => new AssemblyLoadContext(contextName, isCollectible: true));
+        return context.LoadFromAssemblyPath(assemblyPath);
     }
 }
 ```

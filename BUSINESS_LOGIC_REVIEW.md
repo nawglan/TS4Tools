@@ -2,7 +2,7 @@
 
 ## **Comprehensive Review of Core Business Logic Across All Projects**
 
-**Version:** 1.0  
+**Version:** 1.1 (Updated for SIMS4TOOLS Migration Alignment)  
 **Created:** August 7, 2025  
 **Status:** Planning Phase  
 **Review Phase:** 5.5 (Pre-s4pe Migration)  
@@ -15,13 +15,40 @@
 
 This document tracks the comprehensive review of business logic across all TS4Tools projects before beginning the s4pe application migration (Phase 6). The review ensures that all core libraries have been thoroughly analyzed, documented, and validated for correctness, performance, and maintainability.
 
+### **🚨 CRITICAL ALIGNMENT WITH SIMS4TOOLS MIGRATION REQUIREMENTS**
+
+This review has been updated to align with the comprehensive SIMS4TOOLS_MIGRATION_DOCUMENTATION.md requirements:
+
+1. **MANDATORY: Golden Master Testing Validation**
+   - Every core component must pass byte-perfect compatibility tests
+   - Real Sims 4 .package files must be used for validation
+   - Round-trip operations must produce identical output
+
+2. **MANDATORY: Assembly Loading Crisis Assessment**  
+   - Verify all plugin loading mechanisms use modern AssemblyLoadContext
+   - Identify and document any remaining Assembly.LoadFile() usage
+   - Validate cross-platform assembly loading patterns
+
+3. **MANDATORY: API Compatibility Verification**
+   - All public method signatures must remain identical to original
+   - Plugin system must support legacy handlers via adapters
+   - External tool integration must work without changes
+
+4. **MANDATORY: Business Logic Extraction Validation**
+   - Confirm domain knowledge extraction from 114+ legacy projects
+   - Verify modern implementation with identical external behavior
+   - Document all business rule preservation decisions
+
 ### **Review Objectives**
 
 1. **Business Logic Validation** → Verify correctness of all core algorithms and data processing
-2. **Architecture Assessment** → Ensure design patterns and structures support s4pe migration
+2. **Architecture Assessment** → Ensure design patterns and structures support s4pe migration  
 3. **Performance Analysis** → Identify potential bottlenecks before GUI integration
 4. **API Completeness** → Validate all interfaces needed for s4pe migration
 5. **Documentation Gaps** → Fill critical knowledge gaps before complex GUI work
+6. **🚨 NEW: Golden Master Compatibility** → Validate byte-perfect file format handling
+7. **🚨 NEW: Assembly Loading Modernization** → Verify .NET 9 compatibility throughout
+8. **🚨 NEW: External Interface Preservation** → Confirm 100% backward compatibility
 
 ---
 
@@ -225,10 +252,12 @@ This document tracks the comprehensive review of business logic across all TS4To
   - **Scalability Findings:** _To be documented_
 
 ### **Phase 5.5.6: Documentation and Gap Analysis (Days 10-11)**
+
 **Status:** ⏳ Not Started  
 **Focus:** Knowledge transfer and preparation for Phase 6
 
 #### **Critical Documentation Updates**
+
 - [ ] **Architecture Decision Records**
   - [ ] Document all major design decisions
   - [ ] Rationale for chosen patterns and approaches
@@ -244,6 +273,7 @@ This document tracks the comprehensive review of business logic across all TS4To
   - **Documentation Status:** _To be documented_
 
 #### **Identified Gaps and Risks**
+
 - [ ] **Technical Debt Items**
   - [ ] Code quality issues that impact s4pe migration
   - [ ] Performance bottlenecks requiring attention
@@ -257,6 +287,59 @@ This document tracks the comprehensive review of business logic across all TS4To
   - [ ] Dependencies between GUI and core libraries
   - [ ] Recommended approach for Phase 6 execution
   - **Readiness Report:** _To be documented_
+
+### **Phase 5.5.7: MANDATORY Golden Master Validation (Days 12-13)**
+
+**Status:** ⏳ Not Started  
+**Focus:** CRITICAL - Byte-perfect compatibility validation aligned with SIMS4TOOLS requirements
+
+#### **🚨 CRITICAL: Real Sims 4 Package Testing**
+
+- [ ] **Test Data Collection**
+  - [ ] Collect 100+ diverse .package files from Steam installation
+  - [ ] Include packages of varying sizes (KB to GB range)
+  - [ ] Cover all major resource types found in core libraries
+  - [ ] Document package file characteristics and complexity
+  - **Collection Status:** _To be documented_
+
+- [ ] **Golden Master Test Implementation**
+  - [ ] Create comprehensive byte-perfect round-trip tests
+  - [ ] Validate load → modify → save → compare operations
+  - [ ] Test resource enumeration and access patterns
+  - [ ] Verify compression/decompression algorithms
+  - **Implementation Status:** _To be documented_
+
+#### **🚨 CRITICAL: Assembly Loading Context Validation**
+
+- [ ] **Modern Assembly Loading Verification**
+  - [ ] Confirm all plugin loading uses AssemblyLoadContext
+  - [ ] Verify no remaining Assembly.LoadFile() usage
+  - [ ] Test plugin isolation and unloading capabilities
+  - [ ] Validate cross-platform assembly discovery
+  - **Validation Status:** _To be documented_
+
+- [ ] **Plugin Compatibility Testing**
+  - [ ] Test legacy plugin adapter system
+  - [ ] Verify existing AResourceHandler patterns work
+  - [ ] Validate modern plugin registration system
+  - [ ] Test plugin hot-reload capabilities
+  - **Testing Status:** _To be documented_
+
+#### **🚨 CRITICAL: API Compatibility Preservation**
+
+- [ ] **External Interface Validation**
+  - [ ] Document all public API signatures
+  - [ ] Verify method signatures identical to legacy version
+  - [ ] Test static class compatibility wrappers
+  - [ ] Validate helper tool integration points
+  - **Interface Status:** _To be documented_
+
+- [ ] **Business Logic Extraction Verification**
+  - [ ] Confirm domain knowledge accurately extracted
+  - [ ] Validate identical external behavior
+  - [ ] Document all business rule preservation decisions
+  - [ ] Verify performance characteristics maintained
+  - **Extraction Status:** _To be documented_
 
 ---
 

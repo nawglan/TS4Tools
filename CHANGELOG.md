@@ -27,13 +27,37 @@
 - **Modern Architecture:** .NET 9 with dependency injection, async patterns, and nullable reference types
 
 **Revised Project Timeline:**
-- **New Estimated Completion:** September 2025 (10-12 weeks total)
+- **New Estimated Completion:** September 2025 (10-12 weeks total) + 2 weeks for Phase 0
 - **Original Target:** March 2026 (50 weeks optimized with business logic review phase)  
-- **Time Savings:** 6+ months ahead of schedule
+- **Time Savings:** 6+ months ahead of schedule (after Phase 0 completion)
+
+**🚨 PHASE NUMBERING CLARIFICATION:**
+The addition of Phase 0.1-0.4 does NOT require renumbering any completed work. All accomplished phases listed below retain their original numbers and remain valid. Phase 0 is an INSERT operation that must be completed before resuming Phase 4.9+.
 
 ---
 
 ## 📋 **Recent Planning Updates**
+
+### **🚨 CRITICAL: Phase 0 Foundation Requirements Added** 🚨
+*Updated: August 7, 2025*
+
+**URGENT PROJECT PHASE ADDITION:**
+- 🚨 **NEW CRITICAL PHASES ADDED:** Phase 0.1-0.4 - P0 CRITICAL Foundation Requirements (2 weeks)
+- 🛑 **PROJECT STATUS:** BLOCKED until Phase 0 requirements complete
+- 🔄 **EXECUTION PRIORITY:** Must complete Phase 0.1-0.4 BEFORE resuming Phase 4.9+
+- 📋 **Implementation Guide:** [`PHASE_0_IMPLEMENTATION_GUIDE.md`](./PHASE_0_IMPLEMENTATION_GUIDE.md) - Detailed step-by-step instructions
+
+**Phase 0 Requirements (NEW - BLOCKING):**
+- **Phase 0.1:** Real Package Data Collection (3 days) - Collect 100+ real Sims 4 packages
+- **Phase 0.2:** Golden Master Test Framework (4 days) - Byte-perfect compatibility testing 
+- **Phase 0.3:** Assembly Loading Crisis Assessment (3.5 days) - Fix .NET 9 breaking changes
+- **Phase 0.4:** Business Logic Inventory (4 days) - Document critical rules from 114+ legacy projects
+
+**Impact on Existing Phases:**
+- ✅ **NO RENUMBERING:** All completed phases (1.1-4.8) keep their current numbers
+- ✅ **NO SCOPE CHANGES:** Completed work remains unchanged and valid
+- ❌ **EXECUTION HALT:** Phase 4.9+ work MUST STOP until Phase 0 complete
+- 🎯 **NEW TIMELINE:** +2 weeks for Phase 0 implementation before resuming
 
 ### **Phase 5.5: Business Logic Review Added** 📋
 *Updated: August 7, 2025*
