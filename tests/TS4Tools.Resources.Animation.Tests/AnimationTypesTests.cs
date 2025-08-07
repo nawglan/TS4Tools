@@ -129,14 +129,14 @@ public sealed class AnimationTypesTests
     [Theory]
     [InlineData(AgeCategory.Baby, 1)]
     [InlineData(AgeCategory.Toddler, 2)]
-    [InlineData(AgeCategory.Child, 3)]
-    [InlineData(AgeCategory.Teen, 4)]
-    [InlineData(AgeCategory.YoungAdult, 5)]
-    [InlineData(AgeCategory.Adult, 6)]
-    [InlineData(AgeCategory.Elder, 7)]
+    [InlineData(AgeCategory.Child, 4)]
+    [InlineData(AgeCategory.Teen, 8)]
+    [InlineData(AgeCategory.YoungAdult, 16)]
+    [InlineData(AgeCategory.Adult, 32)]
+    [InlineData(AgeCategory.Elder, 64)]
     public void AgeCategory_Values_ShouldFollowLifeStageOrder(AgeCategory age, int expectedValue)
     {
-        // Act & Assert
+        // Act & Assert - Age categories use bit flags, not sequential values
         ((int)age).Should().Be(expectedValue);
     }
 
@@ -311,27 +311,28 @@ public sealed class AnimationTypesTests
     {
         // Arrange
         const string name = "TestBone";
+        const string parentName = "ParentBone";
         var position = new Vector3(1, 2, 3);
-        var rotation = Quaternion.Identity;
-        Bone? parent = null;
+        var rotation = Quaternion.Identity.ToVector4();
+        var scale = new Vector3(1, 1, 1);
 
         // Act
-        var bone = new Bone(name, position, rotation, parent);
+        var bone = new Bone(name, parentName, position, rotation, scale);
 
         // Assert
         bone.Name.Should().Be(name);
+        bone.ParentName.Should().Be(parentName);
         bone.Position.Should().Be(position);
         bone.Rotation.Should().Be(rotation);
-        bone.Parent.Should().Be(parent);
-        bone.Children.Should().NotBeNull().And.BeEmpty();
+        bone.Scale.Should().Be(scale);
     }
 
     [Fact]
-    public void Bone_AddChild_ShouldAddToChildren()
+    public void BoneNode_AddChild_ShouldAddToChildren()
     {
         // Arrange
-        var parent = new Bone("Parent", Vector3.Zero, Quaternion.Identity, null);
-        var child = new Bone("Child", new Vector3(1, 0, 0), Quaternion.Identity, parent);
+        var parent = new BoneNode("Parent", Vector3.Zero, Quaternion.Identity);
+        var child = new BoneNode("Child", new Vector3(1, 0, 0), Quaternion.Identity);
 
         // Act
         parent.AddChild(child);

@@ -94,7 +94,12 @@ public enum AgeCategory
     /// <summary>
     /// Elder age.
     /// </summary>
-    Elder = 64
+    Elder = 64,
+
+    /// <summary>
+    /// All age categories.
+    /// </summary>
+    All = 127
 }
 
 /// <summary>
@@ -156,7 +161,12 @@ public enum Species
     /// <summary>
     /// Other animal or creature.
     /// </summary>
-    Other = 99
+    Other = 99,
+
+    /// <summary>
+    /// All species.
+    /// </summary>
+    All = 255
 }
 
 /// <summary>
@@ -212,27 +222,52 @@ public enum PartCategory
     /// <summary>
     /// Makeup.
     /// </summary>
-    Makeup = 9
+    Makeup = 9,
+
+    /// <summary>
+    /// Eyebrows.
+    /// </summary>
+    Eyebrows = 10,
+
+    /// <summary>
+    /// Eyes.
+    /// </summary>
+    Eyes = 11,
+
+    /// <summary>
+    /// Skin details.
+    /// </summary>
+    Skin = 12,
+
+    /// <summary>
+    /// Facial features.
+    /// </summary>
+    Facial = 13,
+
+    /// <summary>
+    /// Occult traits.
+    /// </summary>
+    Occult = 14
 }
 
 /// <summary>
 /// Represents a character part used in CAS.
 /// </summary>
-/// <param name="PartId">Unique identifier for this part.</param>
+/// <param name="InstanceId">Unique identifier for this part.</param>
 /// <param name="Category">Category of the part.</param>
 /// <param name="Name">Display name of the part.</param>
 /// <param name="AgeCategory">Supported age categories.</param>
 /// <param name="Gender">Supported genders.</param>
 /// <param name="Species">Supported species.</param>
-/// <param name="SortOrder">Display sort order.</param>
+/// <param name="SortPriority">Display sort priority.</param>
 public readonly record struct CharacterPart(
-    uint PartId, 
+    uint InstanceId, 
     PartCategory Category, 
     string Name, 
     AgeCategory AgeCategory, 
     Gender Gender, 
     Species Species, 
-    int SortOrder);
+    int SortPriority);
 
 /// <summary>
 /// Represents clothing or outfit flags.

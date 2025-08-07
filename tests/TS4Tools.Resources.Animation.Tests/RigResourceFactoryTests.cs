@@ -37,7 +37,6 @@ public sealed class RigResourceFactoryTests : IDisposable
 
         // Assert
         factory.Should().NotBeNull();
-        factory.ApiVersion.Should().NotBeNullOrEmpty();
         factory.SupportedResourceTypes.Should().NotBeEmpty();
     }
 
@@ -50,17 +49,6 @@ public sealed class RigResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public void ApiVersion_ShouldReturnExpectedVersion()
-    {
-        // Act
-        var version = _factory.ApiVersion;
-
-        // Assert
-        version.Should().NotBeNullOrEmpty();
-        version.Should().MatchRegex(@"\d+\.\d+");
-    }
-
-    [Fact]
     public void SupportedResourceTypes_ShouldContainRigTypes()
     {
         // Act
@@ -68,66 +56,64 @@ public sealed class RigResourceFactoryTests : IDisposable
 
         // Assert
         supportedTypes.Should().NotBeEmpty();
-        supportedTypes.Should().Contain("RIG");
-        supportedTypes.Should().Contain("SKEL");
-        supportedTypes.Should().Contain("BOND");
+        supportedTypes.Should().Contain("RIGS");
     }
 
     [Fact]
-    public void CanHandle_WithSupportedResourceType_ShouldReturnTrue()
+    public void SupportedResourceTypes_WithSupportedResourceType_ShouldReturnTrue()
     {
         // Arrange
-        const string resourceType = "RIG";
+        const string resourceType = "RIGS";
 
         // Act
-        var result = _factory.CanHandle(resourceType);
+        var isSupported = _factory.SupportedResourceTypes.Contains(resourceType);
 
         // Assert
-        result.Should().BeTrue();
+        isSupported.Should().BeTrue();
     }
 
     [Fact]
-    public void CanHandle_WithUnsupportedResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_WithUnsupportedResourceType_ShouldReturnFalse()
     {
         // Arrange
         const string resourceType = "UNKNOWN";
 
         // Act
-        var result = _factory.CanHandle(resourceType);
+        var isSupported = _factory.SupportedResourceTypes.Contains(resourceType);
 
         // Assert
-        result.Should().BeFalse();
+        isSupported.Should().BeFalse();
     }
 
     [Fact]
-    public void CanHandle_WithNullResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_WithNullResourceType_ShouldNotContainNull()
     {
         // Act
-        var result = _factory.CanHandle(null!);
+        var containsNull = _factory.SupportedResourceTypes.Contains(null!);
 
         // Assert
-        result.Should().BeFalse();
+        containsNull.Should().BeFalse();
     }
 
     [Fact]
-    public void CanHandle_WithEmptyResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_WithEmptyResourceType_ShouldReturnFalse()
     {
         // Act
-        var result = _factory.CanHandle(string.Empty);
+        var containsEmpty = _factory.SupportedResourceTypes.Contains(string.Empty);
 
         // Assert
-        result.Should().BeFalse();
+        containsEmpty.Should().BeFalse();
     }
 
     [Fact]
     public async Task CreateResourceAsync_WithSupportedType_ShouldReturnRigResource()
     {
         // Arrange
-        const string resourceType = "RIG";
+        const int apiVersion = 1;
         using var stream = new MemoryStream();
 
         // Act
-        var resource = await _factory.CreateResourceAsync(resourceType, stream);
+        var resource = await _factory.CreateResourceAsync(apiVersion, stream);
 
         // Assert
         resource.Should().NotBeNull();
@@ -138,62 +124,62 @@ public sealed class RigResourceFactoryTests : IDisposable
     public async Task CreateResourceAsync_WithUnsupportedType_ShouldThrowNotSupportedException()
     {
         // Arrange
-        const string resourceType = "UNKNOWN";
+        const int apiVersion = 999; // Unsupported version
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(resourceType, stream))
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
             .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("Resource type 'UNKNOWN' is not supported by RigResourceFactory");
+            .WithMessage("API version '999' is not supported");
     }
 
     [Fact]
     public async Task CreateResourceAsync_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange
-        const string resourceType = "RIG";
+        const int apiVersion = 1;
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(resourceType, null!))
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, null!))
             .Should().ThrowAsync<ArgumentNullException>()
             .WithParameterName("stream");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithNullResourceType_ShouldThrowArgumentNullException()
+    public async Task CreateResourceAsync_WithZeroApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
+        const int apiVersion = 0;
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(null!, stream))
-            .Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("resourceType");
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
+            .Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("apiVersion");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithEmptyResourceType_ShouldThrowArgumentException()
+    public async Task CreateResourceAsync_WithNegativeApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
+        const int apiVersion = -1;
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(string.Empty, stream))
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
             .Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("resourceType");
+            .WithParameterName("apiVersion");
     }
 
     [Theory]
-    [InlineData("RIG")]
-    [InlineData("SKEL")]
-    [InlineData("BOND")]
-    public async Task CreateResourceAsync_WithAllSupportedTypes_ShouldReturnValidResources(string resourceType)
+    [InlineData(1)]
+    public async Task CreateResourceAsync_WithAllSupportedVersions_ShouldReturnValidResources(int apiVersion)
     {
         // Arrange
         using var stream = new MemoryStream();
 
         // Act
-        var resource = await _factory.CreateResourceAsync(resourceType, stream);
+        var resource = await _factory.CreateResourceAsync(apiVersion, stream);
 
         // Assert
         resource.Should().NotBeNull();

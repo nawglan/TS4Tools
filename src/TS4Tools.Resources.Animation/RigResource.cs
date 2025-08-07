@@ -47,8 +47,21 @@ public class RigResource : IRigResource
         ReadFromStream(stream);
     }
 
+    private string _rigName = string.Empty;
+
     /// <inheritdoc />
-    public string RigName { get; set; } = string.Empty;
+    public string RigName 
+    { 
+        get => _rigName;
+        set
+        {
+            if (_rigName != value)
+            {
+                _rigName = value;
+                OnResourceChanged();
+            }
+        }
+    }
 
     /// <inheritdoc />
     public IReadOnlyList<Bone> Bones { get; private set; }
@@ -151,14 +164,50 @@ public class RigResource : IRigResource
     }
 
     /// <summary>
+    /// Gets the root bone of the rig (bone with no parent).
+    /// </summary>
+    public Bone? RootBone 
+    {
+        get
+        {
+            var rootBones = _bones.Where(b => b.ParentName == null).ToList();
+            return rootBones.Count > 0 ? rootBones[0] : null;
+        }
+    }
+
+    /// <summary>
+    /// Gets the bone hierarchy as a list of root bones.
+    /// </summary>
+    public IReadOnlyList<Bone> BoneHierarchy => _bones.Where(b => b.ParentName == null).ToList().AsReadOnly();
+
+    /// <summary>
     /// Finds a bone by name.
     /// </summary>
     /// <param name="boneName">The name of the bone to find</param>
     /// <returns>The bone if found, null otherwise</returns>
     public Bone? FindBone(string boneName)
     {
-        return _bones.FirstOrDefault(b => b.Name.Equals(boneName, StringComparison.OrdinalIgnoreCase));
+        if (string.IsNullOrEmpty(boneName))
+            return null;
+            
+        var matchingBones = _bones.Where(b => b.Name != null && b.Name.Equals(boneName, StringComparison.OrdinalIgnoreCase)).ToList();
+        return matchingBones.Count > 0 ? matchingBones[0] : null;
     }
+
+    /// <summary>
+    /// Finds a bone by name (alias for FindBone for test compatibility).
+    /// </summary>
+    /// <param name="boneName">The name of the bone to find</param>
+    /// <returns>The bone if found, null otherwise</returns>
+    public Bone? FindBoneByName(string boneName)
+    {
+        return FindBone(boneName);
+    }
+
+    /// <summary>
+    /// Gets the bone hierarchy starting from root bones.
+    /// </summary>
+    public IEnumerable<Bone> AllBones => BoneHierarchy;
 
     /// <summary>
     /// Gets all child bones of a parent bone.

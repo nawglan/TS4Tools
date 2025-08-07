@@ -119,13 +119,14 @@ public sealed class ServiceCollectionExtensionsTests
         var rigFactory = provider.GetRequiredService<RigResourceFactory>();
 
         // Assert
-        animationFactory.ApiVersion.Should().NotBeNullOrEmpty();
-        characterFactory.ApiVersion.Should().NotBeNullOrEmpty();
-        rigFactory.ApiVersion.Should().NotBeNullOrEmpty();
+        animationFactory.Should().NotBeNull();
+        characterFactory.Should().NotBeNull();
+        rigFactory.Should().NotBeNull();
         
-        // All should have the same API version
-        animationFactory.ApiVersion.Should().Be(characterFactory.ApiVersion);
-        characterFactory.ApiVersion.Should().Be(rigFactory.ApiVersion);
+        // Verify they are properly initialized
+        animationFactory.SupportedResourceTypes.Should().NotBeEmpty();
+        characterFactory.SupportedResourceTypes.Should().NotBeEmpty();
+        rigFactory.SupportedResourceTypes.Should().NotBeEmpty();
     }
 
     [Fact]

@@ -303,16 +303,16 @@ public class CharacterResource : ICharacterResource
         
         for (int i = 0; i < partCount; i++)
         {
-            var partId = reader.ReadUInt32();
+            var instanceId = reader.ReadUInt32();
             var category = (PartCategory)reader.ReadInt32();
             var partNameLength = reader.ReadInt32();
             var partName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(partNameLength));
             var ageCategory = (AgeCategory)reader.ReadInt32();
             var gender = (Gender)reader.ReadInt32();
             var species = (Species)reader.ReadInt32();
-            var sortOrder = reader.ReadInt32();
+            var sortPriority = reader.ReadInt32();
             
-            _characterParts.Add(new CharacterPart(partId, category, partName, ageCategory, gender, species, sortOrder));
+            _characterParts.Add(new CharacterPart(instanceId, category, partName, ageCategory, gender, species, sortPriority));
         }
     }
 
@@ -339,7 +339,7 @@ public class CharacterResource : ICharacterResource
         
         foreach (var part in _characterParts)
         {
-            writer.Write(part.PartId);
+            writer.Write(part.InstanceId);
             writer.Write((int)part.Category);
             var partNameBytes = System.Text.Encoding.UTF8.GetBytes(part.Name);
             writer.Write(partNameBytes.Length);
@@ -347,7 +347,7 @@ public class CharacterResource : ICharacterResource
             writer.Write((int)part.AgeCategory);
             writer.Write((int)part.Gender);
             writer.Write((int)part.Species);
-            writer.Write(part.SortOrder);
+            writer.Write(part.SortPriority);
         }
     }
 

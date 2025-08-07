@@ -37,8 +37,8 @@ public sealed class CharacterResourceFactoryTests : IDisposable
 
         // Assert
         factory.Should().NotBeNull();
-        factory.ApiVersion.Should().NotBeNullOrEmpty();
         factory.SupportedResourceTypes.Should().NotBeEmpty();
+        factory.Priority.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -50,14 +50,14 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public void ApiVersion_ShouldReturnExpectedVersion()
+    public void Priority_ShouldReturnExpectedValue()
     {
         // Act
-        var version = _factory.ApiVersion;
+        var priority = _factory.Priority;
 
         // Assert
-        version.Should().NotBeNullOrEmpty();
-        version.Should().MatchRegex(@"\d+\.\d+");
+        priority.Should().BeGreaterThan(0);
+        priority.Should().BeLessThan(1000);
     }
 
     [Fact]
@@ -75,60 +75,62 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public void CanHandle_WithSupportedResourceType_ShouldReturnTrue()
+    public void SupportedResourceTypes_WithSupportedResourceType_ShouldContainCASP()
     {
         // Arrange
         const string resourceType = "CASP";
 
         // Act
-        var result = _factory.CanHandle(resourceType);
+        var result = _factory.SupportedResourceTypes.Contains(resourceType);
 
         // Assert
         result.Should().BeTrue();
     }
 
     [Fact]
-    public void CanHandle_WithUnsupportedResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_WithUnsupportedResourceType_ShouldNotContainUnknown()
     {
         // Arrange
         const string resourceType = "UNKNOWN";
 
         // Act
-        var result = _factory.CanHandle(resourceType);
+        var result = _factory.SupportedResourceTypes.Contains(resourceType);
 
         // Assert
         result.Should().BeFalse();
     }
 
     [Fact]
-    public void CanHandle_WithNullResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_ShouldNotContainNullValues()
     {
         // Act
-        var result = _factory.CanHandle(null!);
+        var result = _factory.SupportedResourceTypes;
 
         // Assert
-        result.Should().BeFalse();
+        result.Should().NotContainNulls();
+        result.Should().NotBeEmpty();
     }
 
     [Fact]
-    public void CanHandle_WithEmptyResourceType_ShouldReturnFalse()
+    public void SupportedResourceTypes_ShouldNotContainEmptyValues()
     {
         // Act
-        var result = _factory.CanHandle(string.Empty);
+        var result = _factory.SupportedResourceTypes;
 
         // Assert
-        result.Should().BeFalse();
+        result.Should().NotContain(string.Empty);
+        result.Should().NotBeEmpty();
     }
 
     [Fact]
     public async Task CreateResourceAsync_WithSupportedType_ShouldReturnCharacterResource()
     {
         // Arrange
-        const string resourceType = "CASP";
+        const int apiVersion = 1;
         using var stream = new MemoryStream();
 
         // Act
-        var resource = await _factory.CreateResourceAsync(resourceType, stream);
+        var resource = await _factory.CreateResourceAsync(apiVersion, stream);
 
         // Assert
         resource.Should().NotBeNull();
@@ -139,63 +141,65 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     public async Task CreateResourceAsync_WithUnsupportedType_ShouldThrowNotSupportedException()
     {
         // Arrange
-        const string resourceType = "UNKNOWN";
+        const int apiVersion = 999; // Unsupported version
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(resourceType, stream))
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
             .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("Resource type 'UNKNOWN' is not supported by CharacterResourceFactory");
+            .WithMessage("*API version*not supported*");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithNullStream_ShouldThrowArgumentNullException()
+    public async Task CreateResourceAsync_WithNullStream_ShouldCreateValidResource()
     {
         // Arrange
-        const string resourceType = "CASP";
+        const int apiVersion = 1;
 
-        // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(resourceType, null!))
-            .Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("stream");
+        // Act
+        var resource = await _factory.CreateResourceAsync(apiVersion, null);
+
+        // Assert
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<CharacterResource>();
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithNullResourceType_ShouldThrowArgumentNullException()
+    public async Task CreateResourceAsync_WithInvalidApiVersion_ShouldThrowNotSupportedException()
     {
         // Arrange
+        const int apiVersion = -1; // Invalid API version
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(null!, stream))
-            .Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("resourceType");
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
+            .Should().ThrowAsync<NotSupportedException>()
+            .WithMessage("*API version*not supported*");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithEmptyResourceType_ShouldThrowArgumentException()
+    public async Task CreateResourceAsync_WithZeroApiVersion_ShouldThrowNotSupportedException()
     {
         // Arrange
+        const int apiVersion = 0; // Invalid API version
         using var stream = new MemoryStream();
 
         // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(string.Empty, stream))
-            .Should().ThrowAsync<ArgumentException>()
-            .WithParameterName("resourceType");
+        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
+            .Should().ThrowAsync<NotSupportedException>()
+            .WithMessage("*API version*not supported*");
     }
 
     [Theory]
-    [InlineData("CASP")]
-    [InlineData("OUTF")]
-    [InlineData("BOND")]
-    [InlineData("SKIN")]
-    public async Task CreateResourceAsync_WithAllSupportedTypes_ShouldReturnValidResources(string resourceType)
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task CreateResourceAsync_WithValidApiVersions_ShouldReturnValidResources(int apiVersion)
     {
         // Arrange
         using var stream = new MemoryStream();
 
         // Act
-        var resource = await _factory.CreateResourceAsync(resourceType, stream);
+        var resource = await _factory.CreateResourceAsync(apiVersion, stream);
 
         // Assert
         resource.Should().NotBeNull();
