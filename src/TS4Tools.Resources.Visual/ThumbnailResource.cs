@@ -189,7 +189,7 @@ public sealed class ThumbnailResource : IResource, IDisposable
     /// Gets the expected file size for the thumbnail based on its format and dimensions.
     /// </summary>
     /// <returns>The estimated file size in bytes.</returns>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1024:Use properties where appropriate", 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1024:Use properties where appropriate",
         Justification = "Method performs calculation and estimation, not simple property access")]
     public long GetEstimatedFileSize()
     {

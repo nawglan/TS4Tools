@@ -27,7 +27,7 @@ public sealed class MaskResourceFactory : ResourceFactoryBase<MaskResource>
         // Create a basic mask resource - real implementation would parse dimensions from stream
         var key = new ResourceKey(0x00B2D882, 0x00000000, 0x0000000000000000);
         var data = stream != null ? await ReadStreamAsync(stream, cancellationToken) : new byte[100 * 100];
-        
+
         return new MaskResource(key, data, 100, 100, 8, 1, MaskFormat.Alpha);
     }
 
@@ -91,7 +91,7 @@ public sealed class MaterialResourceFactory : ResourceFactoryBase<MaterialResour
     protected override void ValidateApiVersion(int apiVersion)
     {
         base.ValidateApiVersion(apiVersion);
-        
+
         if (apiVersion > 10) // Reasonable upper bound for API versions
         {
             throw new ArgumentException($"API version {apiVersion} is not supported by {nameof(MaterialResourceFactory)}", nameof(apiVersion));

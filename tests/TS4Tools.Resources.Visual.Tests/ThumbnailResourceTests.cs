@@ -51,7 +51,7 @@ public sealed class ThumbnailResourceTests : IDisposable
         var imageData = new byte[100];
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentNullException>(() => 
+        var ex = Assert.Throws<ArgumentNullException>(() =>
             new ThumbnailResource(null!, imageData, 64, 64, ThumbnailFormat.PNG));
         Assert.Equal("key", ex.ParamName);
     }
@@ -76,7 +76,7 @@ public sealed class ThumbnailResourceTests : IDisposable
         var imageData = new byte[100];
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             new ThumbnailResource(key, imageData, 0, 64, ThumbnailFormat.PNG));
         Assert.Equal("width", ex.ParamName);
     }
@@ -89,7 +89,7 @@ public sealed class ThumbnailResourceTests : IDisposable
         var imageData = new byte[100];
 
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             new ThumbnailResource(key, imageData, 64, 0, ThumbnailFormat.PNG));
         Assert.Equal("width", ex.ParamName); // Implementation uses 'width' for both parameters
     }
@@ -154,7 +154,7 @@ public sealed class ThumbnailResourceTests : IDisposable
     public void UpdateImage_WithEmptyData_ShouldThrowArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             _thumbnailResource.UpdateImage(Array.Empty<byte>(), 64, 64));
         Assert.Equal("newImageData", ex.ParamName);
     }
@@ -171,7 +171,7 @@ public sealed class ThumbnailResourceTests : IDisposable
 
         // Assert
         action.Should().NotThrow();
-        
+
         // Since maintainAspectRatio=true by default and original is 100x100 (1:1 ratio)
         // When requesting 200x150 (4:3 ratio), it will adjust to maintain 1:1 ratio
         // The smaller dimension will be chosen: min(200, 150) = 150
@@ -183,7 +183,7 @@ public sealed class ThumbnailResourceTests : IDisposable
     public void Resize_WithInvalidWidth_ShouldThrowArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             _thumbnailResource.Resize(0, 100));
         ex.Message.Should().Contain("New dimensions must be greater than zero");
     }
@@ -192,7 +192,7 @@ public sealed class ThumbnailResourceTests : IDisposable
     public void Resize_WithInvalidHeight_ShouldThrowArgumentException()
     {
         // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
+        var ex = Assert.Throws<ArgumentException>(() =>
             _thumbnailResource.Resize(100, 0));
         ex.Message.Should().Contain("New dimensions must be greater than zero");
     }
