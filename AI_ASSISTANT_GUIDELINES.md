@@ -83,9 +83,11 @@ public class [ServiceName] : I[ServiceName]
 - **Coverage Goal:** 100% for new code, improve existing incrementally
 
 ### Required Testing Patterns
+**MANDATORY:** Use **xUnit** testing framework throughout the project (established standard with 83+ existing test files).
+
 ```csharp
-// ✅ STANDARD TEST STRUCTURE
-[Test]
+// ✅ STANDARD TEST STRUCTURE - xUnit Framework
+[Fact]
 public async Task Should_[ExpectedBehavior]_When_[Scenario]()
 {
     // Arrange - Set up test data and dependencies
@@ -104,6 +106,8 @@ public async Task Should_[ExpectedBehavior]_When_[Scenario]()
 ```
 
 ### Essential Testing Tools
+
+- **xUnit** - Primary testing framework (established project standard)
 - **FluentAssertions** - Readable assertions
 - **NSubstitute** - Mocking framework  
 - **AutoFixture** - Test data generation

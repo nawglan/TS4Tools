@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyTitle>TS4Tools Visual Resources Tests</AssemblyTitle>
+    <AssemblyDescription>Unit tests for TS4Tools visual enhancement resource wrappers</AssemblyDescription>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="AutoFixture" />
+    <PackageReference Include="System.IO.Abstractions.TestingHelpers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Visual\TS4Tools.Resources.Visual.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="FluentAssertions" />
+    <Using Include="NSubstitute" />
+    <Using Include="AutoFixture" />
+    <Using Include="System.Threading" />
+    <Using Include="TS4Tools.Core.Interfaces" />
+    <Using Include="TS4Tools.Core.Package" />
+    <Using Include="TS4Tools.Resources.Visual" />
+  </ItemGroup>
+
+</Project>
