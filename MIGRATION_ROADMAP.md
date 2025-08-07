@@ -155,9 +155,9 @@ This document outlines the comprehensive migration plan from the legacy Sims4Too
 ### 🔮 Upcoming Major Milestones:
 - **Phase 4.9**: World Building Wrappers - World building support (0.5-1 week)
 - **Phase 4.10**: Visual Enhancement Wrappers - Advanced visual effects and materials (0.5-1 week) *[Note: Core effects completed in Phase 4.5]*
-- **Phase 4.10**: Utility and Data Wrappers - Data management support (0.5-1 week)
-- **Phase 4.11**: Helper Tool Integration - Tool integration support (0.5-1 week)
-- **Phase 4.12**: Final Specialized Wrappers - Legacy and edge cases (0.5-1 week)
+- **Phase 4.11**: Utility and Data Wrappers - Data management support (0.5-1 week)
+- **Phase 4.12**: Helper Tool Integration - Tool integration support (0.5-1 week)
+- **Phase 4.13**: Final Specialized Wrappers - Legacy and edge cases (0.5-1 week)
 - **Phase 5**: Core Library Polish - Performance and robustness (2 weeks)
 - **Phase 5.3**: Advanced Features Implementation - Power user features (1 week)
 - **Phase 5.4**: Plugin System and Extensibility - Community extensions (1 week)
@@ -1320,7 +1320,22 @@ Remaining test failures categorized into **planned sub-phases:**
 **Coverage Target:** 85%+
 **Estimated Effort:** 5-7 days
 
-#### **4.9 Visual Enhancement Wrappers (Week 27) - FOCUSED PHASE**
+#### **4.9 World Building Wrappers (Week 27) - FOCUSED PHASE**
+**Status:** ⏳ Not Started
+
+**Scene and Environment Support:**
+- [ ] `WorldResource` - **World and scene definitions**
+- [ ] `TerrainResource` - **Terrain data and heightmaps**
+- [ ] `LotResource` - **Lot placement and configuration**
+- [ ] `NeighborhoodResource` - **Neighborhood and world metadata**
+
+**Unit Tests:**
+- [ ] World building wrapper tests (25+ tests total)
+
+**Coverage Target:** 85%+
+**Estimated Effort:** 5-7 days
+
+#### **4.10 Visual Enhancement Wrappers (Week 28) - FOCUSED PHASE**
 **Status:** ⏳ Not Started
 
 **Visual Effects Support:**
@@ -1334,7 +1349,7 @@ Remaining test failures categorized into **planned sub-phases:**
 **Coverage Target:** 85%+
 **Estimated Effort:** 5-7 days
 
-#### **4.10 Utility and Data Wrappers (Week 28) - FOCUSED PHASE**
+#### **4.11 Utility and Data Wrappers (Week 28) - FOCUSED PHASE**
 **Status:** ⏳ Not Started
 
 **Data Management Support:**
@@ -1348,7 +1363,7 @@ Remaining test failures categorized into **planned sub-phases:**
 **Coverage Target:** 85%+
 **Estimated Effort:** 5-7 days
 
-#### **4.11 Helper Tool Integration (Week 29) - FOCUSED PHASE**
+#### **4.12 Helper Tool Integration (Week 29) - FOCUSED PHASE**
 **Status:** ⏳ Not Started
 
 **Tool Integration Support:**
@@ -1363,7 +1378,7 @@ Remaining test failures categorized into **planned sub-phases:**
 **Coverage Target:** 80%+
 **Estimated Effort:** 5-7 days
 
-#### **4.12 Final Specialized Wrappers (Week 30) - FOCUSED PHASE**
+#### **4.13 Final Specialized Wrappers (Week 30) - FOCUSED PHASE**
 **Status:** ⏳ Not Started
 
 **Final Implementation Support:**

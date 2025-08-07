@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyTitle>TS4Tools World Building Resources</AssemblyTitle>
+    <AssemblyDescription>World building resource wrappers for The Sims 4 package files, including worlds, terrain, lots, and neighborhoods</AssemblyDescription>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
+    <ProjectReference Include="..\TS4Tools.Resources.Common\TS4Tools.Resources.Common.csproj" />
+  </ItemGroup>
+
+</Project>
