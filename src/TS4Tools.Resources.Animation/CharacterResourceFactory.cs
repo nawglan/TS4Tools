@@ -16,7 +16,7 @@ public class CharacterResourceFactory : ResourceFactoryBase<ICharacterResource>
     /// </summary>
     /// <param name="logger">Logger for diagnostic information</param>
     public CharacterResourceFactory(ILogger<CharacterResourceFactory> logger)
-        : base(new[] { "CASP", "SIMO", "CPRE", "BONE", "DMAP", "TONE", "ACOS" }, priority: 50)
+        : base(new[] { "CASP", "SIMO", "CPRE", "BONE", "DMAP", "TONE", "ACOS", "OUTF", "BOND", "SKIN" }, priority: 50)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -49,6 +49,21 @@ public class CharacterResourceFactory : ResourceFactoryBase<ICharacterResource>
         {
             _logger.LogError(ex, "Failed to create character resource from stream");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Validates that the provided API version is supported by this factory.
+    /// </summary>
+    /// <param name="apiVersion">API version to validate</param>
+    /// <exception cref="ArgumentException">Thrown when API version is not supported</exception>
+    protected override void ValidateApiVersion(int apiVersion)
+    {
+        base.ValidateApiVersion(apiVersion);
+        
+        if (apiVersion > 10) // Reasonable upper bound for API versions
+        {
+            throw new ArgumentException($"API version {apiVersion} is not supported by {nameof(CharacterResourceFactory)}", nameof(apiVersion));
         }
     }
 

@@ -138,7 +138,7 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithUnsupportedType_ShouldThrowNotSupportedException()
+    public async Task CreateResourceAsync_WithUnsupportedApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
         const int apiVersion = 999; // Unsupported version
@@ -146,8 +146,8 @@ public sealed class CharacterResourceFactoryTests : IDisposable
 
         // Act & Assert
         await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
-            .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("*API version*not supported*");
+            .Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("apiVersion");
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithInvalidApiVersion_ShouldThrowNotSupportedException()
+    public async Task CreateResourceAsync_WithInvalidApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
         const int apiVersion = -1; // Invalid API version
@@ -173,12 +173,12 @@ public sealed class CharacterResourceFactoryTests : IDisposable
 
         // Act & Assert
         await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
-            .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("*API version*not supported*");
+            .Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("apiVersion");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithZeroApiVersion_ShouldThrowNotSupportedException()
+    public async Task CreateResourceAsync_WithZeroApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
         const int apiVersion = 0; // Invalid API version
@@ -186,8 +186,8 @@ public sealed class CharacterResourceFactoryTests : IDisposable
 
         // Act & Assert
         await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
-            .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("*API version*not supported*");
+            .Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("apiVersion");
     }
 
     [Theory]

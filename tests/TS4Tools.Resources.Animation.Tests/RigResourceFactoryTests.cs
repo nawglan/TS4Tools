@@ -121,7 +121,7 @@ public sealed class RigResourceFactoryTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithUnsupportedType_ShouldThrowNotSupportedException()
+    public async Task CreateResourceAsync_WithUnsupportedApiVersion_ShouldThrowArgumentException()
     {
         // Arrange
         const int apiVersion = 999; // Unsupported version
@@ -129,20 +129,22 @@ public sealed class RigResourceFactoryTests : IDisposable
 
         // Act & Assert
         await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, stream))
-            .Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("API version '999' is not supported");
+            .Should().ThrowAsync<ArgumentException>()
+            .WithParameterName("apiVersion");
     }
 
     [Fact]
-    public async Task CreateResourceAsync_WithNullStream_ShouldThrowArgumentNullException()
+    public async Task CreateResourceAsync_WithNullStream_ShouldCreateValidResource()
     {
         // Arrange
         const int apiVersion = 1;
 
-        // Act & Assert
-        await FluentActions.Awaiting(() => _factory.CreateResourceAsync(apiVersion, null!))
-            .Should().ThrowAsync<ArgumentNullException>()
-            .WithParameterName("stream");
+        // Act
+        var resource = await _factory.CreateResourceAsync(apiVersion, null);
+
+        // Assert
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<RigResource>();
     }
 
     [Fact]

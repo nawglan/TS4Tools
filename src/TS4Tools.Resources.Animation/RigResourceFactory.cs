@@ -52,6 +52,21 @@ public class RigResourceFactory : ResourceFactoryBase<IRigResource>
         }
     }
 
+    /// <summary>
+    /// Validates that the provided API version is supported by this factory.
+    /// </summary>
+    /// <param name="apiVersion">API version to validate</param>
+    /// <exception cref="ArgumentException">Thrown when API version is not supported</exception>
+    protected override void ValidateApiVersion(int apiVersion)
+    {
+        base.ValidateApiVersion(apiVersion);
+        
+        if (apiVersion > 10) // Reasonable upper bound for API versions
+        {
+            throw new ArgumentException($"API version {apiVersion} is not supported by {nameof(RigResourceFactory)}", nameof(apiVersion));
+        }
+    }
+
     /// <inheritdoc />
     protected override bool TryGetResourceTypeId(string resourceType, out uint id)
     {
