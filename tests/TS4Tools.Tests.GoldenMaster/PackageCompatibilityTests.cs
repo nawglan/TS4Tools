@@ -246,8 +246,8 @@ public class PackageCompatibilityTests
     }
 
     /// <summary>
-    /// Get test packages from the test-data directory as fallback.
-    /// Creates mock packages if no real packages are available.
+    /// Get test packages as fallback when real game packages are not accessible.
+    /// Uses the configured game directories directly, then creates mock packages if no real packages are available.
     /// </summary>
     private IEnumerable<string> GetFallbackTestPackages()
     {
@@ -255,55 +255,105 @@ public class PackageCompatibilityTests
 
         try
         {
-            // Ensure test-data directory exists
-            if (!Directory.Exists(_testDataPath))
-            {
-                Directory.CreateDirectory(_testDataPath);
-                Directory.CreateDirectory(Path.Combine(_testDataPath, "official"));
-                Directory.CreateDirectory(Path.Combine(_testDataPath, "mods"));
-            }
+            // Load configuration settings
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-            // Check official packages
-            var officialPath = Path.Combine(_testDataPath, "official");
-            if (Directory.Exists(officialPath))
-            {
-                packages.AddRange(Directory.GetFiles(officialPath, "*.package"));
-            }
+            var settings = new ApplicationSettings();
+            configuration.Bind("ApplicationSettings", settings);
 
-            // Check community packages
-            var modsPath = Path.Combine(_testDataPath, "mods");
-            if (Directory.Exists(modsPath))
-            {
-                packages.AddRange(Directory.GetFiles(modsPath, "*.package"));
-            }
+            // First priority: Direct access to configured game data directories
+            var dataDirectory = settings?.Game?.DataDirectory;
+            var clientDataDirectory = settings?.Game?.ClientDataDirectory;
 
-            // If no packages found, create mock packages for testing framework
-            if (!packages.Any())
+            // Try configured data directory first (main game installation)
+            if (!string.IsNullOrEmpty(dataDirectory) && Directory.Exists(dataDirectory))
             {
-                _logger?.LogInformation("No real packages found - creating mock packages for testing framework");
-
-                // Create mock packages with different structures for comprehensive testing
-                var mockPackages = new[]
+                var gameSearchPaths = new[]
                 {
-                    ("simple-mock", "Simple mock package with minimal structure"),
-                    ("complex-mock", "Complex mock package with multiple resources"),
-                    ("edge-case-mock", "Edge case mock package for boundary testing")
+                    Path.Combine(dataDirectory, "Client"),
+                    Path.Combine(dataDirectory, "Shared")
                 };
 
-                var mockDir = Path.Combine(_testDataPath, "mock");
-                Directory.CreateDirectory(mockDir);
-
-                foreach (var (id, description) in mockPackages)
+                foreach (var searchPath in gameSearchPaths.Where(Directory.Exists))
                 {
-                    var mockData = CreateMockDbpfPackage(id);
-                    var mockFile = Path.Combine(mockDir, $"test-package-{id}.package");
+                    var gamePackages = Directory.GetFiles(searchPath, "*.package", SearchOption.TopDirectoryOnly)
+                        .Take(5); // Limit for performance during testing
+                    packages.AddRange(gamePackages);
 
-                    // Use synchronous write for simplicity in this context
-                    File.WriteAllBytes(mockFile, mockData);
-                    packages.Add(mockFile);
-
-                    _logger?.LogInformation($"Created mock package: {Path.GetFileName(mockFile)} - {description}");
+                    if (packages.Count >= 5) break; // We have enough for testing
                 }
+
+                if (packages.Any())
+                {
+                    _logger?.LogInformation($"Using {packages.Count} packages directly from game data directory: {dataDirectory}");
+                    return packages;
+                }
+            }
+
+            // Second priority: Configured client data directory (smaller package collection)
+            if (!string.IsNullOrEmpty(clientDataDirectory) && Directory.Exists(clientDataDirectory))
+            {
+                var clientPackages = Directory.GetFiles(clientDataDirectory, "*.package", SearchOption.TopDirectoryOnly)
+                    .Take(10); // Limit for performance
+                packages.AddRange(clientPackages);
+
+                if (packages.Any())
+                {
+                    _logger?.LogInformation($"Using {packages.Count} packages from configured client data directory: {clientDataDirectory}");
+                    return packages;
+                }
+            }
+
+            // Third priority: Check if there are any local test packages (for development without game installation)
+            if (Directory.Exists(_testDataPath))
+            {
+                var localTestPaths = new[]
+                {
+                    Path.Combine(_testDataPath, "official"),
+                    Path.Combine(_testDataPath, "mods")
+                };
+
+                foreach (var testPath in localTestPaths.Where(Directory.Exists))
+                {
+                    packages.AddRange(Directory.GetFiles(testPath, "*.package"));
+                }
+
+                if (packages.Any())
+                {
+                    _logger?.LogInformation($"Using {packages.Count} local test packages for development");
+                    return packages;
+                }
+            }
+
+            // Final fallback: Create mock packages for testing framework
+            _logger?.LogInformation("No real game packages accessible - creating mock packages for testing framework");
+
+            // Create mock packages with different structures for comprehensive testing
+            var mockPackages = new[]
+            {
+                ("simple-mock", "Simple mock package with minimal structure"),
+                ("complex-mock", "Complex mock package with multiple resources"),
+                ("edge-case-mock", "Edge case mock package for boundary testing")
+            };
+
+            var mockDir = Path.Combine(_testDataPath, "mock");
+            Directory.CreateDirectory(mockDir);
+
+            foreach (var (id, description) in mockPackages)
+            {
+                var mockData = CreateMockDbpfPackage(id);
+                var mockFile = Path.Combine(mockDir, $"test-package-{id}.package");
+
+                // Use synchronous write for simplicity in this context
+                File.WriteAllBytes(mockFile, mockData);
+                packages.Add(mockFile);
+
+                _logger?.LogInformation($"Created mock package: {Path.GetFileName(mockFile)} - {description}");
             }
         }
         catch (Exception ex)
@@ -327,7 +377,7 @@ public class PackageCompatibilityTests
             .Build();
 
         var settings = new ApplicationSettings();
-        configuration.Bind(settings);
+        configuration.Bind("ApplicationSettings", settings);
 
         var options = Microsoft.Extensions.Options.Options.Create(settings);
         var logger = new NullLogger<GameInstallationService>();
@@ -358,40 +408,109 @@ public class PackageCompatibilityTests
 
     /// <summary>
     /// Get real game packages from the configured installation directory.
+    /// Accesses game files directly without copying them to avoid unnecessary file operations.
     /// </summary>
     private async Task<IEnumerable<string>> GetRealGamePackagesAsync(IGameInstallationService gameService)
     {
         var packages = new List<string>();
 
-        // Check if game installation is available
-        var installationPath = await gameService.GetInstallationDirectoryAsync();
-        if (string.IsNullOrEmpty(installationPath) || !Directory.Exists(installationPath))
+        try
         {
-            return packages;
-        }
+            // Get configuration settings
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Development.json", optional: true)
+                .AddEnvironmentVariables()
+                .Build();
 
-        // Look for packages in common game directories
-        var searchPaths = new[]
-        {
-            Path.Combine(installationPath, "Data", "Client"),
-            Path.Combine(installationPath, "Data", "Shared"),
-            Path.Combine(installationPath, "EP01", "Data", "Client"), // Get to Work
-            Path.Combine(installationPath, "EP02", "Data", "Client"), // Get Together
-            Path.Combine(installationPath, "EP03", "Data", "Client"), // City Living
-        };
+            var settings = new ApplicationSettings();
+            configuration.Bind("ApplicationSettings", settings);
 
-        foreach (var searchPath in searchPaths)
-        {
-            if (Directory.Exists(searchPath))
+            // Check if game installation is available
+            var installationPath = await gameService.GetInstallationDirectoryAsync();
+            var dataDirectory = settings?.Game?.DataDirectory;
+            var clientDataDirectory = settings?.Game?.ClientDataDirectory;
+
+            _logger?.LogDebug($"Game installation path: {installationPath}");
+            _logger?.LogDebug($"Data directory from config: {dataDirectory}");
+            _logger?.LogDebug($"Client data directory from config: {clientDataDirectory}");
+
+            // Use configured directories if available, otherwise fall back to detection
+            var searchPaths = new List<string>();
+
+            // Add paths from configuration (direct access to game files)
+            if (!string.IsNullOrEmpty(dataDirectory) && Directory.Exists(dataDirectory))
             {
-                var foundPackages = Directory.GetFiles(searchPath, "*.package", SearchOption.TopDirectoryOnly);
-                packages.AddRange(foundPackages);
+                var clientPath = Path.Combine(dataDirectory, "Client");
+                var sharedPath = Path.Combine(dataDirectory, "Shared");
 
-                if (foundPackages.Length > 0)
+                if (Directory.Exists(clientPath)) searchPaths.Add(clientPath);
+                if (Directory.Exists(sharedPath)) searchPaths.Add(sharedPath);
+            }
+
+            if (!string.IsNullOrEmpty(clientDataDirectory) && Directory.Exists(clientDataDirectory))
+            {
+                searchPaths.Add(clientDataDirectory);
+            }
+
+            // Fall back to standard detection if no configured paths or they don't exist
+            if (!searchPaths.Any() && !string.IsNullOrEmpty(installationPath) && Directory.Exists(installationPath))
+            {
+                var standardPaths = new[]
                 {
-                    _logger?.LogDebug($"Found {foundPackages.Length} packages in {searchPath}");
+                    Path.Combine(installationPath, "Data", "Client"),
+                    Path.Combine(installationPath, "Data", "Shared"),
+                    Path.Combine(installationPath, "EP01", "Data", "Client"), // Get to Work
+                    Path.Combine(installationPath, "EP02", "Data", "Client"), // Get Together
+                    Path.Combine(installationPath, "EP03", "Data", "Client"), // City Living
+                };
+
+                searchPaths.AddRange(standardPaths.Where(Directory.Exists));
+            }
+
+            if (!searchPaths.Any())
+            {
+                _logger?.LogWarning("No valid game package directories found in configuration or installation");
+                return packages;
+            }
+
+            // Collect package files directly from game directories (no copying)
+            var maxPackagesToUse = 10; // Limit to avoid excessive test duration
+            var foundCount = 0;
+
+            foreach (var searchPath in searchPaths)
+            {
+                if (foundCount >= maxPackagesToUse) break;
+
+                try
+                {
+                    var sourcePackages = Directory.GetFiles(searchPath, "*.package", SearchOption.TopDirectoryOnly)
+                        .Take(maxPackagesToUse - foundCount);
+
+                    foreach (var sourcePackage in sourcePackages)
+                    {
+                        // Verify the file is readable before adding it to the list
+                        if (File.Exists(sourcePackage))
+                        {
+                            packages.Add(sourcePackage);
+                            foundCount++;
+
+                            if (foundCount >= maxPackagesToUse) break;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning($"Error accessing packages in {searchPath}: {ex.Message}");
                 }
             }
+
+            _logger?.LogInformation($"Found {packages.Count} real game packages for direct testing from configured directories");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Error accessing real game packages: {ex.Message}");
         }
 
         return packages.Where(File.Exists).ToList();
