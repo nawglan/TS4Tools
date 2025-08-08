@@ -6,7 +6,7 @@
 
 ## Context
 
-TS4Tools needs to modernize from legacy .NET Framework 4.8 to a current platform that supports cross-platform deployment, modern language features, and improved performance. The legacy codebase was tightly coupled to Windows-specific APIs and outdated patterns.
+TS4Tools needs to modernize from legacy .NET Framework 4.0 to a current platform that supports cross-platform deployment, modern language features, and improved performance. The legacy codebase was tightly coupled to Windows-specific APIs and outdated patterns.
 
 ## Decision
 
@@ -26,7 +26,7 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 
 | Framework | Cross-Platform | Performance | Modern Features | Support Lifecycle |
 |-----------|----------------|-------------|-----------------|-------------------|
-| .NET Framework 4.8 | ❌ Windows Only | Baseline | Limited | Maintenance Mode |
+| .NET Framework 4.0 | ❌ Windows Only | Baseline | Limited | Maintenance Mode |
 | .NET 6 (LTS) | ✅ | +40% | Full | Until Nov 2024 |
 | .NET 8 (LTS) | ✅ | +60% | Full | Until Nov 2026 |
 | **✅ .NET 9** | ✅ | +80% | Latest | Until May 2025* |

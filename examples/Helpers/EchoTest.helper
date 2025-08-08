@@ -1,0 +1,8 @@
+// Echo Test Helper - Cross-platform test helper
+// This helper demonstrates cross-platform execution
+ResourceType: 0x12345678
+Label: Echo Test
+Command: echo
+Arguments: "Processing resource: {}"
+Desc: Test helper that echoes the resource filename
+ReadOnly: true

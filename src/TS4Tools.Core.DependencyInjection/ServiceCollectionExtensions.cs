@@ -10,6 +10,7 @@ using TS4Tools.Core.System;
 using TS4Tools.Extensions.ResourceTypes;
 using TS4Tools.Extensions.Utilities;
 using TS4Tools.Resources.Common.CatalogTags;
+using TS4Tools.Core.Helpers;
 
 namespace TS4Tools.Core.DependencyInjection;
 
@@ -48,6 +49,9 @@ public static class ServiceCollectionExtensions
 
         // Register all available resource factories
         services.AddAllResourceFactories();
+
+        // Register helper tool services
+        services.AddHelperToolServices();
 
         // Register extension services
         services.AddTS4ToolsExtensions();
@@ -95,6 +99,24 @@ public static class ServiceCollectionExtensions
         // Register resource services using the existing extension method
         // Note: This requires configuration but we'll handle it in the main method
         // services.AddResourceManager(configuration);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers TS4Tools helper tool services.
+    /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <returns>The service collection for fluent configuration.</returns>
+    public static IServiceCollection AddHelperToolServices(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        // Register helper tool service as singleton
+        services.AddSingleton<IHelperToolService, HelperToolService>();
+
+        // Initialize helper tools on startup
+        services.AddHostedService<HelperToolInitializationService>();
 
         return services;
     }

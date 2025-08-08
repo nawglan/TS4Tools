@@ -4,9 +4,49 @@
 
 ---
 
+## 🎯 **TS4Tools-Specific Requirements (ADR Compliance)**
+
+### Greenfield Migration Strategy (ADR-004)
+
+- [ ] **Business Logic Extraction**: Extracts domain knowledge without copying old code structures
+- [ ] **API Compatibility**: Existing third-party tools work without modification
+- [ ] **Legacy Adapter Pattern**: Uses adapter pattern for backward compatibility where needed
+- [ ] **Performance Preservation**: Maintains or improves upon legacy performance metrics
+
+### Assembly Loading Modernization (ADR-005)
+
+- [ ] **AssemblyLoadContext Usage**: Uses modern `AssemblyLoadContext` instead of `Assembly.LoadFile()`
+- [ ] **Plugin Loading**: Proper plugin assembly loading with context management
+- [ ] **Memory Management**: Assembly contexts properly disposed to prevent memory leaks
+- [ ] **Type Resolution**: Cross-assembly type resolution works correctly
+
+### Golden Master Testing (ADR-006)
+
+- [ ] **Byte-Perfect Validation**: Changes validated against real Sims 4 package files
+- [ ] **Format Preservation**: Binary formats remain identical to legacy implementation
+- [ ] **Regression Testing**: Performance and compatibility regression tests included
+- [ ] **Test Data Coverage**: Uses diverse real-world package files for validation
+
+### Plugin Architecture (ADR-007)
+
+- [ ] **Legacy Plugin Support**: Existing community plugins work without modification
+- [ ] **Modern Plugin Interface**: New plugins can use dependency injection and modern patterns
+- [ ] **Resource Type Discovery**: Plugin discovery and registration works correctly
+- [ ] **Error Handling**: Plugin loading failures are handled gracefully
+
+### Cross-Platform Compatibility (ADR-008)
+
+- [ ] **Binary Format Consistency**: Package files identical across Windows/Linux/macOS
+- [ ] **Compression Algorithms**: Compression produces identical output across platforms
+- [ ] **File I/O Operations**: File operations work correctly on all target filesystems
+- [ ] **Memory Layout**: Struct packing and endianness handled correctly
+
+---
+
 ## 🏗️ **Architecture & Design**
 
 ### Dependency Injection
+
 - [ ] **Constructor Injection**: All dependencies injected via constructor, not property/method injection
 - [ ] **Null Checks**: All injected dependencies have null checks with `ArgumentNullException`
 - [ ] **Interface Usage**: Depends on interfaces, not concrete implementations
@@ -14,6 +54,7 @@
 - [ ] **No Service Locator**: Avoids static service locator pattern (except legacy compatibility)
 
 ### SOLID Principles
+
 - [ ] **Single Responsibility**: Each class has one clear purpose and reason to change
 - [ ] **Open/Closed**: Classes open for extension, closed for modification
 - [ ] **Liskov Substitution**: Derived classes can substitute base classes without breaking functionality
@@ -21,6 +62,7 @@
 - [ ] **Dependency Inversion**: Depends on abstractions, not concretions
 
 ### Cross-Platform Compatibility
+
 - [ ] **File Paths**: Uses `Path.Combine()` instead of string concatenation
 - [ ] **Platform APIs**: Uses cross-platform .NET APIs only
 - [ ] **Case Sensitivity**: Considers case-sensitive file systems (Linux/macOS)
@@ -32,13 +74,15 @@
 ## 🚀 **Performance & Memory**
 
 ### Memory Management
+
 - [ ] **IDisposable**: Implements and calls `Dispose()` for unmanaged resources
 - [ ] **Using Statements**: Uses `using` statements or `using var` for disposable objects
 - [ ] **Array Pooling**: Uses `ArrayPool<T>` for temporary large arrays
 - [ ] **String Builder**: Uses `StringBuilder` for multiple string concatenations
-- [ ] **Span<T> Usage**: Uses `Span<T>` and `ReadOnlySpan<T>` for zero-allocation operations
+- [ ] **Span Usage**: Uses `Span<T>` and `ReadOnlySpan<T>` for zero-allocation operations
 
 ### Async/Await Patterns
+
 - [ ] **ConfigureAwait**: Uses `ConfigureAwait(false)` in library code
 - [ ] **Async All The Way**: Async methods call async methods, no `Result` or `Wait()`
 - [ ] **CancellationToken**: Accepts and properly handles `CancellationToken` parameters
@@ -46,6 +90,7 @@
 - [ ] **Async Naming**: Async methods end with `Async` suffix
 
 ### Algorithm Efficiency  
+
 - [ ] **Big-O Complexity**: Considers algorithmic complexity for large datasets
 - [ ] **Collection Choice**: Chooses appropriate collection types (`Dictionary`, `HashSet`, etc.)
 - [ ] **LINQ Performance**: Avoids inefficient LINQ operations in hot paths
@@ -57,6 +102,7 @@
 ## 🧪 **Testing & Quality**
 
 ### Unit Tests
+
 - [ ] **AAA Pattern**: Tests use Arrange-Act-Assert structure clearly
 - [ ] **Test Coverage**: New code has 95%+ unit test coverage
 - [ ] **Meaningful Names**: Test names describe the scenario and expected outcome
@@ -64,6 +110,7 @@
 - [ ] **No Logic**: Tests don't contain business logic or complex conditionals
 
 ### Test Quality
+
 - [ ] **Mocking**: Uses interfaces and dependency injection for proper mocking
 - [ ] **Test Data**: Uses test builders or fixture patterns for complex test data
 - [ ] **Isolated Tests**: Tests don't depend on external resources or other tests
@@ -71,6 +118,7 @@
 - [ ] **Performance Tests**: Critical paths have performance benchmark tests
 
 ### Integration Tests
+
 - [ ] **Service Integration**: Tests verify services work together correctly
 - [ ] **Configuration**: Tests verify configuration binding and validation
 - [ ] **Error Handling**: Tests verify error scenarios and edge cases
@@ -81,6 +129,7 @@
 ## 📝 **Code Style & Documentation**
 
 ### Code Formatting
+
 - [ ] **EditorConfig**: Code follows `.editorconfig` formatting rules
 - [ ] **Naming Conventions**: Follows C# naming conventions (PascalCase, camelCase, etc.)
 - [ ] **File Organization**: Using statements, namespace, classes organized logically
@@ -88,6 +137,7 @@
 - [ ] **Consistent Style**: Consistent indentation, spacing, and brace placement
 
 ### Documentation
+
 - [ ] **XML Comments**: Public APIs have comprehensive XML documentation
 - [ ] **Parameter Docs**: All parameters documented with `<param>` tags
 - [ ] **Return Docs**: Return values documented with `<returns>` tags
@@ -95,6 +145,7 @@
 - [ ] **Inline Comments**: Complex logic explained with inline comments
 
 ### Code Clarity
+
 - [ ] **Descriptive Names**: Variables, methods, classes have clear, descriptive names
 - [ ] **Magic Numbers**: No magic numbers; uses named constants or enums
 - [ ] **Method Length**: Methods are focused and typically under 50 lines
@@ -106,6 +157,7 @@
 ## 🔒 **Security & Reliability**
 
 ### Input Validation
+
 - [ ] **Null Checks**: All public method parameters validated for null
 - [ ] **Range Validation**: Numeric parameters validated for acceptable ranges
 - [ ] **String Validation**: String parameters checked for null/empty/whitespace
@@ -113,6 +165,7 @@
 - [ ] **User Input**: All user input properly validated and sanitized
 
 ### Error Handling
+
 - [ ] **Exception Types**: Throws appropriate exception types (`ArgumentException`, etc.)
 - [ ] **Exception Messages**: Meaningful messages that help developers diagnose issues
 - [ ] **Resource Cleanup**: Resources cleaned up in finally blocks or using statements
@@ -120,6 +173,7 @@
 - [ ] **Logging**: Appropriate logging for errors and important operations
 
 ### Thread Safety
+
 - [ ] **Concurrent Access**: Thread-safe for expected usage patterns
 - [ ] **Immutable Objects**: Prefers immutable objects where possible
 - [ ] **Proper Locking**: Uses appropriate synchronization primitives if needed
@@ -131,6 +185,7 @@
 ## 🏷️ **Git & CI/CD**
 
 ### Commit Quality
+
 - [ ] **Conventional Commits**: Follows conventional commit format (`feat:`, `fix:`, etc.)
 - [ ] **Atomic Commits**: Each commit represents a single logical change
 - [ ] **Descriptive Messages**: Commit messages clearly describe what and why
@@ -138,6 +193,7 @@
 - [ ] **Signed Commits**: Commits are signed for security (if required)
 
 ### Pull Request
+
 - [ ] **Clear Description**: PR description explains the change and rationale
 - [ ] **Breaking Changes**: Breaking changes clearly documented
 - [ ] **Migration Guide**: Includes migration instructions if needed
@@ -145,6 +201,7 @@
 - [ ] **Screenshots**: UI changes include before/after screenshots
 
 ### CI/CD Pipeline
+
 - [ ] **Build Success**: All CI/CD pipeline checks pass
 - [ ] **Test Coverage**: Code coverage meets minimum threshold (95%)
 - [ ] **Performance Gates**: Performance benchmarks within acceptable limits
@@ -156,12 +213,14 @@
 ## 📋 **Reviewer Checklist**
 
 ### Before Starting Review
+
 - [ ] **Pull Latest**: Reviewed branch is up-to-date with target branch
 - [ ] **Build Locally**: Code builds and tests pass locally
 - [ ] **Requirements**: Understand the requirements and acceptance criteria
 - [ ] **Architecture**: Change aligns with overall architecture decisions
 
 ### During Review
+
 - [ ] **Code Logic**: Logic is correct and handles edge cases
 - [ ] **Performance**: No obvious performance issues or anti-patterns
 - [ ] **Security**: No security vulnerabilities or sensitive data exposure
@@ -169,6 +228,7 @@
 - [ ] **Documentation**: Changes are properly documented
 
 ### Review Feedback
+
 - [ ] **Constructive**: Feedback is specific, actionable, and constructive
 - [ ] **Explanatory**: Explains the reasoning behind suggested changes
 - [ ] **Prioritized**: Distinguishes between must-fix issues and suggestions
@@ -208,6 +268,7 @@ A pull request is ready to merge when:
 ## 💡 **Review Tips**
 
 ### For Authors
+
 - **Self-Review First**: Review your own PR before requesting reviews
 - **Small PRs**: Keep PRs focused and under 400 lines when possible
 - **Context**: Provide sufficient context in PR description
@@ -215,6 +276,7 @@ A pull request is ready to merge when:
 - **Learn from Reviews**: Use feedback as learning opportunities
 
 ### For Reviewers
+
 - **Timely Reviews**: Provide feedback within 24 hours when possible
 - **Focus on Important Issues**: Don't nitpick minor style issues
 - **Ask Questions**: Ask clarifying questions when unsure

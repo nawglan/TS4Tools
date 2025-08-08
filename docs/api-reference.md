@@ -62,7 +62,7 @@ public interface IPackageFactory
 }
 ```
 
-#### Usage Example
+#### IPackageFactory Usage Example
 
 ```csharp
 var packageFactory = serviceProvider.GetRequiredService<IPackageFactory>();
@@ -91,7 +91,7 @@ public interface IResourceKey : IEquatable<IResourceKey>, IComparable<IResourceK
 }
 ```
 
-#### Usage Example
+#### IResourceKey Usage Example
 
 ```csharp
 // Create resource key
@@ -124,7 +124,7 @@ public interface IResource
 }
 ```
 
-#### Usage Example
+#### IResource Usage Example
 
 ```csharp
 // Read resource data
@@ -156,7 +156,7 @@ public static IServiceCollection AddTS4ToolsCore(
     IConfiguration? configuration = null)
 ```
 
-#### Usage Example
+#### Service Registration Usage Example
 
 ```csharp
 var builder = Host.CreateApplicationBuilder();
@@ -242,7 +242,7 @@ public interface IResourceTypeRegistry
 }
 ```
 
-#### Usage Example
+#### IResourceTypeRegistry Usage Example
 
 ```csharp
 var registry = serviceProvider.GetRequiredService<IResourceTypeRegistry>();

@@ -1,0 +1,8 @@
+// Notepad Helper for Text Resources
+// This helper opens text resources in Windows Notepad
+ResourceType: 0x0069453E 0x029E333B 0x02C9EFF2 0x03B33DDF 0x03E9D964
+Label: Edit with Notepad
+Command: notepad.exe
+Arguments: "{}"
+Desc: Edit text files with Windows Notepad
+ReadOnly: false

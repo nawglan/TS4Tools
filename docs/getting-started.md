@@ -8,7 +8,7 @@ TS4Tools is a modern, cross-platform toolkit for working with The Sims 4 package
 
 - **Modern .NET 9**: Built on the latest .NET runtime with modern C# features
 - **Cross-Platform**: Works on Windows, macOS, and Linux
-- **High Performance**: Optimized with Span<T>, Memory<T>, and async patterns
+- **High Performance**: Optimized with `Span<T>`, `Memory<T>`, and async patterns
 - **Type Safe**: Full nullable reference type support
 - **Comprehensive Testing**: 374+ tests with 95%+ code coverage
 - **Dependency Injection**: Modern service-based architecture
@@ -120,11 +120,11 @@ See the `examples/` directory for complete working examples:
 - Read the [API Reference](api-reference.md) for detailed documentation
 - Explore [Advanced Features](advanced-features.md) for complex scenarios
 - Check out [Performance Guide](performance-guide.md) for optimization tips
-- Review [Migration Guide](migration-guide.md) if upgrading from Sims4Tools
+- Review the [Migration Roadmap](../MIGRATION_ROADMAP.md) for project progress
 
 ## Support
 
 - **Documentation**: See the `docs/` folder for comprehensive guides
 - **Examples**: Check the `examples/` folder for working code samples
 - **Issues**: Report issues on GitHub
-- **Contributing**: See [Contributing Guide](contributing.md)
+- **Architecture**: Review [Architecture Decision Records](architecture/adr/README.md)

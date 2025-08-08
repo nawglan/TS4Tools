@@ -39,7 +39,7 @@ TS4Tools is a comprehensive migration and modernization of the popular Sims4Tool
 | **s4pe Helpers** | ⏳ Pending | 8 weeks | TBD | TBD |
 | **Final Integration** | ⏳ Pending | 4 weeks | TBD | TBD |
 
-> **📋 Latest Update:** Phase 4.11 Utility Resources completed (98.4% functionality) - See [PHASE_4_11_STATUS.md](PHASE_4_11_STATUS.md) for details
+> **📋 Latest Update:** Phase 4.11 Utility Resources completed (98.4% functionality) - Core foundation ready
 
 ### **⚡ AI ACCELERATION METRICS**
 - **Phases 1-3 Original Estimate:** 14 weeks (98 days)
@@ -55,17 +55,19 @@ TS4Tools is a comprehensive migration and modernization of the popular Sims4Tool
 
 For detailed progress tracking, see:
 - 📋 [Migration Roadmap](MIGRATION_ROADMAP.md) - Comprehensive migration plan with AI acceleration metrics
-- 📊 [Task Tracker](TASK_TRACKER.md) - Real-time progress tracking with acceleration analysis
 
 ## 🏗️ **Architecture Overview**
 
 ### **Core Libraries**
+
 ```
-TS4Tools.Core.System/           # System utilities and extensions
+TS4Tools.Core.System/           # System utilities and extensions  
 TS4Tools.Core.Interfaces/       # Core interfaces and contracts
 TS4Tools.Core.Settings/         # Configuration management
 TS4Tools.Core.Package/          # Package I/O operations
 TS4Tools.Core.Resources/        # Resource management and factories
+TS4Tools.Core.DependencyInjection/ # Dependency injection services
+TS4Tools.Core.Helpers/          # Common helper utilities
 TS4Tools.Extensions/            # UI extensions and helpers
 TS4Tools.Resources.Common/      # Shared resource utilities
 ```
@@ -106,21 +108,25 @@ dotnet run --project TS4Tools.Desktop
 ```
 
 ### **Project Structure**
+
 ```
 TS4Tools/
 ├── src/                        # Source code
-│   ├── TS4Tools.Core.*/       # Core libraries
+│   ├── TS4Tools.Core.*/       # Core libraries (System, Interfaces, Package, etc.)
+│   ├── TS4Tools.Resources.*/  # Resource type libraries (Strings, Images, etc.)
 │   ├── TS4Tools.Extensions/   # UI extensions
 │   ├── TS4Tools/              # Main application library
 │   └── TS4Tools.Desktop/      # Desktop application
 ├── tests/                      # Test projects
-│   ├── TS4Tools.Tests.Unit/   # Unit tests
-│   ├── TS4Tools.Tests.Integration/ # Integration tests
-│   └── TS4Tools.Tests.Performance/ # Performance tests
+│   ├── TS4Tools.Core.*.Tests/ # Core library tests
+│   ├── TS4Tools.Resources.*.Tests/ # Resource library tests
+│   ├── TS4Tools.Tests.Common/ # Shared test utilities
+│   └── TS4Tools.Tests.GoldenMaster/ # Golden master tests
+├── benchmarks/                 # Performance benchmarks
+├── examples/                   # Usage examples
 ├── docs/                       # Documentation
 ├── scripts/                    # Build and utility scripts
 ├── MIGRATION_ROADMAP.md       # Comprehensive migration plan
-├── TASK_TRACKER.md           # Daily progress tracking
 └── README.md                  # This file
 ```
 
@@ -141,7 +147,7 @@ dotnet test
 dotnet test --collect:"XPlat Code Coverage"
 
 # Run performance benchmarks
-dotnet run --project TS4Tools.Tests.Performance --configuration Release
+dotnet run --project benchmarks/TS4Tools.Benchmarks --configuration Release
 
 # Generate coverage report
 dotnet tool install -g dotnet-reportgenerator-globaltool
@@ -192,9 +198,8 @@ This project is currently in active development by the core team. Once the found
 ## 📚 **Documentation**
 
 - [Migration Roadmap](MIGRATION_ROADMAP.md) - Complete migration strategy
-- [Task Tracker](TASK_TRACKER.md) - Current progress and sprint planning
-- [Architecture Decisions](docs/adr/) - Technical decision records (TBD)
-- [API Documentation](docs/api/) - Generated API documentation (TBD)
+- [Architecture Decision Records (ADRs)](docs/architecture/adr/README.md) - Technical decision records
+- [API Documentation](docs/api-reference.md) - API documentation
 
 ## 🔗 **Related Projects**
 

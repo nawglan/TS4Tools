@@ -6,7 +6,7 @@ TS4Tools is designed for high performance with modern .NET 9 features. This guid
 
 ## Memory Optimization
 
-### Span<T> and Memory<T> Usage
+### `Span<T>` and `Memory<T>` Usage
 
 TS4Tools leverages `Span<T>` and `Memory<T>` for zero-allocation operations:
 
@@ -573,7 +573,7 @@ public class PerformanceCounters
 ## Best Practices Summary
 
 1. **Use async/await**: All I/O operations should be async
-2. **Leverage Span<T>**: Use for string and binary operations to avoid allocations
+2. **Leverage `Span<T>`**: Use for string and binary operations to avoid allocations
 3. **Stream for large data**: Use streams instead of byte arrays for large resources
 4. **Parallel processing**: Process multiple packages concurrently with proper throttling
 5. **Monitor memory**: Track allocations and detect leaks early

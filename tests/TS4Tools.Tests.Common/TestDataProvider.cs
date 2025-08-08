@@ -141,17 +141,16 @@ public sealed class TestDataProvider : IDisposable
     /// <summary>
     /// Gets the application settings loaded from appsettings.json.
     /// </summary>
-    /// <returns>The loaded application settings</returns>
-    public ApplicationSettings GetApplicationSettings() => _settings;
+    public ApplicationSettings ApplicationSettings => _settings;
 
-    private async Task<IEnumerable<string>> GetRealGamePackagesAsync()
+    private Task<IEnumerable<string>> GetRealGamePackagesAsync()
     {
         var packages = new List<string>();
 
         var dataDirectory = _settings?.Game?.DataDirectory;
         if (string.IsNullOrEmpty(dataDirectory) || !Directory.Exists(dataDirectory))
         {
-            return packages;
+            return Task.FromResult<IEnumerable<string>>(packages);
         }
 
         var searchPaths = new[]
@@ -192,7 +191,7 @@ public sealed class TestDataProvider : IDisposable
             }
         }
 
-        return packages;
+        return Task.FromResult<IEnumerable<string>>(packages);
     }
 
     private async Task<IEnumerable<string>> CreateMockPackagesAsync(int count)
