@@ -1,0 +1,5 @@
+[*.cs]
+# Temporarily disable CA warnings during initial implementation
+dotnet_diagnostic.CA1002.severity = none
+dotnet_diagnostic.CA1008.severity = none
+dotnet_diagnostic.CA1028.severity = none

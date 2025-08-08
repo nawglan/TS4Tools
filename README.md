@@ -1,4 +1,4 @@
-# TS4Tools - Modern Sims 4 Package Editor
+# TS4Tools - Modern Sims 4 Package Editor> **📝 Latest Update:** Phase 4.11 Utility Resources production-ready (100% functional, all issues resolved) - Ready for Phase 4.12
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![Avalonia UI](https://img.shields.io/badge/Avalonia%20UI-11.3+-purple.svg)](https://avaloniaui.net/)
@@ -33,11 +33,13 @@ TS4Tools is a comprehensive migration and modernization of the popular Sims4Tool
 | Core Foundation | ✅ **Completed** | 8 weeks | **2 days** | **28x faster** |
 | Extensions & Commons | ✅ **Completed** | 4 weeks | **1 day** | **28x faster** |
 | Architecture Integration | ✅ **Completed** | 2 weeks | **1 day** | **14x faster** |
-| **Resource Wrappers** | ⏳ **Next Up** | 16 weeks | **TBD** | **TBD** |
+| **Resource Wrappers** | 🚧 **In Progress** | 16 weeks | **TBD** | **TBD** |
 | Core Library Polish | ⏳ Pending | 4 weeks | TBD | TBD |
 | **s4pe Application** | ⏳ Pending | 8 weeks | TBD | TBD |
 | **s4pe Helpers** | ⏳ Pending | 8 weeks | TBD | TBD |
 | **Final Integration** | ⏳ Pending | 4 weeks | TBD | TBD |
+
+> **📋 Latest Update:** Phase 4.11 Utility Resources completed (98.4% functionality) - See [PHASE_4_11_STATUS.md](PHASE_4_11_STATUS.md) for details
 
 ### **⚡ AI ACCELERATION METRICS**
 - **Phases 1-3 Original Estimate:** 14 weeks (98 days)

@@ -122,62 +122,62 @@ public class PackageCompatibilityTests
         {
             // IMPLEMENTED: Actual package loading performance measurement
             var packageFactory = CreatePackageFactory();
-            
+
             _logger?.LogInformation($"Starting performance test for {Path.GetFileName(packagePath)}");
-            
+
             // Measure package loading performance
             var loadStartTime = DateTime.UtcNow;
             var package = await packageFactory.LoadFromFileAsync(packagePath, readOnly: true);
             var loadDuration = DateTime.UtcNow - loadStartTime;
-            
+
             // Validate basic package properties
             package.Should().NotBeNull("package should load for performance test");
-            
+
             // Handle special cases: some packages (like delta builds) may have 0 resources
             // In this case, we'll run a minimal performance test
             if (package.ResourceCount == 0)
             {
                 _logger?.LogInformation($"Package {Path.GetFileName(packagePath)} has 0 resources (likely a delta build) - running minimal performance test");
-                
+
                 // Measure basic operations on empty package
                 var emptyIndexStartTime = DateTime.UtcNow;
                 var emptyIndexCount = package.ResourceIndex.Count;
                 var emptyIndexDuration = DateTime.UtcNow - emptyIndexStartTime;
-                
+
                 // Clean up
                 await package.DisposeAsync();
-                
+
                 var emptyTotalDuration = DateTime.UtcNow - startTime;
 
                 // Assert performance for minimal package operations
-                emptyTotalDuration.TotalSeconds.Should().BeLessThan(5.0, 
+                emptyTotalDuration.TotalSeconds.Should().BeLessThan(5.0,
                     "minimal package operations should complete quickly");
-                
+
                 _logger?.LogInformation($"✅ Minimal performance test PASSED for {Path.GetFileName(packagePath)}:");
                 _logger?.LogInformation($"   - Total Duration: {emptyTotalDuration.TotalMilliseconds:F2}ms");
                 _logger?.LogInformation($"   - Package Type: Empty/Delta build");
                 _logger?.LogInformation($"   - Index Access Duration: {emptyIndexDuration.TotalMilliseconds:F2}ms");
-                
+
                 return; // Early exit for empty packages
             }
-            
+
             // Normal performance test for packages with resources
             package.ResourceCount.Should().BeGreaterThan(0, "package should have resources for meaningful performance test");
-            
+
             // Measure resource index access performance
             var indexStartTime = DateTime.UtcNow;
             var indexCount = package.ResourceIndex.Count;
             var indexDuration = DateTime.UtcNow - indexStartTime;
-            
+
             // Clean up
             await package.DisposeAsync();
-            
+
             var totalDuration = DateTime.UtcNow - startTime;
 
             // ASSERT: Performance should be reasonable
-            totalDuration.TotalSeconds.Should().BeLessThan(10.0, 
+            totalDuration.TotalSeconds.Should().BeLessThan(10.0,
                 "package operations should complete within reasonable time");
-            
+
             loadDuration.TotalSeconds.Should().BeLessThan(8.0,
                 "package loading should complete within reasonable time");
 
@@ -436,7 +436,7 @@ public class PackageCompatibilityTests
             package.Magic.ToArray().Should().BeEquivalentTo("DBPF"u8.ToArray(), "loaded package should have correct magic");
             package.Major.Should().BeInRange(1, 3, "package major version should be valid (1-3)");
             package.Minor.Should().BeGreaterOrEqualTo(0, "package minor version should be non-negative");
-            
+
             // Handle special case: delta builds or empty packages may have 0 resources
             package.ResourceCount.Should().BeGreaterOrEqualTo(0, "package should have valid resource count");
 
@@ -527,11 +527,11 @@ public class PackageCompatibilityTests
 
             // Validate round-trip produces equivalent bytes
             roundTripBytes.Should().NotBeEmpty("round-trip should produce content");
-            
+
             // Allow for reasonable size variation due to compression or formatting differences
             // but ensure it's not drastically different
             var sizeRatio = (double)roundTripBytes.Length / originalBytes.Length;
-            sizeRatio.Should().BeInRange(0.5, 2.0, 
+            sizeRatio.Should().BeInRange(0.5, 2.0,
                 "round-trip size should be reasonable compared to original (allowing for compression differences)");
 
             // Validate key header fields are preserved (byte-perfect for critical fields)
@@ -548,7 +548,7 @@ public class PackageCompatibilityTests
                 var rtMajorVersion = BitConverter.ToInt32(roundTripBytes, 4);
                 var rtMinorVersion = BitConverter.ToInt32(roundTripBytes, 8);
 
-                rtMajorVersion.Should().BeInRange(Math.Max(1, originalMajor - 1), originalMajor + 1, 
+                rtMajorVersion.Should().BeInRange(Math.Max(1, originalMajor - 1), originalMajor + 1,
                     "round-trip should preserve compatible major version");
                 rtMinorVersion.Should().BeGreaterOrEqualTo(0, "round-trip should have valid minor version");
 

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AssemblyTitle>TS4Tools Utility Resources</AssemblyTitle>
+    <Product>TS4Tools</Product>
+    <Description>Utility resource wrappers for TS4Tools package - DataResource, ConfigResource, MetadataResource</Description>
+    <Copyright>Copyright © 2024-2025 TS4Tools Contributors</Copyright>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>TS4Tools.Resources.Utility.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
+    <ProjectReference Include="..\TS4Tools.Resources.Common\TS4Tools.Resources.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+</Project>
