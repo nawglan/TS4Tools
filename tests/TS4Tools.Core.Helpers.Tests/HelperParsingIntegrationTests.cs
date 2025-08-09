@@ -14,6 +14,7 @@ namespace TS4Tools.Core.Helpers.Tests;
 internal sealed class TestHelperToolService : HelperToolService
 {
     private readonly string[] _customSearchPaths;
+    private ITestOutputHelper? _testOutput;
 
     public TestHelperToolService(ILogger<HelperToolService> logger, params string[] customSearchPaths)
         : base(logger)
@@ -21,8 +22,19 @@ internal sealed class TestHelperToolService : HelperToolService
         _customSearchPaths = customSearchPaths;
     }
 
+    public void SetTestOutput(ITestOutputHelper output)
+    {
+        _testOutput = output;
+    }
+
+    protected override void WriteDebug(string message)
+    {
+        _testOutput?.WriteLine($"SERVICE: {message}");
+    }
+
     protected override IEnumerable<string> GetHelperSearchPathsCore()
     {
+        WriteDebug($"GetHelperSearchPathsCore called, returning paths: [{string.Join(", ", _customSearchPaths)}]");
         return _customSearchPaths;
     }
 }
@@ -39,6 +51,7 @@ public sealed class HelperParsingIntegrationTests : IDisposable
         _testHelpersDirectory = Path.Combine(Path.GetTempPath(), "TS4Tools_TestHelpers", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testHelpersDirectory);
         _service = new TestHelperToolService(NullLogger<HelperToolService>.Instance, _testHelpersDirectory);
+        _service.SetTestOutput(output);
     }
 
     [Fact]
@@ -139,7 +152,18 @@ Desc: Test description
         _output.WriteLine($"Content matches: {helperContent == readBackContent}");
 
         // Act
-        await _service.ReloadHelpersAsync();
+        _output.WriteLine("=== CALLING SERVICE: ReloadHelpersAsync ===");
+        try
+        {
+            await _service.ReloadHelpersAsync();
+            _output.WriteLine("=== SERVICE CALL: ReloadHelpersAsync COMPLETED ===");
+        }
+        catch (Exception ex)
+        {
+            _output.WriteLine($"=== SERVICE CALL EXCEPTION: {ex.GetType().Name}: {ex.Message} ===");
+            _output.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw;
+        }
 
         // DEBUG: Check what helpers were loaded
         var allAvailableHelpers = _service.GetAvailableHelperTools();

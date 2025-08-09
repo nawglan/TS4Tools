@@ -16,6 +16,15 @@ public class HelperToolService : IHelperToolService
     private readonly Dictionary<string, HelperToolInfo> _helpers = new();
     private readonly Dictionary<uint, List<HelperToolInfo>> _resourceTypeIndex = new();
 
+    /// <summary>
+    /// Virtual method for debug output that can be overridden in tests
+    /// </summary>
+    /// <param name="message">Debug message to output</param>
+    protected virtual void WriteDebug(string message)
+    {
+        Console.WriteLine(message);
+    }
+
     private static readonly string[] ReservedKeywords =
     {
         "wrapper", "label", "desc", "command", "arguments", "readonly", "ignorewritetimestamp"
@@ -139,9 +148,9 @@ public class HelperToolService : IHelperToolService
         try
         {
             // DEBUG: Add debugging for cross-platform failures
-            Console.WriteLine("=== DEBUG: ReloadHelpersAsync ===");
-            Console.WriteLine($"Operating System: {Environment.OSVersion}");
-            Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
+            WriteDebug("=== DEBUG: ReloadHelpersAsync ===");
+            WriteDebug($"Operating System: {Environment.OSVersion}");
+            WriteDebug($"Current Directory: {Environment.CurrentDirectory}");
 
             _helpers.Clear();
             _resourceTypeIndex.Clear();
@@ -149,19 +158,19 @@ public class HelperToolService : IHelperToolService
             await LoadHelpersFromDirectoryAsync();
             BuildResourceTypeIndex();
 
-            Console.WriteLine($"Total helpers loaded: {_helpers.Count}");
+            WriteDebug($"Total helpers loaded: {_helpers.Count}");
             foreach (var helper in _helpers)
             {
-                Console.WriteLine($"  Helper: {helper.Key} -> {helper.Value.Label} (ResourceTypes: {helper.Value.SupportedResourceTypes.Count})");
+                WriteDebug($"  Helper: {helper.Key} -> {helper.Value.Label} (ResourceTypes: {helper.Value.SupportedResourceTypes.Count})");
             }
-            Console.WriteLine("=== END DEBUG: ReloadHelpersAsync ===");
+            WriteDebug("=== END DEBUG: ReloadHelpersAsync ===");
 
             _logger.LogInformation("Loaded {Count} helper tools", _helpers.Count);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"=== ERROR in ReloadHelpersAsync: {ex.GetType().Name}: {ex.Message} ===");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            WriteDebug($"=== ERROR in ReloadHelpersAsync: {ex.GetType().Name}: {ex.Message} ===");
+            WriteDebug($"Stack trace: {ex.StackTrace}");
             throw;
         }
     }
@@ -171,50 +180,50 @@ public class HelperToolService : IHelperToolService
         // Look for .helper files in common locations
         var searchPaths = GetHelperSearchPathsCore();
 
-        Console.WriteLine("=== DEBUG: LoadHelpersFromDirectoryAsync ===");
-        Console.WriteLine($"Search paths: [{string.Join(", ", searchPaths)}]");
+        WriteDebug("=== DEBUG: LoadHelpersFromDirectoryAsync ===");
+        WriteDebug($"Search paths: [{string.Join(", ", searchPaths)}]");
 
         foreach (var searchPath in searchPaths)
         {
-            Console.WriteLine($"Checking search path: '{searchPath}'");
+            WriteDebug($"Checking search path: '{searchPath}'");
             if (!Directory.Exists(searchPath))
             {
-                Console.WriteLine($"  Directory does not exist");
+                WriteDebug($"  Directory does not exist");
                 _logger.LogDebug("Helper directory not found: {Path}", searchPath);
                 continue;
             }
 
-            Console.WriteLine($"  Directory exists, searching for *.helper files");
+            WriteDebug($"  Directory exists, searching for *.helper files");
             _logger.LogDebug("Searching for helpers in: {Path}", searchPath);
 
             var helperFiles = Directory.GetFiles(searchPath, "*.helper", SearchOption.AllDirectories);
-            Console.WriteLine($"  Found {helperFiles.Length} helper files: [{string.Join(", ", helperFiles)}]");
+            WriteDebug($"  Found {helperFiles.Length} helper files: [{string.Join(", ", helperFiles)}]");
 
             foreach (var helperFile in helperFiles)
             {
-                Console.WriteLine($"  Processing helper file: '{helperFile}'");
+                WriteDebug($"  Processing helper file: '{helperFile}'");
                 try
                 {
                     var helperInfo = await ParseHelperFileAsync(helperFile);
                     if (helperInfo != null)
                     {
                         _helpers[helperInfo.Id] = helperInfo;
-                        Console.WriteLine($"    Successfully loaded helper: {helperInfo.Id} - {helperInfo.Label}");
+                        WriteDebug($"    Successfully loaded helper: {helperInfo.Id} - {helperInfo.Label}");
                         _logger.LogDebug("Loaded helper: {Id} - {Label}", helperInfo.Id, helperInfo.Label);
                     }
                     else
                     {
-                        Console.WriteLine($"    Helper parsing returned null");
+                        WriteDebug($"    Helper parsing returned null");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"    Exception parsing helper file: {ex.Message}");
+                    WriteDebug($"    Exception parsing helper file: {ex.Message}");
                     _logger.LogWarning(ex, "Failed to parse helper file: {File}", helperFile);
                 }
             }
         }
-        Console.WriteLine("=== END DEBUG: LoadHelpersFromDirectoryAsync ===");
+        WriteDebug("=== END DEBUG: LoadHelpersFromDirectoryAsync ===");
     }
 
     /// <summary>
