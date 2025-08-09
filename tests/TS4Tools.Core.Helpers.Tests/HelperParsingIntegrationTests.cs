@@ -93,17 +93,82 @@ Desc: Test description
         var helperFile = Path.Combine(_testHelpersDirectory, "CommentTest.helper");
         await File.WriteAllTextAsync(helperFile, helperContent);
 
+        // DEBUG: Add debugging to understand cross-platform failures
+        Console.WriteLine("=== CROSS-PLATFORM DEBUG: Comment Test Helper ===");
+        Console.WriteLine($"Operating System: {Environment.OSVersion}");
+        Console.WriteLine($"Is Windows: {OperatingSystem.IsWindows()}");
+        Console.WriteLine($"Is Linux: {OperatingSystem.IsLinux()}");
+        Console.WriteLine($"Is macOS: {OperatingSystem.IsMacOS()}");
+        Console.WriteLine($"Test Helpers Directory: {_testHelpersDirectory}");
+        Console.WriteLine($"Helper File Path: {helperFile}");
+        Console.WriteLine($"Helper File Exists: {File.Exists(helperFile)}");
+        Console.WriteLine("Original Helper Content:");
+        Console.WriteLine(helperContent);
+        Console.WriteLine("=== Character Analysis ===");
+        for (int i = 0; i < helperContent.Length && i < 200; i++)
+        {
+            var c = helperContent[i];
+            Console.Write($"{(int)c:X2}");
+            if (c == '\n') Console.Write("(LF)");
+            else if (c == '\r') Console.Write("(CR)");
+            else if (c == ' ') Console.Write("(SP)");
+            Console.Write(" ");
+            if ((i + 1) % 20 == 0) Console.WriteLine();
+        }
+        Console.WriteLine("\n=== End Character Analysis ===");
+        Console.WriteLine("=== End Original Content ===");
+        
+        // Verify file was written correctly
+        var readBackContent = await File.ReadAllTextAsync(helperFile);
+        Console.WriteLine("Read Back Content:");
+        Console.WriteLine(readBackContent);
+        Console.WriteLine("=== End Read Back Content ===");
+        Console.WriteLine($"Content matches: {helperContent == readBackContent}");
+
         // Act
         await _service.ReloadHelpersAsync();
 
-        // Assert
-        var helpers = _service.GetHelpersForResourceType(0x12345678);
-        helpers.Should().HaveCount(1);
+        // DEBUG: Check what helpers were loaded
+        var allAvailableHelpers = _service.GetAvailableHelperTools();
+        Console.WriteLine($"Available helpers count: {allAvailableHelpers.Count()}");
+        Console.WriteLine($"Available helpers: [{string.Join(", ", allAvailableHelpers)}]");
 
-        var helper = helpers.First();
-        helper.Label.Should().Be("Test Helper  Tool");
-        helper.Command.Should().Be("notepad.exe");
-        helper.Description.Should().Be("Test description");
+        var helpers = _service.GetHelpersForResourceType(0x12345678);
+        Console.WriteLine($"Helpers for ResourceType 0x12345678: {helpers.Count()}");
+        
+        if (helpers.Any())
+        {
+            var helper = helpers.First();
+            Console.WriteLine($"Helper ID: {helper.Id}");
+            Console.WriteLine($"Helper Label: '{helper.Label}'");
+            Console.WriteLine($"Helper Command: '{helper.Command}'");
+            Console.WriteLine($"Helper Description: '{helper.Description}'");
+            Console.WriteLine($"Helper ResourceTypes: [{string.Join(", ", helper.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
+        }
+        else
+        {
+            Console.WriteLine("No helpers found for ResourceType 0x12345678");
+            
+            // Check if any helpers were loaded at all
+            var allHelpers = _service.GetAvailableHelperTools().ToList();
+            if (allHelpers.Count == 0)
+            {
+                Console.WriteLine("ERROR: No helpers loaded at all!");
+            }
+            else
+            {
+                Console.WriteLine($"Other helpers loaded: {string.Join(", ", allHelpers)}");
+            }
+        }
+        Console.WriteLine("=== END CROSS-PLATFORM DEBUG ===");
+
+        // Assert
+        helpers.Should().HaveCount(1, "Expected exactly 1 helper to be loaded for ResourceType 0x12345678");
+
+        var foundHelper = helpers.First();
+        foundHelper.Label.Should().Be("Test Helper  Tool");
+        foundHelper.Command.Should().Be("notepad.exe");
+        foundHelper.Description.Should().Be("Test description");
     }
 
     [Fact]
