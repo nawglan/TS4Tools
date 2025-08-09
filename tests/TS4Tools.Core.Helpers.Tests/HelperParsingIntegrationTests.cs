@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Reflection;
 using System.Text;
 using TS4Tools.Core.Helpers;
 using Xunit;
@@ -169,6 +170,19 @@ Desc: Test description
         var allAvailableHelpers = _service.GetAvailableHelperTools();
         _output.WriteLine($"Available helpers count: {allAvailableHelpers.Count()}");
         _output.WriteLine($"Available helpers: [{string.Join(", ", allAvailableHelpers)}]");
+
+        // DEBUG: Check raw helpers in service (using reflection to access private _helpers field)
+        var serviceType = _service.GetType().BaseType; // Get HelperToolService type
+        var helpersField = serviceType?.GetField("_helpers", BindingFlags.NonPublic | BindingFlags.Instance);
+        if (helpersField?.GetValue(_service) is Dictionary<string, HelperToolInfo> rawHelpers)
+        {
+            _output.WriteLine($"Raw helpers count: {rawHelpers.Count}");
+            foreach (var kvp in rawHelpers)
+            {
+                _output.WriteLine($"  Raw helper: {kvp.Key} -> Label='{kvp.Value.Label}', IsAvailable={kvp.Value.IsAvailable}, Command='{kvp.Value.Command}'");
+                _output.WriteLine($"    ResourceTypes: [{string.Join(", ", kvp.Value.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
+            }
+        }
 
         var helpers = _service.GetHelpersForResourceType(0x12345678);
         _output.WriteLine($"Helpers for ResourceType 0x12345678: {helpers.Count()}");
