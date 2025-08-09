@@ -188,4 +188,123 @@ public class HelperToolResultTests
         result.Exception.Should().Be(exception);
         result.ResultData.Should().BeNull();
     }
+
+    [Fact]
+    public void HelperToolResult_Success_ShouldCreateSuccessResult()
+    {
+        // Arrange
+        const int exitCode = 0;
+        const string standardOutput = "Success output";
+        const string standardError = "";
+        var executionTime = TimeSpan.FromMilliseconds(100);
+
+        // Act
+        var result = HelperToolResult.Success(exitCode, standardOutput, standardError, executionTime);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.ExitCode.Should().Be(exitCode);
+        result.StandardOutput.Should().Be(standardOutput);
+        result.StandardError.Should().Be(standardError);
+        result.ExecutionTime.Should().Be(executionTime);
+        result.Exception.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(1)]
+    [InlineData(255)]
+    public void HelperToolResult_Failure_ShouldCreateFailureResult(int exitCode)
+    {
+        // Arrange
+        const string standardOutput = "Output";
+        const string standardError = "Error";
+        var executionTime = TimeSpan.FromMilliseconds(200);
+
+        // Act
+        var result = HelperToolResult.Failure(exitCode, standardOutput, standardError, executionTime);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.ExitCode.Should().Be(exitCode);
+        result.StandardOutput.Should().Be(standardOutput);
+        result.StandardError.Should().Be(standardError);
+        result.ExecutionTime.Should().Be(executionTime);
+        result.Exception.Should().BeNull();
+    }
+
+    [Fact]
+    public void HelperToolInfo_Constructor_ShouldInitializeProperties()
+    {
+        // Arrange
+        const string id = "TestHelper";
+        const string label = "Test Helper";
+        const string description = "A test helper tool";
+        const string command = "test.exe";
+        var resourceTypes = new List<uint> { 0x12345678 };
+
+        // Act
+        var helperInfo = new HelperToolInfo
+        {
+            Id = id,
+            Label = label,
+            Description = description,
+            Command = command,
+            SupportedResourceTypes = resourceTypes
+        };
+
+        // Assert
+        helperInfo.Id.Should().Be(id);
+        helperInfo.Label.Should().Be(label);
+        helperInfo.Description.Should().Be(description);
+        helperInfo.Command.Should().Be(command);
+        helperInfo.SupportedResourceTypes.Should().BeEquivalentTo(resourceTypes);
+    }
+
+    [Fact]
+    public void HelperToolInfo_ToString_ShouldReturnLabel()
+    {
+        // Arrange
+        const string label = "Test Helper Label";
+        const string id = "test";
+        var helperInfo = new HelperToolInfo
+        {
+            Id = id,
+            Label = label,
+            Command = "test.exe"
+        };
+
+        // Act
+        var result = helperInfo.ToString();
+
+        // Assert
+        result.Should().Be($"{label} ({id})");
+    }
+
+    [Fact]
+    public async Task ExecuteForResourceAsync_WithNullResource_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var service = new HelperToolService(NullLogger<HelperToolService>.Instance);
+
+        // Act & Assert
+        await service.Invoking(s => s.ExecuteForResourceAsync("test", null!, Array.Empty<string>()))
+            .Should().ThrowAsync<ArgumentNullException>()
+            .WithParameterName("resource");
+    }
+
+    [Fact]
+    public async Task ReloadHelpersAsync_ShouldClearExistingHelpers()
+    {
+        // Arrange
+        var service = new HelperToolService(NullLogger<HelperToolService>.Instance);
+        var initialCount = service.GetAvailableHelperTools().Count;
+
+        // Act
+        await service.ReloadHelpersAsync();
+
+        // Assert
+        var finalCount = service.GetAvailableHelperTools().Count;
+        finalCount.Should().Be(0); // No actual helper files in test environment
+    }
 }

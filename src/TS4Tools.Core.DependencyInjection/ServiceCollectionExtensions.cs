@@ -96,9 +96,16 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // Register resource services using the existing extension method
-        // Note: This requires configuration but we'll handle it in the main method
-        // services.AddResourceManager(configuration);
+        // Register resource manager with default configuration
+        services.AddResourceManager(options =>
+        {
+            options.EnableCaching = true;
+            options.CacheExpirationMinutes = 30;
+            options.EnableStrictValidation = true;
+        });
+
+        // Register resource wrapper registry
+        services.AddResourceWrapperRegistry();
 
         return services;
     }

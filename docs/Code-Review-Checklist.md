@@ -245,6 +245,9 @@ A pull request is ready to merge when:
 - [ ] **Two approving reviews** from qualified team members
 - [ ] **All CI/CD pipeline checks pass** (build, test, security, performance)
 - [ ] **Documentation updated** (ADRs, README, API docs as needed)
+- [ ] **README.md updated** if changes affect user-facing functionality or setup
+- [ ] **MIGRATION_ROADMAP.md updated** if completing phases, milestones, or major implementations
+- [ ] **CHANGELOG.md updated** with detailed technical accomplishments and implementation details
 - [ ] **Performance impact assessed** and within acceptable limits
 - [ ] **Breaking changes documented** with migration guide if applicable
 

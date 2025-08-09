@@ -1,0 +1,41 @@
+{
+  "ApplicationSettings": {
+    "EnableExtraChecking": true,
+    "AssumeDataDirty": true,
+    "UseTS4Format": true,
+    "MaxResourceCacheSize": 1000,
+    "EnableDetailedLogging": true,
+    "AsyncOperationTimeoutMs": 30000,
+    "EnableCrossPlatformFeatures": true,
+    "Game": {
+      "InstallationDirectory": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Sims 4",
+      "DataDirectory": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\The Sims 4\\Data",
+      "ClientDataDirectory": "C:\\Users\\nawgl\\code\\Test Data\\Client",
+      "EnableAutoDetection": true,
+      "ValidateInstallation": true
+    },
+    "Package": {
+      "CreateBackups": true,
+      "MaxBackupCount": 10,
+      "EnableCompression": true,
+      "CompressionLevel": 6,
+      "IOBufferSize": 65536
+    },
+    "UserInterface": {
+      "Theme": "System",
+      "EnableAnimations": true,
+      "ShowAdvancedOptions": false,
+      "RecentFilesCount": 10,
+      "EnableAutoSave": false,
+      "AutoSaveIntervalMinutes": 5
+    }
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information",
+      "TS4Tools": "Debug"
+    }
+  }
+}
