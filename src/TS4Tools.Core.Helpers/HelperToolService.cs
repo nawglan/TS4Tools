@@ -140,7 +140,7 @@ public class HelperToolService : IHelperToolService
         Console.WriteLine("=== DEBUG: ReloadHelpersAsync ===");
         Console.WriteLine($"Operating System: {Environment.OSVersion}");
         Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
-        
+
         _helpers.Clear();
         _resourceTypeIndex.Clear();
 
@@ -180,7 +180,7 @@ public class HelperToolService : IHelperToolService
 
             var helperFiles = Directory.GetFiles(searchPath, "*.helper", SearchOption.AllDirectories);
             Console.WriteLine($"  Found {helperFiles.Length} helper files: [{string.Join(", ", helperFiles)}]");
-            
+
             foreach (var helperFile in helperFiles)
             {
                 Console.WriteLine($"  Processing helper file: '{helperFile}'");
@@ -251,7 +251,7 @@ public class HelperToolService : IHelperToolService
         var fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
         Console.WriteLine("Original file content:");
         Console.WriteLine($"[{fileContent}]");
-        
+
         var processedContent = RemoveComments(fileContent);
         Console.WriteLine("Processed content after comment removal:");
         Console.WriteLine($"[{processedContent}]");
@@ -361,11 +361,11 @@ public class HelperToolService : IHelperToolService
     {
         Console.WriteLine("=== DEBUG: RemoveComments ===");
         Console.WriteLine($"Input content: [{content}]");
-        
+
         var result = new StringBuilder();
         var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
         Console.WriteLine($"Split into {lines.Length} lines");
-        
+
         var inBlockComment = false;
 
         for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)

@@ -1,8 +1,10 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Text;
 using TS4Tools.Core.Helpers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace TS4Tools.Core.Helpers.Tests;
 
@@ -29,9 +31,11 @@ public sealed class HelperParsingIntegrationTests : IDisposable
 {
     private readonly TestHelperToolService _service;
     private readonly string _testHelpersDirectory;
+    private readonly ITestOutputHelper _output;
 
-    public HelperParsingIntegrationTests()
+    public HelperParsingIntegrationTests(ITestOutputHelper output)
     {
+        _output = output;
         _testHelpersDirectory = Path.Combine(Path.GetTempPath(), "TS4Tools_TestHelpers", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testHelpersDirectory);
         _service = new TestHelperToolService(NullLogger<HelperToolService>.Instance, _testHelpersDirectory);
@@ -94,73 +98,82 @@ Desc: Test description
         await File.WriteAllTextAsync(helperFile, helperContent);
 
         // DEBUG: Add debugging to understand cross-platform failures
-        Console.WriteLine("=== CROSS-PLATFORM DEBUG: Comment Test Helper ===");
-        Console.WriteLine($"Operating System: {Environment.OSVersion}");
-        Console.WriteLine($"Is Windows: {OperatingSystem.IsWindows()}");
-        Console.WriteLine($"Is Linux: {OperatingSystem.IsLinux()}");
-        Console.WriteLine($"Is macOS: {OperatingSystem.IsMacOS()}");
-        Console.WriteLine($"Test Helpers Directory: {_testHelpersDirectory}");
-        Console.WriteLine($"Helper File Path: {helperFile}");
-        Console.WriteLine($"Helper File Exists: {File.Exists(helperFile)}");
-        Console.WriteLine("Original Helper Content:");
-        Console.WriteLine(helperContent);
-        Console.WriteLine("=== Character Analysis ===");
+        _output.WriteLine("=== CROSS-PLATFORM DEBUG: Comment Test Helper ===");
+        _output.WriteLine($"Operating System: {Environment.OSVersion}");
+        _output.WriteLine($"Is Windows: {OperatingSystem.IsWindows()}");
+        _output.WriteLine($"Is Linux: {OperatingSystem.IsLinux()}");
+        _output.WriteLine($"Is macOS: {OperatingSystem.IsMacOS()}");
+        _output.WriteLine($"Test Helpers Directory: {_testHelpersDirectory}");
+        _output.WriteLine($"Helper File Path: {helperFile}");
+        _output.WriteLine($"Helper File Exists: {File.Exists(helperFile)}");
+        _output.WriteLine("Original Helper Content:");
+        _output.WriteLine(helperContent);
+        _output.WriteLine("=== Character Analysis ===");
+        var hexOutput = new StringBuilder();
         for (int i = 0; i < helperContent.Length && i < 200; i++)
         {
             var c = helperContent[i];
-            Console.Write($"{(int)c:X2}");
-            if (c == '\n') Console.Write("(LF)");
-            else if (c == '\r') Console.Write("(CR)");
-            else if (c == ' ') Console.Write("(SP)");
-            Console.Write(" ");
-            if ((i + 1) % 20 == 0) Console.WriteLine();
+            hexOutput.Append($"{(int)c:X2}");
+            if (c == '\n') hexOutput.Append("(LF)");
+            else if (c == '\r') hexOutput.Append("(CR)");
+            else if (c == ' ') hexOutput.Append("(SP)");
+            hexOutput.Append(" ");
+            if ((i + 1) % 20 == 0) 
+            {
+                _output.WriteLine(hexOutput.ToString());
+                hexOutput.Clear();
+            }
         }
-        Console.WriteLine("\n=== End Character Analysis ===");
-        Console.WriteLine("=== End Original Content ===");
-        
+        if (hexOutput.Length > 0)
+        {
+            _output.WriteLine(hexOutput.ToString());
+        }
+        _output.WriteLine("=== End Character Analysis ===");
+        _output.WriteLine("=== End Original Content ===");
+
         // Verify file was written correctly
         var readBackContent = await File.ReadAllTextAsync(helperFile);
-        Console.WriteLine("Read Back Content:");
-        Console.WriteLine(readBackContent);
-        Console.WriteLine("=== End Read Back Content ===");
-        Console.WriteLine($"Content matches: {helperContent == readBackContent}");
+        _output.WriteLine("Read Back Content:");
+        _output.WriteLine(readBackContent);
+        _output.WriteLine("=== End Read Back Content ===");
+        _output.WriteLine($"Content matches: {helperContent == readBackContent}");
 
         // Act
         await _service.ReloadHelpersAsync();
 
         // DEBUG: Check what helpers were loaded
         var allAvailableHelpers = _service.GetAvailableHelperTools();
-        Console.WriteLine($"Available helpers count: {allAvailableHelpers.Count()}");
-        Console.WriteLine($"Available helpers: [{string.Join(", ", allAvailableHelpers)}]");
+        _output.WriteLine($"Available helpers count: {allAvailableHelpers.Count()}");
+        _output.WriteLine($"Available helpers: [{string.Join(", ", allAvailableHelpers)}]");
 
         var helpers = _service.GetHelpersForResourceType(0x12345678);
-        Console.WriteLine($"Helpers for ResourceType 0x12345678: {helpers.Count()}");
-        
+        _output.WriteLine($"Helpers for ResourceType 0x12345678: {helpers.Count()}");
+
         if (helpers.Any())
         {
             var helper = helpers.First();
-            Console.WriteLine($"Helper ID: {helper.Id}");
-            Console.WriteLine($"Helper Label: '{helper.Label}'");
-            Console.WriteLine($"Helper Command: '{helper.Command}'");
-            Console.WriteLine($"Helper Description: '{helper.Description}'");
-            Console.WriteLine($"Helper ResourceTypes: [{string.Join(", ", helper.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
+            _output.WriteLine($"Helper ID: {helper.Id}");
+            _output.WriteLine($"Helper Label: '{helper.Label}'");
+            _output.WriteLine($"Helper Command: '{helper.Command}'");
+            _output.WriteLine($"Helper Description: '{helper.Description}'");
+            _output.WriteLine($"Helper ResourceTypes: [{string.Join(", ", helper.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
         }
         else
         {
-            Console.WriteLine("No helpers found for ResourceType 0x12345678");
-            
+            _output.WriteLine("No helpers found for ResourceType 0x12345678");
+
             // Check if any helpers were loaded at all
             var allHelpers = _service.GetAvailableHelperTools().ToList();
             if (allHelpers.Count == 0)
             {
-                Console.WriteLine("ERROR: No helpers loaded at all!");
+                _output.WriteLine("ERROR: No helpers loaded at all!");
             }
             else
             {
-                Console.WriteLine($"Other helpers loaded: {string.Join(", ", allHelpers)}");
+                _output.WriteLine($"Other helpers loaded: {string.Join(", ", allHelpers)}");
             }
         }
-        Console.WriteLine("=== END CROSS-PLATFORM DEBUG ===");
+        _output.WriteLine("=== END CROSS-PLATFORM DEBUG ===");
 
         // Assert
         helpers.Should().HaveCount(1, "Expected exactly 1 helper to be loaded for ResourceType 0x12345678");
