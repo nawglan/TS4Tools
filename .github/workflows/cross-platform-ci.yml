@@ -2,7 +2,7 @@ name: Cross-Platform CI/CD
 
 on:
   push:
-    branches: [ main, develop, 'feature/**', 'release/**', 'nawglan.*' ]
+    branches: [ main, develop, 'feature/**', 'release/**' ]
   pull_request:
     branches: [ main, develop ]
 
@@ -17,23 +17,23 @@ jobs:
   cross-platform-test:
     name: Build & Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 1
-    
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-    
+
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
@@ -41,18 +41,18 @@ jobs:
         key: ${{ runner.os }}-nuget-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
         restore-keys: |
           ${{ runner.os }}-nuget-
-    
+
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE }}
-    
+
     - name: Build solution
       run: |
         dotnet build ${{ env.SOLUTION_FILE }} --no-restore --configuration Release --verbosity minimal
-    
+
     - name: Run unit tests
       run: |
         dotnet test ${{ env.SOLUTION_FILE }} --no-build --configuration Release --verbosity minimal --logger trx --collect:"XPlat Code Coverage"
-    
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -120,18 +120,18 @@ jobs:
     name: Quality Gate
     needs: cross-platform-test
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Download all test results
       uses: actions/download-artifact@v4
       with:
         path: test-results
-        
+
     - name: Check cross-platform test results
       run: |
         echo "Cross-platform testing completed successfully on:"
         echo "- Windows (windows-latest)"
-        echo "- Linux (ubuntu-latest)" 
+        echo "- Linux (ubuntu-latest)"
         echo "- macOS (macos-latest)"
         echo ""
         echo "✅ All platforms passed build and test validation"
@@ -144,19 +144,19 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: cross-platform-test
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-    
+
     - name: Restore dependencies
       run: dotnet restore
-    
+
     - name: Run performance benchmarks
       run: |
         if [ -d "benchmarks" ]; then

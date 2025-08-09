@@ -227,21 +227,6 @@ public class HelperToolService : IHelperToolService
             // Handle comment blocks
             if (inCommentBlock)
             {
-                var endIndex = line.IndexOf("*/", StringComparison.Ordinal);
-                if (endIndex > -1)
-                {
-                    line = line.Substring(endIndex + 2).Trim();
-                    inCommentBlock = false;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-
-            // Handle comment blocks
-            if (inCommentBlock)
-            {
                 var commentEnd = line.IndexOf("*/", StringComparison.Ordinal);
                 if (commentEnd > -1)
                 {
@@ -334,7 +319,7 @@ public class HelperToolService : IHelperToolService
         // Must have required fields
         if (!properties.ContainsKey("Label") || !properties.ContainsKey("Command"))
         {
-            _logger.LogWarning("Helper file missing required fields (Label, Command): {File}", filePath);
+            _logger?.LogWarning("Helper file missing required fields (Label, Command): {File}", filePath);
             return null;
         }
 
