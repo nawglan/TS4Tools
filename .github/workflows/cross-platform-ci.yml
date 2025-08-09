@@ -2,7 +2,7 @@ name: Cross-Platform CI/CD
 
 on:
   push:
-    branches: [ main, develop, 'feature/**', 'release/**' ]
+    branches: [ main, develop, 'feature/**', 'release/**', 'nawglan.*' ]
   pull_request:
     branches: [ main, develop ]
 

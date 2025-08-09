@@ -239,6 +239,26 @@ public class HelperToolService : IHelperToolService
                 }
             }
 
+            // Handle comment blocks
+            if (inCommentBlock)
+            {
+                var commentEnd = line.IndexOf("*/", StringComparison.Ordinal);
+                if (commentEnd > -1)
+                {
+                    // Block comment ends on this line - keep the part after */
+                    line = line.Substring(commentEnd + 2).Trim();
+                    inCommentBlock = false;
+                    // If nothing left after removing comment, skip this line
+                    if (string.IsNullOrEmpty(line))
+                        continue;
+                }
+                else
+                {
+                    // Still in comment block
+                    continue;
+                }
+            }
+
             // Handle single-line comments (start of line)
             if (line.StartsWith("//") || line.StartsWith("#") || line.StartsWith(";") || string.IsNullOrEmpty(line))
                 continue;
