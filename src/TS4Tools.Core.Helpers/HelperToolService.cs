@@ -216,76 +216,16 @@ public class HelperToolService : IHelperToolService
         var properties = new Dictionary<string, string>();
         var resourceTypes = new List<uint>();
 
-        using var reader = new StreamReader(filePath, Encoding.UTF8);
-        string? line;
-        var inCommentBlock = false;
+        // Read entire file content and process comments first
+        var fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
+        var processedContent = RemoveComments(fileContent);
 
-        while ((line = await reader.ReadLineAsync()) != null)
+        using var reader = new StringReader(processedContent);
+        string? line;
+
+        while ((line = reader.ReadLine()) != null)
         {
             line = line.Trim();
-
-            // Handle comment blocks
-            if (inCommentBlock)
-            {
-                var commentEnd = line.IndexOf("*/", StringComparison.Ordinal);
-                if (commentEnd > -1)
-                {
-                    // Block comment ends on this line - keep the part after */
-                    line = line.Substring(commentEnd + 2).Trim();
-                    inCommentBlock = false;
-                    // If nothing left after removing comment, skip this line
-                    if (string.IsNullOrEmpty(line))
-                        continue;
-                }
-                else
-                {
-                    // Still in comment block
-                    continue;
-                }
-            }
-
-            // Handle single-line comments (start of line)
-            if (line.StartsWith("//") || line.StartsWith("#") || line.StartsWith(";") || string.IsNullOrEmpty(line))
-                continue;
-
-            // Handle inline single-line comments
-            var commentMarkers = new[] { "#", ";", "//" };
-            foreach (var marker in commentMarkers)
-            {
-                var commentIndex = line.IndexOf(marker, StringComparison.Ordinal);
-                if (commentIndex > -1)
-                {
-                    line = line.Substring(0, commentIndex).Trim();
-                    break;
-                }
-            }
-
-            // Handle comment block start/end (including inline)
-            while (true)
-            {
-                var commentStart = line.IndexOf("/*", StringComparison.Ordinal);
-                if (commentStart > -1)
-                {
-                    var beforeComment = line.Substring(0, commentStart);
-                    var afterComment = line.Substring(commentStart + 2);
-
-                    var commentEnd = afterComment.IndexOf("*/", StringComparison.Ordinal);
-                    if (commentEnd > -1)
-                    {
-                        // Inline block comment
-                        line = beforeComment + afterComment.Substring(commentEnd + 2);
-                        continue; // Check for more block comments on the same line
-                    }
-                    else
-                    {
-                        // Block comment starts but doesn't end on this line
-                        line = beforeComment.Trim();
-                        inCommentBlock = true;
-                        break;
-                    }
-                }
-                break;
-            }
 
             if (string.IsNullOrEmpty(line))
                 continue;
@@ -349,6 +289,75 @@ public class HelperToolService : IHelperToolService
             IsAvailable = isAvailable,
             Properties = properties
         };
+    }
+
+    private static string RemoveComments(string content)
+    {
+        var result = new StringBuilder();
+        var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
+        var inBlockComment = false;
+
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine;
+
+            if (inBlockComment)
+            {
+                var commentEndIndex = line.IndexOf("*/", StringComparison.Ordinal);
+                if (commentEndIndex >= 0)
+                {
+                    line = line.Substring(commentEndIndex + 2);
+                    inBlockComment = false;
+                }
+                else
+                {
+                    // Entire line is in block comment
+                    result.AppendLine();
+                    continue;
+                }
+            }
+
+            // Process the line for comments
+            var processedLine = new StringBuilder();
+            var i = 0;
+
+            while (i < line.Length)
+            {
+                // Check for block comment start
+                if (i < line.Length - 1 && line[i] == '/' && line[i + 1] == '*')
+                {
+                    var commentEndIndex = line.IndexOf("*/", i + 2, StringComparison.Ordinal);
+                    if (commentEndIndex >= 0)
+                    {
+                        // Inline block comment - skip over it
+                        i = commentEndIndex + 2;
+                    }
+                    else
+                    {
+                        // Block comment starts but doesn't end on this line
+                        inBlockComment = true;
+                        break;
+                    }
+                }
+                // Check for single-line comments
+                else if ((i < line.Length - 1 && line[i] == '/' && line[i + 1] == '/') ||
+                         line[i] == '#' ||
+                         line[i] == ';')
+                {
+                    // Rest of line is comment
+                    break;
+                }
+                else
+                {
+                    processedLine.Append(line[i]);
+                    i++;
+                }
+            }
+
+            result.AppendLine(processedLine.ToString());
+        }
+
+        return result.ToString();
     }
 
     private static bool TryParseResourceType(string input, out uint resourceType)
