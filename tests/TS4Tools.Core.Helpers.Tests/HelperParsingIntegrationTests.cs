@@ -118,7 +118,7 @@ Desc: Test description
             else if (c == '\r') hexOutput.Append("(CR)");
             else if (c == ' ') hexOutput.Append("(SP)");
             hexOutput.Append(" ");
-            if ((i + 1) % 20 == 0) 
+            if ((i + 1) % 20 == 0)
             {
                 _output.WriteLine(hexOutput.ToString());
                 hexOutput.Clear();

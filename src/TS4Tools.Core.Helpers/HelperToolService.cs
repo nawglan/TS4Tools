@@ -136,25 +136,34 @@ public class HelperToolService : IHelperToolService
     /// <inheritdoc />
     public async Task ReloadHelpersAsync()
     {
-        // DEBUG: Add debugging for cross-platform failures
-        Console.WriteLine("=== DEBUG: ReloadHelpersAsync ===");
-        Console.WriteLine($"Operating System: {Environment.OSVersion}");
-        Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
-
-        _helpers.Clear();
-        _resourceTypeIndex.Clear();
-
-        await LoadHelpersFromDirectoryAsync();
-        BuildResourceTypeIndex();
-
-        Console.WriteLine($"Total helpers loaded: {_helpers.Count}");
-        foreach (var helper in _helpers)
+        try
         {
-            Console.WriteLine($"  Helper: {helper.Key} -> {helper.Value.Label} (ResourceTypes: {helper.Value.SupportedResourceTypes.Count})");
-        }
-        Console.WriteLine("=== END DEBUG: ReloadHelpersAsync ===");
+            // DEBUG: Add debugging for cross-platform failures
+            Console.WriteLine("=== DEBUG: ReloadHelpersAsync ===");
+            Console.WriteLine($"Operating System: {Environment.OSVersion}");
+            Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
 
-        _logger.LogInformation("Loaded {Count} helper tools", _helpers.Count);
+            _helpers.Clear();
+            _resourceTypeIndex.Clear();
+
+            await LoadHelpersFromDirectoryAsync();
+            BuildResourceTypeIndex();
+
+            Console.WriteLine($"Total helpers loaded: {_helpers.Count}");
+            foreach (var helper in _helpers)
+            {
+                Console.WriteLine($"  Helper: {helper.Key} -> {helper.Value.Label} (ResourceTypes: {helper.Value.SupportedResourceTypes.Count})");
+            }
+            Console.WriteLine("=== END DEBUG: ReloadHelpersAsync ===");
+
+            _logger.LogInformation("Loaded {Count} helper tools", _helpers.Count);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"=== ERROR in ReloadHelpersAsync: {ex.GetType().Name}: {ex.Message} ===");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw;
+        }
     }
 
     private async Task LoadHelpersFromDirectoryAsync()
