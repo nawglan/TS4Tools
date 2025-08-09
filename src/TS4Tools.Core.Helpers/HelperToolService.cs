@@ -16,15 +16,6 @@ public class HelperToolService : IHelperToolService
     private readonly Dictionary<string, HelperToolInfo> _helpers = new();
     private readonly Dictionary<uint, List<HelperToolInfo>> _resourceTypeIndex = new();
 
-    /// <summary>
-    /// Virtual method for debug output that can be overridden in tests
-    /// </summary>
-    /// <param name="message">Debug message to output</param>
-    protected virtual void WriteDebug(string message)
-    {
-        Console.WriteLine(message);
-    }
-
     private static readonly string[] ReservedKeywords =
     {
         "wrapper", "label", "desc", "command", "arguments", "readonly", "ignorewritetimestamp"
@@ -145,34 +136,13 @@ public class HelperToolService : IHelperToolService
     /// <inheritdoc />
     public async Task ReloadHelpersAsync()
     {
-        try
-        {
-            // DEBUG: Add debugging for cross-platform failures
-            WriteDebug("=== DEBUG: ReloadHelpersAsync ===");
-            WriteDebug($"Operating System: {Environment.OSVersion}");
-            WriteDebug($"Current Directory: {Environment.CurrentDirectory}");
+        _helpers.Clear();
+        _resourceTypeIndex.Clear();
 
-            _helpers.Clear();
-            _resourceTypeIndex.Clear();
+        await LoadHelpersFromDirectoryAsync();
+        BuildResourceTypeIndex();
 
-            await LoadHelpersFromDirectoryAsync();
-            BuildResourceTypeIndex();
-
-            WriteDebug($"Total helpers loaded: {_helpers.Count}");
-            foreach (var helper in _helpers)
-            {
-                WriteDebug($"  Helper: {helper.Key} -> {helper.Value.Label} (ResourceTypes: {helper.Value.SupportedResourceTypes.Count})");
-            }
-            WriteDebug("=== END DEBUG: ReloadHelpersAsync ===");
-
-            _logger.LogInformation("Loaded {Count} helper tools", _helpers.Count);
-        }
-        catch (Exception ex)
-        {
-            WriteDebug($"=== ERROR in ReloadHelpersAsync: {ex.GetType().Name}: {ex.Message} ===");
-            WriteDebug($"Stack trace: {ex.StackTrace}");
-            throw;
-        }
+        _logger.LogInformation("Loaded {Count} helper tools", _helpers.Count);
     }
 
     private async Task LoadHelpersFromDirectoryAsync()
@@ -180,50 +150,35 @@ public class HelperToolService : IHelperToolService
         // Look for .helper files in common locations
         var searchPaths = GetHelperSearchPathsCore();
 
-        WriteDebug("=== DEBUG: LoadHelpersFromDirectoryAsync ===");
-        WriteDebug($"Search paths: [{string.Join(", ", searchPaths)}]");
-
         foreach (var searchPath in searchPaths)
         {
-            WriteDebug($"Checking search path: '{searchPath}'");
             if (!Directory.Exists(searchPath))
             {
-                WriteDebug($"  Directory does not exist");
                 _logger.LogDebug("Helper directory not found: {Path}", searchPath);
                 continue;
             }
 
-            WriteDebug($"  Directory exists, searching for *.helper files");
             _logger.LogDebug("Searching for helpers in: {Path}", searchPath);
 
             var helperFiles = Directory.GetFiles(searchPath, "*.helper", SearchOption.AllDirectories);
-            WriteDebug($"  Found {helperFiles.Length} helper files: [{string.Join(", ", helperFiles)}]");
 
             foreach (var helperFile in helperFiles)
             {
-                WriteDebug($"  Processing helper file: '{helperFile}'");
                 try
                 {
                     var helperInfo = await ParseHelperFileAsync(helperFile);
                     if (helperInfo != null)
                     {
                         _helpers[helperInfo.Id] = helperInfo;
-                        WriteDebug($"    Successfully loaded helper: {helperInfo.Id} - {helperInfo.Label}");
                         _logger.LogDebug("Loaded helper: {Id} - {Label}", helperInfo.Id, helperInfo.Label);
-                    }
-                    else
-                    {
-                        WriteDebug($"    Helper parsing returned null");
                     }
                 }
                 catch (Exception ex)
                 {
-                    WriteDebug($"    Exception parsing helper file: {ex.Message}");
                     _logger.LogWarning(ex, "Failed to parse helper file: {File}", helperFile);
                 }
             }
         }
-        WriteDebug("=== END DEBUG: LoadHelpersFromDirectoryAsync ===");
     }
 
     /// <summary>
@@ -262,17 +217,9 @@ public class HelperToolService : IHelperToolService
         var properties = new Dictionary<string, string>();
         var resourceTypes = new List<uint>();
 
-        // DEBUG: Add debugging to understand cross-platform parsing failures
-        Console.WriteLine($"=== DEBUG: Parsing helper file: {filePath} ===");
-
         // Read entire file content and process comments first
         var fileContent = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
-        Console.WriteLine("Original file content:");
-        Console.WriteLine($"[{fileContent}]");
-
         var processedContent = RemoveComments(fileContent);
-        Console.WriteLine("Processed content after comment removal:");
-        Console.WriteLine($"[{processedContent}]");
 
         using var reader = new StringReader(processedContent);
         string? line;
@@ -280,64 +227,43 @@ public class HelperToolService : IHelperToolService
         while ((line = reader.ReadLine()) != null)
         {
             line = line.Trim();
-            Console.WriteLine($"Processing line: '{line}' (original length: {line?.Length ?? 0})");
 
             if (string.IsNullOrEmpty(line))
             {
-                Console.WriteLine("  -> Skipped: empty line");
                 continue;
             }
 
             // Parse key-value pairs
             var colonIndex = line.IndexOf(':');
-            Console.WriteLine($"  -> Colon found at index: {colonIndex}");
             if (colonIndex <= 0)
             {
-                Console.WriteLine($"  -> Skipped: no colon found or at start (colonIndex={colonIndex})");
                 continue;
             }
 
             var key = line.Substring(0, colonIndex).Trim();
             var value = line.Substring(colonIndex + 1).Trim();
-            Console.WriteLine($"  -> Parsed: '{key}' = '{value}' (key length: {key.Length}, value length: {value.Length})");
 
             if (string.Equals(key, "ResourceType", StringComparison.OrdinalIgnoreCase))
             {
                 // Parse resource types
                 var types = value.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                Console.WriteLine($"    -> ResourceType parts: [{string.Join(", ", types)}] (count: {types.Length})");
                 foreach (var type in types)
                 {
-                    Console.WriteLine($"    -> Attempting to parse ResourceType: '{type}' (length: {type.Length})");
                     if (TryParseResourceType(type, out var resourceType))
                     {
                         resourceTypes.Add(resourceType);
-                        Console.WriteLine($"    -> SUCCESS: Added ResourceType: 0x{resourceType:X8}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"    -> FAILED to parse ResourceType: '{type}'");
                     }
                 }
             }
             else
             {
                 properties[key] = value;
-                Console.WriteLine($"    -> Added property: '{key}' = '{value}'");
             }
         }
-
-        Console.WriteLine($"Final parsed properties: {properties.Count} items");
-        foreach (var prop in properties)
-        {
-            Console.WriteLine($"  {prop.Key} = '{prop.Value}'");
-        }
-        Console.WriteLine($"Final parsed resource types: [{string.Join(", ", resourceTypes.Select(rt => $"0x{rt:X8}"))}]");
 
         // Must have required fields
         if (!properties.ContainsKey("Label") || !properties.ContainsKey("Command"))
         {
-            Console.WriteLine($"ERROR: Missing required fields. Has Label: {properties.ContainsKey("Label")}, Has Command: {properties.ContainsKey("Command")}");
             _logger?.LogWarning("Helper file missing required fields (Label, Command): {File}", filePath);
             return null;
         }
@@ -350,14 +276,9 @@ public class HelperToolService : IHelperToolService
         var isReadOnly = bool.Parse(properties.GetValueOrDefault("ReadOnly", "false"));
         var ignoreWriteTimestamp = bool.Parse(properties.GetValueOrDefault("IgnoreWriteTimestamp", "false"));
 
-        Console.WriteLine($"Creating HelperToolInfo with ID: '{id}', Label: '{label}', Command: '{command}'");
-
         // Resolve executable path
         var executablePath = ResolveExecutablePath(command, filePath);
         var isAvailable = !string.IsNullOrEmpty(executablePath) && File.Exists(executablePath);
-
-        Console.WriteLine($"Executable path: '{executablePath}', IsAvailable: {isAvailable}");
-        Console.WriteLine("=== END DEBUG ===");
 
         return new HelperToolInfo
         {
@@ -377,35 +298,26 @@ public class HelperToolService : IHelperToolService
 
     private static string RemoveComments(string content)
     {
-        Console.WriteLine("=== DEBUG: RemoveComments ===");
-        Console.WriteLine($"Input content: [{content}]");
-
         var result = new StringBuilder();
         var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.None);
-        Console.WriteLine($"Split into {lines.Length} lines");
-
         var inBlockComment = false;
 
         for (int lineIndex = 0; lineIndex < lines.Length; lineIndex++)
         {
             var rawLine = lines[lineIndex];
             var line = rawLine;
-            Console.WriteLine($"Line {lineIndex}: '{rawLine}' (inBlockComment: {inBlockComment})");
 
             if (inBlockComment)
             {
                 var commentEndIndex = line.IndexOf("*/", StringComparison.Ordinal);
-                Console.WriteLine($"  Looking for */ in block comment, found at: {commentEndIndex}");
                 if (commentEndIndex >= 0)
                 {
                     line = line.Substring(commentEndIndex + 2);
                     inBlockComment = false;
-                    Console.WriteLine($"  Exited block comment, remaining line: '{line}'");
                 }
                 else
                 {
                     // Entire line is in block comment
-                    Console.WriteLine($"  Entire line is in block comment, adding empty line");
                     result.AppendLine();
                     continue;
                 }
@@ -420,20 +332,16 @@ public class HelperToolService : IHelperToolService
                 // Check for block comment start
                 if (i < line.Length - 1 && line[i] == '/' && line[i + 1] == '*')
                 {
-                    Console.WriteLine($"  Found /* at position {i}");
                     var commentEndIndex = line.IndexOf("*/", i + 2, StringComparison.Ordinal);
-                    Console.WriteLine($"    Looking for closing */ from position {i + 2}, found at: {commentEndIndex}");
                     if (commentEndIndex >= 0)
                     {
                         // Inline block comment - skip over it
                         i = commentEndIndex + 2;
-                        Console.WriteLine($"    Skipped inline block comment, continuing from position {i}");
                     }
                     else
                     {
                         // Block comment starts but doesn't end on this line
                         inBlockComment = true;
-                        Console.WriteLine($"    Block comment starts, setting inBlockComment=true");
                         break;
                     }
                 }
@@ -443,7 +351,6 @@ public class HelperToolService : IHelperToolService
                          line[i] == ';')
                 {
                     // Rest of line is comment
-                    Console.WriteLine($"  Found single-line comment at position {i} ('{line[i]}{(i < line.Length - 1 ? line[i + 1].ToString() : "")}')");
                     break;
                 }
                 else
@@ -454,50 +361,35 @@ public class HelperToolService : IHelperToolService
             }
 
             var finalLine = processedLine.ToString();
-            Console.WriteLine($"  Final processed line: '{finalLine}'");
             result.AppendLine(finalLine);
         }
 
-        var finalResult = result.ToString();
-        Console.WriteLine($"Final result: [{finalResult}]");
-        Console.WriteLine("=== END DEBUG: RemoveComments ===");
-        return finalResult;
+        return result.ToString();
     }
 
     private static bool TryParseResourceType(string input, out uint resourceType)
     {
         resourceType = 0;
-        Console.WriteLine($"      -> TryParseResourceType: input='{input}' (length: {input?.Length ?? 0})");
 
         if (string.IsNullOrEmpty(input))
         {
-            Console.WriteLine($"      -> FAILED: input is null or empty");
             return false;
         }
 
         // Handle hex format (0x12345678)
         if (input.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine($"      -> Attempting hex parse with 0x prefix: '{input.Substring(2)}'");
-            var result = uint.TryParse(input.Substring(2), NumberStyles.HexNumber, null, out resourceType);
-            Console.WriteLine($"      -> Hex parse result: {result}, value: 0x{resourceType:X8}");
-            return result;
+            return uint.TryParse(input.Substring(2), NumberStyles.HexNumber, null, out resourceType);
         }
 
         // Handle direct hex
         if (input.All(c => char.IsDigit(c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')))
         {
-            Console.WriteLine($"      -> Attempting direct hex parse: '{input}'");
-            var result = uint.TryParse(input, NumberStyles.HexNumber, null, out resourceType);
-            Console.WriteLine($"      -> Direct hex parse result: {result}, value: 0x{resourceType:X8}");
-            return result;
+            return uint.TryParse(input, NumberStyles.HexNumber, null, out resourceType);
         }
 
         // Handle decimal
-        Console.WriteLine($"      -> Attempting decimal parse: '{input}'");
-        var decimalResult = uint.TryParse(input, out resourceType);
-        Console.WriteLine($"      -> Decimal parse result: {decimalResult}, value: {resourceType}");
-        return decimalResult;
+        return uint.TryParse(input, out resourceType);
     }
 
     private static string? ResolveExecutablePath(string command, string helperFilePath)

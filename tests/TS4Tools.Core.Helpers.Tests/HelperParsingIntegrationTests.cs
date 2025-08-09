@@ -1,8 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.Reflection;
-using System.Text;
 using TS4Tools.Core.Helpers;
 using Xunit;
 using Xunit.Abstractions;
@@ -15,7 +13,6 @@ namespace TS4Tools.Core.Helpers.Tests;
 internal sealed class TestHelperToolService : HelperToolService
 {
     private readonly string[] _customSearchPaths;
-    private ITestOutputHelper? _testOutput;
 
     public TestHelperToolService(ILogger<HelperToolService> logger, params string[] customSearchPaths)
         : base(logger)
@@ -23,19 +20,8 @@ internal sealed class TestHelperToolService : HelperToolService
         _customSearchPaths = customSearchPaths;
     }
 
-    public void SetTestOutput(ITestOutputHelper output)
-    {
-        _testOutput = output;
-    }
-
-    protected override void WriteDebug(string message)
-    {
-        _testOutput?.WriteLine($"SERVICE: {message}");
-    }
-
     protected override IEnumerable<string> GetHelperSearchPathsCore()
     {
-        WriteDebug($"GetHelperSearchPathsCore called, returning paths: [{string.Join(", ", _customSearchPaths)}]");
         return _customSearchPaths;
     }
 }
@@ -44,15 +30,12 @@ public sealed class HelperParsingIntegrationTests : IDisposable
 {
     private readonly TestHelperToolService _service;
     private readonly string _testHelpersDirectory;
-    private readonly ITestOutputHelper _output;
 
     public HelperParsingIntegrationTests(ITestOutputHelper output)
     {
-        _output = output;
         _testHelpersDirectory = Path.Combine(Path.GetTempPath(), "TS4Tools_TestHelpers", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testHelpersDirectory);
         _service = new TestHelperToolService(NullLogger<HelperToolService>.Instance, _testHelpersDirectory);
-        _service.SetTestOutput(output);
     }
 
     [Fact]
@@ -112,107 +95,9 @@ Desc: Test description
         var helperFile = Path.Combine(_testHelpersDirectory, "CommentTest.helper");
         await File.WriteAllTextAsync(helperFile, helperContent);
 
-        // DEBUG: Add debugging to understand cross-platform failures
-        _output.WriteLine("=== CROSS-PLATFORM DEBUG: Comment Test Helper ===");
-        _output.WriteLine($"Operating System: {Environment.OSVersion}");
-        _output.WriteLine($"Is Windows: {OperatingSystem.IsWindows()}");
-        _output.WriteLine($"Is Linux: {OperatingSystem.IsLinux()}");
-        _output.WriteLine($"Is macOS: {OperatingSystem.IsMacOS()}");
-        _output.WriteLine($"Test Helpers Directory: {_testHelpersDirectory}");
-        _output.WriteLine($"Helper File Path: {helperFile}");
-        _output.WriteLine($"Helper File Exists: {File.Exists(helperFile)}");
-        _output.WriteLine("Original Helper Content:");
-        _output.WriteLine(helperContent);
-        _output.WriteLine("=== Character Analysis ===");
-        var hexOutput = new StringBuilder();
-        for (int i = 0; i < helperContent.Length && i < 200; i++)
-        {
-            var c = helperContent[i];
-            hexOutput.Append($"{(int)c:X2}");
-            if (c == '\n') hexOutput.Append("(LF)");
-            else if (c == '\r') hexOutput.Append("(CR)");
-            else if (c == ' ') hexOutput.Append("(SP)");
-            hexOutput.Append(" ");
-            if ((i + 1) % 20 == 0)
-            {
-                _output.WriteLine(hexOutput.ToString());
-                hexOutput.Clear();
-            }
-        }
-        if (hexOutput.Length > 0)
-        {
-            _output.WriteLine(hexOutput.ToString());
-        }
-        _output.WriteLine("=== End Character Analysis ===");
-        _output.WriteLine("=== End Original Content ===");
-
-        // Verify file was written correctly
-        var readBackContent = await File.ReadAllTextAsync(helperFile);
-        _output.WriteLine("Read Back Content:");
-        _output.WriteLine(readBackContent);
-        _output.WriteLine("=== End Read Back Content ===");
-        _output.WriteLine($"Content matches: {helperContent == readBackContent}");
-
         // Act
-        _output.WriteLine("=== CALLING SERVICE: ReloadHelpersAsync ===");
-        try
-        {
-            await _service.ReloadHelpersAsync();
-            _output.WriteLine("=== SERVICE CALL: ReloadHelpersAsync COMPLETED ===");
-        }
-        catch (Exception ex)
-        {
-            _output.WriteLine($"=== SERVICE CALL EXCEPTION: {ex.GetType().Name}: {ex.Message} ===");
-            _output.WriteLine($"Stack trace: {ex.StackTrace}");
-            throw;
-        }
-
-        // DEBUG: Check what helpers were loaded
-        var allAvailableHelpers = _service.GetAvailableHelperTools();
-        _output.WriteLine($"Available helpers count: {allAvailableHelpers.Count()}");
-        _output.WriteLine($"Available helpers: [{string.Join(", ", allAvailableHelpers)}]");
-
-        // DEBUG: Check raw helpers in service (using reflection to access private _helpers field)
-        var serviceType = _service.GetType().BaseType; // Get HelperToolService type
-        var helpersField = serviceType?.GetField("_helpers", BindingFlags.NonPublic | BindingFlags.Instance);
-        if (helpersField?.GetValue(_service) is Dictionary<string, HelperToolInfo> rawHelpers)
-        {
-            _output.WriteLine($"Raw helpers count: {rawHelpers.Count}");
-            foreach (var kvp in rawHelpers)
-            {
-                _output.WriteLine($"  Raw helper: {kvp.Key} -> Label='{kvp.Value.Label}', IsAvailable={kvp.Value.IsAvailable}, Command='{kvp.Value.Command}'");
-                _output.WriteLine($"    ResourceTypes: [{string.Join(", ", kvp.Value.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
-            }
-        }
-
+        await _service.ReloadHelpersAsync();
         var helpers = _service.GetHelpersForResourceType(0x12345678);
-        _output.WriteLine($"Helpers for ResourceType 0x12345678: {helpers.Count()}");
-
-        if (helpers.Any())
-        {
-            var helper = helpers.First();
-            _output.WriteLine($"Helper ID: {helper.Id}");
-            _output.WriteLine($"Helper Label: '{helper.Label}'");
-            _output.WriteLine($"Helper Command: '{helper.Command}'");
-            _output.WriteLine($"Helper Description: '{helper.Description}'");
-            _output.WriteLine($"Helper ResourceTypes: [{string.Join(", ", helper.SupportedResourceTypes.Select(rt => $"0x{rt:X8}"))}]");
-        }
-        else
-        {
-            _output.WriteLine("No helpers found for ResourceType 0x12345678");
-
-            // Check if any helpers were loaded at all
-            var allHelpers = _service.GetAvailableHelperTools().ToList();
-            if (allHelpers.Count == 0)
-            {
-                _output.WriteLine("ERROR: No helpers loaded at all!");
-            }
-            else
-            {
-                _output.WriteLine($"Other helpers loaded: {string.Join(", ", allHelpers)}");
-            }
-        }
-        _output.WriteLine("=== END CROSS-PLATFORM DEBUG ===");
 
         // Assert
         helpers.Should().HaveCount(1, "Expected exactly 1 helper to be loaded for ResourceType 0x12345678");
