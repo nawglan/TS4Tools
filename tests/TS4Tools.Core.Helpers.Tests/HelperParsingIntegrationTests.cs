@@ -97,13 +97,14 @@ ReadOnly: false
     public async Task ReloadHelpersAsync_WithCommentedHelperFile_ShouldIgnoreComments()
     {
         // Arrange
-        var helperContent = @"// This is a comment
+        var systemCommand = OperatingSystem.IsWindows() ? "notepad.exe" : "echo";
+        var helperContent = $@"// This is a comment
 /* Block comment start
    Still in comment
 */ ResourceType: 0x12345678
 // Another comment
 Label: Test Helper /* inline comment */ Tool
-Command: notepad.exe
+Command: {systemCommand}
 // Description comment
 Desc: Test description
 ";
@@ -218,7 +219,7 @@ Desc: Test description
 
         var foundHelper = helpers.First();
         foundHelper.Label.Should().Be("Test Helper  Tool");
-        foundHelper.Command.Should().Be("notepad.exe");
+        foundHelper.Command.Should().Be(systemCommand);
         foundHelper.Description.Should().Be("Test description");
     }
 
