@@ -239,27 +239,47 @@ public class HelperToolService : IHelperToolService
                 }
             }
 
-            // Handle single-line comments
-            if (line.StartsWith("//") || string.IsNullOrEmpty(line))
+            // Handle single-line comments (start of line)
+            if (line.StartsWith("//") || line.StartsWith("#") || line.StartsWith(";") || string.IsNullOrEmpty(line))
                 continue;
 
-            // Handle comment block start
-            var commentStart = line.IndexOf("/*", StringComparison.Ordinal);
-            if (commentStart > -1)
+            // Handle inline single-line comments
+            var commentMarkers = new[] { "#", ";", "//" };
+            foreach (var marker in commentMarkers)
             {
-                var beforeComment = line.Substring(0, commentStart);
-                var afterComment = line.Substring(commentStart + 2);
+                var commentIndex = line.IndexOf(marker, StringComparison.Ordinal);
+                if (commentIndex > -1)
+                {
+                    line = line.Substring(0, commentIndex).Trim();
+                    break;
+                }
+            }
 
-                var commentEnd = afterComment.IndexOf("*/", StringComparison.Ordinal);
-                if (commentEnd > -1)
+            // Handle comment block start/end (including inline)
+            while (true)
+            {
+                var commentStart = line.IndexOf("/*", StringComparison.Ordinal);
+                if (commentStart > -1)
                 {
-                    line = beforeComment + afterComment.Substring(commentEnd + 2);
+                    var beforeComment = line.Substring(0, commentStart);
+                    var afterComment = line.Substring(commentStart + 2);
+
+                    var commentEnd = afterComment.IndexOf("*/", StringComparison.Ordinal);
+                    if (commentEnd > -1)
+                    {
+                        // Inline block comment
+                        line = beforeComment + afterComment.Substring(commentEnd + 2);
+                        continue; // Check for more block comments on the same line
+                    }
+                    else
+                    {
+                        // Block comment starts but doesn't end on this line
+                        line = beforeComment.Trim();
+                        inCommentBlock = true;
+                        break;
+                    }
                 }
-                else
-                {
-                    line = beforeComment.Trim();
-                    inCommentBlock = true;
-                }
+                break;
             }
 
             if (string.IsNullOrEmpty(line))
