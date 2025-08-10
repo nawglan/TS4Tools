@@ -325,7 +325,9 @@ public class PackageCompatibilityTests
     private void SafeLog<T1, T2, T3, T4>(Action<ILogger, T1, T2, T3, T4, Exception?> logAction, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
     {
         if (_logger != null) logAction(_logger, arg1, arg2, arg3, arg4, null);
-    }    /// <summary>
+    }
+
+    /// <summary>
     /// Test that validates package reading produces identical results between
     /// original implementation and TS4Tools implementation.
     /// This is the core golden master test for package compatibility.
