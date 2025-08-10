@@ -185,6 +185,6 @@ public class ServiceCollectionExtensionsTests
             x.ServiceType == typeof(IResourceFactory));
 
         serviceDescriptor.Should().NotBeNull();
-        serviceDescriptor!.ImplementationType.Should().Be(typeof(EffectResourceFactory));
+        serviceDescriptor!.ImplementationType.Should().Be<EffectResourceFactory>();
     }
 }

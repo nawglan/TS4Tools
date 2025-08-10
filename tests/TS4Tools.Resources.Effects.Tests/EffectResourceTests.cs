@@ -34,7 +34,7 @@ public sealed class EffectResourceTests : IDisposable
     public void Constructor_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new EffectResource(null!);
+        var act = () => new EffectResource(null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("stream");
     }
 

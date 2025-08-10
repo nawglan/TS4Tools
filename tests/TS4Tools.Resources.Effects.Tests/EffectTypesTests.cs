@@ -233,7 +233,7 @@ public class EffectTypesTests
     public void EffectType_AllValues_ShouldBeDefined(EffectType effectType)
     {
         // Act & Assert
-        Enum.IsDefined(typeof(EffectType), effectType).Should().BeTrue();
+        Enum.IsDefined(effectType).Should().BeTrue();
     }
 
     [Theory]
@@ -245,7 +245,7 @@ public class EffectTypesTests
     public void BlendMode_AllValues_ShouldBeDefined(BlendMode blendMode)
     {
         // Act & Assert
-        Enum.IsDefined(typeof(BlendMode), blendMode).Should().BeTrue();
+        Enum.IsDefined(blendMode).Should().BeTrue();
     }
 
     [Fact]

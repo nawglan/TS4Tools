@@ -1,6 +1,6 @@
 /***************************************************************************
  * TS4Tools - A comprehensive toolkit for working with The Sims 4 packages
- * Copyright (C) 2024 
+ * Copyright (C) 2024
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

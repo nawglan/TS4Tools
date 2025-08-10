@@ -27,7 +27,7 @@ public class EffectResourceFactoryTests
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new EffectResourceFactory(null!);
+        var act = () => new EffectResourceFactory(null!);
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 
