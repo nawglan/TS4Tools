@@ -288,7 +288,7 @@ public sealed class ScriptResourceTests
         var resourceKey = new ResourceKey(1, 0x073FAA07, 1);
 
         // Act & Assert - Constructor should throw when data is invalid
-        Action action = () => new ScriptResource(resourceKey, invalidData, _logger);
+        Action action = () => { var _ = new ScriptResource(resourceKey, invalidData, _logger); };
         action.Should().Throw<EndOfStreamException>()
             .WithMessage("Unable to read beyond the end of the stream.");
     }

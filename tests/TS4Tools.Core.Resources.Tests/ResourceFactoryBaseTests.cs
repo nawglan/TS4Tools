@@ -25,6 +25,8 @@ namespace TS4Tools.Core.Resources.Tests;
 
 public class ResourceFactoryBaseTests
 {
+    private static readonly string[] TestResourceTypes = ["0x12345678"];
+
     [Fact]
     public void Constructor_WithValidParameters_ShouldInitializeCorrectly()
     {
@@ -69,7 +71,7 @@ public class ResourceFactoryBaseTests
     public void ValidateApiVersion_WithValidVersion_ShouldNotThrow()
     {
         // Arrange
-        var factory = new TestResourceFactory(new[] { "0x12345678" });
+        var factory = new TestResourceFactory(TestResourceTypes);
 
         // Act & Assert
         var act = () => factory.TestValidateApiVersion(1);
@@ -80,7 +82,7 @@ public class ResourceFactoryBaseTests
     public void ValidateApiVersion_WithInvalidVersion_ShouldThrowArgumentException()
     {
         // Arrange
-        var factory = new TestResourceFactory(new[] { "0x12345678" });
+        var factory = new TestResourceFactory(TestResourceTypes);
 
         // Act & Assert
         var act = () => factory.TestValidateApiVersion(0);
@@ -134,7 +136,7 @@ public class ResourceFactoryBaseTests
     }
 
     // Test implementation of ResourceFactoryBase
-    internal class TestResourceFactory : ResourceFactoryBase<IResource>
+    internal sealed class TestResourceFactory : ResourceFactoryBase<IResource>
     {
         public TestResourceFactory(IEnumerable<string> supportedResourceTypes, int priority = 0)
             : base(supportedResourceTypes, priority)

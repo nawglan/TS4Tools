@@ -38,7 +38,7 @@ public sealed class RigResourceTests : IDisposable
     public void Constructor_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new RigResource(null!);
+        Action act = () => { var _ = new RigResource(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("stream");
     }
 

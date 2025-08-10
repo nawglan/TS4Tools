@@ -192,7 +192,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     // Helper class for testing
-    internal class TestResourceFactory : IResourceFactory<IResource>
+    internal sealed class TestResourceFactory : IResourceFactory<IResource>
     {
         public IReadOnlySet<string> SupportedResourceTypes => new HashSet<string> { "0x12345678" };
         public IReadOnlySet<uint> ResourceTypes => new HashSet<uint> { 0x12345678u };

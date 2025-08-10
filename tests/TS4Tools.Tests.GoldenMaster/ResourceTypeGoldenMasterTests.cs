@@ -1,3 +1,10 @@
+#pragma warning disable CA1305 // Specify IFormatProvider
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable CA1848 // Use LoggerMessage delegates
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance
+#pragma warning disable CA1860 // Avoid using 'Enumerable.Any()' extension method
+#pragma warning disable CA2254 // Template should be a static expression
+
 using System.Diagnostics;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;

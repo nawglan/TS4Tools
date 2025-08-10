@@ -77,7 +77,7 @@ public class ElementPriorityAttributeTests
         act.Should().Throw<ArgumentException>();
     }
 
-    private class TestClass
+    private sealed class TestClass
     {
         [ElementPriority(10)]
         public string TestProperty { get; set; } = string.Empty;

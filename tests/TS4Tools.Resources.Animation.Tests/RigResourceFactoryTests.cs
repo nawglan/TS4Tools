@@ -44,7 +44,7 @@ public sealed class RigResourceFactoryTests : IDisposable
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new RigResourceFactory(null!);
+        Action act = () => { var _ = new RigResourceFactory(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 

@@ -34,6 +34,251 @@ public class PackageCompatibilityTests
     private readonly ILogger _logger;
     private readonly IGameInstallationService _gameInstallationService;
 
+    // LoggerMessage delegates for performance
+    private static readonly Action<ILogger, Exception?> LogNoTestPackagesDevelopment =
+        LoggerMessage.Define(LogLevel.Information, new EventId(1),
+            "No test packages found - running in development mode without game installation");
+
+    private static readonly Action<ILogger, Exception?> LogNoTestPackagesRoundTrip =
+        LoggerMessage.Define(LogLevel.Information, new EventId(2),
+            "No test packages found for round-trip test");
+
+    private static readonly Action<ILogger, Exception?> LogNoTestPackagesPerformance =
+        LoggerMessage.Define(LogLevel.Information, new EventId(3),
+            "No test packages found for performance test");
+
+    private static readonly Action<ILogger, string, Exception?> LogStartingPerformanceTest =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(4),
+            "Starting performance test for {PackageName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogMinimalPerformanceTest =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(5),
+            "Package {PackageName} has 0 resources (likely a delta build) - running minimal performance test");
+
+    private static readonly Action<ILogger, string, double, Exception?> LogMinimalTestPassed =
+        LoggerMessage.Define<string, double>(LogLevel.Information, new EventId(6),
+            "✅ Minimal performance test PASSED for {PackageName} - Total Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, double, Exception?> LogIndexAccessDuration =
+        LoggerMessage.Define<double>(LogLevel.Information, new EventId(7),
+            "   - Index Access Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, string, double, Exception?> LogPerformanceTestPassed =
+        LoggerMessage.Define<string, double>(LogLevel.Information, new EventId(8),
+            "✅ Performance test PASSED for {PackageName} - Total Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, double, Exception?> LogTotalDuration =
+        LoggerMessage.Define<double>(LogLevel.Information, new EventId(9),
+            "   - Total Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, string, int, Exception?> LogPackageInfo =
+        LoggerMessage.Define<string, int>(LogLevel.Information, new EventId(10),
+            "   - Package: {PackageName} ({ResourceCount} resources)");
+
+    private static readonly Action<ILogger, double, Exception?> LogPackageLoadDuration =
+        LoggerMessage.Define<double>(LogLevel.Information, new EventId(11),
+            "   - Package Load Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, int, Exception?> LogResourceCount =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(12),
+            "   - Resource Count: {Count}");
+
+    private static readonly Action<ILogger, string, Exception?> LogValidationResult =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(13),
+            "✅ Round-trip validation test PASSED for {PackageName}");
+
+    private static readonly Action<ILogger, string, Exception?> LogWarningMessage =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(14),
+            "{Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogDebugMessage =
+        LoggerMessage.Define<string>(LogLevel.Debug, new EventId(15),
+            "{Message}");
+
+    private static readonly Action<ILogger, Exception?> LogPackageTypeEmpty =
+        LoggerMessage.Define(LogLevel.Information, new EventId(16),
+            "   - Package Type: Empty/Delta build");
+
+    private static readonly Action<ILogger, double, Exception?> LogLoadDuration =
+        LoggerMessage.Define<double>(LogLevel.Information, new EventId(17),
+            "   - Load Duration: {Duration:F2}ms");
+
+    private static readonly Action<ILogger, int, Exception?> LogResourcesIndexed =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(18),
+            "   - Resources Indexed: {Count:N0}");
+
+    private static readonly Action<ILogger, string, Exception?> LogNotImplementedMessage =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(19),
+            "Package loading not yet fully implemented - performance test framework established: {Message}");
+
+    private static readonly Action<ILogger, int, Exception?> LogFoundRealGamePackages =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(20),
+            "Found {Count} real game packages for testing");
+
+    private static readonly Action<ILogger, Exception?> LogFailedLoadGamePackages =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(21),
+            "Failed to load real game packages, falling back to test packages");
+
+    private static readonly Action<ILogger, int, Exception?> LogFoundTestPackages =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(22),
+            "Found {Count} test packages for testing");
+
+    private static readonly Action<ILogger, Exception?> LogNoTestPackagesFound =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(23),
+            "No test packages found in either game installation or test-data directory");
+
+    private static readonly Action<ILogger, int, string, Exception?> LogUsingGameDataDirectory =
+        LoggerMessage.Define<int, string>(LogLevel.Information, new EventId(24),
+            "Using {Count} packages directly from game data directory: {Directory}");
+
+    private static readonly Action<ILogger, int, string, Exception?> LogUsingClientDataDirectory =
+        LoggerMessage.Define<int, string>(LogLevel.Information, new EventId(25),
+            "Using {Count} packages from configured client data directory: {Directory}");
+
+    private static readonly Action<ILogger, int, Exception?> LogUsingLocalTestPackages =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(26),
+            "Using {Count} local test packages for development");
+
+    private static readonly Action<ILogger, Exception?> LogNoRealGamePackages =
+        LoggerMessage.Define(LogLevel.Information, new EventId(27),
+            "No real game packages accessible - creating mock packages for testing framework");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogCreatedMockPackage =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(28),
+            "Created mock package: {FileName} - {Description}");
+
+    private static readonly Action<ILogger, string?, Exception?> LogGameInstallationPath =
+        LoggerMessage.Define<string?>(LogLevel.Debug, new EventId(29),
+            "Game installation path: {Path}");
+
+    private static readonly Action<ILogger, string, Exception?> LogErrorDiscoveringPackages =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(30),
+            "Error discovering test packages: {Message}");
+
+    private static readonly Action<ILogger, string?, Exception?> LogDataDirectoryFromConfig =
+        LoggerMessage.Define<string?>(LogLevel.Debug, new EventId(31),
+            "Data directory from config: {Directory}");
+
+    private static readonly Action<ILogger, string?, Exception?> LogClientDataDirectoryFromConfig =
+        LoggerMessage.Define<string?>(LogLevel.Debug, new EventId(32),
+            "Client data directory from config: {Directory}");
+
+    private static readonly Action<ILogger, Exception?> LogNoValidGamePackageDirectories =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(33),
+            "No valid game package directories found in configuration or installation");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogErrorAccessingPackages =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(34),
+            "Error accessing packages in {SearchPath}: {Message}");
+
+    private static readonly Action<ILogger, int, Exception?> LogFoundRealGamePackagesForTesting =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(35),
+            "Found {Count} real game packages for direct testing from configured directories");
+
+    private static readonly Action<ILogger, string, Exception?> LogErrorAccessingRealGamePackages =
+        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(36),
+            "Error accessing real game packages: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogValidatingPackageCompatibility =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(37),
+            "Validating package compatibility for {PackageName}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogPackageValidationSuccessful =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(38),
+            "✅ Package validation successful for {PackageName} ({PackageType})");
+
+    private static readonly Action<ILogger, long, Exception?> LogFileSize =
+        LoggerMessage.Define<long>(LogLevel.Information, new EventId(39),
+            "   - File Size: {Size:N0} bytes");
+
+    private static readonly Action<ILogger, int, int, Exception?> LogDbpfVersion =
+        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(40),
+            "   - DBPF Version: {Major}.{Minor}");
+
+    private static readonly Action<ILogger, int, Exception?> LogResourceCountInfo =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(41),
+            "   - Resource Count: {Count:N0}");
+
+    private static readonly Action<ILogger, DateTime, Exception?> LogCreatedDate =
+        LoggerMessage.Define<DateTime>(LogLevel.Information, new EventId(42),
+            "   - Created: {Date:yyyy-MM-dd HH:mm:ss}");
+
+    private static readonly Action<ILogger, DateTime, Exception?> LogModifiedDate =
+        LoggerMessage.Define<DateTime>(LogLevel.Information, new EventId(43),
+            "   - Modified: {Date:yyyy-MM-dd HH:mm:ss}");
+
+    private static readonly Action<ILogger, string, Exception?> LogPackageCompatibilityValidationPassed =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(44),
+            "✅ Package compatibility validation PASSED for {PackageName}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogPackageServiceNotImplemented =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(45),
+            "Package service not yet fully implemented for {PackageName}: {Message}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogPackageValidationFailed =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(46),
+            "Package validation failed for {PackageName}: {Message}");
+
+    private static readonly Action<ILogger, string, Exception?> LogValidatingRoundTripCompatibility =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(47),
+            "Validating round-trip compatibility for {PackageName}");
+
+    private static readonly Action<ILogger, int, int, int, Exception?> LogDbpfValidationPassed =
+        LoggerMessage.Define<int, int, int>(LogLevel.Information, new EventId(48),
+            "✅ DBPF validation passed: Version {MajorVersion}.{MinorVersion}, {IndexCount} resources");
+
+    private static readonly Action<ILogger, string, Exception?> LogRoundTripTest =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(49),
+            "Round-trip test for {PackageName}:");
+
+    private static readonly Action<ILogger, int, Exception?> LogOriginalSize =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(50),
+            "   - Original size: {Size:N0} bytes");
+
+    private static readonly Action<ILogger, int, int, Exception?> LogDbpfVersionInfo =
+        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(51),
+            "   - DBPF version: {Major}.{Minor}");
+
+    private static readonly Action<ILogger, int, Exception?> LogResourceCountDetail =
+        LoggerMessage.Define<int>(LogLevel.Information, new EventId(52),
+            "   - Resource count: {Count:N0}");
+
+    private static readonly Action<ILogger, Exception?> LogRoundTripHeaderValidationPassed =
+        LoggerMessage.Define(LogLevel.Information, new EventId(53),
+            "✅ Round-trip header validation PASSED:");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogMagicComparison =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(54),
+            "   - Magic: {OriginalMagic} → {RoundTripMagic}");
+
+    private static readonly Action<ILogger, int, int, int, int, Exception?> LogVersionComparison =
+        LoggerMessage.Define<int, int, int, int>(LogLevel.Information, new EventId(55),
+            "   - Version: {OriginalMajor}.{OriginalMinor} → {RoundTripMajor}.{RoundTripMinor}");
+
+    private static readonly Action<ILogger, int, int, Exception?> LogResourcesComparison =
+        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(56),
+            "   - Resources: {OriginalCount} → {RoundTripCount}");
+
+    private static readonly Action<ILogger, string, Exception?> LogRoundTripValidationPassed =
+        LoggerMessage.Define<string>(LogLevel.Information, new EventId(57),
+            "✅ Round-trip validation PASSED for {FileName}:");
+
+    private static readonly Action<ILogger, int, int, Exception?> LogByteSizeComparison =
+        LoggerMessage.Define<int, int>(LogLevel.Information, new EventId(58),
+            "   - Original: {OriginalSize:N0} bytes → Round-trip: {RoundTripSize:N0} bytes");
+
+    private static readonly Action<ILogger, double, Exception?> LogSizeRatio =
+        LoggerMessage.Define<double>(LogLevel.Information, new EventId(59),
+            "   - Size ratio: {Ratio:F3}x");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogRoundTripNotImplemented =
+        LoggerMessage.Define<string, string>(LogLevel.Information, new EventId(60),
+            "Round-trip validation not yet fully implemented for {FileName}: {Message}");
+
+    private static readonly Action<ILogger, string, string, Exception?> LogRoundTripValidationFailed =
+        LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(61),
+            "Round-trip validation failed for {FileName}: {Message}");
+
     public PackageCompatibilityTests()
     {
         _testDataPath = Path.Combine("test-data", "real-packages");
@@ -41,7 +286,46 @@ public class PackageCompatibilityTests
         _gameInstallationService = CreateGameInstallationService();
     }
 
-    /// <summary>
+    // Helper methods to safely call LoggerMessage delegates with null checks
+    private void SafeLog(Action<ILogger, Exception?> logAction)
+    {
+        if (_logger != null) logAction(_logger, null);
+    }
+
+    private void SafeLog(Action<ILogger, Exception?> logAction, Exception ex)
+    {
+        if (_logger != null) logAction(_logger, ex);
+    }
+
+    private void SafeLog<T>(Action<ILogger, T, Exception?> logAction, T arg)
+    {
+        if (_logger != null) logAction(_logger, arg, null);
+    }
+
+    private void SafeLog<T1, T2>(Action<ILogger, T1, T2, Exception?> logAction, T1 arg1, T2 arg2)
+    {
+        if (_logger != null) logAction(_logger, arg1, arg2, null);
+    }
+
+    private void SafeLog(Action<ILogger, uint, uint, Exception?> logAction, uint arg1, uint arg2)
+    {
+        if (_logger != null) logAction(_logger, arg1, arg2, null);
+    }
+
+    private void SafeLog(Action<ILogger, int, int, Exception?> logAction, int arg1, int arg2)
+    {
+        if (_logger != null) logAction(_logger, arg1, arg2, null);
+    }
+
+    private void SafeLog<T1, T2, T3>(Action<ILogger, T1, T2, T3, Exception?> logAction, T1 arg1, T2 arg2, T3 arg3)
+    {
+        if (_logger != null) logAction(_logger, arg1, arg2, arg3, null);
+    }
+
+    private void SafeLog<T1, T2, T3, T4>(Action<ILogger, T1, T2, T3, T4, Exception?> logAction, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+    {
+        if (_logger != null) logAction(_logger, arg1, arg2, arg3, arg4, null);
+    }    /// <summary>
     /// Test that validates package reading produces identical results between
     /// original implementation and TS4Tools implementation.
     /// This is the core golden master test for package compatibility.
@@ -62,7 +346,7 @@ public class PackageCompatibilityTests
         if (!testPackages.Any())
         {
             // Log that we're running in development mode without real packages
-            _logger?.LogInformation("No test packages found - running in development mode without game installation");
+            LogNoTestPackagesDevelopment(_logger, null);
             return; // Pass the test - framework is established
         }
 
@@ -87,7 +371,7 @@ public class PackageCompatibilityTests
 
         if (!testPackages.Any())
         {
-            _logger?.LogInformation("No test packages found for round-trip test");
+            LogNoTestPackagesRoundTrip(_logger, null);
             return; // Pass - framework established
         }
 
@@ -110,7 +394,7 @@ public class PackageCompatibilityTests
 
         if (!testPackages.Any())
         {
-            _logger?.LogInformation("No test packages found for performance test");
+            LogNoTestPackagesPerformance(_logger, null);
             return; // Pass - framework established
         }
 
@@ -123,7 +407,7 @@ public class PackageCompatibilityTests
             // IMPLEMENTED: Actual package loading performance measurement
             var packageFactory = CreatePackageFactory();
 
-            _logger?.LogInformation($"Starting performance test for {Path.GetFileName(packagePath)}");
+            SafeLog(LogStartingPerformanceTest, Path.GetFileName(packagePath));
 
             // Measure package loading performance
             var loadStartTime = DateTime.UtcNow;
@@ -137,7 +421,7 @@ public class PackageCompatibilityTests
             // In this case, we'll run a minimal performance test
             if (package.ResourceCount == 0)
             {
-                _logger?.LogInformation($"Package {Path.GetFileName(packagePath)} has 0 resources (likely a delta build) - running minimal performance test");
+                SafeLog(LogMinimalPerformanceTest, Path.GetFileName(packagePath));
 
                 // Measure basic operations on empty package
                 var emptyIndexStartTime = DateTime.UtcNow;
@@ -153,10 +437,9 @@ public class PackageCompatibilityTests
                 emptyTotalDuration.TotalSeconds.Should().BeLessThan(5.0,
                     "minimal package operations should complete quickly");
 
-                _logger?.LogInformation($"✅ Minimal performance test PASSED for {Path.GetFileName(packagePath)}:");
-                _logger?.LogInformation($"   - Total Duration: {emptyTotalDuration.TotalMilliseconds:F2}ms");
-                _logger?.LogInformation($"   - Package Type: Empty/Delta build");
-                _logger?.LogInformation($"   - Index Access Duration: {emptyIndexDuration.TotalMilliseconds:F2}ms");
+                SafeLog(LogMinimalTestPassed, Path.GetFileName(packagePath), emptyTotalDuration.TotalMilliseconds);
+                SafeLog(LogPackageTypeEmpty);
+                SafeLog(LogIndexAccessDuration, emptyIndexDuration.TotalMilliseconds);
 
                 return; // Early exit for empty packages
             }
@@ -182,16 +465,15 @@ public class PackageCompatibilityTests
                 "package loading should complete within reasonable time");
 
             // Log detailed performance metrics
-            _logger?.LogInformation($"✅ Performance test PASSED for {Path.GetFileName(packagePath)}:");
-            _logger?.LogInformation($"   - Total Duration: {totalDuration.TotalMilliseconds:F2}ms");
-            _logger?.LogInformation($"   - Load Duration: {loadDuration.TotalMilliseconds:F2}ms");
-            _logger?.LogInformation($"   - Index Access Duration: {indexDuration.TotalMilliseconds:F2}ms");
-            _logger?.LogInformation($"   - Resources Indexed: {indexCount:N0}");
+            SafeLog(LogPerformanceTestPassed, Path.GetFileName(packagePath), totalDuration.TotalMilliseconds);
+            SafeLog(LogLoadDuration, loadDuration.TotalMilliseconds);
+            SafeLog(LogIndexAccessDuration, indexDuration.TotalMilliseconds);
+            SafeLog(LogResourcesIndexed, indexCount);
         }
         catch (NotImplementedException ex)
         {
             // Expected during development - log but don't fail
-            _logger?.LogInformation($"Package loading not yet fully implemented - performance test framework established: {ex.Message}");
+            SafeLog(LogNotImplementedMessage, ex.Message);
         }
     }
 
@@ -218,28 +500,28 @@ public class PackageCompatibilityTests
             var gamePackages = await GetRealGamePackagesAsync(gameInstallation);
             packages.AddRange(gamePackages);
 
-            if (packages.Any())
+            if (packages.Count > 0)
             {
-                _logger?.LogInformation($"Found {packages.Count} real game packages for testing");
+                SafeLog(LogFoundRealGamePackages, packages.Count);
                 return packages;
             }
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Failed to load real game packages, falling back to test packages");
+            SafeLog(LogFailedLoadGamePackages, ex);
         }
 
         // Fallback to test packages in test-data directory
         var testPackages = GetFallbackTestPackages();
         packages.AddRange(testPackages);
 
-        if (packages.Any())
+        if (packages.Count > 0)
         {
-            _logger?.LogInformation($"Found {packages.Count} test packages for testing");
+            SafeLog(LogFoundTestPackages, packages.Count);
         }
         else
         {
-            _logger?.LogWarning("No test packages found in either game installation or test-data directory");
+            SafeLog(LogNoTestPackagesFound);
         }
 
         return packages;
@@ -249,7 +531,7 @@ public class PackageCompatibilityTests
     /// Get test packages as fallback when real game packages are not accessible.
     /// Uses the configured game directories directly, then creates mock packages if no real packages are available.
     /// </summary>
-    private IEnumerable<string> GetFallbackTestPackages()
+    private List<string> GetFallbackTestPackages()
     {
         var packages = new List<string>();
 
@@ -288,9 +570,9 @@ public class PackageCompatibilityTests
                     if (packages.Count >= 5) break; // We have enough for testing
                 }
 
-                if (packages.Any())
+                if (packages.Count > 0)
                 {
-                    _logger?.LogInformation($"Using {packages.Count} packages directly from game data directory: {dataDirectory}");
+                    SafeLog(LogUsingGameDataDirectory, packages.Count, dataDirectory);
                     return packages;
                 }
             }
@@ -302,9 +584,9 @@ public class PackageCompatibilityTests
                     .Take(10); // Limit for performance
                 packages.AddRange(clientPackages);
 
-                if (packages.Any())
+                if (packages.Count > 0)
                 {
-                    _logger?.LogInformation($"Using {packages.Count} packages from configured client data directory: {clientDataDirectory}");
+                    SafeLog(LogUsingClientDataDirectory, packages.Count, clientDataDirectory);
                     return packages;
                 }
             }
@@ -323,15 +605,15 @@ public class PackageCompatibilityTests
                     packages.AddRange(Directory.GetFiles(testPath, "*.package"));
                 }
 
-                if (packages.Any())
+                if (packages.Count > 0)
                 {
-                    _logger?.LogInformation($"Using {packages.Count} local test packages for development");
+                    SafeLog(LogUsingLocalTestPackages, packages.Count);
                     return packages;
                 }
             }
 
             // Final fallback: Create mock packages for testing framework
-            _logger?.LogInformation("No real game packages accessible - creating mock packages for testing framework");
+            SafeLog(LogNoRealGamePackages);
 
             // Create mock packages with different structures for comprehensive testing
             var mockPackages = new[]
@@ -353,12 +635,12 @@ public class PackageCompatibilityTests
                 File.WriteAllBytes(mockFile, mockData);
                 packages.Add(mockFile);
 
-                _logger?.LogInformation($"Created mock package: {Path.GetFileName(mockFile)} - {description}");
+                SafeLog(LogCreatedMockPackage, Path.GetFileName(mockFile), description);
             }
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Error discovering test packages: {ex.Message}");
+            SafeLog(LogErrorDiscoveringPackages, ex.Message);
         }
 
         return packages;
@@ -367,7 +649,7 @@ public class PackageCompatibilityTests
     /// <summary>
     /// Create a game installation service with configuration.
     /// </summary>
-    private IGameInstallationService CreateGameInstallationService()
+    private static GameInstallationService CreateGameInstallationService()
     {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -388,7 +670,7 @@ public class PackageCompatibilityTests
     /// Create a package factory with proper dependency injection setup.
     /// IMPLEMENTED: Complete integration with TS4Tools.Core.Package services
     /// </summary>
-    private IPackageFactory CreatePackageFactory()
+    private static IPackageFactory CreatePackageFactory()
     {
         var services = new ServiceCollection();
 
@@ -410,7 +692,7 @@ public class PackageCompatibilityTests
     /// Get real game packages from the configured installation directory.
     /// Accesses game files directly without copying them to avoid unnecessary file operations.
     /// </summary>
-    private async Task<IEnumerable<string>> GetRealGamePackagesAsync(IGameInstallationService gameService)
+    private async Task<IEnumerable<string>> GetRealGamePackagesAsync(GameInstallationService gameService)
     {
         var packages = new List<string>();
 
@@ -432,9 +714,9 @@ public class PackageCompatibilityTests
             var dataDirectory = settings?.Game?.DataDirectory;
             var clientDataDirectory = settings?.Game?.ClientDataDirectory;
 
-            _logger?.LogDebug($"Game installation path: {installationPath}");
-            _logger?.LogDebug($"Data directory from config: {dataDirectory}");
-            _logger?.LogDebug($"Client data directory from config: {clientDataDirectory}");
+            SafeLog(LogGameInstallationPath, installationPath);
+            SafeLog(LogDataDirectoryFromConfig, dataDirectory);
+            SafeLog(LogClientDataDirectoryFromConfig, clientDataDirectory);
 
             // Use configured directories if available, otherwise fall back to detection
             var searchPaths = new List<string>();
@@ -455,7 +737,7 @@ public class PackageCompatibilityTests
             }
 
             // Fall back to standard detection if no configured paths or they don't exist
-            if (!searchPaths.Any() && !string.IsNullOrEmpty(installationPath) && Directory.Exists(installationPath))
+            if (searchPaths.Count == 0 && !string.IsNullOrEmpty(installationPath) && Directory.Exists(installationPath))
             {
                 var standardPaths = new[]
                 {
@@ -469,9 +751,9 @@ public class PackageCompatibilityTests
                 searchPaths.AddRange(standardPaths.Where(Directory.Exists));
             }
 
-            if (!searchPaths.Any())
+            if (searchPaths.Count == 0)
             {
-                _logger?.LogWarning("No valid game package directories found in configuration or installation");
+                SafeLog(LogNoValidGamePackageDirectories);
                 return packages;
             }
 
@@ -502,15 +784,15 @@ public class PackageCompatibilityTests
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogWarning($"Error accessing packages in {searchPath}: {ex.Message}");
+                    SafeLog(LogErrorAccessingPackages, searchPath, ex.Message);
                 }
             }
 
-            _logger?.LogInformation($"Found {packages.Count} real game packages for direct testing from configured directories");
+            SafeLog(LogFoundRealGamePackagesForTesting, packages.Count);
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Error accessing real game packages: {ex.Message}");
+            SafeLog(LogErrorAccessingRealGamePackages, ex.Message);
         }
 
         return packages.Where(File.Exists).ToList();
@@ -524,7 +806,7 @@ public class PackageCompatibilityTests
         try
         {
             // Phase 0.3 Implementation: Actual package validation using TS4Tools services
-            _logger?.LogInformation($"Validating package compatibility for {Path.GetFileName(packagePath)}");
+            SafeLog(LogValidatingPackageCompatibility, Path.GetFileName(packagePath));
 
             // STEP 1: Basic file validation
             File.Exists(packagePath).Should().BeTrue($"package file {packagePath} should exist");
@@ -565,26 +847,26 @@ public class PackageCompatibilityTests
 
             // Log successful validation with detailed information
             var packageType = package.ResourceCount == 0 ? "Empty/Delta Build" : "Standard";
-            _logger?.LogInformation($"✅ Package validation successful for {Path.GetFileName(packagePath)} ({packageType}):");
-            _logger?.LogInformation($"   - File Size: {fileInfo.Length:N0} bytes");
-            _logger?.LogInformation($"   - DBPF Version: {package.Major}.{package.Minor}");
-            _logger?.LogInformation($"   - Resource Count: {package.ResourceCount:N0}");
-            _logger?.LogInformation($"   - Created: {package.CreatedDate:yyyy-MM-dd HH:mm:ss}");
-            _logger?.LogInformation($"   - Modified: {package.ModifiedDate:yyyy-MM-dd HH:mm:ss}");
+            SafeLog(LogPackageValidationSuccessful, Path.GetFileName(packagePath), packageType);
+            SafeLog(LogFileSize, fileInfo.Length);
+            SafeLog(LogDbpfVersion, package.Major, package.Minor);
+            SafeLog(LogResourceCountInfo, package.ResourceCount);
+            SafeLog(LogCreatedDate, package.CreatedDate);
+            SafeLog(LogModifiedDate, package.ModifiedDate);
 
             // Dispose the package properly
             await package.DisposeAsync();
 
-            _logger?.LogInformation($"✅ Package compatibility validation PASSED for {Path.GetFileName(packagePath)}");
+            SafeLog(LogPackageCompatibilityValidationPassed, Path.GetFileName(packagePath));
         }
         catch (NotImplementedException ex)
         {
-            _logger?.LogWarning($"Package service not yet fully implemented for {Path.GetFileName(packagePath)}: {ex.Message}");
+            SafeLog(LogPackageServiceNotImplemented, Path.GetFileName(packagePath), ex.Message);
             // Allow test to continue - log for investigation but don't fail during development
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Package validation failed for {Path.GetFileName(packagePath)}: {ex.Message}");
+            SafeLog(LogPackageValidationFailed, Path.GetFileName(packagePath), ex.Message);
             // Don't fail during Phase 0 - log for investigation
         }
     }
@@ -597,7 +879,7 @@ public class PackageCompatibilityTests
         try
         {
             // Phase 0.3 Implementation: Round-trip validation with actual TS4Tools services
-            _logger?.LogInformation($"Validating round-trip compatibility for {Path.GetFileName(packagePath)}");
+            SafeLog(LogValidatingRoundTripCompatibility, Path.GetFileName(packagePath));
 
             // STEP 1: Read original file bytes
             var originalBytes = await File.ReadAllBytesAsync(packagePath);
@@ -620,7 +902,7 @@ public class PackageCompatibilityTests
                 var indexCount = BitConverter.ToInt32(originalBytes, 36);
                 indexCount.Should().BeGreaterThan(0, "package should have resource entries");
 
-                _logger?.LogInformation($"✅ DBPF validation passed: Version {majorVersion}.{minorVersion}, {indexCount} resources");
+                SafeLog(LogDbpfValidationPassed, majorVersion, minorVersion, indexCount);
             }
 
             // STEP 3: Actual round-trip testing with TS4Tools.Core.Package services
@@ -631,10 +913,10 @@ public class PackageCompatibilityTests
             package.Should().NotBeNull("package should load successfully for round-trip test");
 
             // Log original package information
-            _logger?.LogInformation($"Round-trip test for {Path.GetFileName(packagePath)}:");
-            _logger?.LogInformation($"   - Original size: {originalBytes.Length:N0} bytes");
-            _logger?.LogInformation($"   - DBPF version: {package.Major}.{package.Minor}");
-            _logger?.LogInformation($"   - Resource count: {package.ResourceCount:N0}");
+            SafeLog(LogRoundTripTest, Path.GetFileName(packagePath));
+            SafeLog(LogOriginalSize, originalBytes.Length);
+            SafeLog(LogDbpfVersionInfo, package.Major, package.Minor);
+            SafeLog(LogResourceCountDetail, package.ResourceCount);
 
             // Save package to memory stream to get round-trip bytes
             using var memoryStream = new MemoryStream();
@@ -676,24 +958,24 @@ public class PackageCompatibilityTests
                 var rtIndexCount = BitConverter.ToInt32(roundTripBytes, 36);
                 rtIndexCount.Should().Be(originalIndexCount, "round-trip should preserve exact resource count");
 
-                _logger?.LogInformation($"✅ Round-trip header validation PASSED:");
-                _logger?.LogInformation($"   - Magic: {originalMagic} → {rtMagic}");
-                _logger?.LogInformation($"   - Version: {originalMajor}.{originalMinor} → {rtMajorVersion}.{rtMinorVersion}");
-                _logger?.LogInformation($"   - Resources: {originalIndexCount} → {rtIndexCount}");
+                SafeLog(LogRoundTripHeaderValidationPassed);
+                SafeLog(LogMagicComparison, originalMagic, rtMagic);
+                SafeLog(LogVersionComparison, (int)originalMajor, (int)originalMinor, (int)rtMajorVersion, (int)rtMinorVersion);
+                SafeLog(LogResourcesComparison, originalIndexCount, rtIndexCount);
             }
 
-            _logger?.LogInformation($"✅ Round-trip validation PASSED for {Path.GetFileName(packagePath)}:");
-            _logger?.LogInformation($"   - Original: {originalBytes.Length:N0} bytes → Round-trip: {roundTripBytes.Length:N0} bytes");
-            _logger?.LogInformation($"   - Size ratio: {sizeRatio:F3}x");
+            SafeLog(LogRoundTripValidationPassed, Path.GetFileName(packagePath));
+            SafeLog(LogByteSizeComparison, originalBytes.Length, roundTripBytes.Length);
+            SafeLog(LogSizeRatio, sizeRatio);
         }
         catch (NotImplementedException ex)
         {
-            _logger?.LogInformation($"Round-trip validation not yet fully implemented for {Path.GetFileName(packagePath)}: {ex.Message}");
+            SafeLog(LogRoundTripNotImplemented, Path.GetFileName(packagePath), ex.Message);
             // Don't fail the test during development - log for investigation
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Round-trip validation failed for {Path.GetFileName(packagePath)}: {ex.Message}");
+            SafeLog(LogRoundTripValidationFailed, Path.GetFileName(packagePath), ex.Message);
             // Don't fail during Phase 0 - log for investigation
         }
     }
@@ -701,7 +983,7 @@ public class PackageCompatibilityTests
     /// <summary>
     /// Creates mock DBPF package for testing when no real packages are available.
     /// </summary>
-    private byte[] CreateMockDbpfPackage(string identifier)
+    private static byte[] CreateMockDbpfPackage(string identifier)
     {
         // Minimal DBPF v2.1 structure for testing
         var data = new List<byte>();
@@ -753,7 +1035,7 @@ public class PackageCompatibilityTests
     /// <summary>
     /// Creates a temporary package file for testing purposes.
     /// </summary>
-    private async Task<string> CreateTempPackageFileAsync(byte[] packageData, string identifier)
+    private static async Task<string> CreateTempPackageFileAsync(byte[] packageData, string identifier)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "ts4tools-tests");
         Directory.CreateDirectory(tempDir);
@@ -772,7 +1054,7 @@ public class PackageCompatibilityTests
 /// and don't interfere with each other.
 /// </summary>
 [CollectionDefinition("GoldenMaster")]
-public class GoldenMasterCollection : ICollectionFixture<GoldenMasterFixture>
+public class GoldenMasterTestGroup : ICollectionFixture<GoldenMasterFixture>
 {
     // This class has no code, and is never created. Its purpose is simply
     // to be the place to apply [CollectionDefinition] and all the

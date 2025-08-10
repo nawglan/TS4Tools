@@ -1,3 +1,6 @@
+#pragma warning disable CA1848 // Use the LoggerMessage delegates for better performance
+#pragma warning disable CA2254 // Template should be a static expression
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,7 +26,7 @@ public sealed class TestDataProvider : IDisposable
     private readonly ILogger _logger;
     private readonly ApplicationSettings _settings;
     private readonly string _testDataCachePath;
-    private readonly bool _disposed = false;
+    private bool _disposed;
 
     public TestDataProvider(ILogger? logger = null)
     {
@@ -55,7 +58,7 @@ public sealed class TestDataProvider : IDisposable
             var realPackages = await GetRealGamePackagesAsync();
             packages.AddRange(realPackages.Take(maxCount));
 
-            if (packages.Any())
+            if (packages.Count > 0)
             {
                 _logger.LogInformation($"Using {packages.Count} real game packages for testing");
                 return packages;
@@ -70,7 +73,7 @@ public sealed class TestDataProvider : IDisposable
         var clientDataPackages = GetClientDataPackages();
         packages.AddRange(clientDataPackages.Take(maxCount));
 
-        if (packages.Any())
+        if (packages.Count > 0)
         {
             _logger.LogInformation($"Using {packages.Count} packages from client data directory");
             return packages;
@@ -305,5 +308,7 @@ public sealed class TestDataProvider : IDisposable
             // Log but don't throw during disposal
             Console.WriteLine($"Warning: Failed to clean up mock test data cache: {ex.Message}");
         }
+
+        _disposed = true;
     }
 }

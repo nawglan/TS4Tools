@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,8 +8,10 @@
     <IsTestProject>true</IsTestProject>
     <AssemblyTitle>TS4Tools World Building Resources Tests</AssemblyTitle>
     <AssemblyDescription>Unit tests for TS4Tools world building resource wrappers</AssemblyDescription>
+    <LangVersion>latest</LangVersion>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
@@ -21,7 +22,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Remove="WorldResourceTests.cs" />
     <Compile Remove="NeighborhoodResourceTests.cs" />
@@ -31,12 +31,10 @@
     <Compile Remove="Phase49VerificationTests.cs" />
     <Compile Remove="BasicWorldResourceTests.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\TS4Tools.Resources.World\TS4Tools.Resources.World.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Interfaces\TS4Tools.Core.Interfaces.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Common\TS4Tools.Resources.Common.csproj" />
   </ItemGroup>
-
 </Project>

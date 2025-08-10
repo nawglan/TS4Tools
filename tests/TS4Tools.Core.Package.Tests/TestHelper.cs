@@ -32,7 +32,7 @@ internal static class TestHelper
 /// <summary>
 /// Simple mock compression service for testing that simulates compression by removing half the data.
 /// </summary>
-internal class MockCompressionService : ICompressionService
+internal sealed class MockCompressionService : ICompressionService
 {
     public byte[] Compress(ReadOnlySpan<byte> data)
     {

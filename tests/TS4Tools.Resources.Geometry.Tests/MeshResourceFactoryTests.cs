@@ -237,7 +237,7 @@ public class MeshResourceFactoryTests
 
         // Mesh data format expected by ParseMeshData:
         // [4 bytes] Vertex count
-        // [4 bytes] Index count  
+        // [4 bytes] Index count
         // [4 bytes] Has normals flag
         // [4 bytes] Has UV coordinates flag
         // [Variable] Vertex data (3 floats per vertex)
@@ -290,7 +290,7 @@ public class MeshResourceFactoryTests
         return new MemoryStream(data.ToArray());
     }
 
-    private static Stream CreateNonSeekableMeshStream()
+    private static NonSeekableMeshMemoryStream CreateNonSeekableMeshStream()
     {
         var data = CreateValidMeshStream().ToArray();
         return new NonSeekableMeshMemoryStream(data);
@@ -300,7 +300,7 @@ public class MeshResourceFactoryTests
 /// <summary>
 /// A memory stream that reports as non-seekable for testing mesh resources.
 /// </summary>
-internal class NonSeekableMeshMemoryStream : MemoryStream
+internal sealed class NonSeekableMeshMemoryStream : MemoryStream
 {
     public NonSeekableMeshMemoryStream(byte[] buffer) : base(buffer) { }
 

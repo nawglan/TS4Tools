@@ -45,7 +45,7 @@ public sealed class CharacterResourceFactoryTests : IDisposable
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new CharacterResourceFactory(null!);
+        Action act = () => { var _ = new CharacterResourceFactory(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 

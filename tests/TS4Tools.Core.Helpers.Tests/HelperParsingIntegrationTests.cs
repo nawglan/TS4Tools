@@ -65,7 +65,7 @@ ReadOnly: false
         var helpers = _service.GetHelpersForResourceType(0x00B2D882);
         helpers.Should().HaveCount(1);
 
-        var helper = helpers.First();
+        var helper = helpers[0];
         helper.Id.Should().Be("TestHelper");
         helper.Label.Should().Be("Test Image Editor");
         helper.Command.Should().Be(systemCommand);
@@ -102,7 +102,7 @@ Desc: Test description
         // Assert
         helpers.Should().HaveCount(1, "Expected exactly 1 helper to be loaded for ResourceType 0x12345678");
 
-        var foundHelper = helpers.First();
+        var foundHelper = helpers[0];
         foundHelper.Label.Should().Be("Test Helper  Tool");
         foundHelper.Command.Should().Be(systemCommand);
         foundHelper.Description.Should().Be("Test description");
@@ -153,7 +153,7 @@ ResourceType: 0x12345678
         var helpers = _service.GetHelpersForResourceType(0x12345678);
         helpers.Should().HaveCount(1);
 
-        var helper = helpers.First();
+        var helper = helpers[0];
         helper.Command.Should().Be(systemCommand);
 
         // Availability depends on whether the system command exists
@@ -205,7 +205,7 @@ ResourceType: {resourceTypeString}
         // Assert
         var helpers = _service.GetHelpersForResourceType(expectedValue);
         helpers.Should().HaveCount(1);
-        helpers.First().SupportedResourceTypes.Should().Contain(expectedValue);
+        helpers[0].SupportedResourceTypes.Should().Contain(expectedValue);
     }
 
     public void Dispose()

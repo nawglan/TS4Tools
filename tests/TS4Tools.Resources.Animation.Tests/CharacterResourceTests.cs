@@ -41,7 +41,7 @@ public sealed class CharacterResourceTests : IDisposable
     public void Constructor_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new CharacterResource(null!);
+        Action act = () => { var _ = new CharacterResource(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("stream");
     }
 

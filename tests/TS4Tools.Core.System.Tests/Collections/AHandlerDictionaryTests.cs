@@ -6,7 +6,7 @@ namespace TS4Tools.Core.System.Tests.Collections;
 
 public class AHandlerDictionaryTests
 {
-    private class TestDictionary : AHandlerDictionary<string, string>
+    private sealed class TestDictionary : AHandlerDictionary<string, string>
     {
         public TestDictionary(EventHandler? handler = null) : base(handler) { }
         public TestDictionary(EventHandler? handler, IDictionary<string, string> dictionary) : base(handler, dictionary) { }

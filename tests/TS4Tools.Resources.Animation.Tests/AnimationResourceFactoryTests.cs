@@ -31,7 +31,7 @@ public class AnimationResourceFactoryTests
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new AnimationResourceFactory(null!);
+        Action act = () => { var _ = new AnimationResourceFactory(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
     }
 

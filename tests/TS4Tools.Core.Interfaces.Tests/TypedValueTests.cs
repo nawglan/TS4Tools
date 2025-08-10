@@ -16,7 +16,7 @@ public class TypedValueTests
         var typedValue = TypedValue.Create(42);
 
         // Assert
-        typedValue.Type.Should().Be(typeof(int));
+        typedValue.Type.Should().Be<int>();
         typedValue.Value.Should().Be(42);
         typedValue.Format.Should().Be("");
     }
@@ -28,7 +28,7 @@ public class TypedValueTests
         var typedValue = TypedValue.Create(255, "X");
 
         // Assert
-        typedValue.Type.Should().Be(typeof(int));
+        typedValue.Type.Should().Be<int>();
         typedValue.Value.Should().Be(255);
         typedValue.Format.Should().Be("X");
     }

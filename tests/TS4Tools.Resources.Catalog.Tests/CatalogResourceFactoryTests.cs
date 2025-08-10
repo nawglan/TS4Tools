@@ -119,7 +119,7 @@ public sealed class CatalogResourceFactoryTests
         var act = () => _factory.CreateResource(stream, resourceType);
         act.Should().Throw<ArgumentException>()
            .WithMessage($"Resource type 0x{resourceType:X8} is not supported by this factory*")
-           .WithParameterName("resourceType");
+           .WithParameterName(nameof(resourceType));
     }
 
     [Fact]

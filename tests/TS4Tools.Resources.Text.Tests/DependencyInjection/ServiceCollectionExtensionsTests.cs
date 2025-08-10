@@ -127,7 +127,7 @@ public class ServiceCollectionExtensionsTests
     {
     }
 
-    private class TestService : ITestService
+    private sealed class TestService : ITestService
     {
     }
 }

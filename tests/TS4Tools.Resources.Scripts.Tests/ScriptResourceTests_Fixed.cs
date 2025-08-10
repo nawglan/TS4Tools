@@ -140,7 +140,7 @@ public sealed class ScriptResourceTests_Fixed
         var versionValue = resource["Version"];
 
         // Assert
-        versionValue.Type.Should().Be(typeof(byte));
+        versionValue.Type.Should().Be<byte>();
         versionValue.Value.Should().Be((byte)1);
     }
 

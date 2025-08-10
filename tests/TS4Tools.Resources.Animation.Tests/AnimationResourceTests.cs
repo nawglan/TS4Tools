@@ -42,7 +42,7 @@ public sealed class AnimationResourceTests : IDisposable
     public void Constructor_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange, Act & Assert
-        Action act = () => new AnimationResource(null!);
+        Action act = () => { var _ = new AnimationResource(null!); };
         act.Should().Throw<ArgumentNullException>().WithParameterName("stream");
     }
 

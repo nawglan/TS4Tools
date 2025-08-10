@@ -453,7 +453,7 @@ public class TextResourceTests
         return new TextResource(resourceKey, _logger);
     }
 
-    private static IResourceKey CreateTestResourceKey()
+    private static ResourceKey CreateTestResourceKey()
     {
         return new ResourceKey(0x03B33DDF, 0x00000000, 0x123456789ABCDEF0UL);
     }

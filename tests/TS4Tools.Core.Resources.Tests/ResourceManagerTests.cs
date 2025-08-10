@@ -192,7 +192,7 @@ public class ResourceManagerTests : IDisposable
         // Assert
         typeMap.Should().NotBeNull();
         typeMap.Should().ContainKey("*"); // Default factory
-        typeMap["*"].Should().Be(typeof(DefaultResourceFactory));
+        typeMap["*"].Should().Be<DefaultResourceFactory>();
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class ResourceManagerTests : IDisposable
     }
 
     // Helper class for testing
-    internal class TestResourceFactory : IResourceFactory<IResource>
+    internal sealed class TestResourceFactory : IResourceFactory<IResource>
     {
         public IReadOnlySet<string> SupportedResourceTypes => new HashSet<string> { "0xABCDEF12" };
         public IReadOnlySet<uint> ResourceTypes => new HashSet<uint> { 0xABCDEF12u };

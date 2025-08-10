@@ -351,7 +351,7 @@ public class GeometryResourceFactoryTests
         return new MemoryStream(data.ToArray());
     }
 
-    private static Stream CreateNonSeekableStream()
+    private static NonSeekableMemoryStream CreateNonSeekableStream()
     {
         var data = CreateValidGeometryStream().ToArray();
         return new NonSeekableMemoryStream(data);
@@ -361,7 +361,7 @@ public class GeometryResourceFactoryTests
 /// <summary>
 /// A memory stream that reports as non-seekable for testing purposes.
 /// </summary>
-internal class NonSeekableMemoryStream : MemoryStream
+internal sealed class NonSeekableMemoryStream : MemoryStream
 {
     public NonSeekableMemoryStream(byte[] buffer) : base(buffer) { }
 
