@@ -39,6 +39,15 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore TS4Tools.sln --verbosity normal
 
+    - name: Build solution
+      run: |
+        Write-Host "🔨 Building solution to ensure dependencies are resolved..."
+        dotnet build TS4Tools.sln --no-restore --verbosity minimal --configuration Debug
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "❌ Build failed! Cannot proceed with formatting check."
+          exit 1
+        }
+
     - name: Check code formatting
       run: |
         Write-Host "🔍 Checking code formatting with dotnet format..."
@@ -66,7 +75,7 @@ jobs:
         Write-Host "🔍 Running .NET code analyzers..."
         Write-Host "ℹ️ This includes Microsoft.CodeAnalysis.NetAnalyzers and SonarAnalyzer.CSharp"
 
-        # Build with analyzer warnings treated as errors (no-restore since we already verified above)
+        # Build with analyzer warnings treated as errors (no-restore since we already built above)
         dotnet build TS4Tools.sln --no-restore --configuration Release --verbosity normal --property:TreatWarningsAsErrors=true --property:WarningsAsErrors=""
 
         if ($LASTEXITCODE -ne 0) {
