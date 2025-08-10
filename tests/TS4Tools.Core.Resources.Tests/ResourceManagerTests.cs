@@ -40,11 +40,11 @@ public class ResourceManagerTests : IDisposable
         _serviceProvider = Substitute.For<IServiceProvider>();
         _optionsMonitor = Substitute.For<IOptionsMonitor<ResourceManagerOptions>>();
         _logger = Substitute.For<ILogger<ResourceManager>>();
-        
+
         // Setup default options
         var options = new ResourceManagerOptions();
         _optionsMonitor.CurrentValue.Returns(options);
-        
+
         _resourceManager = new ResourceManager(_serviceProvider, _optionsMonitor, _logger);
     }
 
@@ -53,7 +53,7 @@ public class ResourceManagerTests : IDisposable
     {
         // Arrange & Act
         var manager = new ResourceManager(_serviceProvider, _optionsMonitor, _logger);
-        
+
         // Assert
         manager.Should().NotBeNull();
         var stats = manager.GetStatistics();
@@ -97,7 +97,7 @@ public class ResourceManagerTests : IDisposable
         // Assert
         resource.Should().NotBeNull();
         resource.RequestedApiVersion.Should().Be(apiVersion);
-        
+
         var stats = _resourceManager.GetStatistics();
         stats.TotalResourcesCreated.Should().Be(1);
     }
@@ -125,7 +125,7 @@ public class ResourceManagerTests : IDisposable
         var package = Substitute.For<IPackage>();
         var resourceEntry = Substitute.For<IResourceIndexEntry>();
         var resourceStream = new MemoryStream(new byte[] { 0x01, 0x02, 0x03, 0x04 });
-        
+
         resourceEntry["ResourceType"].Returns(TypedValue.Create("0x12345678"));
         package.GetResourceStreamAsync(resourceEntry, Arg.Any<CancellationToken>())
                .Returns(Task.FromResult<Stream?>(resourceStream));
@@ -136,7 +136,7 @@ public class ResourceManagerTests : IDisposable
         // Assert
         resource.Should().NotBeNull();
         resource.RequestedApiVersion.Should().Be(1);
-        
+
         var stats = _resourceManager.GetStatistics();
         stats.TotalResourcesLoaded.Should().Be(1);
     }
@@ -170,7 +170,7 @@ public class ResourceManagerTests : IDisposable
         var package = Substitute.For<IPackage>();
         var resourceEntry = Substitute.For<IResourceIndexEntry>();
         var resourceStream = new MemoryStream(new byte[] { 0x01, 0x02, 0x03, 0x04 });
-        
+
         resourceEntry["ResourceType"].Returns(TypedValue.Create("0x12345678"));
         package.GetResourceStreamAsync(resourceEntry, Arg.Any<CancellationToken>())
                .Returns(Task.FromResult<Stream?>(resourceStream));
@@ -225,7 +225,7 @@ public class ResourceManagerTests : IDisposable
         // Assert
         var typeMap = _resourceManager.GetResourceTypeMap();
         typeMap.Should().ContainKey("0xABCDEF12");
-        
+
         var stats = _resourceManager.GetStatistics();
         stats.RegisteredFactories.Should().Be(2); // Default + Test factory
     }
@@ -244,11 +244,11 @@ public class ResourceManagerTests : IDisposable
         var cachingOptions = new ResourceManagerOptions { EnableCaching = true };
         var cachingOptionsMonitor = Substitute.For<IOptionsMonitor<ResourceManagerOptions>>();
         cachingOptionsMonitor.CurrentValue.Returns(cachingOptions);
-        
+
         var package = Substitute.For<IPackage>();
         var resourceEntry = Substitute.For<IResourceIndexEntry>();
         var resourceStream = new MemoryStream(new byte[] { 0x01, 0x02, 0x03, 0x04 });
-        
+
         resourceEntry["ResourceType"].Returns(TypedValue.Create("0x12345678"));
         package.GetResourceStreamAsync(resourceEntry, Arg.Any<CancellationToken>())
                .Returns(Task.FromResult<Stream?>(resourceStream));
@@ -263,7 +263,7 @@ public class ResourceManagerTests : IDisposable
         // Assert
         resource1.Should().NotBeNull();
         resource2.Should().NotBeNull();
-        
+
         var stats = cachingManager.GetStatistics();
         stats.TotalResourcesLoaded.Should().Be(1); // Only one actual load from package
         stats.CacheHitRatio.Should().Be(0.5); // 1 hit out of 2 requests

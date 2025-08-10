@@ -212,8 +212,8 @@ public sealed class GeometryResource : IResource, IDisposable
     /// <summary>
     /// The resource content as a stream.
     /// </summary>
-    public Stream Stream 
-    { 
+    public Stream Stream
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -274,12 +274,12 @@ public sealed class GeometryResource : IResource, IDisposable
     public GeometryResource(Stream stream, int requestedApiVersion = 1)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         RequestedApiVersion = requestedApiVersion;
         _stream = new MemoryStream();
         stream.CopyTo(_stream);
         _stream.Position = 0;
-        
+
         ParseGeometryData();
     }
 
@@ -291,7 +291,7 @@ public sealed class GeometryResource : IResource, IDisposable
     /// <param name="vertexData">The raw vertex data.</param>
     /// <param name="faces">The triangle faces.</param>
     /// <param name="requestedApiVersion">The API version requested for this resource.</param>
-    public GeometryResource(ShaderType shader, IEnumerable<VertexFormat> vertexFormats, 
+    public GeometryResource(ShaderType shader, IEnumerable<VertexFormat> vertexFormats,
                            ReadOnlyMemory<byte> vertexData, IEnumerable<Face> faces, int requestedApiVersion = 1)
     {
         RequestedApiVersion = requestedApiVersion;
@@ -300,7 +300,7 @@ public sealed class GeometryResource : IResource, IDisposable
         VertexFormats = vertexFormats?.ToList() ?? throw new ArgumentNullException(nameof(vertexFormats));
         VertexData = vertexData;
         Faces = faces?.ToList() ?? throw new ArgumentNullException(nameof(faces));
-        
+
         // Calculate vertex count from vertex data size and format
         CalculateVertexCount();
         _modified = true;
@@ -316,14 +316,14 @@ public sealed class GeometryResource : IResource, IDisposable
             throw new InvalidDataException("Geometry stream too small");
 
         using var reader = new BinaryReader(_stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Read header
         Tag = reader.ReadUInt32();
         if (Tag != 0x47454F4D) // "GEOM"
             throw new InvalidDataException($"Invalid GEOM tag: 0x{Tag:X8}");
 
         Version = reader.ReadUInt32();
-        if (Version != 0x00000005 && Version != 0x0000000C && 
+        if (Version != 0x00000005 && Version != 0x0000000C &&
             Version != 0x0000000D && Version != 0x0000000E)
             throw new InvalidDataException($"Unsupported GEOM version: 0x{Version:X8}");
 
@@ -369,12 +369,12 @@ public sealed class GeometryResource : IResource, IDisposable
         else if (Version >= 0x0000000C)
         {
             ReadUVStitches(reader);
-            
+
             if (Version >= 0x0000000D)
             {
                 ReadSeamStitches(reader);
             }
-            
+
             ReadSlotrayIntersections(reader);
         }
 
@@ -386,20 +386,20 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var formatCount = reader.ReadInt32();
         var formats = new VertexFormat[formatCount];
-        
+
         for (int i = 0; i < formatCount; i++)
         {
             var usage = (UsageType)reader.ReadUInt32();
             var dataType = (DataType)reader.ReadUInt32();
             var subUsage = reader.ReadByte();
             var reserved = reader.ReadByte();
-            
+
             // Skip padding
             reader.ReadUInt16();
-            
+
             formats[i] = new VertexFormat(usage, dataType, subUsage, reserved);
         }
-        
+
         VertexFormats = formats;
     }
 
@@ -408,7 +408,7 @@ public sealed class GeometryResource : IResource, IDisposable
         // Calculate vertex stride
         var stride = VertexFormats.Sum(f => f.GetElementSize());
         var totalSize = VertexCount * stride;
-        
+
         if (totalSize > 0)
         {
             var data = reader.ReadBytes(totalSize);
@@ -420,7 +420,7 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var faceCount = reader.ReadInt32();
         var faces = new Face[faceCount];
-        
+
         for (int i = 0; i < faceCount; i++)
         {
             var a = reader.ReadUInt16();
@@ -428,7 +428,7 @@ public sealed class GeometryResource : IResource, IDisposable
             var c = reader.ReadUInt16();
             faces[i] = new Face(a, b, c);
         }
-        
+
         Faces = faces;
     }
 
@@ -436,14 +436,14 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var count = reader.ReadInt32();
         var stitches = new UVStitch[count];
-        
+
         for (int i = 0; i < count; i++)
         {
             var vertexA = reader.ReadUInt32();
             var vertexB = reader.ReadUInt32();
             stitches[i] = new UVStitch(vertexA, vertexB);
         }
-        
+
         UVStitches = stitches;
     }
 
@@ -451,14 +451,14 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var count = reader.ReadInt32();
         var stitches = new SeamStitch[count];
-        
+
         for (int i = 0; i < count; i++)
         {
             var vertexA = reader.ReadUInt32();
             var vertexB = reader.ReadUInt32();
             stitches[i] = new SeamStitch(vertexA, vertexB);
         }
-        
+
         SeamStitches = stitches;
     }
 
@@ -466,14 +466,14 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var count = reader.ReadInt32();
         var intersections = new SlotrayIntersection[count];
-        
+
         for (int i = 0; i < count; i++)
         {
             var position = reader.ReadUInt32();
             var normal = reader.ReadUInt32();
             intersections[i] = new SlotrayIntersection(position, normal);
         }
-        
+
         SlotrayIntersections = intersections;
     }
 
@@ -481,12 +481,12 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         var count = reader.ReadInt32();
         var hashes = new uint[count];
-        
+
         for (int i = 0; i < count; i++)
         {
             hashes[i] = reader.ReadUInt32();
         }
-        
+
         BoneHashes = hashes;
     }
 
@@ -498,41 +498,41 @@ public sealed class GeometryResource : IResource, IDisposable
     {
         _stream.SetLength(0);
         _stream.Position = 0;
-        
+
         using var writer = new BinaryWriter(_stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Write header
         writer.Write(Tag);
         writer.Write(Version);
-        
+
         // Reserve space for TGI offset and size (we'll update these later)
         var tgiOffsetPosition = writer.BaseStream.Position;
         writer.Write(0U); // TGI offset
         writer.Write(0U); // TGI size
-        
+
         // Write shader
         writer.Write((uint)Shader);
-        
+
         // Skip shader data for now (not implemented)
         if (Shader != ShaderType.None)
         {
             writer.Write(0U); // Shader data size
         }
-        
+
         // Write geometry properties
         writer.Write(MergeGroup);
         writer.Write(SortOrder);
-        
+
         // Write vertex data
         writer.Write(VertexCount);
         WriteVertexFormats(writer);
         WriteVertexData(writer);
-        
+
         // Write face data
         writer.Write(1U); // Number of submeshes
         writer.Write((byte)2); // Face point size
         WriteFaces(writer);
-        
+
         // Write version-specific data
         if (Version == 0x00000005)
         {
@@ -541,18 +541,18 @@ public sealed class GeometryResource : IResource, IDisposable
         else if (Version >= 0x0000000C)
         {
             WriteUVStitches(writer);
-            
+
             if (Version >= 0x0000000D)
             {
                 WriteSeamStitches(writer);
             }
-            
+
             WriteSlotrayIntersections(writer);
         }
-        
+
         // Write bone hashes
         WriteBoneHashes(writer);
-        
+
         // For now, we'll skip TGI blocks (can be implemented later if needed)
         var currentPosition = writer.BaseStream.Position;
         writer.BaseStream.Seek(tgiOffsetPosition, SeekOrigin.Begin);
@@ -564,7 +564,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteVertexFormats(BinaryWriter writer)
     {
         writer.Write(VertexFormats.Count);
-        
+
         foreach (var format in VertexFormats)
         {
             writer.Write((uint)format.Usage);
@@ -586,7 +586,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteFaces(BinaryWriter writer)
     {
         writer.Write(Faces.Count);
-        
+
         foreach (var face in Faces)
         {
             writer.Write(face.A);
@@ -598,7 +598,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteUVStitches(BinaryWriter writer)
     {
         writer.Write(UVStitches.Count);
-        
+
         foreach (var stitch in UVStitches)
         {
             writer.Write(stitch.VertexA);
@@ -609,7 +609,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteSeamStitches(BinaryWriter writer)
     {
         writer.Write(SeamStitches.Count);
-        
+
         foreach (var stitch in SeamStitches)
         {
             writer.Write(stitch.VertexA);
@@ -620,7 +620,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteSlotrayIntersections(BinaryWriter writer)
     {
         writer.Write(SlotrayIntersections.Count);
-        
+
         foreach (var intersection in SlotrayIntersections)
         {
             writer.Write(intersection.Position);
@@ -631,7 +631,7 @@ public sealed class GeometryResource : IResource, IDisposable
     private void WriteBoneHashes(BinaryWriter writer)
     {
         writer.Write(BoneHashes.Count);
-        
+
         foreach (var hash in BoneHashes)
         {
             writer.Write(hash);
@@ -645,7 +645,7 @@ public sealed class GeometryResource : IResource, IDisposable
             VertexCount = 0;
             return;
         }
-        
+
         var stride = VertexFormats.Sum(f => f.GetElementSize());
         VertexCount = stride > 0 ? VertexData.Length / stride : 0;
     }
@@ -662,10 +662,10 @@ public sealed class GeometryResource : IResource, IDisposable
     public void UpdateVertexData(IEnumerable<VertexFormat> vertexFormats, ReadOnlyMemory<byte> vertexData)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         VertexFormats = vertexFormats?.ToList() ?? throw new ArgumentNullException(nameof(vertexFormats));
         VertexData = vertexData;
-        
+
         CalculateVertexCount();
         _modified = true;
         ResourceChanged?.Invoke(this, EventArgs.Empty);
@@ -678,7 +678,7 @@ public sealed class GeometryResource : IResource, IDisposable
     public void UpdateFaces(IEnumerable<Face> faces)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         Faces = faces?.ToList() ?? throw new ArgumentNullException(nameof(faces));
         _modified = true;
         ResourceChanged?.Invoke(this, EventArgs.Empty);
@@ -691,7 +691,7 @@ public sealed class GeometryResource : IResource, IDisposable
     public void UpdateBoneHashes(IEnumerable<uint> boneHashes)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         BoneHashes = boneHashes?.ToList() ?? throw new ArgumentNullException(nameof(boneHashes));
         _modified = true;
         ResourceChanged?.Invoke(this, EventArgs.Empty);

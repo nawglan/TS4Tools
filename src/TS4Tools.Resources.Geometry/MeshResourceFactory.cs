@@ -33,7 +33,7 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
     /// <summary>
     /// Resource types that this factory can handle (string identifiers).
     /// </summary>
-    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings = 
+    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings =
         new System.Collections.ObjectModel.ReadOnlySet<string>(new HashSet<string>
         {
             "MLOD",     // Model Level of Detail
@@ -56,7 +56,7 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
         : base(SupportedResourceTypeStrings, priority: 140) // Slightly lower than GeometryResourceFactory
     {
         _logger = logger;
-        
+
         // Build the correct resource types collection using our override method
         var resourceTypeIds = new HashSet<uint>();
         foreach (var typeString in SupportedResourceTypeStrings)
@@ -81,16 +81,16 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
     public override async Task<MeshResource> CreateResourceAsync(int apiVersion, Stream? stream, CancellationToken cancellationToken = default)
     {
         await Task.Yield(); // Make this truly async
-        
+
         if (stream == null)
             throw new ArgumentNullException(nameof(stream));
 
         var originalPosition = stream.CanSeek ? stream.Position : 0;
-        
+
         try
         {
             _logger?.LogDebug("Creating mesh resource from stream (length: {Length} bytes)", stream.Length);
-            
+
             // Validate stream has minimum required size
             if (stream.Length == 0)
             {
@@ -106,15 +106,15 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
             // For mesh resources, we'll try to parse the simple format first
             // If that fails, we might try to extract mesh data from other formats
             var resource = new MeshResource(stream, apiVersion);
-            _logger?.LogDebug("Created mesh resource with {VertexCount} vertices and {TriangleCount} triangles", 
+            _logger?.LogDebug("Created mesh resource with {VertexCount} vertices and {TriangleCount} triangles",
                 resource.VertexCount, resource.TriangleCount);
-            
+
             // Reset stream position if seekable
             if (stream.CanSeek)
             {
                 stream.Position = originalPosition;
             }
-            
+
             return resource;
         }
         catch (Exception ex) when (!(ex is ArgumentNullException || ex is InvalidOperationException))
@@ -143,14 +143,14 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
     private static IReadOnlySet<uint> BuildSupportedResourceTypes()
     {
         var resourceTypes = new HashSet<uint>();
-        
+
         // Mesh-related resource types (from original Sims4Tools analysis)
         resourceTypes.Add(0x021CDB6C); // MLOD - Model Level of Detail
         resourceTypes.Add(0x0229684B); // VBUF - Vertex Buffer  
         resourceTypes.Add(0x0229684A); // IBUF - Index Buffer
         resourceTypes.Add(0x01D0E723); // VRTF - Vertex Format
         resourceTypes.Add(0x01661233); // Additional mesh format
-        
+
         return resourceTypes;
     }
 
@@ -171,7 +171,7 @@ public sealed class MeshResourceFactory : ResourceFactoryBase<MeshResource>
             "MESH" => SetId(out resourceTypeId, 0x01661233),
             _ => base.TryGetResourceTypeId(typeString, out resourceTypeId)
         };
-        
+
         static bool SetId(out uint id, uint value)
         {
             id = value;

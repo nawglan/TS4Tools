@@ -30,44 +30,44 @@ public interface ISoundResource : IResource
     /// Gets the audio metadata for this sound resource.
     /// </summary>
     AudioMetadata Metadata { get; }
-    
+
     /// <summary>
     /// Gets the audio data as a read-only memory span.
     /// </summary>
     ReadOnlyMemory<byte> AudioData { get; }
-    
+
     /// <summary>
     /// Gets the detected audio format.
     /// </summary>
     AudioFormat Format { get; }
-    
+
     /// <summary>
     /// Gets the sample rate in Hz.
     /// </summary>
     uint SampleRate { get; }
-    
+
     /// <summary>
     /// Gets the number of audio channels.
     /// </summary>
     uint Channels { get; }
-    
+
     /// <summary>
     /// Gets the bits per sample.
     /// </summary>
     uint BitsPerSample { get; }
-    
+
     /// <summary>
     /// Gets the duration in seconds.
     /// </summary>
     double Duration { get; }
-    
+
     /// <summary>
     /// Analyzes the audio data and extracts metadata asynchronously.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A task that represents the asynchronous analysis operation</returns>
     Task<AudioMetadata> AnalyzeAsync(CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Updates the audio data with new content.
     /// </summary>

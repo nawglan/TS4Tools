@@ -16,10 +16,10 @@ public sealed class TagDocument
     /// </summary>
     [XmlElement("Listing")]
 #pragma warning disable CA1819 // Properties should not return arrays - Required for XML serialization
-    public TagListing[]? Listings 
-    { 
-        get => _listings; 
-        set => _listings = value; 
+    public TagListing[]? Listings
+    {
+        get => _listings;
+        set => _listings = value;
     }
 #pragma warning restore CA1819
 
@@ -49,10 +49,10 @@ public sealed class TagListing
     /// </summary>
     [XmlElement("Element")]
 #pragma warning disable CA1819 // Properties should not return arrays - Required for XML serialization
-    public Tag[]? Elements 
-    { 
-        get => _elements; 
-        set => _elements = value; 
+    public Tag[]? Elements
+    {
+        get => _elements;
+        set => _elements = value;
     }
 #pragma warning restore CA1819
 

@@ -26,13 +26,13 @@ public sealed class ResourceKey : IResourceKey
 {
     /// <inheritdoc />
     public uint ResourceType { get; set; }
-    
+
     /// <inheritdoc />
     public uint ResourceGroup { get; set; }
-    
+
     /// <inheritdoc />
     public ulong Instance { get; set; }
-    
+
     /// <summary>
     /// Creates a new resource key
     /// </summary>
@@ -45,93 +45,93 @@ public sealed class ResourceKey : IResourceKey
         ResourceGroup = resourceGroup;
         Instance = instance;
     }
-    
+
     /// <inheritdoc />
     public bool Equals(IResourceKey? x, IResourceKey? y)
     {
         if (ReferenceEquals(x, y)) return true;
         if (x is null || y is null) return false;
-        
+
         return x.ResourceType == y.ResourceType &&
                x.ResourceGroup == y.ResourceGroup &&
                x.Instance == y.Instance;
     }
-    
+
     /// <inheritdoc />
     public int GetHashCode(IResourceKey obj)
     {
         ArgumentNullException.ThrowIfNull(obj);
         return HashCode.Combine(obj.ResourceType, obj.ResourceGroup, obj.Instance);
     }
-    
+
     /// <inheritdoc />
     public bool Equals(IResourceKey? other)
     {
         return Equals(this, other);
     }
-    
+
     /// <inheritdoc />
     public int CompareTo(IResourceKey? other)
     {
         if (other is null) return 1;
-        
+
         var typeComparison = ResourceType.CompareTo(other.ResourceType);
         if (typeComparison != 0) return typeComparison;
-        
+
         var groupComparison = ResourceGroup.CompareTo(other.ResourceGroup);
         if (groupComparison != 0) return groupComparison;
-        
+
         return Instance.CompareTo(other.Instance);
     }
-    
+
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
         return obj is IResourceKey other && Equals(other);
     }
-    
+
     /// <inheritdoc />
     public override int GetHashCode()
     {
         return GetHashCode(this);
     }
-    
+
     /// <inheritdoc />
     public override string ToString()
     {
         return $"ResourceKey: Type=0x{ResourceType:X8}, Group=0x{ResourceGroup:X8}, Instance=0x{Instance:X16}";
     }
-    
+
     /// <inheritdoc />
     public static bool operator ==(ResourceKey? left, ResourceKey? right)
     {
         return EqualityComparer<ResourceKey>.Default.Equals(left, right);
     }
-    
+
     /// <inheritdoc />
     public static bool operator !=(ResourceKey? left, ResourceKey? right)
     {
         return !(left == right);
     }
-    
+
     /// <inheritdoc />
     public static bool operator <(ResourceKey? left, ResourceKey? right)
     {
         return left is null ? right is not null : left.CompareTo(right) < 0;
     }
-    
+
     /// <inheritdoc />
     public static bool operator <=(ResourceKey? left, ResourceKey? right)
     {
         return left is null || left.CompareTo(right) <= 0;
     }
-    
+
     /// <inheritdoc />
     public static bool operator >(ResourceKey? left, ResourceKey? right)
     {
         return left is not null && left.CompareTo(right) > 0;
     }
-    
+
     /// <inheritdoc />
     public static bool operator >=(ResourceKey? left, ResourceKey? right)
     {

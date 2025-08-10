@@ -28,7 +28,7 @@ public interface IPackageResourceIndex : IReadOnlyCollection<IResourceIndexEntry
     /// Index type information
     /// </summary>
     uint IndexType { get; }
-    
+
     /// <summary>
     /// Get resource index entry by key
     /// </summary>
@@ -37,34 +37,34 @@ public interface IPackageResourceIndex : IReadOnlyCollection<IResourceIndexEntry
 #pragma warning disable CA1043 // Use Integral Or String Argument For Indexers - ResourceKey is appropriate here
     IResourceIndexEntry? this[IResourceKey key] { get; }
 #pragma warning restore CA1043
-    
+
     /// <summary>
     /// Check if the index contains a resource with the specified key
     /// </summary>
     /// <param name="key">Resource key</param>
     /// <returns>True if resource exists</returns>
     bool Contains(IResourceKey key);
-    
+
     /// <summary>
     /// Get all resource keys in the index
     /// </summary>
     /// <returns>Collection of resource keys</returns>
     IEnumerable<IResourceKey> GetResourceKeys();
-    
+
     /// <summary>
     /// Get resource index entries by type
     /// </summary>
     /// <param name="resourceType">Resource type to filter by</param>
     /// <returns>Collection of matching index entries</returns>
     IEnumerable<IResourceIndexEntry> GetByResourceType(uint resourceType);
-    
+
     /// <summary>
     /// Get resource index entries by group
     /// </summary>
     /// <param name="resourceGroup">Resource group to filter by</param>
     /// <returns>Collection of matching index entries</returns>
     IEnumerable<IResourceIndexEntry> GetByResourceGroup(uint resourceGroup);
-    
+
     /// <summary>
     /// Try to get a resource index entry by key
     /// </summary>

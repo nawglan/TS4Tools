@@ -34,7 +34,7 @@ public class EffectResourceFactory : ResourceFactoryBase<IEffectResource>
             _logger.LogDebug("Creating effect resource from stream (length: {Length})", stream?.Length ?? 0);
 
             var resource = new EffectResource();
-            
+
             if (stream != null)
             {
                 await resource.LoadFromStreamAsync(stream, cancellationToken);

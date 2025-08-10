@@ -9,9 +9,9 @@ namespace TS4Tools.Resources.Animation;
 public class RigResource : IRigResource
 {
     private static readonly byte[] MagicBytes = [0x52, 0x49, 0x47, 0x53]; // "RIGS"
-    
+
     private readonly List<Bone> _bones = [];
-    private readonly List<string> _contentFields = 
+    private readonly List<string> _contentFields =
     [
         "RigName",
         "BoneCount",
@@ -19,7 +19,7 @@ public class RigResource : IRigResource
         "SupportsIk",
         "Bones"
     ];
-    
+
     private MemoryStream? _stream;
     private bool _disposed;
 
@@ -50,8 +50,8 @@ public class RigResource : IRigResource
     private string _rigName = string.Empty;
 
     /// <inheritdoc />
-    public string RigName 
-    { 
+    public string RigName
+    {
         get => _rigName;
         set
         {
@@ -82,7 +82,7 @@ public class RigResource : IRigResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(RigResource));
-                
+
             _stream ??= new MemoryStream();
             return _stream;
         }
@@ -95,7 +95,7 @@ public class RigResource : IRigResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(RigResource));
-                
+
             using var ms = new MemoryStream();
             WriteToStream(ms);
             return ms.ToArray();
@@ -166,7 +166,7 @@ public class RigResource : IRigResource
     /// <summary>
     /// Gets the root bone of the rig (bone with no parent).
     /// </summary>
-    public Bone? RootBone 
+    public Bone? RootBone
     {
         get
         {
@@ -189,7 +189,7 @@ public class RigResource : IRigResource
     {
         if (string.IsNullOrEmpty(boneName))
             return null;
-            
+
         var matchingBones = _bones.Where(b => b.Name != null && b.Name.Equals(boneName, StringComparison.OrdinalIgnoreCase)).ToList();
         return matchingBones.Count > 0 ? matchingBones[0] : null;
     }
@@ -232,7 +232,7 @@ public class RigResource : IRigResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         return GetFieldValue(_contentFields[index]);
     }
 
@@ -253,7 +253,7 @@ public class RigResource : IRigResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         SetFieldValue(_contentFields[index], value);
     }
 
@@ -275,7 +275,7 @@ public class RigResource : IRigResource
             default:
                 throw new ArgumentException($"Field '{name}' is read-only or unknown", nameof(name));
         }
-        
+
         OnResourceChanged();
     }
 
@@ -299,7 +299,7 @@ public class RigResource : IRigResource
     private void ReadFromStream(Stream stream)
     {
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Handle empty stream gracefully
         if (stream.Length == 0)
         {
@@ -308,34 +308,34 @@ public class RigResource : IRigResource
             Bones = new List<Bone>();
             return;
         }
-        
+
         // Read and validate magic bytes
         if (stream.Length < 4)
         {
             throw new InvalidDataException("Invalid rig resource format");
         }
-        
+
         var magic = reader.ReadBytes(4);
         if (!magic.SequenceEqual(MagicBytes))
         {
             throw new InvalidDataException("Invalid rig resource format");
         }
-        
+
         // Read rig data
         var nameLength = reader.ReadInt32();
         RigName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(nameLength));
         RigVersion = reader.ReadInt32();
         SupportsIk = reader.ReadBoolean();
-        
+
         // Read bones
         var boneCount = reader.ReadInt32();
         _bones.Clear();
-        
+
         for (int i = 0; i < boneCount; i++)
         {
             var boneNameLength = reader.ReadInt32();
             var boneName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(boneNameLength));
-            
+
             string? parentName = null;
             var hasParent = reader.ReadBoolean();
             if (hasParent)
@@ -343,11 +343,11 @@ public class RigResource : IRigResource
                 var parentNameLength = reader.ReadInt32();
                 parentName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(parentNameLength));
             }
-            
+
             var position = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             var rotation = new Vector4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             var scale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-            
+
             _bones.Add(new Bone(boneName, parentName, position, rotation, scale));
         }
     }
@@ -355,26 +355,26 @@ public class RigResource : IRigResource
     private void WriteToStream(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Write magic bytes
         writer.Write(MagicBytes);
-        
+
         // Write rig data
         var nameBytes = System.Text.Encoding.UTF8.GetBytes(RigName);
         writer.Write(nameBytes.Length);
         writer.Write(nameBytes);
         writer.Write(RigVersion);
         writer.Write(SupportsIk);
-        
+
         // Write bones
         writer.Write(_bones.Count);
-        
+
         foreach (var bone in _bones)
         {
             var boneNameBytes = System.Text.Encoding.UTF8.GetBytes(bone.Name);
             writer.Write(boneNameBytes.Length);
             writer.Write(boneNameBytes);
-            
+
             writer.Write(!string.IsNullOrEmpty(bone.ParentName));
             if (!string.IsNullOrEmpty(bone.ParentName))
             {
@@ -382,16 +382,16 @@ public class RigResource : IRigResource
                 writer.Write(parentNameBytes.Length);
                 writer.Write(parentNameBytes);
             }
-            
+
             writer.Write(bone.Position.X);
             writer.Write(bone.Position.Y);
             writer.Write(bone.Position.Z);
-            
+
             writer.Write(bone.Rotation.X);
             writer.Write(bone.Rotation.Y);
             writer.Write(bone.Rotation.Z);
             writer.Write(bone.Rotation.W);
-            
+
             writer.Write(bone.Scale.X);
             writer.Write(bone.Scale.Y);
             writer.Write(bone.Scale.Z);

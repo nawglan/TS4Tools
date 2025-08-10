@@ -175,13 +175,13 @@ public sealed class ScriptResourceTests_Fixed
 
         // Write version
         writer.Write((byte)1);
-        
+
         // Write unknown2
         writer.Write(0x2BC4F79FU);
-        
+
         // Write MD5 sum (64 bytes)
         writer.Write(new byte[64]);
-        
+
         // Write entry count
         writer.Write((ushort)0);
 

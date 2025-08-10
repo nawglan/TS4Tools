@@ -23,7 +23,7 @@ public static class StringTableResourceAssertionExtensions
     {
         return BeValidSTBLFormat(assertions, string.Empty);
     }
-    
+
     /// <summary>
     /// Asserts that the binary data represents a valid STBL format.
     /// This tests the behavior outcome without duplicating parsing logic.
@@ -33,8 +33,8 @@ public static class StringTableResourceAssertionExtensions
     /// <param name="becauseArgs">Arguments for the reason.</param>
     /// <returns>Continuation for method chaining.</returns>
     public static AndConstraint<ObjectAssertions> BeValidSTBLFormat(
-        this ObjectAssertions assertions, 
-        string because = "", 
+        this ObjectAssertions assertions,
+        string because = "",
         params object[] becauseArgs)
     {
         Execute.Assertion
@@ -43,7 +43,7 @@ public static class StringTableResourceAssertionExtensions
             .FailWith("Expected byte array to be valid STBL format, but it was not a byte array.");
 
         var data = (byte[])assertions.Subject!;
-        
+
         Execute.Assertion
             .ForCondition(data.Length >= 19) // Minimum STBL header size
             .BecauseOf(because, becauseArgs)
@@ -57,7 +57,7 @@ public static class StringTableResourceAssertionExtensions
 
         return new AndConstraint<ObjectAssertions>(assertions);
     }
-    
+
     /// <summary>
     /// Asserts that the binary data starts with the correct STBL magic number.
     /// This tests behavior without exposing the actual magic number value.
@@ -90,7 +90,7 @@ public static class StringTableResourceAssertionExtensions
 
         return new AndConstraint<ObjectAssertions>(assertions);
     }
-    
+
     /// <summary>
     /// Asserts that the binary data contains the expected number of string entries.
     /// This tests behavior by parsing and counting, not by duplicating binary logic.
@@ -113,7 +113,7 @@ public static class StringTableResourceAssertionExtensions
 
         var data = (byte[])assertions.Subject!;
         var actualCount = GetStringEntryCount(data);
-        
+
         Execute.Assertion
             .ForCondition(actualCount == expectedCount)
             .BecauseOf(because, becauseArgs)
@@ -121,7 +121,7 @@ public static class StringTableResourceAssertionExtensions
 
         return new AndConstraint<ObjectAssertions>(assertions);
     }
-    
+
     /// <summary>
     /// Attempts to parse the binary data as STBL format using the actual implementation.
     /// This verifies behavior without duplicating parsing logic.
@@ -138,7 +138,7 @@ public static class StringTableResourceAssertionExtensions
             return false;
         }
     }
-    
+
     /// <summary>
     /// Checks if the binary data has valid STBL magic number using the actual implementation.
     /// </summary>
@@ -154,7 +154,7 @@ public static class StringTableResourceAssertionExtensions
             return false;
         }
     }
-    
+
     /// <summary>
     /// Gets the string entry count by parsing with the actual implementation.
     /// This tests behavior without duplicating counting logic.

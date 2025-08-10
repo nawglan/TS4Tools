@@ -16,7 +16,7 @@ public sealed class ServiceCollectionExtensionsTests
     public void AddScriptResources_WithNullServices_ShouldThrowArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             ServiceCollectionExtensions.AddScriptResources(null!));
     }
 
@@ -59,7 +59,7 @@ public sealed class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factories = serviceProvider.GetServices<ScriptResourceFactory>();
         factories.Should().HaveCount(1);
     }
@@ -70,7 +70,7 @@ public sealed class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        
+
         // Add some other service first
         services.AddSingleton<string>("test-service");
 
@@ -79,10 +79,10 @@ public sealed class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factory = serviceProvider.GetService<ScriptResourceFactory>();
         factory.Should().NotBeNull();
-        
+
         var testService = serviceProvider.GetService<string>();
         testService.Should().Be("test-service");
     }
@@ -126,7 +126,7 @@ public sealed class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddScriptResources();
-        
+
         var serviceProvider = services.BuildServiceProvider();
         var factory = serviceProvider.GetRequiredService<IResourceFactory<IScriptResource>>();
 

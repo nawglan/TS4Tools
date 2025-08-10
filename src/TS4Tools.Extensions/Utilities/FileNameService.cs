@@ -48,7 +48,7 @@ public sealed partial class FileNameService : IFileNameService
     public string GetFileName(ResourceIdentifier identifier, string? baseName = null)
     {
         var extension = _typeRegistry.GetExtension(identifier.ResourceType) ?? ".dat";
-        
+
         if (!string.IsNullOrWhiteSpace(baseName))
         {
             var sanitizedBaseName = SanitizeFileName(baseName);
@@ -125,7 +125,7 @@ public sealed partial class FileNameService : IFileNameService
     private static string EnsureExtension(string fileName, string expectedExtension)
     {
         var currentExtension = Path.GetExtension(fileName);
-        
+
         if (string.Equals(currentExtension, expectedExtension, StringComparison.OrdinalIgnoreCase))
         {
             return fileName;

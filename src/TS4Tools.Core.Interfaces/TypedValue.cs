@@ -65,7 +65,7 @@ public readonly record struct TypedValue(Type Type, object? Value, string Format
     public string ToString(string format)
     {
         if (Value is null) return "null";
-        
+
         return format switch
         {
             "X" when Value is long l => $"0x{l:X16}",

@@ -59,7 +59,7 @@ public sealed class ScriptResourceFactory : ResourceFactoryBase<IScriptResource>
             var resourceKey = new ResourceKey(0, ScriptResourceType, 0);
             var resource = new ScriptResource(resourceKey, data, _scriptLogger);
             _logger.LogDebug("Successfully created script resource with {DataSize} bytes", data.Length);
-            
+
             return resource;
         }
         catch (Exception ex)
@@ -100,7 +100,7 @@ public sealed class ScriptResourceFactory : ResourceFactoryBase<IScriptResource>
 
             var resource = new ScriptResource(resourceKey, data, _scriptLogger);
             _logger.LogDebug("Successfully created script resource (sync) with {DataSize} bytes", data.Length);
-            
+
             return resource;
         }
         catch (Exception ex)

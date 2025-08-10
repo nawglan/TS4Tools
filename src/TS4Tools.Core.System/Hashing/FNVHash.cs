@@ -31,27 +31,27 @@ public abstract class FnvHash : HashAlgorithm
 {
     private readonly ulong prime;
     private readonly ulong offset;
-    
+
     /// <summary>
     /// Algorithm result, needs casting to appropriate size by concrete classes
     /// </summary>
     private ulong hash;
-    
+
     /// <summary>
     /// Gets the current hash value for derived classes
     /// </summary>
     protected new ulong HashValue => hash;
-    
+
     /// <summary>
     /// Initialise the hash algorithm
     /// </summary>
     /// <param name="prime">algorithm-specific value</param>
     /// <param name="offset">algorithm-specific value</param>
-    protected FnvHash(ulong prime, ulong offset) 
-    { 
-        this.prime = prime; 
-        this.offset = offset; 
-        hash = offset; 
+    protected FnvHash(ulong prime, ulong offset)
+    {
+        this.prime = prime;
+        this.offset = offset;
+        hash = offset;
     }
 
     /// <summary>
@@ -59,18 +59,18 @@ public abstract class FnvHash : HashAlgorithm
     /// </summary>
     /// <param name="value">string</param>
     /// <returns>FNV hash of string</returns>
-    public byte[] ComputeHash(string value) 
-    { 
+    public byte[] ComputeHash(string value)
+    {
         ArgumentNullException.ThrowIfNull(value);
-        return ComputeHash(Encoding.ASCII.GetBytes(value.ToLowerInvariant())); 
+        return ComputeHash(Encoding.ASCII.GetBytes(value.ToLowerInvariant()));
     }
 
     /// <summary>
     /// Nothing to initialize
     /// </summary>
-    public override void Initialize() 
-    { 
-        hash = offset; 
+    public override void Initialize()
+    {
+        hash = offset;
     }
 
     /// <summary>
@@ -82,11 +82,11 @@ public abstract class FnvHash : HashAlgorithm
     protected override void HashCore(byte[] array, int ibStart, int cbSize)
     {
         ArgumentNullException.ThrowIfNull(array);
-        
-        for (int i = ibStart; i < ibStart + cbSize; i++) 
-        { 
-            hash *= prime; 
-            hash ^= array[i]; 
+
+        for (int i = ibStart; i < ibStart + cbSize; i++)
+        {
+            hash *= prime;
+            hash ^= array[i];
         }
     }
 
@@ -107,10 +107,10 @@ public abstract class FnvHash : HashAlgorithm
     /// Returns the computed hash code.
     /// </summary>
     /// <returns>The computed hash code.</returns>
-    protected override byte[] HashFinal() 
-    { 
-        var hashBytes = BitConverter.GetBytes(hash); 
-        return hashBytes; 
+    protected override byte[] HashFinal()
+    {
+        var hashBytes = BitConverter.GetBytes(hash);
+        return hashBytes;
     }
 }
 
@@ -123,26 +123,26 @@ public class Fnv32 : FnvHash
     /// Initialise the hash algorithm
     /// </summary>
     public Fnv32() : base(0x01000193u, 0x811C9DC5u) { }
-    
+
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
     public override byte[] Hash => BitConverter.GetBytes((uint)HashValue);
-    
+
     /// <summary>
     /// Gets the size, in bits, of the computed hash code.
     /// </summary>
     public override int HashSize => 32;
-    
+
     /// <summary>
     /// Get the FNV32 hash for a string of text
     /// </summary>
     /// <param name="text">the text to get the hash for</param>
     /// <returns>the hash value</returns>
-    public static uint GetHash(string text) 
-    { 
+    public static uint GetHash(string text)
+    {
         using var fnv = new Fnv32();
-        return BitConverter.ToUInt32(fnv.ComputeHash(text), 0); 
+        return BitConverter.ToUInt32(fnv.ComputeHash(text), 0);
     }
 }
 
@@ -152,22 +152,22 @@ public class Fnv32 : FnvHash
 public sealed class Fnv24 : Fnv32
 {
     private const uint FNV24Mask = 0xFFFFFF;
-    
+
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
     public override byte[] Hash => BitConverter.GetBytes(ConvertTo24BitFromUInt32((uint)HashValue));
-    
+
     /// <summary>
     /// Get the FNV24 hash for a string of text
     /// </summary>
     /// <param name="text">the text to get the hash for</param>
     /// <returns>the hash value</returns>
-    public static new uint GetHash(string text) 
-    { 
+    public static new uint GetHash(string text)
+    {
         using var fnv = new Fnv24();
         var hash = BitConverter.ToUInt32(fnv.ComputeHash(text), 0);
-        return ConvertTo24BitFromUInt32(hash); 
+        return ConvertTo24BitFromUInt32(hash);
     }
 
     private static uint ConvertTo24BitFromUInt32(uint hash) => (hash >> 24) ^ (hash & FNV24Mask);
@@ -182,26 +182,26 @@ public class Fnv64 : FnvHash
     /// Initialise the hash algorithm
     /// </summary>
     public Fnv64() : base(0x00000100000001B3ul, 0xCBF29CE484222325ul) { }
-    
+
     /// <summary>
     /// Gets the value of the computed hash code.
     /// </summary>
     public override byte[] Hash => BitConverter.GetBytes(HashValue);
-    
+
     /// <summary>
     /// Gets the size, in bits, of the computed hash code.
     /// </summary>
     public override int HashSize => 64;
-    
+
     /// <summary>
     /// Get the FNV64 hash for a string of text
     /// </summary>
     /// <param name="text">the text to get the hash for</param>
     /// <returns>the hash value</returns>
-    public static ulong GetHash(string text) 
-    { 
+    public static ulong GetHash(string text)
+    {
         using var fnv = new Fnv64();
-        return BitConverter.ToUInt64(fnv.ComputeHash(text), 0); 
+        return BitConverter.ToUInt64(fnv.ComputeHash(text), 0);
     }
 }
 
@@ -211,7 +211,7 @@ public class Fnv64 : FnvHash
 public sealed class Fnv64Clip : Fnv64
 {
     private static readonly string[] AgeOnlyValues = ["a", "o"];
-    
+
     /// <summary>
     /// Get the FNV64 hash for use as the IID for a CLIP of a given name.
     /// </summary>
@@ -220,7 +220,7 @@ public sealed class Fnv64Clip : Fnv64
     public static new ulong GetHash(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        
+
         var value = text;
         ulong mask = 0;
 
@@ -276,10 +276,10 @@ public sealed class Fnv64Clip : Fnv64
     public static string GetGenericValue(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        
+
         var value = text;
         var split = text.Split('_', 2);
-        
+
         if (split.Length > 1 && split[0].Length <= 5)
         {
             var x2y = split[0].Split('2', 2);

@@ -44,7 +44,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
     /// Common resource type for video global tuning.
     /// </summary>
     public const uint VideoGlobalTuningResourceType = 0xDE6AD3CF;
-    
+
     /// <summary>
     /// Common resource type for video playlists.
     /// </summary>
@@ -53,7 +53,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
     private readonly int _requestedApiVersion;
     private readonly ILogger<VideoResource>? _logger;
     private readonly ObservableList<TypedValue> _contentFields;
-    
+
     private ReadOnlyMemory<byte> _videoData;
     private VideoMetadata _metadata;
     private bool _disposed;
@@ -69,12 +69,12 @@ public sealed class VideoResource : IVideoResource, IDisposable
         _requestedApiVersion = requestedApiVersion;
         _logger = logger;
         _contentFields = new ObservableList<TypedValue>();
-        
+
         if (stream != null && stream.Length > 0)
         {
             ParseVideoData(stream);
         }
-        
+
         _logger?.LogDebug("VideoResource initialized with API version {ApiVersion}", requestedApiVersion);
     }
 
@@ -91,12 +91,12 @@ public sealed class VideoResource : IVideoResource, IDisposable
         _logger = logger;
         _contentFields = new ObservableList<TypedValue>();
         _videoData = videoData;
-        
+
         // Detect format if not provided
         var detectedFormat = format ?? DetectVideoFormat(_videoData.Span);
         _metadata = new VideoMetadata { Format = detectedFormat };
-        
-        _logger?.LogDebug("VideoResource initialized with {Size} bytes of {Format} video data", 
+
+        _logger?.LogDebug("VideoResource initialized with {Size} bytes of {Format} video data",
                          videoData.Length, detectedFormat);
     }
 
@@ -135,7 +135,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
     /// <inheritdoc />
     public TypedValue this[string name]
     {
-        get 
+        get
         {
             // For now, we don't have named fields, so throw KeyNotFoundException
             throw new KeyNotFoundException($"Content field '{name}' not found");
@@ -203,9 +203,9 @@ public sealed class VideoResource : IVideoResource, IDisposable
     public async Task<VideoMetadata> AnalyzeAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         _logger?.LogDebug("Analyzing video data for metadata extraction");
-        
+
         // Calculate data size and return metadata with current values
         var metadata = new VideoMetadata
         {
@@ -218,7 +218,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
             HasAudio = _metadata.HasAudio,
             DataSize = (uint)_videoData.Length // Calculate from actual data
         };
-        
+
         return await Task.FromResult(metadata);
     }
 
@@ -226,20 +226,20 @@ public sealed class VideoResource : IVideoResource, IDisposable
     public void UpdateVideoData(ReadOnlyMemory<byte> videoData, VideoFormat? format = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         _videoData = videoData;
         var detectedFormat = format ?? DetectVideoFormat(videoData.Span);
-        
+
         // Update metadata with new format
-        _metadata = _metadata with 
-        { 
+        _metadata = _metadata with
+        {
             Format = detectedFormat,
             DataSize = (uint)videoData.Length
         };
-        
+
         ResourceChanged?.Invoke(this, EventArgs.Empty);
-        
-        _logger?.LogDebug("Video data updated: {Size} bytes, format: {Format}", 
+
+        _logger?.LogDebug("Video data updated: {Size} bytes, format: {Format}",
                          videoData.Length, detectedFormat);
     }
 
@@ -247,13 +247,13 @@ public sealed class VideoResource : IVideoResource, IDisposable
     public async Task<ReadOnlyMemory<byte>?> ExtractFrameAsync(double timeSeconds, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         _logger?.LogDebug("Extracting frame at {Time} seconds", timeSeconds);
-        
+
         // Frame extraction would require a video processing library like FFMpegCore
         // For now, return null indicating extraction is not supported
         await Task.Delay(1, cancellationToken); // Simulate async operation
-        
+
         _logger?.LogWarning("Frame extraction not implemented - requires video processing library");
         return null;
     }
@@ -295,7 +295,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
         {
             // ftyp box can be at offset 0 or after a size field (offset 4)
             int ftypOffset = -1;
-            
+
             // Check offset 0
             if (data[0] == 0x66 && data[1] == 0x74 && data[2] == 0x79 && data[3] == 0x70)
             {
@@ -306,34 +306,34 @@ public sealed class VideoResource : IVideoResource, IDisposable
             {
                 ftypOffset = 4;
             }
-            
+
             if (ftypOffset >= 0 && ftypOffset + 7 < data.Length)
             {
                 // Get brand code (4 bytes after "ftyp")
                 int brandOffset = ftypOffset + 4;
-                
+
                 // MOV brand codes
-                if ((data[brandOffset] == 0x71 && data[brandOffset + 1] == 0x74 && 
+                if ((data[brandOffset] == 0x71 && data[brandOffset + 1] == 0x74 &&
                      data[brandOffset + 2] == 0x20 && data[brandOffset + 3] == 0x20) || // "qt  "
-                    (data[brandOffset] == 0x4D && data[brandOffset + 1] == 0x34 && 
+                    (data[brandOffset] == 0x4D && data[brandOffset + 1] == 0x34 &&
                      data[brandOffset + 2] == 0x56 && data[brandOffset + 3] == 0x20) || // "M4V "
-                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x6F && 
+                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x6F &&
                      data[brandOffset + 2] == 0x6F && data[brandOffset + 3] == 0x76))   // "moov"
                 {
                     return VideoFormat.Mov;
                 }
-                
+
                 // MP4 brand codes
-                if ((data[brandOffset] == 0x69 && data[brandOffset + 1] == 0x73 && 
+                if ((data[brandOffset] == 0x69 && data[brandOffset + 1] == 0x73 &&
                      data[brandOffset + 2] == 0x6F && data[brandOffset + 3] == 0x6D) || // "isom"
-                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x70 && 
+                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x70 &&
                      data[brandOffset + 2] == 0x34 && data[brandOffset + 3] == 0x31) || // "mp41"
-                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x70 && 
+                    (data[brandOffset] == 0x6D && data[brandOffset + 1] == 0x70 &&
                      data[brandOffset + 2] == 0x34 && data[brandOffset + 3] == 0x32))   // "mp42"
                 {
                     return VideoFormat.Mp4;
                 }
-                
+
                 // Default to MP4 for other ftyp boxes
                 return VideoFormat.Mp4;
             }
@@ -372,25 +372,25 @@ public sealed class VideoResource : IVideoResource, IDisposable
     {
         // Codec detection would require parsing MP4 box structure
         // This is a simplified implementation
-        
+
         // Look for common codec identifiers in the data
         var dataStr = System.Text.Encoding.ASCII.GetString(data.ToArray()).ToLowerInvariant();
-        
+
         if (dataStr.Contains("avc1") || dataStr.Contains("h264"))
             return VideoCodec.H264;
-        
+
         if (dataStr.Contains("hvc1") || dataStr.Contains("hev1") || dataStr.Contains("h265"))
             return VideoCodec.H265;
-        
+
         if (dataStr.Contains("vp08"))
             return VideoCodec.VP8;
-        
+
         if (dataStr.Contains("vp09"))
             return VideoCodec.VP9;
-        
+
         if (dataStr.Contains("mp4v"))
             return VideoCodec.Mpeg4;
-        
+
         return VideoCodec.Unknown;
     }
 
@@ -411,20 +411,20 @@ public sealed class VideoResource : IVideoResource, IDisposable
         var data = new byte[stream.Length];
         stream.Position = 0;
         var bytesRead = stream.Read(data, 0, data.Length);
-        
+
         if (bytesRead != stream.Length)
         {
-            _logger?.LogWarning("Expected to read {Expected} bytes but read {Actual} bytes", 
+            _logger?.LogWarning("Expected to read {Expected} bytes but read {Actual} bytes",
                               stream.Length, bytesRead);
         }
 
         _videoData = data;
-        
+
         // Detect format and extract basic metadata
         var format = DetectVideoFormat(data.AsSpan());
         _metadata = ExtractMetadata(data.AsSpan(), format);
-        
-        _logger?.LogDebug("Parsed video data: {Size} bytes, format: {Format}", 
+
+        _logger?.LogDebug("Parsed video data: {Size} bytes, format: {Format}",
                          data.Length, format);
     }
 
@@ -442,10 +442,10 @@ public sealed class VideoResource : IVideoResource, IDisposable
             case VideoFormat.Mp4:
             case VideoFormat.Mov:
                 return ExtractMp4Metadata(data) ?? metadata;
-            
+
             case VideoFormat.Avi:
                 return ExtractAviMetadata(data) ?? metadata;
-            
+
             default:
                 return metadata;
         }
@@ -456,7 +456,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
         // MP4 metadata extraction is complex and would require a full MP4 parser
         // For now, return basic metadata with codec detection
         var codec = DetectMp4Codec(data);
-        
+
         return new VideoMetadata
         {
             Format = VideoFormat.Mp4,
@@ -512,7 +512,7 @@ public sealed class VideoResource : IVideoResource, IDisposable
         // Clear video data
         _videoData = ReadOnlyMemory<byte>.Empty;
         _metadata = default;
-        
+
         _disposed = true;
         _logger?.LogDebug("VideoResource disposed");
     }

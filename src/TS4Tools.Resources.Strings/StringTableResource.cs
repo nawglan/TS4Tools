@@ -82,16 +82,16 @@ public sealed class StringTableResource : IResource, IDisposable
     /// <returns>A task containing the created StringTableResource</returns>
     /// <exception cref="ArgumentNullException">Thrown when stream is null</exception>
     public static async Task<StringTableResource> FromStreamAsync(
-        int requestedApiVersion, 
-        Stream stream, 
-        Encoding? encoding = null, 
+        int requestedApiVersion,
+        Stream stream,
+        Encoding? encoding = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
-        
+
         return FromData(requestedApiVersion, memoryStream.ToArray(), encoding);
     }
 
@@ -184,7 +184,7 @@ public sealed class StringTableResource : IResource, IDisposable
     public bool RemoveString(uint key)
     {
         ThrowIfDisposed();
-        
+
         var removed = _strings.Remove(key);
         if (removed)
         {
@@ -213,7 +213,7 @@ public sealed class StringTableResource : IResource, IDisposable
     public void Clear()
     {
         ThrowIfDisposed();
-        
+
         if (_strings.Count > 0)
         {
             _strings.Clear();
@@ -244,12 +244,12 @@ public sealed class StringTableResource : IResource, IDisposable
     {
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
-        
+
         encoding ??= Encoding.UTF8;
-        
+
         using var memoryStream = new MemoryStream();
         using var writer = new BinaryWriter(memoryStream, encoding, leaveOpen: true);
-        
+
         // Write header
         writer.Write(MagicNumber);
         writer.Write(Version);
@@ -257,13 +257,13 @@ public sealed class StringTableResource : IResource, IDisposable
         writer.Write(NumberOfEntries);
         writer.Write(_reserved);
         writer.Write(StringDataLength);
-        
+
         // Write string entries
         foreach (var entry in GetEntries())
         {
             entry.WriteTo(writer, encoding);
         }
-        
+
         return Task.FromResult(memoryStream.ToArray());
     }
 
@@ -369,10 +369,10 @@ public sealed class StringTableResource : IResource, IDisposable
         Version = reader.ReadUInt16();
         IsCompressed = reader.ReadByte();
         var entryCount = reader.ReadUInt64();
-        
+
         var reserved = reader.ReadBytes(2);
         Array.Copy(reserved, _reserved, Math.Min(reserved.Length, _reserved.Length));
-        
+
         var stringDataLength = reader.ReadUInt32();
 
         // Parse string entries
@@ -423,7 +423,7 @@ public sealed class StringTableResource : IResource, IDisposable
         {
             return "StringTableResource (Disposed)";
         }
-        
+
         return $"StringTableResource (Version: {Version}, Entries: {NumberOfEntries}, Data Length: {StringDataLength:N0} bytes)";
     }
 }

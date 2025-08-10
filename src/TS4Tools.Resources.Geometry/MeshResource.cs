@@ -128,8 +128,8 @@ public sealed class MeshResource : IResource, IDisposable
     /// <summary>
     /// The resource content as a stream.
     /// </summary>
-    public Stream Stream 
-    { 
+    public Stream Stream
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -236,13 +236,13 @@ public sealed class MeshResource : IResource, IDisposable
     public MeshResource(Stream stream, int requestedApiVersion = 1)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         RequestedApiVersion = requestedApiVersion;
-        
+
         _stream = new MemoryStream();
         stream.CopyTo(_stream);
         _stream.Position = 0;
-        
+
         ParseMeshData();
     }
 
@@ -254,18 +254,18 @@ public sealed class MeshResource : IResource, IDisposable
     /// <param name="normals">Optional normal vectors (X, Y, Z per vertex).</param>
     /// <param name="uvCoordinates">Optional UV coordinates (U, V per vertex).</param>
     /// <param name="name">Optional mesh name.</param>
-    public MeshResource(IEnumerable<float> vertices, IEnumerable<ushort> indices, 
-                       IEnumerable<float>? normals = null, IEnumerable<float>? uvCoordinates = null, 
+    public MeshResource(IEnumerable<float> vertices, IEnumerable<ushort> indices,
+                       IEnumerable<float>? normals = null, IEnumerable<float>? uvCoordinates = null,
                        string? name = null)
     {
         _stream = new MemoryStream();
-        
+
         Vertices = vertices?.ToList() ?? throw new ArgumentNullException(nameof(vertices));
         Indices = indices?.ToList() ?? throw new ArgumentNullException(nameof(indices));
         Normals = normals?.ToList() ?? new List<float>();
         UVCoordinates = uvCoordinates?.ToList() ?? new List<float>();
         Name = name;
-        
+
         ValidateMeshData();
         _modified = true;
     }
@@ -280,7 +280,7 @@ public sealed class MeshResource : IResource, IDisposable
             throw new InvalidDataException("Mesh stream too small");
 
         using var reader = new BinaryReader(_stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Simple binary format:
         // [4 bytes] Vertex count
         // [4 bytes] Index count  
@@ -358,9 +358,9 @@ public sealed class MeshResource : IResource, IDisposable
     {
         _stream.SetLength(0);
         _stream.Position = 0;
-        
+
         using var writer = new BinaryWriter(_stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Write header
         writer.Write(VertexCount);
         writer.Write(Indices.Count);
@@ -425,12 +425,12 @@ public sealed class MeshResource : IResource, IDisposable
                               IEnumerable<float>? normals = null, IEnumerable<float>? uvCoordinates = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         Vertices = vertices?.ToList() ?? throw new ArgumentNullException(nameof(vertices));
         Indices = indices?.ToList() ?? throw new ArgumentNullException(nameof(indices));
         Normals = normals?.ToList() ?? new List<float>();
         UVCoordinates = uvCoordinates?.ToList() ?? new List<float>();
-        
+
         ValidateMeshData();
         _modified = true;
         ResourceChanged?.Invoke(this, EventArgs.Empty);
@@ -442,12 +442,12 @@ public sealed class MeshResource : IResource, IDisposable
     public void CalculateNormals()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         if (VertexCount == 0 || Indices.Count == 0)
             return;
 
         var normals = new float[Vertices.Count]; // Same size as vertices (3 components each)
-        
+
         // Calculate face normals and accumulate
         for (int i = 0; i < Indices.Count; i += 3)
         {
@@ -489,10 +489,10 @@ public sealed class MeshResource : IResource, IDisposable
         // Normalize all vertex normals
         for (int i = 0; i < normals.Length; i += 3)
         {
-            var length = MathF.Sqrt(normals[i] * normals[i] + 
-                                   normals[i + 1] * normals[i + 1] + 
+            var length = MathF.Sqrt(normals[i] * normals[i] +
+                                   normals[i + 1] * normals[i + 1] +
                                    normals[i + 2] * normals[i + 2]);
-            
+
             if (length > 0.0001f) // Avoid division by zero
             {
                 normals[i] /= length;
@@ -514,7 +514,7 @@ public sealed class MeshResource : IResource, IDisposable
     {
         if (Vertices.Count % 3 != 0)
             throw new ArgumentException("Vertex count must be divisible by 3");
-            
+
         if (Indices.Count % 3 != 0)
             throw new ArgumentException("Index count must be divisible by 3");
 

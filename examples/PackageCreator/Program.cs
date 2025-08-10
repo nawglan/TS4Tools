@@ -19,17 +19,17 @@ internal class Program
     {
         // Set up dependency injection and logging
         var builder = Host.CreateApplicationBuilder(args);
-        
+
         // Add TS4Tools services
         builder.Services.AddTS4ToolsCore(builder.Configuration);
-        
+
         // Add console logging
         builder.Logging.AddConsole();
         builder.Logging.SetMinimumLevel(LogLevel.Information);
-        
+
         var host = builder.Build();
         var logger = host.Services.GetRequiredService<ILogger<Program>>();
-        
+
         try
         {
             if (args.Length == 0)
@@ -40,7 +40,7 @@ internal class Program
             }
 
             var outputPath = args[0];
-            
+
             // Ensure output directory exists
             var outputDir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(outputDir) && !Directory.Exists(outputDir))
@@ -50,51 +50,51 @@ internal class Program
             }
 
             logger.LogInformation("Creating new package: {OutputPath}", outputPath);
-            
+
             // Get the package factory service
             var packageFactory = host.Services.GetRequiredService<IPackageFactory>();
             var resourceTypeRegistry = host.Services.GetRequiredService<IResourceTypeRegistry>();
-            
+
             // Create a new empty package
             using var package = await packageFactory.CreateEmptyPackageAsync();
-            
+
             Console.WriteLine("=== Creating New Package ===");
             Console.WriteLine($"Output path: {outputPath}");
             Console.WriteLine();
-            
+
             // Add some sample resources
             AddSampleTextResource(package, logger);
             AddSampleBinaryResource(package, logger);
             AddSampleMetadataResource(package, logger);
-            
+
             // Display package statistics before saving
             Console.WriteLine();
             Console.WriteLine("=== Package Statistics ===");
             Console.WriteLine($"Total resources: {package.ResourceIndex.Count}");
-            
+
             foreach (var entry in package.ResourceIndex)
             {
                 var typeName = resourceTypeRegistry.GetTag(entry.ResourceType) ?? "Custom Resource";
-                
+
                 Console.WriteLine($"  {typeName}: T=0x{entry.ResourceType:X8}, Size={entry.FileSize} bytes");
             }
-            
+
             // Save the package
             Console.WriteLine();
             Console.WriteLine("Saving package...");
             await package.SaveAsAsync(outputPath);
-            
+
             // Verify the saved file
             var fileInfo = new FileInfo(outputPath);
             Console.WriteLine($"Package saved successfully!");
             Console.WriteLine($"File size: {FormatBytes(fileInfo.Length)}");
             Console.WriteLine($"Created: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}");
-            
+
             // Optional: Load and verify the created package
             Console.WriteLine();
             Console.WriteLine("=== Verification ===");
             await VerifyCreatedPackage(packageFactory, outputPath, logger);
-            
+
             logger.LogInformation("Package creation completed successfully");
         }
         catch (Exception ex)
@@ -103,14 +103,14 @@ internal class Program
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Adds a sample text resource to the package.
     /// </summary>
     private static void AddSampleTextResource(IPackage package, ILogger logger)
     {
         logger.LogInformation("Adding sample text resource");
-        
+
         // Create a sample text content
         var textContent = """
             This is a sample text resource created by TS4Tools PackageCreator example.
@@ -125,32 +125,32 @@ internal class Program
             The resource system supports any binary data, making it suitable for
             storing game assets, configuration files, or custom content.
             """;
-        
+
         var textBytes = Encoding.UTF8.GetBytes(textContent);
-        
+
         // Create resource key (using custom type IDs)
         var textResourceKey = new ResourceKey(
             resourceType: 0x12345678,  // Custom text resource type
             resourceGroup: 0x00000000,
             instance: 0x1000000000000001
         );
-        
+
         // Create the resource
         var textResource = new CustomResource(textBytes);
-        
+
         // Add to package
         package.AddResource(textResourceKey, textBytes);
-        
+
         Console.WriteLine($"Added text resource: {textBytes.Length} bytes");
     }
-    
+
     /// <summary>
     /// Adds a sample binary resource to the package.
     /// </summary>
     private static void AddSampleBinaryResource(IPackage package, ILogger logger)
     {
         logger.LogInformation("Adding sample binary resource");
-        
+
         // Create sample binary data (simulating an image header or similar)
         var binaryData = new byte[]
         {
@@ -163,23 +163,23 @@ internal class Program
             // Additional padding
             0x36, 0x00, 0x00, 0x00, 0x15, 0x49, 0x44, 0x41,
         };
-        
+
         // Create resource key for binary data
         var binaryResourceKey = new ResourceKey(
             resourceType: 0x87654321,  // Custom binary resource type
             resourceGroup: 0x00000000,
             instance: 0x2000000000000001
         );
-        
+
         // Create the resource
         var binaryResource = new CustomResource(binaryData);
-        
+
         // Add to package
         package.AddResource(binaryResourceKey, binaryData);
-        
+
         Console.WriteLine($"Added binary resource: {binaryData.Length} bytes");
     }
-    
+
     /// <summary>
     /// Adds a sample metadata resource to the package.
     /// <summary>
@@ -188,7 +188,7 @@ internal class Program
     private static void AddSampleMetadataResource(IPackage package, ILogger logger)
     {
         logger.LogInformation("Adding sample metadata resource");
-        
+
         // Create JSON metadata
         var metadata = new
         {
@@ -204,30 +204,30 @@ internal class Program
                 new { Type = "Metadata", Count = 1, Description = "This metadata file" }
             }
         };
-        
+
         var jsonContent = System.Text.Json.JsonSerializer.Serialize(metadata, new System.Text.Json.JsonSerializerOptions
         {
             WriteIndented = true
         });
-        
+
         var metadataBytes = Encoding.UTF8.GetBytes(jsonContent);
-        
+
         // Create resource key for metadata
         var metadataResourceKey = new ResourceKey(
             resourceType: 0xABCDEF00,  // Custom metadata resource type
             resourceGroup: 0x00000000,
             instance: 0x3000000000000001
         );
-        
+
         // Create the resource
         var metadataResource = new CustomResource(metadataBytes);
-        
+
         // Add to package
         package.AddResource(metadataResourceKey, metadataBytes);
-        
+
         Console.WriteLine($"Added metadata resource: {metadataBytes.Length} bytes");
     }
-    
+
     /// <summary>
     /// Verifies the created package by loading it again.
     /// </summary>
@@ -236,14 +236,14 @@ internal class Program
         try
         {
             logger.LogInformation("Verifying created package");
-            
+
             using var verifyPackage = await packageFactory.LoadFromFileAsync(packagePath);
-            
+
             Console.WriteLine($"Verification successful!");
             Console.WriteLine($"  Resources loaded: {verifyPackage.ResourceIndex.Count}");
             Console.WriteLine($"  Package path: {packagePath}");
             Console.WriteLine($"  Creation time: {verifyPackage.CreatedDate:yyyy-MM-dd HH:mm:ss}");
-            
+
             // Try to read back one of the resources
             foreach (var entry in verifyPackage.ResourceIndex.Take(1))
             {
@@ -252,13 +252,13 @@ internal class Program
                 {
                     var data = resource.AsBytes;
                     Console.WriteLine($"  Sample resource data length: {data.Length} bytes");
-                    
+
                     // If it's text data, show a preview
                     if (entry.ResourceType == 0x12345678)
                     {
                         var textContent = Encoding.UTF8.GetString(data);
-                        var preview = textContent.Length > 100 
-                            ? textContent[..100] + "..." 
+                        var preview = textContent.Length > 100
+                            ? textContent[..100] + "..."
                             : textContent;
                         Console.WriteLine($"  Text preview: {preview.Replace('\n', ' ').Replace('\r', ' ')}");
                     }
@@ -271,7 +271,7 @@ internal class Program
             Console.WriteLine($"Verification failed: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Formats byte counts into human-readable strings.
     /// </summary>
@@ -280,13 +280,13 @@ internal class Program
         string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
         int counter = 0;
         decimal number = bytes;
-        
+
         while (Math.Round(number / 1024) >= 1)
         {
             number = number / 1024;
             counter++;
         }
-        
+
         return $"{number:n1} {suffixes[counter]}";
     }
 }
@@ -299,46 +299,46 @@ public sealed class CustomResource : IResource
     private readonly MemoryStream _stream;
     private readonly byte[] _data;
     private bool _disposed;
-    
+
     public CustomResource(byte[] data)
     {
         _data = data;
         _stream = new MemoryStream(data);
     }
-    
+
     public Stream Stream => _stream;
-    
+
     public byte[] AsBytes => _data;
-    
+
     public event EventHandler? ResourceChanged;
-    
+
     // IApiVersion implementation
     public int RequestedApiVersion => 1;
     public int RecommendedApiVersion => 1;
-    
+
     // IContentFields implementation
     public IReadOnlyList<string> ContentFields => Array.Empty<string>();
-    
-    public TypedValue this[int index] 
-    { 
-        get => throw new NotSupportedException("ContentFields indexing not supported by CustomResource"); 
-        set => throw new NotSupportedException("ContentFields indexing not supported by CustomResource"); 
+
+    public TypedValue this[int index]
+    {
+        get => throw new NotSupportedException("ContentFields indexing not supported by CustomResource");
+        set => throw new NotSupportedException("ContentFields indexing not supported by CustomResource");
     }
-    
-    public TypedValue this[string name] 
-    { 
-        get => throw new NotSupportedException("ContentFields indexing not supported by CustomResource"); 
-        set => throw new NotSupportedException("ContentFields indexing not supported by CustomResource"); 
+
+    public TypedValue this[string name]
+    {
+        get => throw new NotSupportedException("ContentFields indexing not supported by CustomResource");
+        set => throw new NotSupportedException("ContentFields indexing not supported by CustomResource");
     }
-    
+
     private void OnResourceChanged() => ResourceChanged?.Invoke(this, EventArgs.Empty);
-    
+
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-    
+
     private void Dispose(bool disposing)
     {
         if (!_disposed)

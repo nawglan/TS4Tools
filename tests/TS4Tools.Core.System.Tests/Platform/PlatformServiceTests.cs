@@ -110,7 +110,7 @@ public class PlatformServiceTests
         // Assert
         sanitized.Should().NotBeNullOrWhiteSpace();
         _platformService.IsValidFileName(sanitized).Should().BeTrue();
-        
+
         // Platform-specific behavior
         if (_platformService.CurrentPlatform == PlatformType.Windows && input == "CON")
         {
@@ -126,10 +126,10 @@ public class PlatformServiceTests
 
         // Assert
         lineEnding.Should().NotBeNullOrEmpty();
-        
+
         // Verify platform-specific line endings
         lineEnding.Should().BeOneOf("\r\n", "\n");
-        
+
         if (_platformService.CurrentPlatform == PlatformType.Windows)
         {
             lineEnding.Should().Be("\r\n");

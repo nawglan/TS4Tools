@@ -78,7 +78,7 @@ public sealed class TagTypeConverter : TypeConverter
                     return new Tag(index, tagValue);
                 }
             }
-            
+
             // Fallback to treating the entire string as the value
             return new Tag(0, stringValue);
         }

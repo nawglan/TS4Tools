@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
     {
         // Register compression services
         services.AddSingleton<ICompressionService, ZlibCompressionService>();
-        
+
         // Register package services
         services.AddSingleton<IPackageFactory, PackageFactory>();
         services.AddScoped<IPackageService, PackageService>();

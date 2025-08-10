@@ -63,14 +63,14 @@ internal sealed class DefaultResource : IResource, IDisposable
         _apiVersion = apiVersion;
         _createdAt = DateTime.UtcNow;
         _metadata = new Dictionary<string, object>();
-        
+
         if (stream != null)
         {
             try
             {
                 _originalSize = stream.Length;
                 _stream = new MemoryStream();
-                
+
                 // Performance optimization: Use efficient copying for large streams
                 if (stream.Length > 1024 * 1024) // > 1MB
                 {
@@ -80,12 +80,12 @@ internal sealed class DefaultResource : IResource, IDisposable
                 {
                     stream.CopyTo(_stream);
                 }
-                
+
                 _stream.Position = 0;
-                
+
                 // Enhanced: Detect resource type hints
                 _detectedResourceTypeHint = DetectResourceTypeHint(_stream);
-                
+
                 // Enhanced: Extract additional metadata
                 ExtractMetadata(_stream);
             }
@@ -101,7 +101,7 @@ internal sealed class DefaultResource : IResource, IDisposable
             _stream = new MemoryStream();
             _detectedResourceTypeHint = null;
         }
-        
+
         // Populate base metadata
         _metadata["CreatedAt"] = _createdAt;
         _metadata["OriginalSize"] = _originalSize;
@@ -111,19 +111,19 @@ internal sealed class DefaultResource : IResource, IDisposable
             _metadata["DetectedTypeHint"] = _detectedResourceTypeHint;
         }
     }
-    
+
     /// <inheritdoc />
     public int RequestedApiVersion => _apiVersion;
-    
+
     /// <inheritdoc />
     public int RecommendedApiVersion => _apiVersion;
-    
+
     /// <inheritdoc />
     public IReadOnlyList<string> ContentFields => Array.Empty<string>();
-    
+
     /// <inheritdoc />
-    public Stream Stream 
-    { 
+    public Stream Stream
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -131,76 +131,76 @@ internal sealed class DefaultResource : IResource, IDisposable
             return _stream;
         }
     }
-    
+
     /// <inheritdoc />
-    public byte[] AsBytes 
-    { 
+    public byte[] AsBytes
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return _stream.ToArray();
         }
     }
-    
+
     /// <summary>
     /// Gets metadata about this resource instance.
     /// Enhanced feature providing additional resource information.
     /// </summary>
-    public IReadOnlyDictionary<string, object> Metadata 
-    { 
+    public IReadOnlyDictionary<string, object> Metadata
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return _metadata;
         }
     }
-    
+
     /// <summary>
     /// Gets the detected resource type hint if available.
     /// Enhanced feature for better resource identification.
     /// </summary>
-    public string? DetectedResourceTypeHint 
-    { 
+    public string? DetectedResourceTypeHint
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return _detectedResourceTypeHint;
         }
     }
-    
+
     /// <summary>
     /// Gets the original size of the resource data.
     /// Enhanced feature for performance monitoring.
     /// </summary>
-    public long OriginalSize 
-    { 
+    public long OriginalSize
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return _originalSize;
         }
     }
-    
+
     /// <summary>
     /// Gets the creation timestamp of this resource instance.
     /// Enhanced feature for diagnostics and tracking.
     /// </summary>
-    public DateTime CreatedAt 
-    { 
+    public DateTime CreatedAt
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return _createdAt;
         }
     }
-    
+
     /// <inheritdoc />
     public event EventHandler? ResourceChanged
     {
         add { /* This event is not triggered by DefaultResource as it represents immutable resource data */ }
         remove { /* This event is not triggered by DefaultResource as it represents immutable resource data */ }
     }
-    
+
     /// <inheritdoc />
     public TypedValue this[string index]
     {
@@ -215,7 +215,7 @@ internal sealed class DefaultResource : IResource, IDisposable
             throw new NotSupportedException("Default resource does not support content field access by string index");
         }
     }
-    
+
     /// <inheritdoc />
     public TypedValue this[int index]
     {
@@ -230,7 +230,7 @@ internal sealed class DefaultResource : IResource, IDisposable
             throw new NotSupportedException("Default resource does not support content field access by integer index");
         }
     }
-    
+
     /// <summary>
     /// Enhanced method to detect resource type hints from stream data.
     /// Analyzes the first few bytes to provide hints about the resource type.
@@ -243,23 +243,23 @@ internal sealed class DefaultResource : IResource, IDisposable
         {
             return null;
         }
-        
+
         var originalPosition = stream.Position;
         try
         {
             stream.Position = 0;
             var buffer = new byte[16];
             var bytesRead = stream.Read(buffer, 0, Math.Min(16, (int)stream.Length));
-            
+
             if (bytesRead >= 4)
             {
                 // Check for common Sims 4 resource signatures
                 var signature = Encoding.ASCII.GetString(buffer, 0, 4);
-                
+
                 return signature switch
                 {
                     "DATA" => "DataResource",
-                    "TRIM" => "TrimResource", 
+                    "TRIM" => "TrimResource",
                     "STBL" => "StringTableResource",
                     "THUM" => "ThumbnailResource",
                     "MTBL" => "MaterialTableResource",
@@ -274,7 +274,7 @@ internal sealed class DefaultResource : IResource, IDisposable
                     _ => null
                 };
             }
-            
+
             return null;
         }
         catch
@@ -287,7 +287,7 @@ internal sealed class DefaultResource : IResource, IDisposable
             stream.Position = originalPosition;
         }
     }
-    
+
     /// <summary>
     /// Enhanced method to extract metadata from stream data.
     /// Populates the metadata dictionary with useful information.
@@ -299,29 +299,29 @@ internal sealed class DefaultResource : IResource, IDisposable
         {
             var originalPosition = stream.Position;
             stream.Position = 0;
-            
+
             // Calculate basic statistics
             _metadata["DataLength"] = stream.Length;
             _metadata["HasData"] = stream.Length > 0;
-            
+
             if (stream.Length > 0)
             {
                 // Calculate hash for data integrity
                 var buffer = new byte[Math.Min(1024, stream.Length)];
                 var bytesRead = stream.Read(buffer, 0, buffer.Length);
                 _metadata["SampleDataHash"] = CalculateSimpleHash(buffer, bytesRead);
-                
+
                 // Analyze data characteristics
                 var stats = AnalyzeDataStatistics(buffer, bytesRead);
                 _metadata["DataStatistics"] = stats;
-                
+
                 // Check for null bytes (indicates binary data)
                 _metadata["ContainsNullBytes"] = Array.IndexOf(buffer, (byte)0, 0, bytesRead) >= 0;
-                
+
                 // Check for common text indicators
                 _metadata["LikelyTextData"] = IsLikelyTextData(buffer, bytesRead);
             }
-            
+
             stream.Position = originalPosition;
         }
         catch
@@ -329,48 +329,48 @@ internal sealed class DefaultResource : IResource, IDisposable
             // If metadata extraction fails, continue with basic metadata only
         }
     }
-    
+
     /// <summary>
     /// Checks if the data appears to be an image format.
     /// </summary>
     private static bool IsImageFormat(byte[] buffer, int length)
     {
         if (length < 4) return false;
-        
+
         // PNG signature
         if (buffer[0] == 0x89 && buffer[1] == 0x50 && buffer[2] == 0x4E && buffer[3] == 0x47)
             return true;
-            
+
         // JPEG signature
         if (buffer[0] == 0xFF && buffer[1] == 0xD8)
             return true;
-            
+
         // DDS signature
         if (length >= 4 && Encoding.ASCII.GetString(buffer, 0, 4) == "DDS ")
             return true;
-            
+
         return false;
     }
-    
+
     /// <summary>
     /// Checks if the data appears to be XML format.
     /// </summary>
     private static bool IsXmlFormat(byte[] buffer, int length)
     {
         if (length < 5) return false;
-        
+
         var text = Encoding.UTF8.GetString(buffer, 0, Math.Min(length, 16));
         return text.TrimStart().StartsWith("<?xml", StringComparison.OrdinalIgnoreCase) ||
                text.TrimStart().StartsWith("<", StringComparison.OrdinalIgnoreCase);
     }
-    
+
     /// <summary>
     /// Checks if the data appears to be a binary format.
     /// </summary>
     private static bool IsBinaryFormat(byte[] buffer, int length)
     {
         if (length < 4) return false;
-        
+
         // Check for high percentage of non-printable characters
         var nonPrintableCount = 0;
         for (var i = 0; i < Math.Min(length, 64); i++)
@@ -381,17 +381,17 @@ internal sealed class DefaultResource : IResource, IDisposable
                 nonPrintableCount++;
             }
         }
-        
+
         return (double)nonPrintableCount / Math.Min(length, 64) > 0.3; // >30% non-printable
     }
-    
+
     /// <summary>
     /// Checks if the data is likely text data.
     /// </summary>
     private static bool IsLikelyTextData(byte[] buffer, int length)
     {
         if (length == 0) return false;
-        
+
         var printableCount = 0;
         for (var i = 0; i < Math.Min(length, 64); i++)
         {
@@ -401,10 +401,10 @@ internal sealed class DefaultResource : IResource, IDisposable
                 printableCount++;
             }
         }
-        
+
         return (double)printableCount / Math.Min(length, 64) > 0.8; // >80% printable
     }
-    
+
     /// <summary>
     /// Calculates a simple hash for data integrity checking.
     /// </summary>
@@ -417,24 +417,24 @@ internal sealed class DefaultResource : IResource, IDisposable
         }
         return hash;
     }
-    
+
     /// <summary>
     /// Analyzes basic statistics about the data.
     /// </summary>
     private static Dictionary<string, object> AnalyzeDataStatistics(byte[] buffer, int length)
     {
         var stats = new Dictionary<string, object>();
-        
+
         if (length == 0)
         {
             stats["IsEmpty"] = true;
             return stats;
         }
-        
+
         var min = buffer[0];
         var max = buffer[0];
         var sum = 0L;
-        
+
         for (var i = 0; i < length; i++)
         {
             var b = buffer[i];
@@ -442,16 +442,16 @@ internal sealed class DefaultResource : IResource, IDisposable
             if (b > max) max = b;
             sum += b;
         }
-        
+
         stats["MinByte"] = min;
         stats["MaxByte"] = max;
         stats["AverageByte"] = sum / (double)length;
         stats["ByteRange"] = max - min;
         stats["IsEmpty"] = false;
-        
+
         return stats;
     }
-    
+
     /// <summary>
     /// Gets diagnostic information about this resource.
     /// Enhanced feature for debugging and analysis.
@@ -460,7 +460,7 @@ internal sealed class DefaultResource : IResource, IDisposable
     public string GetDiagnosticInfo()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         var sb = new StringBuilder();
         sb.AppendLine($"DefaultResource Diagnostic Information:");
         sb.AppendLine($"  API Version: {_apiVersion}");
@@ -469,20 +469,20 @@ internal sealed class DefaultResource : IResource, IDisposable
         sb.AppendLine($"  Current Size: {_stream.Length:N0} bytes");
         sb.AppendLine($"  Detected Type Hint: {_detectedResourceTypeHint ?? "None"}");
         sb.AppendLine($"  Metadata Count: {_metadata.Count}");
-        
+
         foreach (var kvp in _metadata)
         {
             sb.AppendLine($"    {kvp.Key}: {kvp.Value}");
         }
-        
+
         return sb.ToString();
     }
-    
+
     /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         try
         {
             _stream?.Dispose();
@@ -497,14 +497,14 @@ internal sealed class DefaultResource : IResource, IDisposable
             _disposed = true;
         }
     }
-    
+
     /// <summary>
     /// Returns a string representation of this resource with enhanced information.
     /// </summary>
     public override string ToString()
     {
         if (_disposed) return "DefaultResource (Disposed)";
-        
+
         var typeHint = string.IsNullOrEmpty(_detectedResourceTypeHint) ? "Unknown" : _detectedResourceTypeHint;
         return $"DefaultResource ({typeHint}, {_stream.Length:N0} bytes, API v{_apiVersion})";
     }

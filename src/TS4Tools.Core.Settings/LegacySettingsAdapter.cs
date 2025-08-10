@@ -42,7 +42,7 @@ namespace TS4Tools.Core.Settings;
 /// </remarks>
 public static class LegacySettingsAdapter
 {
-    private static readonly Lazy<ApplicationSettings> _lazySettings = new(() => 
+    private static readonly Lazy<ApplicationSettings> _lazySettings = new(() =>
         SettingsServiceExtensions.GetDefaultSettings(),
         LazyThreadSafetyMode.ExecutionAndPublication);
 
@@ -78,9 +78,9 @@ public static class LegacySettingsAdapter
     {
         // Force recreation of the lazy settings instance
         // This is done by reflection to reset the lazy field
-        var field = typeof(Lazy<ApplicationSettings>).GetField("m_value", 
+        var field = typeof(Lazy<ApplicationSettings>).GetField("m_value",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        
+
         if (field != null)
         {
             // Reset the lazy value to force reload on next access

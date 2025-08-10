@@ -12,6 +12,52 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
+  # Code Formatting & Analyzer Checks
+  code-formatting:
+    name: Code Formatting & Analyzers
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Check code formatting
+      run: |
+        Write-Host "🔍 Checking code formatting with dotnet format..."
+        dotnet format --verify-no-changes --verbosity diagnostic
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "❌ Code formatting issues detected. Run 'dotnet format' locally to fix."
+          Write-Host "💡 Tip: You can run 'dotnet format TS4Tools.sln' to automatically fix formatting issues."
+          exit 1
+        }
+        Write-Host "✅ Code formatting check passed"
+    
+    - name: Run .NET analyzers
+      run: |
+        Write-Host "🔍 Running .NET analyzers..."
+        dotnet build --no-restore --configuration Release --verbosity normal --warnaserror
+        if ($LASTEXITCODE -ne 0) {
+          Write-Error "❌ .NET analyzer warnings detected. Please fix all analyzer warnings."
+          exit 1
+        }
+        Write-Host "✅ .NET analyzer check passed"
+
   # Build and Test - Fundamental quality gate
   build-and-test:
     name: Build & Test
@@ -292,13 +338,18 @@ jobs:
   quality-gate:
     name: Final Quality Gate
     runs-on: ubuntu-latest
-    needs: [build-and-test, static-analysis, performance-benchmarks, security-analysis, cross-platform-build, documentation-check]
+    needs: [code-formatting, build-and-test, static-analysis, performance-benchmarks, security-analysis, cross-platform-build, documentation-check]
     if: always()
     
     steps:
     - name: Check all jobs succeeded
       run: |
         # Check if any required job failed
+        if [[ "${{ needs.code-formatting.result }}" != "success" ]]; then
+          echo "❌ Code formatting check failed"
+          exit 1
+        fi
+        
         if [[ "${{ needs.build-and-test.result }}" != "success" ]]; then
           echo "❌ Build and test failed"
           exit 1

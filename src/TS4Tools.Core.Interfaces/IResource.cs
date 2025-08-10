@@ -28,7 +28,7 @@ public interface IResource : IApiVersion, IContentFields, IDisposable
     /// The resource content as a <see cref="Stream"/>.
     /// </summary>
     Stream Stream { get; }
-    
+
     /// <summary>
     /// The resource content as a byte array
     /// </summary>

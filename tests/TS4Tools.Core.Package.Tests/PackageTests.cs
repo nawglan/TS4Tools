@@ -33,10 +33,10 @@ public class PackageTests
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
-        
+
         // Act
         using var package = new Package(compressionService);
-        
+
         // Assert
         package.Should().NotBeNull();
         package.ResourceCount.Should().Be(0);
@@ -46,7 +46,7 @@ public class PackageTests
         package.Minor.Should().Be(0);
         package.Magic.SequenceEqual("DBPF"u8).Should().BeTrue();
     }
-    
+
     [Fact]
     public void Constructor_WithEmptyStream_CreatesPackageFromStream()
     {
@@ -54,16 +54,16 @@ public class PackageTests
         var compressionService = TestHelper.CreateMockCompressionService();
         var stream = new MemoryStream();
         CreateMinimalPackageHeader(stream);
-        
+
         // Act
         using var package = new Package(stream, compressionService, fileName: "test.package");
-        
+
         // Assert
         package.Should().NotBeNull();
         package.FileName.Should().Be("test.package");
         package.IsDirty.Should().BeFalse();
     }
-    
+
     [Fact]
     public void AddResource_ValidResource_AddsToPackage()
     {
@@ -72,10 +72,10 @@ public class PackageTests
         using var package = new Package(compressionService);
         var resourceKey = new ResourceKey(0x12345678u, 0x87654321u, 0x123456789ABCDEFul);
         var resourceData = "Hello, World!"u8.ToArray();
-        
+
         // Act
         var entry = package.AddResource(resourceKey, resourceData, compressed: false);
-        
+
         // Assert
         entry.Should().NotBeNull();
         entry.ResourceType.Should().Be(0x12345678u);
@@ -84,12 +84,12 @@ public class PackageTests
         entry.FileSize.Should().Be((uint)resourceData.Length);
         entry.MemorySize.Should().Be((uint)resourceData.Length);
         entry.Compressed.Should().Be(0x0000); // Not compressed
-        
+
         package.ResourceCount.Should().Be(1);
         package.IsDirty.Should().BeTrue();
         package.ResourceIndex.Contains(resourceKey).Should().BeTrue();
     }
-    
+
     [Fact]
     public void AddResource_CompressedResource_SetsCompressionFlag()
     {
@@ -98,15 +98,15 @@ public class PackageTests
         using var package = new Package(compressionService);
         var resourceKey = new ResourceKey(0x12345678u, 0x87654321u, 0x123456789ABCDEFul);
         var resourceData = "Hello, World!"u8.ToArray();
-        
+
         // Act
         var entry = package.AddResource(resourceKey, resourceData, compressed: true);
-        
+
         // Assert
         entry.Compressed.Should().Be(0xFFFF); // Compressed
         (entry.Compressed == 0xFFFF).Should().BeTrue(); // Check compression flag directly
     }
-    
+
     [Fact]
     public void RemoveResource_ExistingResource_RemovesFromPackage()
     {
@@ -116,16 +116,16 @@ public class PackageTests
         var resourceKey = new ResourceKey(0x12345678u, 0x87654321u, 0x123456789ABCDEFul);
         var resourceData = "Hello, World!"u8.ToArray();
         package.AddResource(resourceKey, resourceData);
-        
+
         // Act
         var removed = package.RemoveResource(resourceKey);
-        
+
         // Assert
         removed.Should().BeTrue();
         package.ResourceCount.Should().Be(0);
         package.ResourceIndex.Contains(resourceKey).Should().BeFalse();
     }
-    
+
     [Fact]
     public void RemoveResource_NonExistentResource_ReturnsFalse()
     {
@@ -133,21 +133,21 @@ public class PackageTests
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
         var resourceKey = new ResourceKey(0x12345678u, 0x87654321u, 0x123456789ABCDEFul);
-        
+
         // Act
         var removed = package.RemoveResource(resourceKey);
-        
+
         // Assert
         removed.Should().BeFalse();
     }
-    
+
     [Fact]
     public void ContentFields_Package_ReturnsExpectedFields()
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
-        
+
         // Act & Assert
         package.ContentFields.Should().HaveCount(8);
         package.ContentFields.Should().Contain("Magic");
@@ -155,47 +155,47 @@ public class PackageTests
         package.ContentFields.Should().Contain("Minor");
         package.ContentFields.Should().Contain("ResourceCount");
     }
-    
+
     [Fact]
     public void Indexer_ByIndex_ReturnsCorrectValues()
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
-        
+
         // Act & Assert
         package[0].Value.Should().Be("DBPF"); // Magic
         package[1].Value.Should().Be(2); // Major
         package[2].Value.Should().Be(0); // Minor
         package[7].Value.Should().Be(0); // ResourceCount
     }
-    
+
     [Fact]
     public void Indexer_ByName_ReturnsCorrectValues()
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
-        
+
         // Act & Assert
         package["Magic"].Value.Should().Be("DBPF");
         package["Major"].Value.Should().Be(2);
         package["Minor"].Value.Should().Be(0);
         package["ResourceCount"].Value.Should().Be(0);
     }
-    
+
     [Fact]
     public void ApiVersion_Package_ReturnsExpectedVersions()
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
-        
+
         // Act & Assert
         package.RequestedApiVersion.Should().Be(1);
         package.RecommendedApiVersion.Should().Be(1);
     }
-    
+
     [Fact]
     public async Task SaveAsAsync_ToStream_WritesPackageData()
     {
@@ -205,49 +205,49 @@ public class PackageTests
         var resourceKey = new ResourceKey(0x12345678u, 0x87654321u, 0x123456789ABCDEFul);
         var resourceData = "Hello, World!"u8.ToArray();
         package.AddResource(resourceKey, resourceData);
-        
+
         using var stream = new MemoryStream();
-        
+
         // Act
         await package.SaveAsAsync(stream);
-        
+
         // Assert 
         stream.Length.Should().BeGreaterThan(0);
         package.IsDirty.Should().BeFalse();
-        
+
         // Verify header was written
         stream.Position = 0;
         var headerBytes = new byte[4];
         await stream.ReadAsync(headerBytes);
         headerBytes.Should().Equal("DBPF"u8.ToArray());
     }
-    
+
     [Fact]
     public async Task CompactAsync_EmptyPackage_CompletesSuccessfully()
     {
         // Arrange
         var compressionService = TestHelper.CreateMockCompressionService();
         using var package = new Package(compressionService);
-        
+
         // Act
         await package.CompactAsync();
-        
+
         // Assert
         package.IsDirty.Should().BeTrue(); // Compact marks as dirty
     }
-    
+
     private static void CreateMinimalPackageHeader(MemoryStream stream)
     {
         // Create a minimal valid package header
         using var writer = new BinaryWriter(stream, global::System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Write DBPF magic
         writer.Write("DBPF"u8.ToArray());
-        
+
         // Write minimal header (rest filled with zeros)
         var headerData = new byte[PackageHeader.HeaderSize - 4];
         writer.Write(headerData);
-        
+
         stream.Position = 0;
     }
 }

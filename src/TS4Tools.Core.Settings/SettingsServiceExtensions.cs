@@ -97,7 +97,7 @@ public static class SettingsServiceExtensions
         var builder = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json", 
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production"}.json",
                 optional: true, reloadOnChange: true)
             .AddEnvironmentVariables("TS4TOOLS_");
 
@@ -119,10 +119,10 @@ public static class SettingsServiceExtensions
     {
         configurationBuilder ??= CreateDefaultConfigurationBuilder();
         var configuration = configurationBuilder.Build();
-        
+
         var settings = new ApplicationSettings();
         configuration.GetSection(ApplicationSettings.SectionName).Bind(settings);
-        
+
         return settings;
     }
 }

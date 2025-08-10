@@ -99,7 +99,7 @@ public sealed class ResourceWrapperRegistryTests : IDisposable
 
         // Assert
         factories.Should().NotBeEmpty();
-        
+
         var stringTableFactory = factories.Values
             .FirstOrDefault(f => f.FactoryName == "StringTableResourceFactory");
         stringTableFactory.Should().NotBeNull();
@@ -226,14 +226,14 @@ public sealed class ResourceWrapperRegistryTests : IDisposable
 
         // Assert
         result.SuccessRate.Should().BeInRange(0.0, 100.0);
-        
+
         // If all registrations succeeded
         if (result.FailedRegistrations.Count == 0)
         {
             result.SuccessRate.Should().Be(100.0);
             result.IsSuccess.Should().BeTrue();
         }
-        
+
         // Registration duration should be reasonable
         result.RegistrationDuration.Should().BeLessThan(TimeSpan.FromSeconds(30));
     }
@@ -276,7 +276,7 @@ public sealed class ResourceWrapperRegistryPerformanceTests : IDisposable
 
         // Assert
         stopwatch.Stop();
-        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10), 
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10),
             "Factory discovery should complete quickly");
         result.RegistrationDuration.Should().BeLessThan(TimeSpan.FromSeconds(5),
             "Factory registration should be fast");
@@ -300,18 +300,18 @@ public sealed class ResourceWrapperRegistryPerformanceTests : IDisposable
 
         // Assert
         results.Should().HaveCount(concurrentCalls);
-        results.Should().OnlyContain(r => r.IsSuccess, 
+        results.Should().OnlyContain(r => r.IsSuccess,
             "All concurrent registrations should succeed");
-        
+
         // All results should be consistent - same factories found, regardless of order
         var firstResult = results[0];
-        results.Should().OnlyContain(r => 
+        results.Should().OnlyContain(r =>
             r.SuccessfulRegistrations.Count == firstResult.SuccessfulRegistrations.Count,
             "All registration attempts should find the same number of factories");
-            
+
         // Verify all results have the same set of factories (order-independent)
         var expectedFactoryNames = firstResult.SuccessfulRegistrations.ToHashSet();
-        results.Should().OnlyContain(r => 
+        results.Should().OnlyContain(r =>
             r.SuccessfulRegistrations.ToHashSet().SetEquals(expectedFactoryNames),
             "All registration attempts should find the same factories");
     }
@@ -325,17 +325,17 @@ public sealed class ResourceWrapperRegistryPerformanceTests : IDisposable
 
         // Act
         var initialStats = registry.GetStatistics();
-        
+
         // Wait a short time for metrics collection
         await Task.Delay(100);
-        
+
         var laterStats = registry.GetStatistics();
 
         // Assert
         initialStats.TotalRegisteredFactories.Should().BeGreaterThan(0);
         laterStats.TotalRegisteredFactories.Should().Be(initialStats.TotalRegisteredFactories,
             "Factory count should remain consistent");
-        
+
         laterStats.FactoryUtilizationRatio.Should().BeInRange(0.0, 1.0);
     }
 

@@ -9,12 +9,12 @@ namespace TS4Tools.Resources.Animation;
 public class AnimationResource : IAnimationResource
 {
     private static readonly byte[] MagicBytes = [0x41, 0x4E, 0x49, 0x4D]; // "ANIM"
-    
+
     private readonly List<AnimationTrack> _tracks = [];
-    private readonly List<string> _contentFields = 
+    private readonly List<string> _contentFields =
     [
         "AnimationType",
-        "AnimationName", 
+        "AnimationName",
         "Duration",
         "FrameRate",
         "PlayMode",
@@ -23,7 +23,7 @@ public class AnimationResource : IAnimationResource
         "Priority",
         "Tracks"
     ];
-    
+
     private MemoryStream? _stream;
     private bool _disposed;
 
@@ -90,7 +90,7 @@ public class AnimationResource : IAnimationResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(AnimationResource));
-                
+
             _stream ??= new MemoryStream();
             return _stream;
         }
@@ -103,7 +103,7 @@ public class AnimationResource : IAnimationResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(AnimationResource));
-                
+
             using var ms = new MemoryStream();
             WriteToStream(ms);
             return ms.ToArray();
@@ -175,7 +175,7 @@ public class AnimationResource : IAnimationResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         return GetFieldValue(_contentFields[index]);
     }
 
@@ -200,7 +200,7 @@ public class AnimationResource : IAnimationResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         SetFieldValue(_contentFields[index], value);
     }
 
@@ -252,7 +252,7 @@ public class AnimationResource : IAnimationResource
             default:
                 throw new ArgumentException($"Field '{name}' is read-only or unknown", nameof(name));
         }
-        
+
         OnResourceChanged();
     }
 
@@ -276,7 +276,7 @@ public class AnimationResource : IAnimationResource
     private void ReadFromStream(Stream stream)
     {
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Handle empty stream gracefully
         if (stream.Length == 0)
         {
@@ -288,19 +288,19 @@ public class AnimationResource : IAnimationResource
             Tracks = new List<AnimationTrack>();
             return;
         }
-        
+
         // Read and validate magic bytes
         if (stream.Length < 4)
         {
             throw new InvalidDataException("Invalid animation resource format");
         }
-        
+
         var magic = reader.ReadBytes(4);
         if (!magic.SequenceEqual(MagicBytes))
         {
             throw new InvalidDataException("Invalid animation resource format");
         }
-        
+
         // Read animation data
         AnimationType = (AnimationType)reader.ReadInt32();
         var nameLength = reader.ReadInt32();
@@ -311,27 +311,27 @@ public class AnimationResource : IAnimationResource
         BlendMode = (AnimationBlendMode)reader.ReadInt32();
         IsLooped = reader.ReadBoolean();
         Priority = reader.ReadInt32();
-        
+
         // Read tracks
         var trackCount = reader.ReadInt32();
         _tracks.Clear();
-        
+
         for (int i = 0; i < trackCount; i++)
         {
             var boneNameLength = reader.ReadInt32();
             var boneName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(boneNameLength));
-            
+
             var propertyNameLength = reader.ReadInt32();
             var propertyName = System.Text.Encoding.UTF8.GetString(reader.ReadBytes(propertyNameLength));
-            
+
             var keyframeCount = reader.ReadInt32();
             var keyframes = new List<AnimationKeyframe>();
-            
+
             for (int j = 0; j < keyframeCount; j++)
             {
                 var time = reader.ReadSingle();
                 var valueType = reader.ReadInt32();
-                
+
                 object value = valueType switch
                 {
                     0 => reader.ReadSingle(), // float
@@ -339,11 +339,11 @@ public class AnimationResource : IAnimationResource
                     2 => new Vector4(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()), // Vector4/Quaternion
                     _ => reader.ReadSingle() // default to float
                 };
-                
+
                 var interpolationType = (InterpolationType)reader.ReadInt32();
                 keyframes.Add(new AnimationKeyframe(time, value, interpolationType));
             }
-            
+
             _tracks.Add(new AnimationTrack(boneName, propertyName, keyframes));
         }
     }
@@ -351,10 +351,10 @@ public class AnimationResource : IAnimationResource
     private void WriteToStream(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Write magic bytes
         writer.Write(MagicBytes);
-        
+
         // Write animation data
         writer.Write((int)AnimationType);
         var nameBytes = System.Text.Encoding.UTF8.GetBytes(AnimationName);
@@ -366,26 +366,26 @@ public class AnimationResource : IAnimationResource
         writer.Write((int)BlendMode);
         writer.Write(IsLooped);
         writer.Write(Priority);
-        
+
         // Write tracks
         writer.Write(_tracks.Count);
-        
+
         foreach (var track in _tracks)
         {
             var boneNameBytes = System.Text.Encoding.UTF8.GetBytes(track.BoneName);
             writer.Write(boneNameBytes.Length);
             writer.Write(boneNameBytes);
-            
+
             var propertyNameBytes = System.Text.Encoding.UTF8.GetBytes(track.PropertyName);
             writer.Write(propertyNameBytes.Length);
             writer.Write(propertyNameBytes);
-            
+
             writer.Write(track.Keyframes.Count);
-            
+
             foreach (var keyframe in track.Keyframes)
             {
                 writer.Write(keyframe.Time);
-                
+
                 // Write value type and value
                 switch (keyframe.Value)
                 {
@@ -411,7 +411,7 @@ public class AnimationResource : IAnimationResource
                         writer.Write(0.0f);
                         break;
                 }
-                
+
                 writer.Write((int)keyframe.InterpolationType);
             }
         }

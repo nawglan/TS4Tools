@@ -14,7 +14,7 @@ public interface ICompressionService
     /// <param name="data">The data to compress.</param>
     /// <returns>The compressed data.</returns>
     byte[] Compress(ReadOnlySpan<byte> data);
-    
+
     /// <summary>
     /// Compresses the specified data using ZLIB compression.
     /// </summary>
@@ -22,7 +22,7 @@ public interface ICompressionService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The compressed data.</returns>
     Task<byte[]> CompressAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Decompresses the specified ZLIB-compressed data.
     /// </summary>
@@ -30,7 +30,7 @@ public interface ICompressionService
     /// <param name="originalSize">The expected size of the decompressed data.</param>
     /// <returns>The decompressed data.</returns>
     byte[] Decompress(ReadOnlySpan<byte> compressedData, int originalSize);
-    
+
     /// <summary>
     /// Decompresses the specified ZLIB-compressed data.
     /// </summary>
@@ -39,14 +39,14 @@ public interface ICompressionService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The decompressed data.</returns>
     Task<byte[]> DecompressAsync(ReadOnlyMemory<byte> compressedData, int originalSize, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Determines if the provided data is ZLIB compressed by checking the header.
     /// </summary>
     /// <param name="data">The data to check.</param>
     /// <returns>True if the data appears to be ZLIB compressed.</returns>
     bool IsCompressed(ReadOnlySpan<byte> data);
-    
+
     /// <summary>
     /// Calculates the compression ratio for the given data.
     /// </summary>

@@ -34,12 +34,12 @@ public sealed class VideoResourceFactory : ResourceFactoryBase<IVideoResource>
     /// Initializes a new instance of the VideoResourceFactory class.
     /// </summary>
     /// <param name="logger">Logger for created VideoResource instances</param>
-    public VideoResourceFactory(ILogger<VideoResource> logger) 
+    public VideoResourceFactory(ILogger<VideoResource> logger)
         : base(GetSupportedResourceTypes(), priority: 100)
     {
         _videoResourceLogger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    
+
     private static IEnumerable<string> GetSupportedResourceTypes()
     {
         return new[]

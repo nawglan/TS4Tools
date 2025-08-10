@@ -33,7 +33,7 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
     /// <summary>
     /// Resource types that this factory can handle (string identifiers).
     /// </summary>
-    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings = 
+    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings =
         new System.Collections.ObjectModel.ReadOnlySet<string>(new HashSet<string>
         {
             "GEOM",     // Geometry Resource
@@ -55,7 +55,7 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
         : base(SupportedResourceTypeStrings, priority: 150) // Higher priority for 3D content
     {
         _logger = logger;
-        
+
         // Build the correct resource types collection using our override method
         var resourceTypeIds = new HashSet<uint>();
         foreach (var typeString in SupportedResourceTypeStrings)
@@ -85,7 +85,7 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
         try
         {
             _logger?.LogDebug("Creating geometry resource from stream (length: {Length} bytes)", stream.Length);
-            
+
             // Validate stream has minimum required size
             if (stream.Length == 0)
             {
@@ -120,15 +120,15 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
             }
 
             var resource = new GeometryResource(stream, apiVersion);
-            _logger?.LogDebug("Created geometry resource with {VertexCount} vertices and {FaceCount} faces", 
+            _logger?.LogDebug("Created geometry resource with {VertexCount} vertices and {FaceCount} faces",
                 resource.VertexCount, resource.Faces.Count);
-            
+
             // Reset stream position if seekable
             if (stream.CanSeek)
             {
                 stream.Position = originalPosition;
             }
-            
+
             return resource;
         }
         catch (Exception ex) when (!(ex is ArgumentNullException || ex is InvalidOperationException))
@@ -157,14 +157,14 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
     private static IReadOnlySet<uint> BuildSupportedResourceTypes()
     {
         var resourceTypes = new HashSet<uint>();
-        
+
         // Primary geometry resource type (from original Sims4Tools analysis)
         resourceTypes.Add(0x015A1849); // Main GEOM resource type
-        
+
         // Additional geometry-related resource types that might be encountered
         resourceTypes.Add(0x01661233); // Alternative geometry format
         resourceTypes.Add(0x01D0E75D); // Mesh variant
-        
+
         return resourceTypes;
     }
 
@@ -184,7 +184,7 @@ public sealed class GeometryResourceFactory : ResourceFactoryBase<GeometryResour
             "3D" => SetId(out resourceTypeId, 0x015A1849),
             _ => base.TryGetResourceTypeId(typeString, out resourceTypeId)
         };
-        
+
         static bool SetId(out uint id, uint value)
         {
             id = value;

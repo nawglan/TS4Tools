@@ -45,10 +45,10 @@ internal sealed class PackageService : IPackageService
         try
         {
             using var package = await _packageFactory.LoadFromFileAsync(filePath, readOnly: true, cancellationToken);
-            
+
             // Basic validation checks
             var resourceList = package.ResourceIndex;
-            
+
             // Check for reasonable resource count
             if (resourceList.Count == 0)
             {
@@ -85,7 +85,7 @@ internal sealed class PackageService : IPackageService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to validate package: {FilePath}", filePath);
-            
+
             return new PackageValidationResult
             {
                 IsValid = false,
@@ -113,7 +113,7 @@ internal sealed class PackageService : IPackageService
         try
         {
             using var package = await _packageFactory.LoadFromFileAsync(filePath, readOnly: true, cancellationToken);
-            
+
             var info = new PackageInfo
             {
                 FilePath = filePath,
@@ -147,10 +147,10 @@ internal sealed class PackageService : IPackageService
         try
         {
             var originalResourceCount = package.ResourceIndex.Count;
-            
+
             // Use the built-in compaction method
             await package.CompactAsync(cancellationToken);
-            
+
             var newResourceCount = package.ResourceIndex.Count;
             var deletedEntriesRemoved = originalResourceCount - newResourceCount;
 
@@ -170,7 +170,7 @@ internal sealed class PackageService : IPackageService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to compact package");
-            
+
             return new PackageCompactionResult
             {
                 Success = false,
@@ -198,7 +198,7 @@ internal sealed class PackageService : IPackageService
             var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(filePath);
             var extension = Path.GetExtension(filePath);
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            
+
             backupPath = Path.Combine(directory, $"{fileNameWithoutExtension}_backup_{timestamp}{extension}");
         }
 
@@ -216,7 +216,7 @@ internal sealed class PackageService : IPackageService
             // Copy the file asynchronously
             using var sourceStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
             using var destinationStream = new FileStream(backupPath, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
-            
+
             await sourceStream.CopyToAsync(destinationStream, cancellationToken);
 
             _logger.LogInformation("Successfully created backup: {BackupFile}", backupPath);

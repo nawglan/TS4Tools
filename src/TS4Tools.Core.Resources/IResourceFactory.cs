@@ -32,12 +32,12 @@ public interface IResourceFactory
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A new resource instance</returns>
     Task<IResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Gets the resource types this factory can create.
     /// </summary>
     IReadOnlySet<string> SupportedResourceTypes { get; }
-    
+
     /// <summary>
     /// Gets the priority of this factory (higher values have priority over lower values).
     /// </summary>
@@ -58,7 +58,7 @@ public interface IResourceFactory<TResource> : IResourceFactory where TResource 
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A new resource instance</returns>
     new Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Creates a new resource instance synchronously.
     /// </summary>
@@ -66,31 +66,31 @@ public interface IResourceFactory<TResource> : IResourceFactory where TResource 
     /// <param name="resourceType">Resource type identifier</param>
     /// <returns>A new resource instance</returns>
     TResource CreateResource(Stream stream, uint resourceType);
-    
+
     /// <summary>
     /// Creates an empty resource instance.
     /// </summary>
     /// <param name="resourceType">Resource type identifier</param>
     /// <returns>A new empty resource instance</returns>
     TResource CreateEmptyResource(uint resourceType);
-    
+
     /// <summary>
     /// Determines if this factory can create resources of the specified type.
     /// </summary>
     /// <param name="resourceType">Resource type identifier</param>
     /// <returns>True if the factory can create this resource type</returns>
     bool CanCreateResource(uint resourceType);
-    
+
     /// <summary>
     /// Gets the resource types this factory can create.
     /// </summary>
     new IReadOnlySet<string> SupportedResourceTypes { get; }
-    
+
     /// <summary>
     /// Gets the resource types this factory can create (legacy compatibility).
     /// </summary>
     IReadOnlySet<uint> ResourceTypes { get; }
-    
+
     /// <summary>
     /// Gets the priority of this factory (higher values have priority over lower values).
     /// </summary>

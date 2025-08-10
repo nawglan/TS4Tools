@@ -11,29 +11,29 @@ namespace TS4Tools.Resources.Catalog;
 public readonly record struct ResourceReference : INotifyPropertyChanged
 {
     #region Properties
-    
+
     /// <summary>
     /// Gets the resource type identifier (what kind of resource this is).
     /// </summary>
     [ElementPriority(0)]
     public uint ResourceType { get; init; }
-    
+
     /// <summary>
     /// Gets the resource group identifier (organizational grouping).
     /// </summary>
     [ElementPriority(1)]
     public uint ResourceGroup { get; init; }
-    
+
     /// <summary>
     /// Gets the resource instance identifier (unique identifier within the type/group).
     /// </summary>
     [ElementPriority(2)]
     public ulong Instance { get; init; }
-    
+
     #endregion
-    
+
     #region Constructors
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceReference"/> struct.
     /// </summary>
@@ -46,11 +46,11 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
         ResourceGroup = resourceGroup;
         Instance = instance;
     }
-    
+
     #endregion
-    
+
     #region Methods
-    
+
     /// <summary>
     /// Gets a string representation of the resource reference in TGI format.
     /// </summary>
@@ -59,7 +59,7 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
     {
         return $"TGI({ResourceType:X8}-{ResourceGroup:X8}-{Instance:X16})";
     }
-    
+
     /// <summary>
     /// Deconstructs the resource reference into its TGI components.
     /// </summary>
@@ -72,7 +72,7 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
         resourceGroup = ResourceGroup;
         instance = Instance;
     }
-    
+
     /// <summary>
     /// Creates a resource reference from a TGI tuple.
     /// </summary>
@@ -82,7 +82,7 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
     {
         return new ResourceReference(tgi.Type, tgi.Group, tgi.Instance);
     }
-    
+
     /// <summary>
     /// Converts this resource reference to a TGI tuple.
     /// </summary>
@@ -91,17 +91,17 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
     {
         return (ResourceType, ResourceGroup, Instance);
     }
-    
+
     #endregion
-    
+
     #region INotifyPropertyChanged Implementation
-    
+
     /// <inheritdoc />
     /// <remarks>
     /// This event is never raised for this record struct since it's immutable,
     /// but is implemented to satisfy interface requirements for UI binding.
     /// </remarks>
     public event PropertyChangedEventHandler? PropertyChanged { add { } remove { } }
-    
+
     #endregion
 }

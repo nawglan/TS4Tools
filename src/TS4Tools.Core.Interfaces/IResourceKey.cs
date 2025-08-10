@@ -28,12 +28,12 @@ public interface IResourceKey : IEqualityComparer<IResourceKey>, IEquatable<IRes
     /// The "type" of the resource
     /// </summary>
     uint ResourceType { get; set; }
-    
+
     /// <summary>
     /// The "group" the resource is part of
     /// </summary>
     uint ResourceGroup { get; set; }
-    
+
     /// <summary>
     /// The "instance" number of the resource  
     /// </summary>

@@ -11,7 +11,7 @@ public sealed class StringTableBuilder : IDisposable
 {
     private readonly StringTableResource _resource = new();
     private bool _disposed;
-    
+
     /// <summary>
     /// Adds a string entry to the string table.
     /// </summary>
@@ -23,7 +23,7 @@ public sealed class StringTableBuilder : IDisposable
         _resource.SetString(key, value);
         return this;
     }
-    
+
     /// <summary>
     /// Adds multiple string entries from a dictionary.
     /// </summary>
@@ -37,7 +37,7 @@ public sealed class StringTableBuilder : IDisposable
         }
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string table with a specific number of test strings for stress testing.
     /// </summary>
@@ -52,7 +52,7 @@ public sealed class StringTableBuilder : IDisposable
         }
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string table with empty strings for edge case testing.
     /// </summary>
@@ -66,7 +66,7 @@ public sealed class StringTableBuilder : IDisposable
         }
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string table with Unicode/special character strings for testing.
     /// </summary>
@@ -78,7 +78,7 @@ public sealed class StringTableBuilder : IDisposable
         _resource.SetString(0x30000003u, "Special: \n\t\"'\\");
         return this;
     }
-    
+
     /// <summary>
     /// Builds the configured StringTableResource.
     /// </summary>
@@ -87,13 +87,13 @@ public sealed class StringTableBuilder : IDisposable
     {
         return _resource;
     }
-    
+
     /// <summary>
     /// Creates an empty string table for basic testing.
     /// </summary>
     /// <returns>A new StringTableBuilder with an empty string table.</returns>
     public static StringTableBuilder Empty => new();
-    
+
     /// <summary>
     /// Creates a string table with common test data.
     /// </summary>

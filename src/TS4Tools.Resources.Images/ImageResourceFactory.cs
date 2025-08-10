@@ -11,7 +11,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     /// <summary>
     /// Resource types that this factory can handle.
     /// </summary>
-    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings = 
+    public static readonly IReadOnlySet<string> SupportedResourceTypeStrings =
         new System.Collections.ObjectModel.ReadOnlySet<string>(new HashSet<string>
         {
             "DDS",      // DDS Texture
@@ -36,7 +36,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         : base(BuildSupportedResourceTypes(), priority: 100)
     {
         _logger = logger;
-        
+
         // Build the correct resource types collection using our override method
         var resourceTypeIds = new HashSet<uint>();
         foreach (var typeString in SupportedResourceTypeStrings)
@@ -55,7 +55,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     private static IEnumerable<string> BuildSupportedResourceTypes()
     {
         var supportedTypes = new HashSet<string>(SupportedResourceTypeStrings);
-        
+
         // Add hex equivalents
         foreach (var typeString in SupportedResourceTypeStrings)
         {
@@ -70,13 +70,13 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
                 "TEX" => $"0x{ImageResource.DdsResourceType:X8}",     // Use DDS type for textures
                 _ => null
             };
-            
+
             if (hexValue != null)
             {
                 supportedTypes.Add(hexValue);
             }
         }
-        
+
         return supportedTypes;
     }
 
@@ -112,7 +112,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         try
         {
             var resource = new ImageResource(data, apiVersion, null);
-            
+
             if (resource.Metadata.Format == ImageFormat.Unknown)
             {
                 _logger?.LogWarning("Could not detect image format from stream data");
@@ -145,7 +145,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     public override ImageResource CreateResource(Stream stream, uint resourceType)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         if (!CanCreateResource(resourceType))
         {
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by ImageResourceFactory", nameof(resourceType));
@@ -155,7 +155,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         using var memoryStream = new MemoryStream();
         stream.CopyTo(memoryStream);
         var data = memoryStream.ToArray();
-        
+
         if (data.Length == 0)
         {
             throw new ArgumentException("Image data cannot be empty", nameof(stream));
@@ -171,7 +171,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         try
         {
             var resource = new ImageResource(data, 1, null);
-            
+
             _logger?.LogDebug("Created {Format} image resource: {Width}x{Height} ({DataSize} bytes)",
                 resource.Metadata.Format, resource.Metadata.Width, resource.Metadata.Height, resource.Metadata.DataSize);
 
@@ -195,14 +195,14 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             return ImageFormat.Unknown;
 
         // Check DDS magic number - only need 4 bytes
-        if (data.Length >= 4 && 
+        if (data.Length >= 4 &&
             data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x53 && data[3] == 0x20) // "DDS "
         {
             return ImageFormat.DDS;
         }
 
         // Check PNG magic number - need 8 bytes
-        if (data.Length >= 8 && 
+        if (data.Length >= 8 &&
             data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 &&
             data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A)
         {
@@ -273,7 +273,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             "TEX" => ImageResource.DdsResourceType,     // Use DDS type for textures
             _ => 0
         };
-        
+
         return id != 0;
     }
 
@@ -299,7 +299,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         {
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by ImageResourceFactory", nameof(resourceType));
         }
-        
+
         // Use async method synchronously for compatibility
         return CreateResourceAsync(1, null).GetAwaiter().GetResult();
     }

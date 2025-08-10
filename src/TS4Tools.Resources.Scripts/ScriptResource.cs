@@ -61,7 +61,7 @@ public sealed class ScriptResource : IScriptResource, IApiVersion, IContentField
     {
         _resourceKey = resourceKey;
         ParseFromData(data);
-        
+
         // Update stream with raw data
         _stream?.Dispose();
         _stream = new MemoryStream(data.ToArray());
@@ -125,7 +125,7 @@ public sealed class ScriptResource : IScriptResource, IApiVersion, IContentField
         {
             if (value.Length != MD5SumLength)
                 throw new ArgumentException($"MD5Sum must be exactly {MD5SumLength} bytes", nameof(value));
-            
+
             _md5Sum = value.ToArray();
             _logger.LogDebug("MD5Sum updated");
         }
@@ -139,7 +139,7 @@ public sealed class ScriptResource : IScriptResource, IApiVersion, IContentField
     {
         _clearData = assemblyData.ToArray();
         _logger.LogDebug("Assembly data set, length: {Length} bytes", assemblyData.Length);
-        
+
         // Regenerate encryption tables when assembly data changes
         RegenerateEncryptionTables();
     }
@@ -166,7 +166,7 @@ public sealed class ScriptResource : IScriptResource, IApiVersion, IContentField
             {
                 // Load assembly in a separate AppDomain for security
                 var assembly = Assembly.Load(_clearData);
-                
+
                 var exportedTypes = new List<string>();
                 try
                 {

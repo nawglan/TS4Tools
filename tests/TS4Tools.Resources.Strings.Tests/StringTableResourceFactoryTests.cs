@@ -96,7 +96,7 @@ public class StringTableResourceFactoryTests
         var originalResource = new StringTableResource();
         originalResource.SetString(0x12345678u, "Test String");
         originalResource.SetString(0x87654321u, "Another String");
-        
+
         var binaryData = await originalResource.ToBinaryAsync();
         using var stream = new MemoryStream(binaryData);
 
@@ -411,10 +411,10 @@ public class StringTableResourceFactoryTests
 
         // Act - Create resource with factory
         var originalResource = await _factory.CreateWithStringsAsync(originalStrings);
-        
+
         // Convert to binary
         var binaryData = await originalResource.ToBinaryAsync();
-        
+
         // Create new resource from binary using factory
         var recreatedResource = await _factory.CreateFromDataAsync(binaryData);
 
@@ -438,11 +438,11 @@ public class StringTableResourceFactoryTests
 
         // Act - Create resource
         var originalResource = await _factory.CreateWithStringsAsync(originalStrings);
-        
+
         // Convert to stream
         using var stream = originalResource.Stream;
         stream.Position = 0; // Reset position
-        
+
         // Create new resource from stream
         var recreatedResource = await _factory.CreateResourceAsync(1, stream);
 

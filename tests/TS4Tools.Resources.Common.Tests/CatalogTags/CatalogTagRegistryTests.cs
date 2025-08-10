@@ -122,7 +122,7 @@ public class CatalogTagRegistryTests
     public void Registry_LoadsTagsLazily()
     {
         // Arrange - Registry is already constructed but shouldn't have loaded tags yet
-        
+
         // Act - Access tags to trigger lazy loading
         var tags = _registry.Tags;
         var categories = _registry.Categories;

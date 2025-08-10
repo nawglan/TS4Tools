@@ -34,7 +34,7 @@ public class AnimationResourceFactory : ResourceFactoryBase<IAnimationResource>
             _logger.LogDebug("Creating animation resource from stream (length: {Length})", stream?.Length ?? 0);
 
             var resource = new AnimationResource();
-            
+
             if (stream != null)
             {
                 await resource.LoadFromStreamAsync(stream, cancellationToken);

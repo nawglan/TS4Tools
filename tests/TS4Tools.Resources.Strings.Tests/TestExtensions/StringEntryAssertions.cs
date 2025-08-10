@@ -56,7 +56,7 @@ public static class StringEntryAssertionExtensions
         {
             // Test by parsing with the actual implementation rather than duplicating logic
             var parsedEntry = ParseStringEntryFromStream(stream!);
-            
+
             Execute.Assertion
                 .ForCondition(parsedEntry is not null)
                 .BecauseOf(because, becauseArgs)
@@ -82,7 +82,7 @@ public static class StringEntryAssertionExtensions
 
         return new AndConstraint<ObjectAssertions>(assertions);
     }
-    
+
     /// <summary>
     /// Asserts that serialized StringEntry data can be round-trip parsed correctly.
     /// This tests serialization behavior without duplicating implementation logic.
@@ -102,16 +102,16 @@ public static class StringEntryAssertionExtensions
             .FailWith("Expected object to be a StringEntry, but it was {0}.", assertions.Subject?.GetType());
 
         var originalEntry = (StringEntry)assertions.Subject!;
-        
+
         // Test round-trip serialization behavior
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         originalEntry.WriteTo(writer);
         stream.Position = 0;
-        
+
         var parsedEntry = ParseStringEntryFromStream(stream);
-        
+
         Execute.Assertion
             .ForCondition(parsedEntry is not null)
             .BecauseOf(because, becauseArgs)
@@ -129,7 +129,7 @@ public static class StringEntryAssertionExtensions
 
         return new AndConstraint<ObjectAssertions>(assertions);
     }
-    
+
     /// <summary>
     /// Parses a StringEntry from a stream using the actual implementation.
     /// This delegates to real parsing logic rather than duplicating it.

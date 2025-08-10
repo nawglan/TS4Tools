@@ -31,15 +31,15 @@ internal sealed class DefaultResourceFactory : ResourceFactoryBase<IResource>
     public DefaultResourceFactory() : base(new[] { "*" }, priority: -1000) // Lowest priority
     {
     }
-    
+
     /// <inheritdoc />
     public override async Task<IResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default)
     {
         ValidateApiVersion(apiVersion);
-        
+
         // For async consistency, but no actual async work needed for default resource
         await Task.CompletedTask;
-        
+
         return new DefaultResource(apiVersion, stream);
     }
 }

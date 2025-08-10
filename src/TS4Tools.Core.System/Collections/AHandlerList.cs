@@ -38,7 +38,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// Holds the <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerList{T}"/> changes.
     /// </summary>
     private EventHandler? handler;
-    
+
     /// <summary>
     /// The maximum size of the list, or -1 for no limit.
     /// </summary>
@@ -52,12 +52,12 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// </summary>
     /// <param name="handler">The <see cref="EventHandler"/> to call on changes to the list.</param>
     /// <param name="maxSize">Optional; -1 for unlimited size, otherwise the maximum number of elements in the list.</param>
-    protected AHandlerList(EventHandler? handler, long maxSize = -1) : base() 
-    { 
-        this.handler = handler; 
-        this.maxSize = maxSize; 
+    protected AHandlerList(EventHandler? handler, long maxSize = -1) : base()
+    {
+        this.handler = handler;
+        this.maxSize = maxSize;
     }
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="AHandlerList{T}"/> class,
     /// filled with the content of <paramref name="collection"/>.
@@ -67,10 +67,10 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <param name="maxSize">Optional; -1 for unlimited size, otherwise the maximum number of elements in the list.</param>
     /// <remarks>Does not throw an exception if <paramref name="collection"/>.Count is greater than <paramref name="maxSize"/>.
     /// An exception will be thrown on any attempt to add further items unless the Count is reduced first.</remarks>
-    protected AHandlerList(EventHandler? handler, IEnumerable<T> collection, long maxSize = -1) : base(collection) 
-    { 
-        this.handler = handler; 
-        this.maxSize = maxSize; 
+    protected AHandlerList(EventHandler? handler, IEnumerable<T> collection, long maxSize = -1) : base(collection)
+    {
+        this.handler = handler;
+        this.maxSize = maxSize;
     }
     #endregion
 
@@ -87,7 +87,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     public new virtual void AddRange(IEnumerable<T> collection)
     {
         ArgumentNullException.ThrowIfNull(collection);
-        
+
         // Calculate count efficiently
         var collectionCount = collection switch
         {
@@ -95,8 +95,8 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
             IReadOnlyCollection<T> roc => roc.Count,
             _ => collection.Count()
         };
-        
-        if (maxSize >= 0 && Count > maxSize - collectionCount) 
+
+        if (maxSize >= 0 && Count > maxSize - collectionCount)
             throw new InvalidOperationException($"Adding {collectionCount} elements would exceed maximum size of {maxSize}");
 
         // Note that the following is required to allow for implementation specific processing on items added to the list:
@@ -104,7 +104,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
         handler = null;
         try
         {
-            foreach (var item in collection) 
+            foreach (var item in collection)
                 Add(item);
         }
         finally
@@ -114,7 +114,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
 
         OnListChanged();
     }
-    
+
     /// <summary>
     /// Inserts the elements of a collection into the <see cref="AHandlerList{T}"/> at the specified index.
     /// </summary>
@@ -135,7 +135,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
         ArgumentNullException.ThrowIfNull(collection);
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(index, Count);
-        
+
         // Calculate count efficiently
         var collectionCount = collection switch
         {
@@ -143,8 +143,8 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
             IReadOnlyCollection<T> roc => roc.Count,
             _ => collection.Count()
         };
-        
-        if (maxSize >= 0 && Count > maxSize - collectionCount) 
+
+        if (maxSize >= 0 && Count > maxSize - collectionCount)
             throw new InvalidOperationException($"Inserting {collectionCount} elements would exceed maximum size of {maxSize}");
 
         // Note that the following is required to allow for implementation specific processing on items inserted into the list:
@@ -153,7 +153,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
         try
         {
             var currentIndex = index;
-            foreach (var item in collection) 
+            foreach (var item in collection)
                 Insert(currentIndex++, item);
         }
         finally
@@ -163,7 +163,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
 
         OnListChanged();
     }
-    
+
     /// <summary>
     /// Removes the all the elements that match the conditions defined by the specified predicate.
     /// </summary>
@@ -171,14 +171,14 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <returns>The number of elements removed from the <see cref="AHandlerList{T}"/>.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="match"/> is null.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual int RemoveAll(Predicate<T> match) 
-    { 
-        var result = base.RemoveAll(match); 
-        if (result != 0) 
-            OnListChanged(); 
-        return result; 
+    public new virtual int RemoveAll(Predicate<T> match)
+    {
+        var result = base.RemoveAll(match);
+        if (result != 0)
+            OnListChanged();
+        return result;
     }
-    
+
     /// <summary>
     /// Removes a range of elements from the <see cref="AHandlerList{T}"/>.
     /// </summary>
@@ -193,26 +193,26 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <paramref name="count"/> is less than 0.
     /// </exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void RemoveRange(int index, int count) 
-    { 
+    public new virtual void RemoveRange(int index, int count)
+    {
         if (count == 0) return;
-        
-        base.RemoveRange(index, count); 
-        OnListChanged(); 
+
+        base.RemoveRange(index, count);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Reverses the order of the elements in the entire <see cref="AHandlerList{T}"/>.
     /// </summary>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Reverse() 
-    { 
+    public new virtual void Reverse()
+    {
         if (Count <= 1) return;
-        
-        base.Reverse(); 
-        OnListChanged(); 
+
+        base.Reverse();
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Reverses the order of the elements in the specified range.
     /// </summary>
@@ -227,14 +227,14 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <paramref name="count"/> is less than 0.
     /// </exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Reverse(int index, int count) 
-    { 
+    public new virtual void Reverse(int index, int count)
+    {
         if (count <= 1) return;
-        
-        base.Reverse(index, count); 
-        OnListChanged(); 
+
+        base.Reverse(index, count);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Sorts the elements in the entire <see cref="AHandlerList{T}"/> using the default comparer.
     /// </summary>
@@ -244,14 +244,14 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// or the System.IComparable interface for type <typeparamref name="T"/>.
     /// </exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Sort() 
-    { 
+    public new virtual void Sort()
+    {
         if (Count <= 1) return;
-        
-        base.Sort(); 
-        OnListChanged(); 
+
+        base.Sort();
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Sorts the elements in the entire <see cref="AHandlerList{T}"/> using the specified <see cref="Comparison{T}"/>.
     /// </summary>
@@ -260,14 +260,14 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// For example, <paramref name="comparison"/> might not return 0 when comparing an item with itself.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="comparison"/> is null.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Sort(Comparison<T> comparison) 
-    { 
+    public new virtual void Sort(Comparison<T> comparison)
+    {
         if (Count <= 1) return;
-        
-        base.Sort(comparison); 
-        OnListChanged(); 
+
+        base.Sort(comparison);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Sorts the elements in the entire <see cref="AHandlerList{T}"/> using the specified comparer.
     /// </summary>
@@ -283,14 +283,14 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// or the System.IComparable interface for type <typeparamref name="T"/>.
     /// </exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Sort(IComparer<T>? comparer) 
-    { 
+    public new virtual void Sort(IComparer<T>? comparer)
+    {
         if (Count <= 1) return;
-        
-        base.Sort(comparer); 
-        OnListChanged(); 
+
+        base.Sort(comparer);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Sorts the elements in a range of elements in <see cref="AHandlerList{T}"/> using the specified comparer.
     /// </summary>
@@ -315,12 +315,12 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// or the System.IComparable interface for type <typeparamref name="T"/>.
     /// </exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Sort(int index, int count, IComparer<T>? comparer) 
-    { 
+    public new virtual void Sort(int index, int count, IComparer<T>? comparer)
+    {
         if (count <= 1) return;
-        
-        base.Sort(index, count, comparer); 
-        OnListChanged(); 
+
+        base.Sort(index, count, comparer);
+        OnListChanged();
     }
     #endregion
 
@@ -333,27 +333,27 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="AHandlerList{T}"/>.</exception>
     /// <exception cref="InvalidOperationException">Thrown when list size exceeded.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Insert(int index, T item) 
-    { 
-        if (maxSize >= 0 && Count == maxSize) 
+    public new virtual void Insert(int index, T item)
+    {
+        if (maxSize >= 0 && Count == maxSize)
             throw new InvalidOperationException($"Cannot insert item, maximum size of {maxSize} reached");
-            
-        base.Insert(index, item); 
-        OnListChanged(); 
+
+        base.Insert(index, item);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Removes the <see cref="AHandlerList{T}"/> item at the specified index.
     /// </summary>
     /// <param name="index">The zero-based index of the item to remove.</param>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="AHandlerList{T}"/>.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void RemoveAt(int index) 
-    { 
-        base.RemoveAt(index); 
-        OnListChanged(); 
+    public new virtual void RemoveAt(int index)
+    {
+        base.RemoveAt(index);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Gets or sets the element at the specified index.
     /// </summary>
@@ -361,17 +361,17 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <returns>The element at the specified index.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index in the <see cref="AHandlerList{T}"/>.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual T this[int index] 
-    { 
-        get => base[index]; 
-        set 
-        { 
-            if (!base[index].Equals(value)) 
-            { 
-                base[index] = value; 
-                OnListChanged(); 
-            } 
-        } 
+    public new virtual T this[int index]
+    {
+        get => base[index];
+        set
+        {
+            if (!base[index].Equals(value))
+            {
+                base[index] = value;
+                OnListChanged();
+            }
+        }
     }
     #endregion
 
@@ -382,27 +382,27 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <param name="item">The object to add to the <see cref="AHandlerList{T}"/>.</param>
     /// <exception cref="InvalidOperationException">Thrown when list size exceeded.</exception>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Add(T item) 
-    { 
-        if (maxSize >= 0 && Count == maxSize) 
+    public new virtual void Add(T item)
+    {
+        if (maxSize >= 0 && Count == maxSize)
             throw new InvalidOperationException($"Cannot add item, maximum size of {maxSize} reached");
-            
-        base.Add(item); 
-        OnListChanged(); 
+
+        base.Add(item);
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Removes all items from the <see cref="AHandlerList{T}"/>.
     /// </summary>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual void Clear() 
-    { 
+    public new virtual void Clear()
+    {
         if (Count == 0) return;
-        
-        base.Clear(); 
-        OnListChanged(); 
+
+        base.Clear();
+        OnListChanged();
     }
-    
+
     /// <summary>
     /// Removes the first occurrence of a specific object from the <see cref="AHandlerList{T}"/>.
     /// </summary>
@@ -413,12 +413,12 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// the original <see cref="AHandlerList{T}"/>.
     /// </returns>
     /// <exception cref="NotSupportedException">The <see cref="AHandlerList{T}"/> is read-only.</exception>
-    public new virtual bool Remove(T item) 
-    { 
-        var result = base.Remove(item); 
-        if (result) 
-            OnListChanged(); 
-        return result; 
+    public new virtual bool Remove(T item)
+    {
+        var result = base.Remove(item);
+        if (result)
+            OnListChanged();
+        return result;
     }
     #endregion
 
@@ -430,9 +430,9 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// <summary>
     /// Invokes the list change event handler.
     /// </summary>
-    protected void OnListChanged() 
-    { 
-        handler?.Invoke(this, EventArgs.Empty); 
+    protected void OnListChanged()
+    {
+        handler?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -440,21 +440,21 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
     /// </summary>
     /// <param name="target">A <see cref="AHandlerList{T}"/> against which to test this list for equality.</param>
     /// <returns>True if this list is equal to <paramref name="target"/>; otherwise false.</returns>
-    public bool Equals(AHandlerList<T>? target) 
-    { 
+    public bool Equals(AHandlerList<T>? target)
+    {
         if (target is null) return false;
         if (ReferenceEquals(this, target)) return true;
         if (Count != target.Count) return false;
-        
+
         for (int i = 0; i < Count; i++)
         {
             if (!this[i].Equals(target[i]))
                 return false;
         }
-        
+
         return true;
     }
-    
+
     /// <summary>
     /// Determines whether the specified objects are equal.
     /// </summary>
@@ -467,7 +467,7 @@ public abstract class AHandlerList<T> : List<T>, IEquatable<AHandlerList<T>>, IE
         if (x is null || y is null) return false;
         return x.Equals(y);
     }
-    
+
     /// <summary>
     /// Returns a hash code for the specified object.
     /// </summary>

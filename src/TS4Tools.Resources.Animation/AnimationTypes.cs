@@ -197,13 +197,13 @@ public readonly record struct Quaternion(float X, float Y, float Z, float W)
     /// Identity quaternion (0, 0, 0, 1).
     /// </summary>
     public static Quaternion Identity => new(0, 0, 0, 1);
-    
+
     /// <summary>
     /// Implicit conversion from Quaternion to Vector4.
     /// </summary>
     /// <param name="quaternion">Quaternion to convert.</param>
     public static implicit operator Vector4(Quaternion quaternion) => new(quaternion.X, quaternion.Y, quaternion.Z, quaternion.W);
-    
+
     /// <summary>
     /// Implicit conversion from Vector4 to Quaternion.
     /// </summary>
@@ -345,7 +345,7 @@ public class BoneNode
         Rotation = rotation;
         Scale = scale ?? new Vector3(1, 1, 1);
         Parent = parent;
-        
+
         if (parent != null)
         {
             parent.AddChild(this);

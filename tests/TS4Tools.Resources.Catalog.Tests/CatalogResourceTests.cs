@@ -9,13 +9,13 @@ namespace TS4Tools.Resources.Catalog.Tests;
 public sealed class CatalogResourceTests
 {
     private readonly NullLogger<CatalogResource> _logger = NullLogger<CatalogResource>.Instance;
-    
+
     [Fact]
     public void Constructor_WithLogger_ShouldInitializeSuccessfully()
     {
         // Act
         var resource = new CatalogResource(_logger);
-        
+
         // Assert
         resource.Should().NotBeNull();
         resource.Version.Should().Be(CatalogResource.CurrentVersion);
@@ -24,7 +24,7 @@ public sealed class CatalogResourceTests
         resource.Tags.Should().BeEmpty();
         resource.SellingPoints.Should().BeEmpty();
     }
-    
+
     [Fact]
     public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
     {
@@ -33,7 +33,7 @@ public sealed class CatalogResourceTests
         act.Should().Throw<ArgumentNullException>()
            .WithParameterName("logger");
     }
-    
+
     [Fact]
     public void ContentFields_ShouldReturnExpectedFields()
     {
@@ -57,21 +57,21 @@ public sealed class CatalogResourceTests
             nameof(CatalogResource.Unknown6),
             nameof(CatalogResource.Unknown7)
         };
-        
+
         // Act & Assert
         resource.ContentFields.Should().BeEquivalentTo(expectedFields);
     }
-    
+
     [Fact]
     public void RecommendedApiVersion_ShouldReturnOne()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act & Assert
         resource.RecommendedApiVersion.Should().Be(1);
     }
-    
+
     [Theory]
     [InlineData(1u)]
     [InlineData(2u)]
@@ -80,14 +80,14 @@ public sealed class CatalogResourceTests
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act
         resource.Version = version;
-        
+
         // Assert
         resource.Version.Should().Be(version);
     }
-    
+
     [Theory]
     [InlineData(0x00000009u)]
     [InlineData(0x00000008u)]
@@ -96,14 +96,14 @@ public sealed class CatalogResourceTests
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act
         resource.CatalogVersion = catalogVersion;
-        
+
         // Assert
         resource.CatalogVersion.Should().Be(catalogVersion);
     }
-    
+
     [Theory]
     [InlineData(0x12345678u)]
     [InlineData(0xABCDEF00u)]
@@ -112,14 +112,14 @@ public sealed class CatalogResourceTests
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act
         resource.NameHash = nameHash;
-        
+
         // Assert
         resource.NameHash.Should().Be(nameHash);
     }
-    
+
     [Theory]
     [InlineData(0x87654321u)]
     [InlineData(0x11223344u)]
@@ -128,14 +128,14 @@ public sealed class CatalogResourceTests
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act
         resource.DescriptionHash = descriptionHash;
-        
+
         // Assert
         resource.DescriptionHash.Should().Be(descriptionHash);
     }
-    
+
     [Theory]
     [InlineData(0u)]
     [InlineData(100u)]
@@ -144,46 +144,46 @@ public sealed class CatalogResourceTests
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act
         resource.Price = price;
-        
+
         // Assert
         resource.Price.Should().Be(price);
     }
-    
+
     [Fact]
     public void StyleReferences_ShouldBeModifiable()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
         var reference = new ResourceReference(0x12345678, 0x87654321, 0x1122334455667788);
-        
+
         // Act
         resource.StyleReferences.Add(reference);
-        
+
         // Assert
         resource.StyleReferences.Should().ContainSingle()
             .Which.Should().Be(reference);
     }
-    
+
     [Fact]
     public void Tags_ShouldBeModifiable()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
         var tags = new ushort[] { 1, 2, 3, 100, 999 };
-        
+
         // Act
         foreach (var tag in tags)
         {
             resource.Tags.Add(tag);
         }
-        
+
         // Assert
         resource.Tags.Should().BeEquivalentTo(tags);
     }
-    
+
     [Fact]
     public void SellingPoints_ShouldBeModifiable()
     {
@@ -195,17 +195,17 @@ public sealed class CatalogResourceTests
             new SellingPoint(2, 200),
             new SellingPoint(3, 50)
         };
-        
+
         // Act
         foreach (var sellingPoint in sellingPoints)
         {
             resource.SellingPoints.Add(sellingPoint);
         }
-        
+
         // Assert
         resource.SellingPoints.Should().BeEquivalentTo(sellingPoints);
     }
-    
+
     [Fact]
     public async Task SaveToStreamAsync_WithValidData_ShouldSucceed()
     {
@@ -218,21 +218,21 @@ public sealed class CatalogResourceTests
             DescriptionHash = 0x87654321,
             Price = 500
         };
-        
+
         resource.StyleReferences.Add(new ResourceReference(0x11111111, 0x22222222, 0x3333333344444444));
         resource.Tags.Add(123);
         resource.SellingPoints.Add(new SellingPoint(1, 100));
-        
+
         using var stream = new MemoryStream();
-        
+
         // Act
         await resource.SaveToStreamAsync(stream);
-        
+
         // Assert
         stream.Length.Should().BeGreaterThan(0);
         stream.Position.Should().Be(stream.Length);
     }
-    
+
     [Fact]
     public async Task LoadFromStreamAsync_WithValidData_ShouldSucceed()
     {
@@ -252,50 +252,50 @@ public sealed class CatalogResourceTests
             Unknown6 = 666,
             Unknown7 = 777
         };
-        
+
         originalResource.StyleReferences.Add(new ResourceReference(0x11111111, 0x22222222, 0x3333333344444444));
         originalResource.Tags.Add(123);
         originalResource.SellingPoints.Add(new SellingPoint(1, 100));
-        
+
         using var stream = new MemoryStream();
         await originalResource.SaveToStreamAsync(stream);
-        
+
         stream.Position = 0;
         var loadedResource = new CatalogResource(_logger);
-        
+
         // Act
         await loadedResource.LoadFromStreamAsync(stream);
-        
+
         // Assert
         loadedResource.Should().BeEquivalentTo(originalResource, options => options
             .Excluding(x => x.Stream));
     }
-    
+
     [Fact]
     public async Task LoadFromStreamAsync_WithNullStream_ShouldThrowArgumentNullException()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act & Assert
         var act = () => resource.LoadFromStreamAsync(null!);
         await act.Should().ThrowAsync<ArgumentNullException>()
             .WithParameterName("stream");
     }
-    
+
     [Fact]
     public async Task LoadFromStreamAsync_WithEmptyStream_ShouldThrowInvalidDataException()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
         using var emptyStream = new MemoryStream();
-        
+
         // Act & Assert
         var act = () => resource.LoadFromStreamAsync(emptyStream);
         await act.Should().ThrowAsync<InvalidDataException>()
             .WithMessage("Stream too short for catalog resource*");
     }
-    
+
     [Fact]
     public async Task GetStreamAsync_ShouldReturnValidStream()
     {
@@ -306,17 +306,17 @@ public sealed class CatalogResourceTests
             NameHash = 0x12345678,
             Price = 100
         };
-        
+
         // Act
         using var stream = await resource.GetStreamAsync();
-        
+
         // Assert
         stream.Should().NotBeNull();
         stream.Length.Should().BeGreaterThan(0);
         stream.Position.Should().Be(0);
         stream.CanRead.Should().BeTrue();
     }
-    
+
     [Fact]
     public void ToString_ShouldReturnFormattedString()
     {
@@ -327,18 +327,18 @@ public sealed class CatalogResourceTests
             DescriptionHash = 0x87654321,
             Price = 500
         };
-        
+
         resource.Tags.Add(1);
         resource.Tags.Add(2);
         resource.StyleReferences.Add(new ResourceReference(0x11111111, 0x22222222, 0x3333333344444444));
-        
+
         // Act
         var result = resource.ToString();
-        
+
         // Assert
         result.Should().Be("CatalogResource(Name=12345678, Desc=87654321, Price=500, Tags=2, Styles=1)");
     }
-    
+
     [Fact]
     public void Equals_WithIdenticalResources_ShouldReturnTrue()
     {
@@ -350,7 +350,7 @@ public sealed class CatalogResourceTests
             Price = 100
         };
         resource1.Tags.Add(123);
-        
+
         var resource2 = new CatalogResource(_logger)
         {
             Version = 1,
@@ -358,34 +358,34 @@ public sealed class CatalogResourceTests
             Price = 100
         };
         resource2.Tags.Add(123);
-        
+
         // Act & Assert
         resource1.Equals(resource2).Should().BeTrue();
         resource1.GetHashCode().Should().Be(resource2.GetHashCode());
     }
-    
+
     [Fact]
     public void Equals_WithDifferentResources_ShouldReturnFalse()
     {
         // Arrange
         var resource1 = new CatalogResource(_logger) { NameHash = 0x12345678 };
         var resource2 = new CatalogResource(_logger) { NameHash = 0x87654321 };
-        
+
         // Act & Assert
         resource1.Equals(resource2).Should().BeFalse();
     }
-    
+
     [Fact]
     public void Equals_WithNull_ShouldReturnFalse()
     {
         // Arrange
         var resource = new CatalogResource(_logger);
-        
+
         // Act & Assert
         resource.Equals(null as CatalogResource).Should().BeFalse();
         resource.Equals(null as object).Should().BeFalse();
     }
-    
+
     [Fact]
     public void PropertyChanged_WhenPropertyChanges_ShouldRaiseEvent()
     {
@@ -393,37 +393,37 @@ public sealed class CatalogResourceTests
         var resource = new CatalogResource(_logger);
         var eventRaised = false;
         string? changedPropertyName = null;
-        
+
         resource.PropertyChanged += (sender, args) =>
         {
             eventRaised = true;
             changedPropertyName = args.PropertyName;
         };
-        
+
         // Act
         resource.NameHash = 0x12345678;
-        
+
         // Assert
         eventRaised.Should().BeTrue();
         changedPropertyName.Should().Be(nameof(CatalogResource.NameHash));
     }
-    
+
     [Fact]
     public void PropertyChanged_WhenSameValueSet_ShouldNotRaiseEvent()
     {
         // Arrange
         var resource = new CatalogResource(_logger) { NameHash = 0x12345678 };
         var eventRaised = false;
-        
+
         resource.PropertyChanged += (_, _) => eventRaised = true;
-        
+
         // Act
         resource.NameHash = 0x12345678; // Same value
-        
+
         // Assert
         eventRaised.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task RoundTripTest_ComplexData_ShouldPreserveAllData()
     {
@@ -443,31 +443,31 @@ public sealed class CatalogResourceTests
             Unknown6 = 54321,
             Unknown7 = 0x5050505050505050
         };
-        
+
         // Add multiple style references
         original.StyleReferences.Add(new ResourceReference(0x11111111, 0x22222222, 0x3333333344444444));
         original.StyleReferences.Add(new ResourceReference(0x55555555, 0x66666666, 0x7777777788888888));
         original.StyleReferences.Add(new ResourceReference(0x99999999, 0xAAAAAAAA, 0xBBBBBBBBCCCCCCCC));
-        
+
         // Add multiple tags
         original.Tags.Add(1);
         original.Tags.Add(100);
         original.Tags.Add(999);
         original.Tags.Add(12345);
-        
+
         // Add multiple selling points
         original.SellingPoints.Add(new SellingPoint(1, 50));
         original.SellingPoints.Add(new SellingPoint(2, 75));
         original.SellingPoints.Add(new SellingPoint(10, 25));
-        
+
         // Act: Save and reload
         using var stream = new MemoryStream();
         await original.SaveToStreamAsync(stream);
-        
+
         stream.Position = 0;
         var reloaded = new CatalogResource(_logger);
         await reloaded.LoadFromStreamAsync(stream);
-        
+
         // Assert
         reloaded.Should().BeEquivalentTo(original, options => options
             .Excluding(x => x.Stream));

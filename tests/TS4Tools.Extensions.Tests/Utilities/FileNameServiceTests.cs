@@ -133,7 +133,7 @@ public sealed class FileNameServiceTests
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        
+
         // Platform-specific character validation:
         // Windows: Many characters are invalid and should be replaced
         // Unix: Only null, / and \ characters are invalid
@@ -166,7 +166,7 @@ public sealed class FileNameServiceTests
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        
+
         // On Windows, reserved names should be modified to avoid conflicts
         // On Unix systems, these names are not reserved so they remain unchanged
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -226,7 +226,7 @@ public sealed class FileNameServiceTests
 
         // Assert
         result.Should().NotBeNullOrWhiteSpace();
-        
+
         // Platform-specific behavior:
         // Windows: Invalid chars are removed, if result is empty return "unnamed"
         // Unix: Invalid chars are replaced with underscores
@@ -278,7 +278,7 @@ public sealed class FileNameServiceTests
         // Arrange
         using var tempDir = CreateTempDirectory();
         const string fileName = "test.txt";
-        
+
         // Create several existing files
         File.WriteAllText(Path.Combine(tempDir.FullName, "test.txt"), "content");
         File.WriteAllText(Path.Combine(tempDir.FullName, "test_001.txt"), "content");

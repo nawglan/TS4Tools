@@ -38,7 +38,7 @@ public static class ServiceCollectionExtensions
 
         // Register sound resource factory
         services.AddSingleton<IResourceFactory, SoundResourceFactory>();
-        
+
         // Register video resource factory
         services.AddSingleton<IResourceFactory, VideoResourceFactory>();
 

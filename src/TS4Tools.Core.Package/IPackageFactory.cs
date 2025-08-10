@@ -14,7 +14,7 @@ public interface IPackageFactory
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>A new empty package instance</returns>
     Task<IPackage> CreateEmptyPackageAsync(CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Loads a package from a file path.
     /// </summary>
@@ -23,7 +23,7 @@ public interface IPackageFactory
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>The loaded package instance</returns>
     Task<IPackage> LoadFromFileAsync(string filePath, bool readOnly = false, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Loads a package from a stream.
     /// </summary>

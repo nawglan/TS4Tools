@@ -27,18 +27,18 @@ public class AHandlerDictionaryBenchmarks
     private TestDictionary _dictionary = null!;
     private Dictionary<int, string> _standardDictionary = null!;
     private readonly int[] _keys = Enumerable.Range(0, 1000).ToArray();
-    
+
     private class TestDictionary : AHandlerDictionary<int, string>
     {
         public TestDictionary(EventHandler? handler) : base(handler) { }
     }
-    
+
     [GlobalSetup]
     public void Setup()
     {
         _dictionary = new TestDictionary((_, _) => { });
         _standardDictionary = new Dictionary<int, string>();
-        
+
         // Pre-populate dictionaries
         for (int i = 0; i < 1000; i++)
         {
@@ -46,7 +46,7 @@ public class AHandlerDictionaryBenchmarks
             _standardDictionary[i] = $"Value{i}";
         }
     }
-    
+
     [Benchmark]
     public void AHandlerDictionary_Add()
     {
@@ -56,7 +56,7 @@ public class AHandlerDictionaryBenchmarks
             dict.Add(i, $"Value{i}");
         }
     }
-    
+
     [Benchmark]
     public void StandardDictionary_Add()
     {
@@ -66,7 +66,7 @@ public class AHandlerDictionaryBenchmarks
             dict.Add(i, $"Value{i}");
         }
     }
-    
+
     [Benchmark]
     public void AHandlerDictionary_Lookup()
     {
@@ -75,7 +75,7 @@ public class AHandlerDictionaryBenchmarks
             _ = _dictionary[key];
         }
     }
-    
+
     [Benchmark]
     public void StandardDictionary_Lookup()
     {
@@ -96,29 +96,29 @@ public class FnvHashBenchmarks
     private readonly byte[] _smallData = "Hello World"u8.ToArray();
     private readonly byte[] _mediumData = new byte[1024];
     private readonly byte[] _largeData = new byte[64 * 1024];
-    
+
     [GlobalSetup]
     public void Setup()
     {
         Random.Shared.NextBytes(_mediumData);
         Random.Shared.NextBytes(_largeData);
     }
-    
+
     [Benchmark]
     public uint FNV32_SmallData() => Fnv32.GetHash(Encoding.UTF8.GetString(_smallData));
-    
+
     [Benchmark]
     public uint FNV32_MediumData() => Fnv32.GetHash(Encoding.UTF8.GetString(_mediumData));
-    
+
     [Benchmark]
     public uint FNV32_LargeData() => Fnv32.GetHash(Encoding.UTF8.GetString(_largeData));
-    
+
     [Benchmark]
     public ulong FNV64_SmallData() => Fnv64.GetHash(Encoding.UTF8.GetString(_smallData));
-    
+
     [Benchmark]
     public ulong FNV64_MediumData() => Fnv64.GetHash(Encoding.UTF8.GetString(_mediumData));
-    
+
     [Benchmark]
     public ulong FNV64_LargeData() => Fnv64.GetHash(Encoding.UTF8.GetString(_largeData));
 }

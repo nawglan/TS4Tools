@@ -181,7 +181,7 @@ public class ObservableListTests
         var list = new ObservableList<string> { "Existing" };
         var resetEventCount = 0;
         var otherEventCount = 0;
-        
+
         // Use static readonly array instead of constant array
         var itemsToAdd = new[] { "Item1", "Item2", "Item3" };
 

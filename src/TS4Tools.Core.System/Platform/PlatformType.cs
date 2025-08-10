@@ -9,17 +9,17 @@ public enum PlatformType
     /// Windows operating system.
     /// </summary>
     Windows,
-    
+
     /// <summary>
     /// macOS operating system.
     /// </summary>
     MacOS,
-    
+
     /// <summary>
     /// Linux operating system.
     /// </summary>
     Linux,
-    
+
     /// <summary>
     /// Unknown or unsupported operating system.
     /// </summary>

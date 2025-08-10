@@ -14,7 +14,7 @@ namespace TS4Tools.Resources.Common.CatalogTags;
 public sealed partial class CatalogTagRegistry
 {
     private const string CatalogTuningFileName = "S4_03B33DDF_00000000_D89CB9186B79ACB7.xml";
-    
+
     private readonly ILogger<CatalogTagRegistry> _logger;
     private readonly Lazy<FrozenDictionary<uint, Tag>> _tags;
     private readonly Lazy<FrozenDictionary<uint, Tag>> _categories;
@@ -124,7 +124,7 @@ public sealed partial class CatalogTagRegistry
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = $"TS4Tools.Resources.Common.CatalogTags.{CatalogTuningFileName}";
-            
+
             using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
             {
@@ -143,7 +143,7 @@ public sealed partial class CatalogTagRegistry
 
             using var xmlReader = XmlReader.Create(stream, settings);
             var serializer = new XmlSerializer(typeof(TagDocument));
-            
+
             if (serializer.Deserialize(xmlReader) is not TagDocument document)
             {
                 LogDeserializationFailed(resourceName);
@@ -159,7 +159,7 @@ public sealed partial class CatalogTagRegistry
 
             var tags = listing.ElementsReadOnly.ToFrozenDictionary(t => t.Index, t => t);
             LogTagsLoaded(tags.Count, listingName);
-            
+
             return tags;
         }
         catch (Exception ex)

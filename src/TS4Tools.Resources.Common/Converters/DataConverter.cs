@@ -54,7 +54,7 @@ public static class DataConverter
     public static bool TryParseNumber(string? input, out uint result)
     {
         result = 0;
-        
+
         if (string.IsNullOrWhiteSpace(input))
             return false;
 

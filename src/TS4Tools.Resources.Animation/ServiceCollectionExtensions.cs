@@ -21,15 +21,15 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AnimationResourceFactory>();
         services.AddSingleton<CharacterResourceFactory>();
         services.AddSingleton<RigResourceFactory>();
-        
+
         // Register as interface implementations
-        services.AddTransient<IResourceFactory, AnimationResourceFactory>(provider => 
+        services.AddTransient<IResourceFactory, AnimationResourceFactory>(provider =>
             provider.GetRequiredService<AnimationResourceFactory>());
-        services.AddTransient<IResourceFactory, CharacterResourceFactory>(provider => 
+        services.AddTransient<IResourceFactory, CharacterResourceFactory>(provider =>
             provider.GetRequiredService<CharacterResourceFactory>());
-        services.AddTransient<IResourceFactory, RigResourceFactory>(provider => 
+        services.AddTransient<IResourceFactory, RigResourceFactory>(provider =>
             provider.GetRequiredService<RigResourceFactory>());
-        
+
         return services;
     }
 }

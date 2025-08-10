@@ -51,7 +51,7 @@ public sealed class ServiceCollectionExtensionsTests
         // Assert
         serviceProvider.GetService<IResourceTypeRegistry>().Should().NotBeNull();
         serviceProvider.GetService<IFileNameService>().Should().NotBeNull();
-        
+
         var options = serviceProvider.GetService<IOptions<ExtensionOptions>>();
         options.Should().NotBeNull();
         options!.Value.MaxFileNameLength.Should().Be(200);
@@ -84,7 +84,7 @@ public sealed class ServiceCollectionExtensionsTests
         // Assert
         var registry1 = serviceProvider.GetService<IResourceTypeRegistry>();
         var registry2 = serviceProvider.GetService<IResourceTypeRegistry>();
-        
+
         registry1.Should().BeSameAs(registry2);
     }
 

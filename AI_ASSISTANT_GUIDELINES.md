@@ -88,6 +88,7 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
 - **External dependencies** → Abstract behind interfaces for testing
 
 ### 📋 PRE-COMMIT CHECKLIST (All Must Be ✅)
+- [ ] Run code quality script: `.\scripts\check-quality.ps1` (or `.\scripts\check-quality.ps1 -Fix` to auto-fix)
 - [ ] Zero build errors and warnings
 - [ ] All tests passing (100%)
 - [ ] Static analysis clean
@@ -326,10 +327,16 @@ public readonly struct HandlerData { public int Value; }
 ### Mandatory Pre-Commit Sequence
 ```powershell
 cd "c:\Users\nawgl\code\TS4Tools"
+
+# Option 1: Use automated quality check script (RECOMMENDED)
+.\scripts\check-quality.ps1
+
+# Option 2: Manual sequence (if script unavailable)
 dotnet clean
 dotnet restore  
 dotnet build TS4Tools.sln --verbosity minimal --no-restore
 dotnet test TS4Tools.sln --verbosity minimal
+
 # All steps must succeed with no errors/warnings
 ```
 
@@ -515,11 +522,16 @@ public interface IRollbackService
 # Always start here
 cd "c:\Users\nawgl\code\TS4Tools"
 
+# Code quality check (RECOMMENDED before commits)
+.\scripts\check-quality.ps1                    # Check formatting and analyzers
+.\scripts\check-quality.ps1 -Fix              # Auto-fix formatting issues
+.\scripts\check-quality.ps1 -Verbose          # Detailed output
+
 # Development cycle
 dotnet build TS4Tools.sln [specific-project]
 dotnet test TS4Tools.sln [test-project] --verbosity minimal
 
-# Full validation (before commits)
+# Manual validation (if script unavailable)
 dotnet clean; dotnet restore; dotnet build TS4Tools.sln --verbosity minimal; dotnet test TS4Tools.sln --verbosity minimal
 
 # After completion: Update MIGRATION_ROADMAP.md and CHANGELOG.md

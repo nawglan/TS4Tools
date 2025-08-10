@@ -55,7 +55,7 @@ public class DefaultResourceTests
         // Assert
         resource.RequestedApiVersion.Should().Be(apiVersion);
         resource.AsBytes.Should().BeEquivalentTo(originalData);
-        
+
         // Stream should be independent of source
         sourceStream.Position = 100; // Modify source stream position
         resource.Stream.Position.Should().Be(0); // Resource stream should not be affected

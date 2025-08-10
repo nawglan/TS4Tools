@@ -245,66 +245,66 @@ public class GeometryResourceFactoryTests
     private static MemoryStream CreateValidGeometryStream()
     {
         var data = new List<byte>();
-        
+
         // GEOM header - simplified to minimal working format
         data.AddRange(BitConverter.GetBytes(0x47454F4Du)); // "GEOM" tag
         data.AddRange(BitConverter.GetBytes(0x00000005u)); // Version 5 (supported)
         data.AddRange(BitConverter.GetBytes(0u)); // TGI offset
         data.AddRange(BitConverter.GetBytes(0u)); // TGI size
         data.AddRange(BitConverter.GetBytes((uint)ShaderType.None)); // Shader type (0)
-        
+
         // Geometry properties
         data.AddRange(BitConverter.GetBytes(0u)); // MergeGroup
         data.AddRange(BitConverter.GetBytes(0u)); // SortOrder
-        
+
         // Vertex data - minimal
         data.AddRange(BitConverter.GetBytes(0)); // VertexCount (0 = no vertices)
         data.AddRange(BitConverter.GetBytes(0)); // Format count (0 = no formats)
-        
+
         // Face data
         data.AddRange(BitConverter.GetBytes(1u)); // Number of submeshes (must be 1)
         data.Add(2); // Face point size (must be 2)
         data.AddRange(BitConverter.GetBytes(0)); // Face count (0 = no faces)
-        
+
         // Version 5 specific data
         data.AddRange(BitConverter.GetBytes(0)); // SkinIndex
-        
+
         // Bone hashes
         data.AddRange(BitConverter.GetBytes(0)); // Bone hash count (0 = no bones)
-        
+
         return new MemoryStream(data.ToArray());
     }
 
     private static MemoryStream CreateMinimalValidGeometryStream()
     {
         var data = new List<byte>();
-        
+
         // Minimal GEOM header - same as valid but even simpler
         data.AddRange(BitConverter.GetBytes(0x47454F4Du)); // "GEOM" tag
         data.AddRange(BitConverter.GetBytes(0x00000005u)); // Version 5 (supported)
         data.AddRange(BitConverter.GetBytes(0u)); // TGI offset
         data.AddRange(BitConverter.GetBytes(0u)); // TGI size
         data.AddRange(BitConverter.GetBytes((uint)ShaderType.None)); // Shader type (0)
-        
+
         // Geometry properties
         data.AddRange(BitConverter.GetBytes(0u)); // MergeGroup
         data.AddRange(BitConverter.GetBytes(0u)); // SortOrder
-        
+
         // Vertex data - no vertices
         data.AddRange(BitConverter.GetBytes(0)); // VertexCount (0)
         data.AddRange(BitConverter.GetBytes(0)); // Format count (0)
-        
+
         // Face data
         data.AddRange(BitConverter.GetBytes(1u)); // Number of submeshes (must be 1)
         data.Add(2); // Face point size (must be 2)
         data.AddRange(BitConverter.GetBytes(0)); // Face count (0)
-        
+
         // Version 5 specific data
         data.AddRange(BitConverter.GetBytes(0)); // SkinIndex
-        
+
         // Bone hashes
         data.AddRange(BitConverter.GetBytes(0)); // Bone hash count (0)
-        
+
         return new MemoryStream(data.ToArray());
     }
 
@@ -313,23 +313,23 @@ public class GeometryResourceFactoryTests
         // Just create a larger version of the valid stream by duplicating it multiple times
         var baseData = CreateValidGeometryStream().ToArray();
         var largeData = new List<byte>();
-        
+
         // Add the first valid stream
         largeData.AddRange(baseData);
-        
+
         // Add some padding bytes to make it "large"
         for (int i = 0; i < 1000; i++)
         {
             largeData.AddRange(BitConverter.GetBytes((float)i));
         }
-        
+
         return new MemoryStream(largeData.ToArray());
     }
 
     private static MemoryStream CreateCorruptedGeometryStream()
     {
         var data = new List<byte>();
-        
+
         // Corrupted GEOM header
         data.AddRange(BitConverter.GetBytes(0x4D4F4547u)); // "GEOM" in big-endian (wrong order)
         data.AddRange(BitConverter.GetBytes(1u)); // Version
@@ -337,17 +337,17 @@ public class GeometryResourceFactoryTests
         data.AddRange(BitConverter.GetBytes(3u)); // Vertex count
         data.AddRange(BitConverter.GetBytes(1u)); // Face count
         data.AddRange(BitConverter.GetBytes(1u)); // Vertex format count
-        
+
         // Vertex format
         data.AddRange(BitConverter.GetBytes((uint)UsageType.Position));
         data.AddRange(BitConverter.GetBytes((uint)DataType.Float));
         data.Add(3); // SubCount
         data.AddRange(BitConverter.GetBytes(0u)); // SubOffset
-        
+
         // Truncated data - not enough for 3 vertices
         data.AddRange(BitConverter.GetBytes(1.0f));
         data.AddRange(BitConverter.GetBytes(2.0f));
-        
+
         return new MemoryStream(data.ToArray());
     }
 

@@ -28,32 +28,32 @@ public enum AudioFormat
     /// Unknown or unsupported audio format.
     /// </summary>
     Unknown = 0,
-    
+
     /// <summary>
     /// WAV (Waveform Audio File Format) - uncompressed audio.
     /// </summary>
     Wav = 1,
-    
+
     /// <summary>
     /// MP3 (MPEG-1 Audio Layer III) - compressed audio.
     /// </summary>
     Mp3 = 2,
-    
+
     /// <summary>
     /// OGG Vorbis - open-source compressed audio.
     /// </summary>
     Ogg = 3,
-    
+
     /// <summary>
     /// AAC (Advanced Audio Coding) - compressed audio.
     /// </summary>
     Aac = 4,
-    
+
     /// <summary>
     /// FLAC (Free Lossless Audio Codec) - lossless compressed audio.
     /// </summary>
     Flac = 5,
-    
+
     /// <summary>
     /// Custom Sims audio format - proprietary format used by EA.
     /// </summary>
@@ -69,37 +69,37 @@ public readonly record struct AudioMetadata
     /// The detected audio format.
     /// </summary>
     public AudioFormat Format { get; init; }
-    
+
     /// <summary>
     /// Sample rate in Hz (e.g., 44100, 48000).
     /// </summary>
     public uint SampleRate { get; init; }
-    
+
     /// <summary>
     /// Number of audio channels (1 = mono, 2 = stereo, etc.).
     /// </summary>
     public uint Channels { get; init; }
-    
+
     /// <summary>
     /// Bits per sample (e.g., 16, 24, 32).
     /// </summary>
     public uint BitsPerSample { get; init; }
-    
+
     /// <summary>
     /// Duration of the audio in seconds.
     /// </summary>
     public double Duration { get; init; }
-    
+
     /// <summary>
     /// Size of the audio data in bytes.
     /// </summary>
     public uint DataSize { get; init; }
-    
+
     /// <summary>
     /// Whether the audio has compression applied.
     /// </summary>
     public bool IsCompressed => Format is AudioFormat.Mp3 or AudioFormat.Ogg or AudioFormat.Aac;
-    
+
     /// <summary>
     /// Whether the audio is lossless.
     /// </summary>

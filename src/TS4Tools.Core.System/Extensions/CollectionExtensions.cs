@@ -34,7 +34,7 @@ public static class ArrayExtensions
     /// <param name="array">The input array</param>
     /// <returns>An <c>TOut[]</c> array containing converted input elements.</returns>
     /// <exception cref="InvalidCastException">The element type of <paramref name="array"/> does not provide the <c>IConvertible</c> interface.</exception>
-    public static TOut[] ConvertAll<TOut>(this Array array) where TOut : IConvertible 
+    public static TOut[] ConvertAll<TOut>(this Array array) where TOut : IConvertible
         => array.ConvertAll<TOut>(0, array.Length, CultureInfo.CurrentCulture);
 
     /// <summary>
@@ -45,7 +45,7 @@ public static class ArrayExtensions
     /// <param name="provider">An <c>System.IFormatProvider</c> interface implementation that supplies culture-specific formatting information.</param>
     /// <returns>An <c>TOut[]</c> array containing converted input elements.</returns>
     /// <exception cref="InvalidCastException">The element type of <paramref name="array"/> does not provide the <c>IConvertible</c> interface.</exception>
-    public static TOut[] ConvertAll<TOut>(this Array array, IFormatProvider provider) where TOut : IConvertible 
+    public static TOut[] ConvertAll<TOut>(this Array array, IFormatProvider provider) where TOut : IConvertible
         => array.ConvertAll<TOut>(0, array.Length, provider);
 
     /// <summary>
@@ -65,7 +65,7 @@ public static class ArrayExtensions
     /// </exception>
     /// <exception cref="IndexOutOfRangeException"><paramref name="start"/> is outside the bounds of <paramref name="array"/>.</exception>
     /// <exception cref="ArgumentException"><paramref name="length"/> has an invalid value.</exception>
-    public static TOut[] ConvertAll<TOut>(this Array array, int start, int length) where TOut : IConvertible 
+    public static TOut[] ConvertAll<TOut>(this Array array, int start, int length) where TOut : IConvertible
         => array.ConvertAll<TOut>(start, length, CultureInfo.CurrentCulture);
 
     /// <summary>
@@ -90,7 +90,7 @@ public static class ArrayExtensions
     {
         ArgumentNullException.ThrowIfNull(array);
         ArgumentNullException.ThrowIfNull(provider);
-        
+
         var elementType = array.GetType().GetElementType();
         if (elementType is null || !typeof(IConvertible).IsAssignableFrom(elementType))
             throw new InvalidCastException($"{elementType?.Name ?? "Unknown"} is not IConvertible");
@@ -130,19 +130,19 @@ public static class ListExtensions
     {
         if (value is null)
             return target is null ? 0 : -1;
-        
-        if (target is null) 
+
+        if (target is null)
             return 1;
 
         var minCount = Math.Min(value.Count, target.Count);
-        
-        for (int i = 0; i < minCount; i++) 
-        { 
-            var comparison = value[i].CompareTo(target[i]); 
-            if (comparison != 0) 
-                return comparison; 
+
+        for (int i = 0; i < minCount; i++)
+        {
+            var comparison = value[i].CompareTo(target[i]);
+            if (comparison != 0)
+                return comparison;
         }
-        
+
         return value.Count.CompareTo(target.Count);
     }
 
@@ -157,19 +157,19 @@ public static class ListExtensions
     {
         if (value is null)
             return target is null;
-        
-        if (target is null) 
+
+        if (target is null)
             return false;
 
-        if (value.Count != target.Count) 
+        if (value.Count != target.Count)
             return false;
-        
-        for (int i = 0; i < value.Count; i++) 
+
+        for (int i = 0; i < value.Count; i++)
         {
-            if (!value[i].Equals(target[i])) 
+            if (!value[i].Equals(target[i]))
                 return false;
         }
-        
+
         return true;
     }
 }

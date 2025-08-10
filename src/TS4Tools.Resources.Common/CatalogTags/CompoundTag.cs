@@ -96,9 +96,9 @@ public sealed class CompoundTag : IEquatable<CompoundTag>
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        
-        return Name == other.Name && 
-               _tags.Count == other._tags.Count && 
+
+        return Name == other.Name &&
+               _tags.Count == other._tags.Count &&
                _tags.SequenceEqual(other._tags);
     }
 

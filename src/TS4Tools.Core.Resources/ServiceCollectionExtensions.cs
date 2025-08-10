@@ -36,25 +36,25 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
-        
+
         // Configure options
-        services.Configure<ResourceManagerOptions>(options => 
+        services.Configure<ResourceManagerOptions>(options =>
         {
             configuration.GetSection(ResourceManagerOptions.SectionName).Bind(options);
         });
-        
+
         // Register core services
         services.AddSingleton<IResourceManager, ResourceManager>();
-        
+
         // Register resource wrapper registry
         services.AddSingleton<IResourceWrapperRegistry, ResourceWrapperRegistry>();
-        
+
         // Register default factory
         services.AddSingleton<DefaultResourceFactory>();
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Adds resource management services with custom configuration.
     /// </summary>
@@ -65,19 +65,19 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configureOptions);
-        
+
         // Configure options
         services.Configure(configureOptions);
-        
+
         // Register core services
         services.AddSingleton<IResourceManager, ResourceManager>();
-        
+
         // Register default factory
         services.AddSingleton<DefaultResourceFactory>();
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Registers a resource factory for a specific resource type.
     /// </summary>
@@ -87,19 +87,19 @@ public static class ServiceCollectionExtensions
     /// <param name="lifetime">Service lifetime (default: Singleton)</param>
     /// <returns>Service collection for chaining</returns>
     public static IServiceCollection AddResourceFactory<TResource, TFactory>(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         ServiceLifetime lifetime = ServiceLifetime.Singleton)
         where TResource : class, IResource
         where TFactory : class, IResourceFactory<TResource>
     {
         ArgumentNullException.ThrowIfNull(services);
-        
+
         // Register the factory
         services.Add(new ServiceDescriptor(typeof(TFactory), typeof(TFactory), lifetime));
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Adds and configures resource wrapper registry with automatic factory discovery.
     /// </summary>
@@ -108,13 +108,13 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddResourceWrapperRegistry(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        
+
         // Register resource wrapper registry (if not already registered)
         services.AddSingleton<IResourceWrapperRegistry, ResourceWrapperRegistry>();
-        
+
         return services;
     }
-    
+
     /// <summary>
     /// Initializes the resource wrapper registry by discovering and registering all available factories.
     /// Call this method after building the service provider to complete factory registration.
@@ -127,7 +127,7 @@ public static class ServiceCollectionExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(serviceProvider);
-        
+
         var registry = serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
         return await registry.DiscoverAndRegisterFactoriesAsync(cancellationToken);
     }

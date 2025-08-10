@@ -113,7 +113,7 @@ public class StringEntryTests
         // Arrange
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         const uint expectedKey = 0x12345678u;
         const string expectedValue = "Hello World";
         var expectedBytes = Encoding.UTF8.GetBytes(expectedValue);
@@ -121,7 +121,7 @@ public class StringEntryTests
         writer.Write(expectedKey);
         writer.Write((byte)expectedBytes.Length);
         writer.Write(expectedBytes);
-        
+
         stream.Position = 0;
         using var reader = new BinaryReader(stream);
 
@@ -139,12 +139,12 @@ public class StringEntryTests
         // Arrange
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         const uint expectedKey = 0xABCDEF00u;
 
         writer.Write(expectedKey);
         writer.Write((byte)0); // Empty string
-        
+
         stream.Position = 0;
         using var reader = new BinaryReader(stream);
 
@@ -169,10 +169,10 @@ public class StringEntryTests
         // Arrange
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         writer.Write(0x12345678u);
         writer.Write((byte)10); // Claims 10 bytes but we won't write them
-        
+
         stream.Position = 0;
         using var reader = new BinaryReader(stream);
 
@@ -186,7 +186,7 @@ public class StringEntryTests
         // Arrange
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream, Encoding.Unicode);
-        
+
         const uint expectedKey = 0x12345678u;
         const string expectedValue = "Unicode Test 🎮";
         var expectedBytes = Encoding.Unicode.GetBytes(expectedValue);
@@ -194,7 +194,7 @@ public class StringEntryTests
         writer.Write(expectedKey);
         writer.Write((byte)expectedBytes.Length);
         writer.Write(expectedBytes);
-        
+
         stream.Position = 0;
         using var reader = new BinaryReader(stream, Encoding.Unicode);
 
@@ -303,13 +303,13 @@ public class StringEntryTests
         // Arrange
         var originalEntry = new StringEntry(key, value);
         using var stream = new MemoryStream();
-        
+
         // Act - Write
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true))
         {
             originalEntry.WriteTo(writer);
         }
-        
+
         // Act - Read
         stream.Position = 0;
         using var reader = new BinaryReader(stream);

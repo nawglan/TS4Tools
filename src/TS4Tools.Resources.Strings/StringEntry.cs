@@ -52,7 +52,7 @@ public readonly record struct StringEntry(uint Key, string Value)
 
         var key = reader.ReadUInt32();
         var length = reader.ReadByte();
-        
+
         if (length == 0)
         {
             return new StringEntry(key, string.Empty);

@@ -28,8 +28,8 @@ public sealed class StringTableResourceFactory : ResourceFactoryBase<StringTable
     /// <exception cref="ArgumentException">Thrown when the stream contains invalid STBL data</exception>
     /// <exception cref="NotSupportedException">Thrown when the API version is unsupported</exception>
     public override async Task<StringTableResource> CreateResourceAsync(
-        int apiVersion, 
-        Stream? stream = null, 
+        int apiVersion,
+        Stream? stream = null,
         CancellationToken cancellationToken = default)
     {
         ValidateApiVersion(apiVersion);
@@ -60,7 +60,7 @@ public sealed class StringTableResourceFactory : ResourceFactoryBase<StringTable
     {
         ValidateApiVersion(apiVersion);
         cancellationToken.ThrowIfCancellationRequested();
-        
+
         var resource = new StringTableResource(apiVersion);
         return Task.FromResult(resource);
     }
@@ -83,12 +83,12 @@ public sealed class StringTableResourceFactory : ResourceFactoryBase<StringTable
         cancellationToken.ThrowIfCancellationRequested();
 
         var resource = new StringTableResource(apiVersion);
-        
+
         foreach (var kvp in strings)
         {
             resource.SetString(kvp.Key, kvp.Value);
         }
-        
+
         return Task.FromResult(resource);
     }
 

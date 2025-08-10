@@ -140,7 +140,7 @@ public class TextResourceFactoryTests
         // Assert
         resource.Should().NotBeNull();
         resource.Should().BeOfType<TextResource>();
-        
+
         // Verify the resource implements ITextResource
         var textResource = resource.Should().BeAssignableTo<ITextResource>().Subject;
         textResource.Content.Should().BeEmpty(); // New resource should have empty content
@@ -192,7 +192,7 @@ public class TextResourceFactoryTests
         // Assert
         resource.Should().NotBeNull();
         resource.Should().BeOfType<TextResource>();
-        
+
         // Verify content was loaded
         var textResource = resource.Should().BeAssignableTo<ITextResource>().Subject;
         textResource.Content.Should().Be(content);
@@ -214,7 +214,7 @@ public class TextResourceFactoryTests
         // Assert
         resource.Should().NotBeNull();
         resource.Should().BeOfType<TextResource>();
-        
+
         // Verify the resource implements ITextResource and is empty
         var textResource = resource.Should().BeAssignableTo<ITextResource>().Subject;
         textResource.Content.Should().BeEmpty();
@@ -247,7 +247,7 @@ public class TextResourceFactoryTests
         // Assert
         // Verify we loaded a reasonable number of types (should be 80+ based on the resource file)
         supportedTypes.Should().HaveCountGreaterThan(10);
-        
+
         // Verify some specific types that should definitely be included
         var expectedTypes = new uint[]
         {
@@ -261,7 +261,7 @@ public class TextResourceFactoryTests
 
         foreach (var expectedType in expectedTypes)
         {
-            supportedTypes.Should().Contain(expectedType, 
+            supportedTypes.Should().Contain(expectedType,
                 $"because 0x{expectedType:X8} should be a supported text resource type");
         }
     }
@@ -277,7 +277,7 @@ public class TextResourceFactoryTests
 
         // Assert
         supportedTypes.Should().BeAssignableTo<IReadOnlySet<string>>();
-        
+
         // Verify we can't modify the collection by trying to cast to mutable type
         supportedTypes.Should().NotBeAssignableTo<HashSet<string>>();
     }

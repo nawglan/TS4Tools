@@ -25,10 +25,10 @@ public sealed class ImageResourceTests : IDisposable
 
     private ImageResource CreateResource(byte[]? data = null, int apiVersion = 1)
     {
-        var resource = data is null 
+        var resource = data is null
             ? new ImageResource(apiVersion, _logger)
             : new ImageResource(data, apiVersion, _logger);
-        
+
         _disposables.Add(resource);
         return resource;
     }
@@ -203,7 +203,7 @@ public sealed class ImageResourceTests : IDisposable
         // Assert
         stream.Should().NotBeNull();
         stream.Length.Should().Be(pngData.Length);
-        
+
         var streamData = new byte[stream.Length];
         var bytesRead = stream.Read(streamData, 0, streamData.Length);
         bytesRead.Should().Be(streamData.Length);
@@ -266,7 +266,7 @@ public sealed class ImageResourceTests : IDisposable
             ImageFormat.BMP => TestImageDataGenerator.CreateTestBmp(),
             _ => throw new ArgumentException($"Unsupported format: {format}")
         };
-        
+
         var resource = CreateResource(originalData);
 
         // Act
@@ -289,7 +289,7 @@ public sealed class ImageResourceTests : IDisposable
         // Assert
         jpegData.Should().NotEqual(pngData);
         jpegData.Length.Should().BeGreaterThan(0);
-        
+
         // Verify it's actually JPEG by checking magic number
         jpegData[0].Should().Be(0xFF);
         jpegData[1].Should().Be(0xD8);
@@ -334,7 +334,7 @@ public sealed class ImageResourceTests : IDisposable
         image.Should().NotBeNull();
         image.Width.Should().Be(4);
         image.Height.Should().Be(4);
-        
+
         // Verify known pixel colors
         image[0, 0].Should().Be(new Rgba32(255, 0, 0, 255)); // Red
         image[3, 0].Should().Be(new Rgba32(0, 128, 0, 255)); // Green
@@ -348,7 +348,7 @@ public sealed class ImageResourceTests : IDisposable
         // Arrange
         var resource = CreateResource();
         using var image = new Image<Rgba32>(8, 8);
-        
+
         // Set specific pixel pattern
         image[0, 0] = Color.Red;
         image[7, 7] = Color.Blue;

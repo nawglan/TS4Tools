@@ -10,7 +10,7 @@ public sealed class StringEntryBuilder
 {
     private uint _key = 0x12345678u;
     private string _value = "Default Test String";
-    
+
     /// <summary>
     /// Sets the key for the string entry.
     /// </summary>
@@ -21,7 +21,7 @@ public sealed class StringEntryBuilder
         _key = key;
         return this;
     }
-    
+
     /// <summary>
     /// Sets the value for the string entry.
     /// </summary>
@@ -32,7 +32,7 @@ public sealed class StringEntryBuilder
         _value = value;
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string entry with an empty value.
     /// </summary>
@@ -42,7 +42,7 @@ public sealed class StringEntryBuilder
         _value = string.Empty;
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string entry with Unicode content.
     /// </summary>
@@ -52,7 +52,7 @@ public sealed class StringEntryBuilder
         _value = "Unicode: 测试 🎮 Ñoël";
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string entry with special characters.
     /// </summary>
@@ -62,7 +62,7 @@ public sealed class StringEntryBuilder
         _value = "Special: \n\t\"'\\";
         return this;
     }
-    
+
     /// <summary>
     /// Creates a string entry with a large value for testing.
     /// </summary>
@@ -73,7 +73,7 @@ public sealed class StringEntryBuilder
         _value = new string('A', size);
         return this;
     }
-    
+
     /// <summary>
     /// Builds the configured StringEntry.
     /// </summary>
@@ -82,13 +82,13 @@ public sealed class StringEntryBuilder
     {
         return new StringEntry(_key, _value);
     }
-    
+
     /// <summary>
     /// Creates a string entry builder with default test values.
     /// </summary>
     /// <returns>A new StringEntryBuilder.</returns>
     public static StringEntryBuilder Default => new();
-    
+
     /// <summary>
     /// Creates a string entry builder with common test data.
     /// </summary>

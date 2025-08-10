@@ -77,7 +77,7 @@ public class ViewModelBaseTests
         // Arrange
         var viewModel = new TestViewModel();
         viewModel.TestProperty = "Initial Value";
-        
+
         var propertyChangedRaised = false;
         viewModel.PropertyChanged += (sender, e) => propertyChangedRaised = true;
 

@@ -39,7 +39,7 @@ public static class ServiceCollectionExtensions
         // Register resource factories
         services.AddSingleton<IResourceFactory, GeometryResourceFactory>();
         services.AddSingleton<IResourceFactory, MeshResourceFactory>();
-        
+
         // Register typed factories
         services.AddSingleton<GeometryResourceFactory>();
         services.AddSingleton<MeshResourceFactory>();

@@ -46,9 +46,9 @@ public sealed class PortableConfiguration : IDisposable
     {
         var appName = applicationName ?? GetExecutableName();
         var configDir = configurationDirectory ?? GetDefaultConfigurationDirectory();
-        
+
         _configurationPath = Path.Combine(configDir, $"{appName}.config.json");
-        
+
         _jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -56,7 +56,7 @@ public sealed class PortableConfiguration : IDisposable
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip
         };
-        
+
         _settings = LoadSettings();
     }
 
@@ -70,7 +70,7 @@ public sealed class PortableConfiguration : IDisposable
     public T GetValue<T>(string key, T defaultValue = default!)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        
+
         lock (_lock)
         {
             if (_settings.TryGetValue(key, out var value))
@@ -81,12 +81,12 @@ public sealed class PortableConfiguration : IDisposable
                     {
                         return jsonElement.Deserialize<T>(_jsonOptions) ?? defaultValue;
                     }
-                    
+
                     if (value is T directValue)
                     {
                         return directValue;
                     }
-                    
+
                     // Try to convert the value
                     var convertedValue = Convert.ChangeType(value, typeof(T));
                     return convertedValue is T result ? result : defaultValue;
@@ -96,7 +96,7 @@ public sealed class PortableConfiguration : IDisposable
                     return defaultValue;
                 }
             }
-            
+
             return defaultValue;
         }
     }
@@ -110,7 +110,7 @@ public sealed class PortableConfiguration : IDisposable
     public void SetValue<T>(string key, T value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        
+
         lock (_lock)
         {
             _settings[key] = value;
@@ -125,7 +125,7 @@ public sealed class PortableConfiguration : IDisposable
     public bool RemoveValue(string key)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        
+
         lock (_lock)
         {
             return _settings.Remove(key);
@@ -140,7 +140,7 @@ public sealed class PortableConfiguration : IDisposable
     public bool ContainsKey(string key)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        
+
         lock (_lock)
         {
             return _settings.ContainsKey(key);
@@ -212,7 +212,7 @@ public sealed class PortableConfiguration : IDisposable
             if (File.Exists(_configurationPath))
             {
                 var json = File.ReadAllText(_configurationPath);
-                return JsonSerializer.Deserialize<Dictionary<string, object?>>(json, _jsonOptions) 
+                return JsonSerializer.Deserialize<Dictionary<string, object?>>(json, _jsonOptions)
                        ?? [];
             }
         }
@@ -220,7 +220,7 @@ public sealed class PortableConfiguration : IDisposable
         {
             throw new ConfigurationException($"Failed to load configuration from '{_configurationPath}'", ex);
         }
-        
+
         return new Dictionary<string, object?>();
     }
 
@@ -256,7 +256,7 @@ public sealed class ConfigurationException : Exception
     /// Initializes a new instance of the <see cref="ConfigurationException"/> class.
     /// </summary>
     public ConfigurationException() { }
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ConfigurationException"/> class.
     /// </summary>
@@ -285,7 +285,7 @@ public static class ConfigurationExtensions
     public static PortableConfiguration AsPortable(this IConfiguration configuration, string? applicationName = null)
     {
         var portable = new PortableConfiguration(applicationName);
-        
+
         // Copy existing configuration values
         foreach (var section in configuration.AsEnumerable())
         {
@@ -294,7 +294,7 @@ public static class ConfigurationExtensions
                 portable.SetValue(section.Key, section.Value);
             }
         }
-        
+
         return portable;
     }
 }

@@ -89,7 +89,7 @@ public class ServiceCollectionExtensionsTests
         var services = new ServiceCollection();
         var configuration = Substitute.For<IConfiguration>();
         var configSection = Substitute.For<IConfigurationSection>();
-        
+
         configuration.GetSection("ResourceManager").Returns(configSection);
 
         // Act

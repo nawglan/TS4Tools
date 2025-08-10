@@ -27,11 +27,11 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         result.Should().BeSameAs(services); // Should return same collection for chaining
-        
+
         // Verify service registration
         var serviceProvider = services.BuildServiceProvider();
         var factories = serviceProvider.GetServices<IResourceFactory<ITextResource>>().ToList();
-        
+
         factories.Should().ContainSingle(f => f is TextResourceFactory);
     }
 
@@ -64,7 +64,7 @@ public class ServiceCollectionExtensionsTests
         // Assert
         var serviceProvider = services.BuildServiceProvider();
         var factories = serviceProvider.GetServices<IResourceFactory<ITextResource>>().ToList();
-        
+
         // Should have two instances (one per registration)
         var textFactories = factories.Where(f => f is TextResourceFactory).ToList();
         textFactories.Should().HaveCount(2);
@@ -110,11 +110,11 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         // Original service should still be available
         var testService = serviceProvider.GetService<ITestService>();
         testService.Should().NotBeNull().And.BeOfType<TestService>();
-        
+
         // Text resource factory should also be available
         var textFactory = serviceProvider.GetServices<IResourceFactory<ITextResource>>()
             .OfType<TextResourceFactory>()

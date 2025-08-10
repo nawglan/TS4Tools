@@ -128,7 +128,7 @@ public class ResourceFactoryBaseTests
         result.Should().NotBeNull();
         result!.ToArray().Should().BeEquivalentTo(new byte[] { 0x03, 0x04 }); // Should copy from current position
         result.Position.Should().Be(0); // Result stream should be at start
-        
+
         // Source stream should not be affected
         sourceStream.Position.Should().Be(4); // Should be at end after copying
     }
@@ -150,7 +150,7 @@ public class ResourceFactoryBaseTests
 
         // Expose protected methods for testing
         public void TestValidateApiVersion(int apiVersion) => ValidateApiVersion(apiVersion);
-        
+
         public static async Task<MemoryStream?> TestCreateMemoryStreamAsync(Stream? sourceStream, CancellationToken cancellationToken = default)
             => await CreateMemoryStreamAsync(sourceStream, cancellationToken);
     }

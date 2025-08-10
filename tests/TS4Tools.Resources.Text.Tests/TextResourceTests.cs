@@ -79,7 +79,7 @@ public class TextResourceTests
         var resource = CreateTextResource();
         var newContent = "Updated content";
         var propertyChangedRaised = false;
-        
+
         resource.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(resource.Content))
@@ -104,7 +104,7 @@ public class TextResourceTests
         var resource = CreateTextResource();
         var content = "Same content";
         resource.Content = content;
-        
+
         var propertyChangedRaised = false;
         resource.PropertyChanged += (_, _) => propertyChangedRaised = true;
 
@@ -433,7 +433,7 @@ public class TextResourceTests
         // Arrange
         var resource = CreateTextResource();
         resource.Content = "<?xml version=\"1.0\"?><root></root>";
-        
+
         // Access properties to cache them
         var originalIsXml = resource.IsXml;
         var originalLineEndings = resource.LineEndings;

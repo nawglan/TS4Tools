@@ -28,47 +28,47 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
     /// Size of a resource index entry in bytes
     /// </summary>
     public const int EntrySize = 32; // 8 fields * 4 bytes each
-    
+
     private const int ApiVersion = 1;
     private IResourceKey _resourceKey;
-    
+
     /// <inheritdoc />
     public int RequestedApiVersion => ApiVersion;
-    
+
     /// <inheritdoc />
     public int RecommendedApiVersion => ApiVersion;
-    
+
     /// <inheritdoc />
     public IReadOnlyList<string> ContentFields { get; } = new[]
     {
         "ResourceType", "ResourceGroup", "Instance", "ChunkOffset",
         "FileSize", "MemorySize", "Compressed", "Unknown2"
     };
-    
+
     /// <inheritdoc />
     public uint ResourceType { get; set; }
-    
+
     /// <inheritdoc />
     public uint ResourceGroup { get; set; }
-    
+
     /// <inheritdoc />
     public ulong Instance { get; set; }
-    
+
     /// <inheritdoc />
     public uint ChunkOffset { get; set; }
-    
+
     /// <inheritdoc />
     public uint FileSize { get; set; }
-    
+
     /// <inheritdoc />
     public uint MemorySize { get; set; }
-    
+
     /// <inheritdoc />
     public ushort Compressed { get; set; }
-    
+
     /// <inheritdoc />
     public ushort Unknown2 { get; set; } = 1;
-    
+
     /// <inheritdoc />
     public Stream Stream
     {
@@ -77,7 +77,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
             // Create a MemoryStream containing the index entry binary data
             // This matches the legacy s4pi behavior where Stream provides access to entry metadata
             var buffer = new byte[EntrySize];
-            
+
             // Pack the entry data in DBPF format (little endian)
             BitConverter.TryWriteBytes(buffer.AsSpan(0, 4), ResourceType);
             BitConverter.TryWriteBytes(buffer.AsSpan(4, 4), ResourceGroup);
@@ -88,22 +88,22 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
             BitConverter.TryWriteBytes(buffer.AsSpan(24, 4), MemorySize);
             BitConverter.TryWriteBytes(buffer.AsSpan(28, 2), Compressed);
             BitConverter.TryWriteBytes(buffer.AsSpan(30, 2), Unknown2);
-            
+
             return new MemoryStream(buffer);
         }
     }
-    
+
     /// <inheritdoc />
     public bool IsDeleted { get; set; }
-    
+
     /// <inheritdoc />
     public IResourceKey ResourceKey => _resourceKey;
-    
+
     /// <summary>
     /// Check if the resource is compressed
     /// </summary>
     public bool IsCompressed => Compressed == 0xFFFF;
-    
+
     /// <inheritdoc />
     public TypedValue this[int index]
     {
@@ -121,7 +121,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         };
         set => throw new NotSupportedException("Resource index entry fields are read-only");
     }
-    
+
     /// <inheritdoc />
     public TypedValue this[string name]
     {
@@ -139,7 +139,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         };
         set => throw new NotSupportedException("Resource index entry fields are read-only");
     }
-    
+
     /// <summary>
     /// Creates a new resource index entry
     /// </summary>
@@ -158,7 +158,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         ushort unknown2 = 1)
     {
         ArgumentNullException.ThrowIfNull(resourceKey);
-        
+
         _resourceKey = resourceKey;
         ResourceType = resourceKey.ResourceType;
         ResourceGroup = resourceKey.ResourceGroup;
@@ -169,7 +169,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         Compressed = compressed;
         Unknown2 = unknown2;
     }
-    
+
     /// <summary>
     /// Creates a resource index entry from raw values
     /// </summary>
@@ -199,10 +199,10 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         MemorySize = memorySize;
         Compressed = compressed;
         Unknown2 = unknown2;
-        
+
         _resourceKey = new ResourceKey(resourceType, resourceGroup, instance);
     }
-    
+
     /// <summary>
     /// Read a resource index entry from a binary reader
     /// </summary>
@@ -212,7 +212,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
     public static ResourceIndexEntry Read(BinaryReader reader, uint indexType)
     {
         ArgumentNullException.ThrowIfNull(reader);
-        
+
         var resourceType = reader.ReadUInt32();
         var resourceGroup = reader.ReadUInt32();
         var instanceHigh = reader.ReadUInt32();
@@ -222,11 +222,11 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         var fileSize = reader.ReadUInt32();
         var memorySize = reader.ReadUInt32();
         var compressedAndUnknown = reader.ReadUInt32();
-        
+
         // Split the compressed and unknown2 fields
         var compressed = (ushort)(compressedAndUnknown & 0xFFFF);
         var unknown2 = (ushort)((compressedAndUnknown >> 16) & 0xFFFF);
-        
+
         return new ResourceIndexEntry(
             resourceType,
             resourceGroup,
@@ -237,7 +237,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
             compressed,
             unknown2);
     }
-    
+
     /// <summary>
     /// Write the resource index entry to a binary writer
     /// </summary>
@@ -245,7 +245,7 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
     public void Write(BinaryWriter writer)
     {
         ArgumentNullException.ThrowIfNull(writer);
-        
+
         writer.Write(ResourceType);
         writer.Write(ResourceGroup);
         writer.Write((uint)(Instance >> 32)); // High 32 bits
@@ -253,50 +253,50 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         writer.Write(ChunkOffset);
         writer.Write(FileSize);
         writer.Write(MemorySize);
-        
+
         // Combine compressed and unknown2 into a single uint
         var compressedAndUnknown = (uint)((Unknown2 << 16) | Compressed);
         writer.Write(compressedAndUnknown);
     }
-    
+
     /// <inheritdoc />
     public bool Equals(IResourceKey? x, IResourceKey? y)
     {
         if (ReferenceEquals(x, y)) return true;
         if (x is null || y is null) return false;
-        
+
         return x.ResourceType == y.ResourceType &&
                x.ResourceGroup == y.ResourceGroup &&
                x.Instance == y.Instance;
     }
-    
+
     /// <inheritdoc />
     public int GetHashCode(IResourceKey obj)
     {
         ArgumentNullException.ThrowIfNull(obj);
         return HashCode.Combine(obj.ResourceType, obj.ResourceGroup, obj.Instance);
     }
-    
+
     /// <inheritdoc />
     public bool Equals(IResourceKey? other)
     {
         return Equals(this, other);
     }
-    
+
     /// <inheritdoc />
     public int CompareTo(IResourceKey? other)
     {
         if (other is null) return 1;
-        
+
         var typeComparison = ResourceType.CompareTo(other.ResourceType);
         if (typeComparison != 0) return typeComparison;
-        
+
         var groupComparison = ResourceGroup.CompareTo(other.ResourceGroup);
         if (groupComparison != 0) return groupComparison;
-        
+
         return Instance.CompareTo(other.Instance);
     }
-    
+
     /// <inheritdoc />
     public bool Equals(IResourceIndexEntry? other)
     {
@@ -305,31 +305,31 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
                ResourceGroup == other.ResourceGroup &&
                Instance == other.Instance;
     }
-    
+
     /// <inheritdoc />
     public override string ToString()
     {
         return $"ResourceIndexEntry: Type=0x{ResourceType:X8}, Group=0x{ResourceGroup:X8}, Instance=0x{Instance:X16}, Size={FileSize}";
     }
-    
+
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
         return obj is IResourceIndexEntry other && Equals(other);
     }
-    
+
     /// <inheritdoc />
     public override int GetHashCode()
     {
         return GetHashCode(this);
     }
-    
+
     /// <inheritdoc />
     public static bool operator ==(ResourceIndexEntry? left, ResourceIndexEntry? right)
     {
         return EqualityComparer<ResourceIndexEntry>.Default.Equals(left, right);
     }
-    
+
     /// <inheritdoc />
     public static bool operator !=(ResourceIndexEntry? left, ResourceIndexEntry? right)
     {

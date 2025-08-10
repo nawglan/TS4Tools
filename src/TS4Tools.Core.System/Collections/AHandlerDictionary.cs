@@ -51,9 +51,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// and uses the default equality comparer for the key type.
     /// </summary>
     /// <param name="handler">The <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerDictionary{TKey, TValue}"/> changes.</param>
-    protected AHandlerDictionary(EventHandler? handler) : base() 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler) : base()
+    {
+        this.handler = handler;
     }
 
     /// <summary>
@@ -66,9 +66,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <param name="dictionary">The <see cref="IDictionary{TKey,TValue}"/> whose elements are copied to the new <see cref="AHandlerDictionary{TKey, TValue}"/>.</param>
     /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is null.</exception>
     /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
-    protected AHandlerDictionary(EventHandler? handler, IDictionary<TKey, TValue> dictionary) : base(dictionary) 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler, IDictionary<TKey, TValue> dictionary) : base(dictionary)
+    {
+        this.handler = handler;
     }
 
     /// <summary>
@@ -80,9 +80,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// </summary>
     /// <param name="handler">The <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerDictionary{TKey, TValue}"/> changes.</param>
     /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys, or null to use the default <see cref="EqualityComparer{T}"/> for the type of the key.</param>
-    protected AHandlerDictionary(EventHandler? handler, IEqualityComparer<TKey>? comparer) : base(comparer) 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler, IEqualityComparer<TKey>? comparer) : base(comparer)
+    {
+        this.handler = handler;
     }
 
     /// <summary>
@@ -95,9 +95,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <param name="handler">The <see cref="EventHandler"/> delegate to invoke if the <see cref="AHandlerDictionary{TKey, TValue}"/> changes.</param>
     /// <param name="capacity">The initial number of elements that the <see cref="AHandlerDictionary{TKey, TValue}"/> can contain.</param>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
-    protected AHandlerDictionary(EventHandler? handler, int capacity) : base(capacity) 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler, int capacity) : base(capacity)
+    {
+        this.handler = handler;
     }
 
     /// <summary>
@@ -111,9 +111,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys, or null to use the default <see cref="EqualityComparer{T}"/> for the type of the key.</param>
     /// <exception cref="ArgumentNullException"><paramref name="dictionary"/> is null.</exception>
     /// <exception cref="ArgumentException"><paramref name="dictionary"/> contains one or more duplicate keys.</exception>
-    protected AHandlerDictionary(EventHandler? handler, IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer) : base(dictionary, comparer) 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler, IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey>? comparer) : base(dictionary, comparer)
+    {
+        this.handler = handler;
     }
 
     /// <summary>
@@ -127,9 +127,9 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <param name="capacity">The initial number of elements that the <see cref="AHandlerDictionary{TKey, TValue}"/> can contain.</param>
     /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys, or null to use the default <see cref="EqualityComparer{T}"/> for the type of the key.</param>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> is less than 0.</exception>
-    protected AHandlerDictionary(EventHandler? handler, int capacity, IEqualityComparer<TKey>? comparer) : base(capacity, comparer) 
-    { 
-        this.handler = handler; 
+    protected AHandlerDictionary(EventHandler? handler, int capacity, IEqualityComparer<TKey>? comparer) : base(capacity, comparer)
+    {
+        this.handler = handler;
     }
     #endregion
 
@@ -145,17 +145,17 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// </returns>
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     /// <exception cref="KeyNotFoundException">The property is retrieved and <paramref name="key"/> does not exist in the collection.</exception>
-    public new virtual TValue this[TKey key] 
-    { 
-        get => base[key]; 
-        set 
-        { 
+    public new virtual TValue this[TKey key]
+    {
+        get => base[key];
+        set
+        {
             if (TryGetValue(key, out var currentValue) && currentValue.Equals(value))
                 return;
-                
-            base[key] = value; 
-            OnDictionaryChanged(); 
-        } 
+
+            base[key] = value;
+            OnDictionaryChanged();
+        }
     }
 
     /// <summary>
@@ -165,21 +165,21 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// <param name="value">The value of the element to add. The value can be null for reference types.</param>
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
     /// <exception cref="ArgumentException">An element with the same key already exists in the <see cref="AHandlerDictionary{TKey,TValue}"/>.</exception>
-    public new virtual void Add(TKey key, TValue value) 
-    { 
-        base.Add(key, value); 
-        OnDictionaryChanged(); 
+    public new virtual void Add(TKey key, TValue value)
+    {
+        base.Add(key, value);
+        OnDictionaryChanged();
     }
 
     /// <summary>
     /// Removes all keys and values from the <see cref="AHandlerDictionary{TKey,TValue}"/>.
     /// </summary>
-    public new virtual void Clear() 
-    { 
+    public new virtual void Clear()
+    {
         if (Count == 0) return;
-        
-        base.Clear(); 
-        OnDictionaryChanged(); 
+
+        base.Clear();
+        OnDictionaryChanged();
     }
 
     /// <summary>
@@ -190,20 +190,20 @@ public abstract class AHandlerDictionary<TKey, TValue> : Dictionary<TKey, TValue
     /// This method returns <c>false</c> if <paramref name="key"/> is not found in the <see cref="AHandlerDictionary{TKey,TValue}"/>.
     /// </returns>
     /// <exception cref="ArgumentNullException"><paramref name="key"/> is null.</exception>
-    public new virtual bool Remove(TKey key) 
-    { 
-        if (!base.Remove(key)) 
+    public new virtual bool Remove(TKey key)
+    {
+        if (!base.Remove(key))
             return false;
-            
-        OnDictionaryChanged(); 
+
+        OnDictionaryChanged();
         return true;
     }
 
     /// <summary>
     /// Invokes the dictionary change event handler.
     /// </summary>
-    protected void OnDictionaryChanged() 
-    { 
-        handler?.Invoke(this, EventArgs.Empty); 
+    protected void OnDictionaryChanged()
+    {
+        handler?.Invoke(this, EventArgs.Empty);
     }
 }

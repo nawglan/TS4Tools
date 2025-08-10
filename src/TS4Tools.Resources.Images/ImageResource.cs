@@ -167,7 +167,7 @@ public sealed class ImageResource : IResource, IDisposable
     {
         _requestedApiVersion = requestedApiVersion;
         _logger = logger;
-        
+
         LoadFromData(data);
     }
 
@@ -190,7 +190,7 @@ public sealed class ImageResource : IResource, IDisposable
         // Read all data from stream
         using var memoryStream = new MemoryStream();
         stream.CopyTo(memoryStream);
-        
+
         LoadFromData(memoryStream.ToArray());
     }
 
@@ -230,7 +230,7 @@ public sealed class ImageResource : IResource, IDisposable
             ThrowIfDisposed();
             if (value is null)
                 throw new ArgumentNullException(nameof(value));
-            
+
             LoadFromData(value);
         }
     }
@@ -314,12 +314,12 @@ public sealed class ImageResource : IResource, IDisposable
     {
         if (stream is null)
             throw new ArgumentNullException(nameof(stream));
-        
+
         ThrowIfDisposed();
 
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
-        
+
         LoadFromData(memoryStream.ToArray());
     }
 
@@ -350,22 +350,22 @@ public sealed class ImageResource : IResource, IDisposable
             case ImageFormat.PNG:
                 await image.SaveAsPngAsync(outputStream);
                 break;
-            
+
             case ImageFormat.JPEG:
                 await image.SaveAsJpegAsync(outputStream);
                 break;
-            
+
             case ImageFormat.BMP:
                 await image.SaveAsBmpAsync(outputStream);
                 break;
-                
+
             case ImageFormat.DDS:
                 {
                     // Cast to the specific pixel type - using Rgba32 as default
                     using var rgba32Image = image.CloneAs<Rgba32>();
                     return await ConvertToDdsAsync(rgba32Image);
                 }
-                
+
             default:
                 throw new NotSupportedException($"Conversion to {targetFormat} is not supported");
         }
@@ -407,11 +407,11 @@ public sealed class ImageResource : IResource, IDisposable
     {
         if (image is null)
             throw new ArgumentNullException(nameof(image));
-        
+
         ThrowIfDisposed();
 
         using var stream = new MemoryStream();
-        
+
         switch (format)
         {
             case ImageFormat.PNG:
@@ -462,14 +462,14 @@ public sealed class ImageResource : IResource, IDisposable
             return new ImageMetadata { Format = ImageFormat.Unknown };
 
         // Check DDS magic number
-        if (data.Length >= 128 && 
+        if (data.Length >= 128 &&
             data[0] == 0x44 && data[1] == 0x44 && data[2] == 0x53 && data[3] == 0x20) // "DDS "
         {
             return DetectDdsMetadata(data);
         }
 
         // Check PNG magic number
-        if (data.Length >= 8 && 
+        if (data.Length >= 8 &&
             data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 &&
             data[4] == 0x0D && data[5] == 0x0A && data[6] == 0x1A && data[7] == 0x0A)
         {
@@ -635,16 +635,16 @@ public sealed class ImageResource : IResource, IDisposable
         {
             using var inputStream = new MemoryStream(_imageData);
             var decoder = new BcDecoder();
-            
+
             // Extract DDS format information from metadata or assume BC3 (DXT5) for now
             // In a real implementation, you would parse the DDS header to determine the format
             var format = CompressionFormat.Bc3; // Most common in Sims 4
             var width = (int)_metadata.Width;
             var height = (int)_metadata.Height;
-            
+
             // Use DecodeRaw method with correct parameters
             var decodedData = await Task.Run(() => decoder.DecodeRaw(inputStream, width, height, format));
-            
+
             // Convert ColorRgba32 array to byte array
             var result = new byte[decodedData.Length * 4];
             for (int i = 0; i < decodedData.Length; i++)
@@ -655,7 +655,7 @@ public sealed class ImageResource : IResource, IDisposable
                 result[i * 4 + 2] = color.b;
                 result[i * 4 + 3] = color.a;
             }
-            
+
             return result;
         }
         catch (Exception ex)
@@ -670,20 +670,20 @@ public sealed class ImageResource : IResource, IDisposable
         {
             using var outputStream = new MemoryStream();
             var encoder = new BcEncoder();
-            
+
             // Configure encoder for BC3 (DXT5) which is commonly used in Sims 4
             encoder.OutputOptions.Format = CompressionFormat.Bc3;
             encoder.OutputOptions.FileFormat = OutputFileFormat.Dds;
             encoder.OutputOptions.GenerateMipMaps = _metadata.MipMapCount > 1;
-            
+
             // Convert ImageSharp Image to the format expected by BCnEncoder
             var width = image.Width;
             var height = image.Height;
-            
+
             // Extract pixel data from ImageSharp image without using GetPixelRowSpan
             var pixelData = new ColorRgba32[width * height];
             using var rgba32Image = image.CloneAs<Rgba32>();
-            
+
             // Copy pixel data using safe indexer access
             for (int y = 0; y < height; y++)
             {
@@ -693,13 +693,13 @@ public sealed class ImageResource : IResource, IDisposable
                     pixelData[y * width + x] = new ColorRgba32(pixel.R, pixel.G, pixel.B, pixel.A);
                 }
             }
-            
+
             // Create Memory2D from pixel data using the correct CommunityToolkit API
             var memory2D = pixelData.AsMemory().AsMemory2D(height, width);
-            
+
             // Encode to DDS
             await Task.Run(() => encoder.EncodeToStream(memory2D, outputStream));
-            
+
             return outputStream.ToArray();
         }
         catch (Exception ex)

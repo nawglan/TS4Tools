@@ -236,7 +236,7 @@ public sealed class AnimationResourceTests : IDisposable
         };
         var track1 = new AnimationTrack("Bone1", "Position.X", keyframes);
         var track2 = new AnimationTrack("Bone2", "Position.Y", keyframes);
-        
+
         _animationResource.AddTrack(track1);
         _animationResource.AddTrack(track2);
 
@@ -341,7 +341,7 @@ public sealed class AnimationResourceTests : IDisposable
         // Arrange
         var eventFired = false;
         _animationResource.ResourceChanged += (_, _) => eventFired = true;
-        
+
         var keyframes = new List<AnimationKeyframe>
         {
             new(0.0f, 1.0f, InterpolationType.Linear)

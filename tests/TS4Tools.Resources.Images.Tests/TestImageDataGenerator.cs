@@ -12,13 +12,13 @@ public static class TestImageDataGenerator
     public static byte[] CreateTestPng()
     {
         using var image = new Image<Rgba32>(4, 4);
-        
+
         // Create a simple pattern: red, green, blue, white corners
         image[0, 0] = Color.Red;
         image[3, 0] = Color.Green;
         image[0, 3] = Color.Blue;
         image[3, 3] = Color.White;
-        
+
         using var stream = new MemoryStream();
         image.SaveAsPng(stream);
         return stream.ToArray();
@@ -31,7 +31,7 @@ public static class TestImageDataGenerator
     public static byte[] CreateTestJpeg()
     {
         using var image = new Image<Rgba32>(4, 4);
-        
+
         // Create a gradient pattern
         for (int x = 0; x < 4; x++)
         {
@@ -41,7 +41,7 @@ public static class TestImageDataGenerator
                 image[x, y] = new Rgba32(intensity, intensity, intensity, 255);
             }
         }
-        
+
         using var stream = new MemoryStream();
         image.SaveAsJpeg(stream);
         return stream.ToArray();
@@ -54,7 +54,7 @@ public static class TestImageDataGenerator
     public static byte[] CreateTestBmp()
     {
         using var image = new Image<Rgba32>(4, 4);
-        
+
         // Create a checkerboard pattern
         for (int x = 0; x < 4; x++)
         {
@@ -64,7 +64,7 @@ public static class TestImageDataGenerator
                 image[x, y] = isBlack ? Color.Black : Color.White;
             }
         }
-        
+
         using var stream = new MemoryStream();
         image.SaveAsBmp(stream);
         return stream.ToArray();
@@ -80,7 +80,7 @@ public static class TestImageDataGenerator
     public static byte[] CreateTestDdsHeader(uint width = 4, uint height = 4, DdsFourCC fourCC = DdsFourCC.DXT5)
     {
         var header = DdsHeader.CreateForCompressed(width, height, fourCC, width * height);
-        
+
         using var stream = new MemoryStream();
         stream.WriteDdsHeader(header);
         return stream.ToArray();

@@ -133,7 +133,7 @@ public sealed class ResourceIdentifierTests
 
         // Assert
         identifier.Should().NotBeNull();
-        
+
         if (tginString.Contains("-N:", StringComparison.OrdinalIgnoreCase))
         {
             identifier.Name.Should().NotBeNull();

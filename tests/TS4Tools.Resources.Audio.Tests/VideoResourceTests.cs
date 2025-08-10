@@ -217,7 +217,7 @@ public sealed class VideoResourceTests
         var originalData = new byte[] { 0x00, 0x01, 0x02, 0x03 };
         var newData = new byte[] { 0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6F, 0x6D };
         var resource = new VideoResource(originalData, VideoFormat.Unknown, 1, _logger);
-        
+
         var eventRaised = false;
         resource.ResourceChanged += (_, _) => eventRaised = true;
 

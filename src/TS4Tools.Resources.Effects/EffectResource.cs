@@ -28,13 +28,13 @@ namespace TS4Tools.Resources.Effects;
 public class EffectResource : IEffectResource
 {
     private static readonly byte[] MagicBytes = [0x45, 0x46, 0x46, 0x58]; // "EFFX"
-    
+
     private readonly List<EffectParameter> _parameters = [];
     private readonly List<EffectTexture> _textures = [];
-    private readonly List<string> _contentFields = 
+    private readonly List<string> _contentFields =
     [
         "EffectType",
-        "EffectName", 
+        "EffectName",
         "BlendMode",
         "IsEnabled",
         "Duration",
@@ -42,7 +42,7 @@ public class EffectResource : IEffectResource
         "Parameters",
         "Textures"
     ];
-    
+
     private MemoryStream? _stream;
     private bool _disposed;
 
@@ -105,7 +105,7 @@ public class EffectResource : IEffectResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(EffectResource));
-                
+
             _stream ??= new MemoryStream();
             return _stream;
         }
@@ -118,7 +118,7 @@ public class EffectResource : IEffectResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(EffectResource));
-                
+
             using var ms = new MemoryStream();
             WriteToStream(ms);
             return ms.ToArray();
@@ -225,7 +225,7 @@ public class EffectResource : IEffectResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         return GetFieldValue(_contentFields[index]);
     }
 
@@ -249,7 +249,7 @@ public class EffectResource : IEffectResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         SetFieldValue(_contentFields[index], value);
     }
 
@@ -289,7 +289,7 @@ public class EffectResource : IEffectResource
             default:
                 throw new ArgumentException($"Field '{name}' is read-only or unknown", nameof(name));
         }
-        
+
         OnResourceChanged();
     }
 
@@ -313,7 +313,7 @@ public class EffectResource : IEffectResource
     private void ReadFromStream(Stream stream)
     {
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Handle empty stream gracefully
         if (stream.Length == 0)
         {
@@ -324,19 +324,19 @@ public class EffectResource : IEffectResource
             Textures = new List<EffectTexture>();
             return;
         }
-        
+
         // Read and validate magic bytes
         if (stream.Length < 4)
         {
             throw new InvalidDataException("Invalid effect resource format");
         }
-        
+
         var magic = reader.ReadBytes(4);
         if (!magic.SequenceEqual(MagicBytes))
         {
             throw new InvalidDataException("Invalid effect resource format");
         }
-        
+
         // Read effect data
         EffectType = (EffectType)reader.ReadInt32();
         var nameLength = reader.ReadInt32();
@@ -345,7 +345,7 @@ public class EffectResource : IEffectResource
         IsEnabled = reader.ReadBoolean();
         Duration = reader.ReadSingle();
         Priority = reader.ReadInt32();
-        
+
         // Read parameters
         var parameterCount = reader.ReadInt32();
         _parameters.Clear();
@@ -356,7 +356,7 @@ public class EffectResource : IEffectResource
             var paramValue = reader.ReadSingle();
             _parameters.Add(new EffectParameter(paramName, "float", paramValue));
         }
-        
+
         // Read textures
         var textureCount = reader.ReadInt32();
         _textures.Clear();
@@ -372,10 +372,10 @@ public class EffectResource : IEffectResource
     private void WriteToStream(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Write magic bytes
         writer.Write(MagicBytes);
-        
+
         // Write effect data
         writer.Write((int)EffectType);
         var nameBytes = System.Text.Encoding.UTF8.GetBytes(EffectName);
@@ -385,7 +385,7 @@ public class EffectResource : IEffectResource
         writer.Write(IsEnabled);
         writer.Write(Duration);
         writer.Write(Priority);
-        
+
         // Write parameters
         writer.Write(_parameters.Count);
         foreach (var param in _parameters)
@@ -395,7 +395,7 @@ public class EffectResource : IEffectResource
             writer.Write(paramNameBytes);
             writer.Write((float)param.Value);
         }
-        
+
         // Write textures
         writer.Write(_textures.Count);
         foreach (var texture in _textures)

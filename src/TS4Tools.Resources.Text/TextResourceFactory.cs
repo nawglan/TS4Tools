@@ -19,26 +19,26 @@ public class TextResourceFactory : ResourceFactoryBase<ITextResource>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="logger"/> is <c>null</c>.
     /// </exception>
-    public TextResourceFactory(ILogger<TextResourceFactory> logger) 
+    public TextResourceFactory(ILogger<TextResourceFactory> logger)
         : base(LoadSupportedResourceTypes(), priority: 50)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
-        _logger.LogDebug("TextResourceFactory initialized with {Count} supported resource types", 
+
+        _logger.LogDebug("TextResourceFactory initialized with {Count} supported resource types",
             SupportedResourceTypes.Count);
     }
 
     /// <inheritdoc />
     public override async Task<ITextResource> CreateResourceAsync(
-        int apiVersion, 
-        Stream? stream = null, 
+        int apiVersion,
+        Stream? stream = null,
         CancellationToken cancellationToken = default)
     {
         ValidateApiVersion(apiVersion);
 
         // Create a temporary resource key for the factory method
         var tempResourceKey = new Core.Package.ResourceKey(0x03B33DDF, 0x00000000, 0x123456789ABCDEF0UL);
-        
+
         // Create a simple logger for the text resource
         using var loggerFactory = Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
         var textLogger = loggerFactory.CreateLogger<TextResource>();
@@ -71,29 +71,29 @@ public class TextResourceFactory : ResourceFactoryBase<ITextResource>
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = "TS4Tools.Resources.Text.TextResourceTypes.txt";
-        
+
         using var stream = assembly.GetManifestResourceStream(resourceName);
         if (stream == null)
         {
             throw new InvalidOperationException($"Could not find embedded resource: {resourceName}");
         }
-        
+
         using var reader = new StreamReader(stream);
         var types = new List<string>();
-        
+
         string? line;
         while ((line = reader.ReadLine()) != null)
         {
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith(';'))
                 continue;
-                
+
             var parts = line.Split(' ', 2);
             if (parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0]))
             {
                 types.Add(parts[0].Trim());
             }
         }
-        
+
         return types;
     }
 

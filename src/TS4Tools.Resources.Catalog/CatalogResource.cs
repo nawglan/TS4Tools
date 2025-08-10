@@ -15,21 +15,21 @@ namespace TS4Tools.Resources.Catalog;
 public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IEquatable<CatalogResource>, INotifyPropertyChanged
 {
     #region Constants
-    
+
     /// <summary>
     /// The current version of the catalog resource format.
     /// </summary>
     public const uint CurrentVersion = 1;
-    
+
     /// <summary>
     /// The standard catalog version identifier.
     /// </summary>
     public const uint StandardCatalogVersion = 0x00000009;
-    
+
     #endregion
 
     #region Fields
-    
+
     private readonly ILogger<CatalogResource> _logger;
     private uint _version = CurrentVersion;
     private uint _catalogVersion = StandardCatalogVersion;
@@ -47,11 +47,11 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     private ushort _unknown6;
     private ulong _unknown7;
     private bool _disposed;
-    
+
     #endregion
 
     #region Constructors
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CatalogResource"/> class.
     /// </summary>
@@ -61,7 +61,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CatalogResource"/> class from stream data.
     /// </summary>
@@ -75,18 +75,18 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         ArgumentNullException.ThrowIfNull(stream);
         LoadFromStreamAsync(stream, cancellationToken).GetAwaiter().GetResult();
     }
-    
+
     #endregion
 
     #region IApiVersion Implementation
-    
+
     /// <inheritdoc />
     public int RecommendedApiVersion => 1;
-    
+
     #endregion
 
     #region IContentFields Implementation
-    
+
     /// <inheritdoc />
     public IReadOnlyList<string> ContentFields { get; } = new List<string>
     {
@@ -106,11 +106,11 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         nameof(Unknown6),
         nameof(Unknown7)
     }.AsReadOnly();
-    
+
     #endregion
 
     #region Properties
-    
+
     /// <summary>
     /// Gets or sets the version of the catalog resource format.
     /// </summary>
@@ -120,7 +120,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _version;
         set => SetProperty(ref _version, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the catalog version identifier.
     /// </summary>
@@ -130,7 +130,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _catalogVersion;
         set => SetProperty(ref _catalogVersion, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the FNV hash of the object name for localization.
     /// </summary>
@@ -140,7 +140,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _nameHash;
         set => SetProperty(ref _nameHash, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the FNV hash of the object description for localization.
     /// </summary>
@@ -150,7 +150,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _descriptionHash;
         set => SetProperty(ref _descriptionHash, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the catalog price in simoleons.
     /// </summary>
@@ -160,7 +160,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _price;
         set => SetProperty(ref _price, value);
     }
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly object flags or category).
     /// </summary>
@@ -170,7 +170,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown1;
         set => SetProperty(ref _unknown1, value);
     }
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly object properties).
     /// </summary>
@@ -180,7 +180,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown2;
         set => SetProperty(ref _unknown2, value);
     }
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly thumbnail or icon reference).
     /// </summary>
@@ -190,13 +190,13 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown3;
         set => SetProperty(ref _unknown3, value);
     }
-    
+
     /// <summary>
     /// Gets the list of style-related resource references (meshes, textures, etc.).
     /// </summary>
     [ElementPriority(8)]
     public IList<ResourceReference> StyleReferences => _styleReferences;
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly style flags).
     /// </summary>
@@ -206,19 +206,19 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown4;
         set => SetProperty(ref _unknown4, value);
     }
-    
+
     /// <summary>
     /// Gets the list of catalog tags for filtering and categorization.
     /// </summary>
     [ElementPriority(10)]
     public IList<ushort> Tags => _tags;
-    
+
     /// <summary>
     /// Gets the list of selling points (commodity effects).
     /// </summary>
     [ElementPriority(11)]
     public IList<SellingPoint> SellingPoints => _sellingPoints;
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly object behavior flags).
     /// </summary>
@@ -228,7 +228,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown5;
         set => SetProperty(ref _unknown5, value);
     }
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly placement flags).
     /// </summary>
@@ -238,7 +238,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown6;
         set => SetProperty(ref _unknown6, value);
     }
-    
+
     /// <summary>
     /// Gets or sets an unknown field (possibly additional metadata).
     /// </summary>
@@ -248,14 +248,14 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         get => _unknown7;
         set => SetProperty(ref _unknown7, value);
     }
-    
+
     #endregion
 
     #region IResource Implementation
-    
+
     /// <inheritdoc />
     public Stream Stream { get; private set; } = new MemoryStream();
-    
+
     /// <inheritdoc />
     public byte[] AsBytes
     {
@@ -266,13 +266,13 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             return ms.ToArray();
         }
     }
-    
+
     /// <inheritdoc />
     public event EventHandler? ResourceChanged;
-    
+
     /// <inheritdoc />
     public int RequestedApiVersion { get; set; } = 1;
-    
+
     /// <inheritdoc />
     public async Task<Stream> GetStreamAsync(CancellationToken cancellationToken = default)
     {
@@ -281,11 +281,11 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         stream.Position = 0;
         return stream;
     }
-    
+
     #endregion
 
     #region IContentFields Implementation (Indexers)
-    
+
     /// <inheritdoc />
     public TypedValue this[int index]
     {
@@ -302,7 +302,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             this[ContentFields[index]] = value;
         }
     }
-    
+
     /// <inheritdoc />
     public TypedValue this[string name]
     {
@@ -406,11 +406,11 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             }
         }
     }
-    
+
     #endregion
 
     #region Data I/O Operations
-    
+
     /// <summary>
     /// Loads catalog resource data from a stream asynchronously.
     /// </summary>
@@ -421,18 +421,18 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         _logger.LogDebug("Loading catalog resource from stream (length: {Length} bytes)", stream.Length);
-        
+
         // Ensure we have enough data for the minimum header
         const int minimumHeaderSize = 44; // Version through Unknown3 + byte count
         if (stream.Length < minimumHeaderSize)
         {
             throw new InvalidDataException($"Stream too short for catalog resource. Expected at least {minimumHeaderSize} bytes, got {stream.Length}");
         }
-        
+
         using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
-        
+
         // Read basic header
         _version = reader.ReadUInt32();
         _catalogVersion = reader.ReadUInt32();
@@ -442,7 +442,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         _unknown1 = reader.ReadUInt32();
         _unknown2 = reader.ReadUInt32();
         _unknown3 = reader.ReadUInt32();
-        
+
         // Read style references
         var styleCount = reader.ReadByte();
         _styleReferences.Clear();
@@ -451,13 +451,13 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             var instance = reader.ReadUInt64();
             var resourceType = reader.ReadUInt32();
             var resourceGroup = reader.ReadUInt32();
-            
+
             _styleReferences.Add(new ResourceReference(resourceType, resourceGroup, instance));
         }
-        
+
         // Read remaining fields
         _unknown4 = reader.ReadUInt16();
-        
+
         // Read tags
         var tagCount = reader.ReadInt32();
         _tags.Clear();
@@ -465,22 +465,22 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         {
             _tags.Add(reader.ReadUInt16());
         }
-        
+
         // Read selling points
         await ReadSellingPointsAsync(reader, cancellationToken).ConfigureAwait(false);
-        
+
         _unknown5 = reader.ReadUInt64();
         _unknown6 = reader.ReadUInt16();
         _unknown7 = reader.ReadUInt64();
-        
+
         Stream = stream;
-        
+
         _logger.LogDebug("Successfully loaded catalog resource with {StyleCount} styles, {TagCount} tags, {SellingPointCount} selling points",
             _styleReferences.Count, _tags.Count, _sellingPoints.Count);
-        
+
         OnPropertyChanged(nameof(Stream));
     }
-    
+
     /// <summary>
     /// Saves catalog resource data to a stream asynchronously.
     /// </summary>
@@ -490,11 +490,11 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     public async Task SaveToStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         _logger.LogDebug("Saving catalog resource to stream");
-        
+
         using var writer = new BinaryWriter(stream, Encoding.UTF8, leaveOpen: true);
-        
+
         // Write basic header
         writer.Write(_version);
         writer.Write(_catalogVersion);
@@ -504,7 +504,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         writer.Write(_unknown1);
         writer.Write(_unknown2);
         writer.Write(_unknown3);
-        
+
         // Write style references
         writer.Write((byte)_styleReferences.Count);
         foreach (var styleRef in _styleReferences)
@@ -513,64 +513,64 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             writer.Write(styleRef.ResourceType);
             writer.Write(styleRef.ResourceGroup);
         }
-        
+
         // Write remaining fields
         writer.Write(_unknown4);
-        
+
         // Write tags
         writer.Write(_tags.Count);
         foreach (var tag in _tags)
         {
             writer.Write(tag);
         }
-        
+
         // Write selling points
         await WriteSellingPointsAsync(writer, cancellationToken).ConfigureAwait(false);
-        
+
         writer.Write(_unknown5);
         writer.Write(_unknown6);
         writer.Write(_unknown7);
-        
+
         _logger.LogDebug("Successfully saved catalog resource ({Length} bytes)", stream.Length);
     }
-    
+
     private async Task ReadSellingPointsAsync(BinaryReader reader, CancellationToken cancellationToken)
     {
         var sellingPointCount = reader.ReadInt32();
         _sellingPoints.Clear();
-        
+
         for (int i = 0; i < sellingPointCount; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             var commodity = reader.ReadUInt16();
             var amount = reader.ReadUInt32();
-            
+
             _sellingPoints.Add(new SellingPoint(commodity, amount));
         }
-        
+
         await Task.CompletedTask.ConfigureAwait(false);
     }
-    
+
     private async Task WriteSellingPointsAsync(BinaryWriter writer, CancellationToken cancellationToken)
     {
         writer.Write(_sellingPoints.Count);
-        
+
         foreach (var sellingPoint in _sellingPoints)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             writer.Write(sellingPoint.Commodity);
             writer.Write(sellingPoint.Amount);
         }
-        
+
         await Task.CompletedTask.ConfigureAwait(false);
     }
-    
+
     #endregion
 
     #region Helper Methods
-    
+
     /// <summary>
     /// Gets a formatted string representation of the catalog resource for debugging.
     /// </summary>
@@ -579,17 +579,17 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     {
         return $"CatalogResource(Name={NameHash:X8}, Desc={DescriptionHash:X8}, Price={Price}, Tags={Tags.Count}, Styles={StyleReferences.Count})";
     }
-    
+
     #endregion
 
     #region IEquatable<CatalogResource> Implementation
-    
+
     /// <inheritdoc />
     public bool Equals(CatalogResource? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        
+
         return _version == other._version &&
                _catalogVersion == other._catalogVersion &&
                _nameHash == other._nameHash &&
@@ -606,13 +606,13 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
                _unknown6 == other._unknown6 &&
                _unknown7 == other._unknown7;
     }
-    
+
     /// <inheritdoc />
     public override bool Equals(object? obj)
     {
         return obj is CatalogResource other && Equals(other);
     }
-    
+
     /// <inheritdoc />
     public override int GetHashCode()
     {
@@ -637,14 +637,14 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         hash.Add(_unknown7);
         return hash.ToHashCode();
     }
-    
+
     #endregion
 
     #region INotifyPropertyChanged Implementation
-    
+
     /// <inheritdoc />
     public event PropertyChangedEventHandler? PropertyChanged;
-    
+
     /// <summary>
     /// Raises the PropertyChanged event for the specified property.
     /// </summary>
@@ -654,7 +654,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         ResourceChanged?.Invoke(this, EventArgs.Empty);
     }
-    
+
     /// <summary>
     /// Sets a property value and raises PropertyChanged if the value changes.
     /// </summary>
@@ -667,24 +667,24 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
             return false;
-        
+
         field = value;
         OnPropertyChanged(propertyName);
         return true;
     }
-    
+
     #endregion
-    
+
     #region IDisposable Implementation
-    
+
     /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed) return;
-        
+
         Stream?.Dispose();
         _disposed = true;
     }
-    
+
     #endregion
 }

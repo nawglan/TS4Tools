@@ -33,7 +33,7 @@ public sealed class DdsHeaderExtensionsTests
 
         // Assert
         stream.Position.Should().Be(4 + DdsHeader.HeaderSize); // Magic + header size
-        
+
         // Verify magic number was written
         stream.Position = 0;
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
@@ -143,7 +143,7 @@ public sealed class DdsHeaderExtensionsTests
             PixelFormat = DdsPixelFormat.CreateForRGBA32(),
             Caps = DdsCaps.Texture
         };
-        
+
         using var stream = new MemoryStream();
 
         // Act
@@ -170,7 +170,7 @@ public sealed class DdsHeaderExtensionsTests
             PixelFormat = DdsPixelFormat.CreateForRGBA32(),
             Caps = DdsCaps.Texture
         };
-        
+
         using var stream = new MemoryStream();
 
         // Act
@@ -264,11 +264,11 @@ public sealed class DdsHeaderExtensionsTests
     private static void CreateHeaderWithInvalidPixelFormatSize(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
-        
+
         // Write magic and header size
         writer.Write(DdsHeader.DdsMagic);
         writer.Write(DdsHeader.HeaderSize);
-        
+
         // Write basic header fields
         writer.Write((uint)DdsFlags.Caps);  // flags
         writer.Write(64u);                  // height
@@ -276,13 +276,13 @@ public sealed class DdsHeaderExtensionsTests
         writer.Write(256u);                 // pitch
         writer.Write(0u);                   // depth
         writer.Write(1u);                   // mipmap count
-        
+
         // Write reserved fields (11 uints)
         for (int i = 0; i < 11; i++)
         {
             writer.Write(0u);
         }
-        
+
         // Write pixel format with invalid size
         writer.Write(20u); // Invalid size (should be 32)
         writer.Write((uint)DdsPixelFormatFlags.RGBA);
@@ -292,7 +292,7 @@ public sealed class DdsHeaderExtensionsTests
         writer.Write(0x0000FF00u); // green mask
         writer.Write(0x000000FFu); // blue mask
         writer.Write(0xFF000000u); // alpha mask
-        
+
         // Write remaining caps fields
         writer.Write((uint)DdsCaps.Texture);
         writer.Write(0u); // caps2

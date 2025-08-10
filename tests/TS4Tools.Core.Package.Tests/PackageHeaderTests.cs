@@ -29,7 +29,7 @@ public class PackageHeaderTests
     {
         // Act
         var header = PackageHeader.CreateDefault();
-        
+
         // Assert
         header.IsValid.Should().BeTrue();
         header.Magic.SequenceEqual("DBPF"u8).Should().BeTrue();
@@ -40,31 +40,31 @@ public class PackageHeaderTests
         header.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
         header.ModifiedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
     }
-    
+
     [Fact]
     public void Constructor_WithValidMagic_CreatesValidHeader()
     {
         // Act
         var header = new PackageHeader("DBPF"u8);
-        
+
         // Assert
         header.IsValid.Should().BeTrue();
         header.Magic.SequenceEqual("DBPF"u8).Should().BeTrue();
         header.Major.Should().Be(2);
         header.Minor.Should().Be(0);
     }
-    
+
     [Fact]
     public void Constructor_WithInvalidMagic_CreatesInvalidHeader()
     {
         // Act
         var header = new PackageHeader("INVALID"u8);
-        
+
         // Assert
         header.IsValid.Should().BeFalse();
         header.Magic.SequenceEqual("INVALID"u8).Should().BeTrue();
     }
-    
+
     [Fact]
     public void WriteAndRead_RoundTrip_PreservesData()
     {
@@ -80,18 +80,18 @@ public class PackageHeaderTests
             resourceCount: 42,
             indexPosition: 1024,
             indexSize: 512);
-        
+
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         // Act - Write
         originalHeader.Write(writer);
-        
+
         // Act - Read
         stream.Position = 0;
         using var reader = new BinaryReader(stream);
         var readHeader = PackageHeader.Read(reader);
-        
+
         // Assert
         readHeader.Magic.SequenceEqual(originalHeader.Magic).Should().BeTrue();
         readHeader.Major.Should().Be(originalHeader.Major);
@@ -104,14 +104,14 @@ public class PackageHeaderTests
         readHeader.IndexPosition.Should().Be(originalHeader.IndexPosition);
         readHeader.IndexSize.Should().Be(originalHeader.IndexSize);
     }
-    
+
     [Fact]
     public void HeaderSize_IsCorrect()
     {
         // Assert
         PackageHeader.HeaderSize.Should().Be(96);
     }
-    
+
     [Fact]
     public void Write_WritesCorrectSize()
     {
@@ -119,52 +119,52 @@ public class PackageHeaderTests
         var header = PackageHeader.CreateDefault();
         using var stream = new MemoryStream();
         using var writer = new BinaryWriter(stream);
-        
+
         // Act
         header.Write(writer);
-        
+
         // Assert
         stream.Length.Should().Be(PackageHeader.HeaderSize);
     }
-    
+
     [Fact]
     public void CreatedDate_ConvertsFromUnixTime()
     {
         // Arrange
         var unixTime = 1609459200u; // January 1, 2021 00:00:00 UTC
         var header = new PackageHeader("DBPF"u8, createdDate: unixTime);
-        
+
         // Act
         var dateTime = header.CreatedDate;
-        
+
         // Assert
         dateTime.Year.Should().Be(2021);
         dateTime.Month.Should().Be(1);
         dateTime.Day.Should().Be(1);
     }
-    
+
     [Fact]
     public void ModifiedDate_ConvertsFromUnixTime()
     {
         // Arrange
         var unixTime = 1609459200u; // January 1, 2021 00:00:00 UTC
         var header = new PackageHeader("DBPF"u8, modifiedDate: unixTime);
-        
+
         // Act
         var dateTime = header.ModifiedDate;
-        
+
         // Assert
         dateTime.Year.Should().Be(2021);
         dateTime.Month.Should().Be(1);
         dateTime.Day.Should().Be(1);
     }
-    
+
     [Fact]
     public void ExpectedMagic_ReturnsDBPF()
     {
         // Act
         var magic = PackageHeader.ExpectedMagic;
-        
+
         // Assert
         magic.SequenceEqual("DBPF"u8).Should().BeTrue();
     }

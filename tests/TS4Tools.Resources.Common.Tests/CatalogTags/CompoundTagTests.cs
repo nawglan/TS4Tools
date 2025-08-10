@@ -184,7 +184,7 @@ public class CompoundTagTests
         var compoundTag1 = new CompoundTag { Name = "TestCompound" };
         var compoundTag2 = new CompoundTag { Name = "TestCompound" };
         var tag = new Tag(123u, "TestTag");
-        
+
         compoundTag1.AddTag(tag);
         compoundTag2.AddTag(tag);
 

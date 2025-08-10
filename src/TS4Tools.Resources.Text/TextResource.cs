@@ -70,7 +70,7 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
                 _content = value ?? string.Empty;
                 InvalidateCache();
                 OnPropertyChanged();
-                _logger.LogDebug("Content updated for resource {ResourceKey}, length: {Length}", 
+                _logger.LogDebug("Content updated for resource {ResourceKey}, length: {Length}",
                     ResourceKey, _content.Length);
             }
         }
@@ -271,9 +271,9 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
             normalized = normalized.Replace("\n", targetLineEnding);
         }
 
-        _logger.LogDebug("Normalized line endings for resource {ResourceKey} to {Style}", 
+        _logger.LogDebug("Normalized line endings for resource {ResourceKey} to {Style}",
             ResourceKey, lineEndingStyle);
-        
+
         return normalized;
     }
 
@@ -281,11 +281,11 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
     public byte[] ToBytes(Encoding targetEncoding)
     {
         ArgumentNullException.ThrowIfNull(targetEncoding);
-        
+
         var bytes = targetEncoding.GetBytes(_content);
-        _logger.LogDebug("Converted resource {ResourceKey} to {Encoding}, {ByteCount} bytes", 
+        _logger.LogDebug("Converted resource {ResourceKey} to {Encoding}, {ByteCount} bytes",
             ResourceKey, targetEncoding.EncodingName, bytes.Length);
-        
+
         return bytes;
     }
 
@@ -299,11 +299,11 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
     {
         ThrowIfDisposed();
         cancellationToken.ThrowIfCancellationRequested();
-        
+
         var bytes = _encoding.GetBytes(_content);
         _logger.LogDebug("Serialized TextResource {ResourceKey} to {ByteCount} bytes using {Encoding}",
             ResourceKey, bytes.Length, _encoding.EncodingName);
-        
+
         return Task.FromResult(bytes);
     }
 
@@ -323,10 +323,10 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
         using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
         _content = await reader.ReadToEndAsync(cancellationToken);
         _encoding = reader.CurrentEncoding;
-        
+
         InvalidateCache();
         OnResourceChanged();
-        
+
         _logger.LogDebug("Loaded TextResource {ResourceKey} from stream: {Length} characters, encoding: {Encoding}",
             ResourceKey, _content.Length, _encoding.EncodingName);
     }
@@ -339,10 +339,10 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
         using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
         _content = reader.ReadToEnd();
         _encoding = reader.CurrentEncoding;
-        
+
         InvalidateCache();
         OnResourceChanged();
-        
+
         _logger.LogDebug("Loaded TextResource {ResourceKey} from stream: {Length} characters, encoding: {Encoding}",
             ResourceKey, _content.Length, _encoding.EncodingName);
     }

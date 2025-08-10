@@ -234,7 +234,7 @@ public class MeshResourceFactoryTests
     private static MemoryStream CreateValidMeshStream()
     {
         var data = new List<byte>();
-        
+
         // Mesh data format expected by ParseMeshData:
         // [4 bytes] Vertex count
         // [4 bytes] Index count  
@@ -244,49 +244,49 @@ public class MeshResourceFactoryTests
         // [Variable] Normal data (3 floats per vertex, if present)
         // [Variable] UV data (2 floats per vertex, if present)
         // [Variable] Index data (ushort per index)
-        
+
         data.AddRange(BitConverter.GetBytes(3)); // Vertex count
         data.AddRange(BitConverter.GetBytes(3)); // Index count
         data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
         data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
-        
+
         // Vertex data (3 vertices * 3 floats = 9 floats)
         for (int i = 0; i < 9; i++)
         {
             data.AddRange(BitConverter.GetBytes((float)i));
         }
-        
+
         // Index data (3 indices as ushort)
         data.AddRange(BitConverter.GetBytes((ushort)0));
         data.AddRange(BitConverter.GetBytes((ushort)1));
         data.AddRange(BitConverter.GetBytes((ushort)2));
-        
+
         return new MemoryStream(data.ToArray());
     }
 
     private static MemoryStream CreateMinimalValidMeshStream()
     {
         var data = new List<byte>();
-        
+
         // Minimal mesh data
         data.AddRange(BitConverter.GetBytes(0)); // Vertex count
         data.AddRange(BitConverter.GetBytes(0)); // Index count
         data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
         data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
-        
+
         return new MemoryStream(data.ToArray());
     }
 
     private static MemoryStream CreateCorruptedMeshStream()
     {
         var data = new List<byte>();
-        
+
         // Corrupted mesh data - invalid vertex count
         data.AddRange(BitConverter.GetBytes(-1)); // Invalid negative vertex count
         data.AddRange(BitConverter.GetBytes(0)); // Index count
         data.AddRange(BitConverter.GetBytes(0)); // Has normals flag (false)
         data.AddRange(BitConverter.GetBytes(0)); // Has UV coordinates flag (false)
-        
+
         return new MemoryStream(data.ToArray());
     }
 

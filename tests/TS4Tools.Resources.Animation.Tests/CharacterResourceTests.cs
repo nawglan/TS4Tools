@@ -205,7 +205,7 @@ public sealed class CharacterResourceTests : IDisposable
         // Arrange
         var part1 = new CharacterPart(123, PartCategory.Hair, "Hair1", AgeCategory.Adult, Gender.Unisex, Species.Human, 0);
         var part2 = new CharacterPart(124, PartCategory.Top, "Shirt1", AgeCategory.Adult, Gender.Unisex, Species.Human, 1);
-        
+
         _characterResource.AddCharacterPart(part1);
         _characterResource.AddCharacterPart(part2);
 
@@ -298,7 +298,7 @@ public sealed class CharacterResourceTests : IDisposable
         // Arrange
         var eventFired = false;
         _characterResource.ResourceChanged += (_, _) => eventFired = true;
-        
+
         var part = new CharacterPart(123, PartCategory.Hair, "TestHair", AgeCategory.Adult, Gender.Unisex, Species.Human, 0);
 
         // Act

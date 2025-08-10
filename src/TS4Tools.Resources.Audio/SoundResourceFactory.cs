@@ -33,12 +33,12 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
     /// Initializes a new instance of the SoundResourceFactory class
     /// </summary>
     /// <param name="logger">Logger for created sound resources</param>
-    public SoundResourceFactory(ILogger<SoundResource> logger) 
+    public SoundResourceFactory(ILogger<SoundResource> logger)
         : base(GetSupportedResourceTypes(), priority: 100)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-    
+
     private static IEnumerable<string> GetSupportedResourceTypes()
     {
         return new[]
@@ -55,7 +55,7 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
     public override async Task<ISoundResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default)
     {
         ValidateApiVersion(apiVersion);
-        
+
         if (stream == null)
         {
             return new SoundResource(ReadOnlyMemory<byte>.Empty, AudioFormat.Unknown, apiVersion, _logger);
@@ -75,12 +75,12 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
     public override ISoundResource CreateResource(Stream stream, uint resourceType)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         if (!CanCreateResource(resourceType))
         {
             throw new ArgumentException($"Unsupported resource type: 0x{resourceType:X8}", nameof(resourceType));
         }
-        
+
         // Use async method synchronously for compatibility
         return CreateResourceAsync(1, stream).GetAwaiter().GetResult();
     }
@@ -93,12 +93,12 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
     public static AudioFormat DetectAudioFormat(byte[] data)
     {
         ArgumentNullException.ThrowIfNull(data);
-        
+
         if (data.Length < 4)
             return AudioFormat.Unknown;
 
         // WAV format detection
-        if (data.Length >= 12 && 
+        if (data.Length >= 12 &&
             data[0] == 0x52 && data[1] == 0x49 && data[2] == 0x46 && data[3] == 0x46 && // "RIFF"
             data[8] == 0x57 && data[9] == 0x41 && data[10] == 0x56 && data[11] == 0x45) // "WAVE"
         {
@@ -119,7 +119,7 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
         }
 
         // AAC format detection (simplified)
-        if (data.Length >= 7 && 
+        if (data.Length >= 7 &&
             data[0] == 0xFF && (data[1] & 0xF0) == 0xF0) // ADTS sync word
         {
             return AudioFormat.Aac;

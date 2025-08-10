@@ -21,11 +21,11 @@ public static class ServiceCollectionExtensions
 
         // Register the factory as both the interface and implementation
         services.TryAddSingleton<ScriptResourceFactory>();
-        services.TryAddSingleton<IResourceFactory<IScriptResource>>(provider => 
+        services.TryAddSingleton<IResourceFactory<IScriptResource>>(provider =>
             provider.GetRequiredService<ScriptResourceFactory>());
 
         // Register the base factory interface for polymorphic access
-        services.TryAddSingleton<IResourceFactory>(provider => 
+        services.TryAddSingleton<IResourceFactory>(provider =>
             provider.GetRequiredService<ScriptResourceFactory>());
 
         return services;

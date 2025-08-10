@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddTransient<IResourceFactory, EffectResourceFactory>();
-        
+
         return services;
     }
 }

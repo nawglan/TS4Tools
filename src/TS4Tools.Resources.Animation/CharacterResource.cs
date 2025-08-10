@@ -9,12 +9,12 @@ namespace TS4Tools.Resources.Animation;
 public class CharacterResource : ICharacterResource
 {
     private static readonly byte[] MagicBytes = [0x43, 0x48, 0x41, 0x52]; // "CHAR"
-    
+
     private readonly List<CharacterPart> _characterParts = [];
-    private readonly List<string> _contentFields = 
+    private readonly List<string> _contentFields =
     [
         "CharacterType",
-        "CharacterName", 
+        "CharacterName",
         "AgeCategory",
         "Gender",
         "Species",
@@ -22,7 +22,7 @@ public class CharacterResource : ICharacterResource
         "Priority",
         "CharacterParts"
     ];
-    
+
     private MemoryStream? _stream;
     private bool _disposed;
 
@@ -85,7 +85,7 @@ public class CharacterResource : ICharacterResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(CharacterResource));
-                
+
             _stream ??= new MemoryStream();
             return _stream;
         }
@@ -98,7 +98,7 @@ public class CharacterResource : ICharacterResource
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(CharacterResource));
-                
+
             using var ms = new MemoryStream();
             WriteToStream(ms);
             return ms.ToArray();
@@ -170,7 +170,7 @@ public class CharacterResource : ICharacterResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         return GetFieldValue(_contentFields[index]);
     }
 
@@ -194,7 +194,7 @@ public class CharacterResource : ICharacterResource
     {
         if (index < 0 || index >= _contentFields.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-            
+
         SetFieldValue(_contentFields[index], value);
     }
 
@@ -240,7 +240,7 @@ public class CharacterResource : ICharacterResource
             default:
                 throw new ArgumentException($"Field '{name}' is read-only or unknown", nameof(name));
         }
-        
+
         OnResourceChanged();
     }
 
@@ -264,7 +264,7 @@ public class CharacterResource : ICharacterResource
     private void ReadFromStream(Stream stream)
     {
         using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Handle empty stream gracefully
         if (stream.Length == 0)
         {
@@ -274,19 +274,19 @@ public class CharacterResource : ICharacterResource
             CharacterParts = new List<CharacterPart>();
             return;
         }
-        
+
         // Read and validate magic bytes
         if (stream.Length < 4)
         {
             throw new InvalidDataException("Invalid character resource format");
         }
-        
+
         var magic = reader.ReadBytes(4);
         if (!magic.SequenceEqual(MagicBytes))
         {
             throw new InvalidDataException("Invalid character resource format");
         }
-        
+
         // Read character data
         CharacterType = (CharacterType)reader.ReadInt32();
         var nameLength = reader.ReadInt32();
@@ -296,11 +296,11 @@ public class CharacterResource : ICharacterResource
         Species = (Species)reader.ReadInt32();
         SupportsMorphing = reader.ReadBoolean();
         Priority = reader.ReadInt32();
-        
+
         // Read character parts
         var partCount = reader.ReadInt32();
         _characterParts.Clear();
-        
+
         for (int i = 0; i < partCount; i++)
         {
             var instanceId = reader.ReadUInt32();
@@ -311,7 +311,7 @@ public class CharacterResource : ICharacterResource
             var gender = (Gender)reader.ReadInt32();
             var species = (Species)reader.ReadInt32();
             var sortPriority = reader.ReadInt32();
-            
+
             _characterParts.Add(new CharacterPart(instanceId, category, partName, ageCategory, gender, species, sortPriority));
         }
     }
@@ -319,10 +319,10 @@ public class CharacterResource : ICharacterResource
     private void WriteToStream(Stream stream)
     {
         using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true);
-        
+
         // Write magic bytes
         writer.Write(MagicBytes);
-        
+
         // Write character data
         writer.Write((int)CharacterType);
         var nameBytes = System.Text.Encoding.UTF8.GetBytes(CharacterName);
@@ -333,10 +333,10 @@ public class CharacterResource : ICharacterResource
         writer.Write((int)Species);
         writer.Write(SupportsMorphing);
         writer.Write(Priority);
-        
+
         // Write character parts
         writer.Write(_characterParts.Count);
-        
+
         foreach (var part in _characterParts)
         {
             writer.Write(part.InstanceId);

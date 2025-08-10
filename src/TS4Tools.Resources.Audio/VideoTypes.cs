@@ -28,37 +28,37 @@ public enum VideoFormat
     /// Unknown or unsupported video format.
     /// </summary>
     Unknown = 0,
-    
+
     /// <summary>
     /// MP4 (MPEG-4 Part 14) - common container format.
     /// </summary>
     Mp4 = 1,
-    
+
     /// <summary>
     /// AVI (Audio Video Interleave) - Microsoft container format.
     /// </summary>
     Avi = 2,
-    
+
     /// <summary>
     /// MOV (QuickTime Movie) - Apple container format.
     /// </summary>
     Mov = 3,
-    
+
     /// <summary>
     /// WMV (Windows Media Video) - Microsoft video format.
     /// </summary>
     Wmv = 4,
-    
+
     /// <summary>
     /// FLV (Flash Video) - Adobe Flash video format.
     /// </summary>
     Flv = 5,
-    
+
     /// <summary>
     /// WebM - Google's open container format.
     /// </summary>
     WebM = 6,
-    
+
     /// <summary>
     /// Custom Sims video format - proprietary format used by EA.
     /// </summary>
@@ -74,32 +74,32 @@ public enum VideoCodec
     /// Unknown or unsupported codec.
     /// </summary>
     Unknown = 0,
-    
+
     /// <summary>
     /// H.264/AVC - Advanced Video Coding.
     /// </summary>
     H264 = 1,
-    
+
     /// <summary>
     /// H.265/HEVC - High Efficiency Video Coding.
     /// </summary>
     H265 = 2,
-    
+
     /// <summary>
     /// VP8 - Google's video codec.
     /// </summary>
     VP8 = 3,
-    
+
     /// <summary>
     /// VP9 - Google's improved video codec.
     /// </summary>
     VP9 = 4,
-    
+
     /// <summary>
     /// MPEG-4 Visual - ISO/IEC 14496-2.
     /// </summary>
     Mpeg4 = 5,
-    
+
     /// <summary>
     /// Custom Sims codec - EA's proprietary codec.
     /// </summary>
@@ -115,52 +115,52 @@ public readonly record struct VideoMetadata
     /// The detected video format.
     /// </summary>
     public VideoFormat Format { get; init; }
-    
+
     /// <summary>
     /// The video codec used.
     /// </summary>
     public VideoCodec Codec { get; init; }
-    
+
     /// <summary>
     /// Video width in pixels.
     /// </summary>
     public uint Width { get; init; }
-    
+
     /// <summary>
     /// Video height in pixels.
     /// </summary>
     public uint Height { get; init; }
-    
+
     /// <summary>
     /// Frame rate in frames per second.
     /// </summary>
     public double FrameRate { get; init; }
-    
+
     /// <summary>
     /// Duration of the video in seconds.
     /// </summary>
     public double Duration { get; init; }
-    
+
     /// <summary>
     /// Bitrate in bits per second.
     /// </summary>
     public uint Bitrate { get; init; }
-    
+
     /// <summary>
     /// Size of the video data in bytes.
     /// </summary>
     public uint DataSize { get; init; }
-    
+
     /// <summary>
     /// Whether the video has an audio track.
     /// </summary>
     public bool HasAudio { get; init; }
-    
+
     /// <summary>
     /// Whether the video uses compression.
     /// </summary>
     public bool IsCompressed => Format is not VideoFormat.Unknown;
-    
+
     /// <summary>
     /// Aspect ratio of the video.
     /// </summary>

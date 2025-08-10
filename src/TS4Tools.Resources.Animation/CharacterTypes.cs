@@ -261,12 +261,12 @@ public enum PartCategory
 /// <param name="Species">Supported species.</param>
 /// <param name="SortPriority">Display sort priority.</param>
 public readonly record struct CharacterPart(
-    uint InstanceId, 
-    PartCategory Category, 
-    string Name, 
-    AgeCategory AgeCategory, 
-    Gender Gender, 
-    Species Species, 
+    uint InstanceId,
+    PartCategory Category,
+    string Name,
+    AgeCategory AgeCategory,
+    Gender Gender,
+    Species Species,
     int SortPriority);
 
 /// <summary>

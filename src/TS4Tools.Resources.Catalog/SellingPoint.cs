@@ -11,23 +11,23 @@ namespace TS4Tools.Resources.Catalog;
 public readonly record struct SellingPoint : INotifyPropertyChanged
 {
     #region Properties
-    
+
     /// <summary>
     /// Gets the commodity type identifier (e.g., Fun, Comfort, Energy).
     /// </summary>
     [ElementPriority(0)]
     public ushort Commodity { get; init; }
-    
+
     /// <summary>
     /// Gets the amount of the commodity effect (positive values increase the need).
     /// </summary>
     [ElementPriority(1)]
     public uint Amount { get; init; }
-    
+
     #endregion
-    
+
     #region Constructors
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SellingPoint"/> struct.
     /// </summary>
@@ -38,11 +38,11 @@ public readonly record struct SellingPoint : INotifyPropertyChanged
         Commodity = commodity;
         Amount = amount;
     }
-    
+
     #endregion
-    
+
     #region Methods
-    
+
     /// <summary>
     /// Gets a string representation of the selling point.
     /// </summary>
@@ -51,7 +51,7 @@ public readonly record struct SellingPoint : INotifyPropertyChanged
     {
         return $"SellingPoint(Commodity={Commodity}, Amount={Amount})";
     }
-    
+
     /// <summary>
     /// Deconstructs the selling point into its components.
     /// </summary>
@@ -62,17 +62,17 @@ public readonly record struct SellingPoint : INotifyPropertyChanged
         commodity = Commodity;
         amount = Amount;
     }
-    
+
     #endregion
-    
+
     #region INotifyPropertyChanged Implementation
-    
+
     /// <inheritdoc />
     /// <remarks>
     /// This event is never raised for this record struct since it's immutable,
     /// but is implemented to satisfy interface requirements for UI binding.
     /// </remarks>
     public event PropertyChangedEventHandler? PropertyChanged { add { } remove { } }
-    
+
     #endregion
 }

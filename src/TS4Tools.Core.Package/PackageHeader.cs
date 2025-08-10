@@ -29,133 +29,133 @@ public readonly record struct PackageHeader
     /// The size of the header in bytes
     /// </summary>
     public const int HeaderSize = 96;
-    
+
     /// <summary>
     /// Expected magic bytes for DBPF packages
     /// </summary>
     public static ReadOnlySpan<byte> ExpectedMagic => "DBPF"u8;
-    
+
     /// <summary>
     /// Package magic bytes ("DBPF")
     /// </summary>
     public ReadOnlySpan<byte> Magic => new ReadOnlySpan<byte>(_magicBytes);
     private readonly byte[] _magicBytes;
-    
+
     /// <summary>
     /// Major version (typically 2 for TS4)
     /// </summary>
     public int Major { get; }
-    
+
     /// <summary>
     /// Minor version (typically 0 for TS4)
     /// </summary>
     public int Minor { get; }
-    
+
     /// <summary>
     /// User version major
     /// </summary>
     public int UserVersionMajor { get; }
-    
+
     /// <summary>
     /// User version minor
     /// </summary>
     public int UserVersionMinor { get; }
-    
+
     /// <summary>
     /// Unused field 1
     /// </summary>
     public int Unused1 { get; }
-    
+
     /// <summary>
     /// Creation date as Unix timestamp
     /// </summary>
     public uint CreatedDateRaw { get; }
-    
+
     /// <summary>
     /// Modified date as Unix timestamp
     /// </summary>
     public uint ModifiedDateRaw { get; }
-    
+
     /// <summary>
     /// Index major version
     /// </summary>
     public int IndexMajor { get; }
-    
+
     /// <summary>
     /// Number of resources in the package
     /// </summary>
     public int ResourceCount { get; }
-    
+
     /// <summary>
     /// Position of the resource index in the file
     /// </summary>
     public int IndexPosition { get; }
-    
+
     /// <summary>
     /// Size of the resource index in bytes
     /// </summary>
     public int IndexSize { get; }
-    
+
     /// <summary>
     /// Unused field 2
     /// </summary>
     public int Unused2 { get; }
-    
+
     /// <summary>
     /// Unused field 3
     /// </summary>
     public int Unused3 { get; }
-    
+
     /// <summary>
     /// Index minor version
     /// </summary>
     public int IndexMinor { get; }
-    
+
     /// <summary>
     /// Position of the hole index in the file
     /// </summary>
     public int HoleIndexPosition { get; }
-    
+
     /// <summary>
     /// Size of the hole index in bytes
     /// </summary>
     public int HoleIndexSize { get; }
-    
+
     /// <summary>
     /// Number of holes in the package
     /// </summary>
     public int HoleCount { get; }
-    
+
     /// <summary>
     /// Unused field 4
     /// </summary>
     public int Unused4 { get; }
-    
+
     /// <summary>
     /// Unused field 5
     /// </summary>
     public int Unused5 { get; }
-    
+
     /// <summary>
     /// Unused field 6
     /// </summary>
     public int Unused6 { get; }
-    
+
     /// <summary>
     /// Creation date as DateTime
     /// </summary>
     public DateTime CreatedDate => DateTimeOffset.FromUnixTimeSeconds(CreatedDateRaw).DateTime;
-    
+
     /// <summary>
     /// Modified date as DateTime
     /// </summary>
     public DateTime ModifiedDate => DateTimeOffset.FromUnixTimeSeconds(ModifiedDateRaw).DateTime;
-    
+
     /// <summary>
     /// Check if the header has valid magic bytes
     /// </summary>
     public bool IsValid => Magic.SequenceEqual(ExpectedMagic);
-    
+
     /// <summary>
     /// Creates a new package header
     /// </summary>
@@ -204,7 +204,7 @@ public readonly record struct PackageHeader
         Unused5 = unused5;
         Unused6 = unused6;
     }
-    
+
     /// <summary>
     /// Creates a default TS4 package header
     /// </summary>
@@ -217,7 +217,7 @@ public readonly record struct PackageHeader
             createdDate: now,
             modifiedDate: now);
     }
-    
+
     /// <summary>
     /// Read header from a binary reader
     /// </summary>
@@ -226,7 +226,7 @@ public readonly record struct PackageHeader
     public static PackageHeader Read(BinaryReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader);
-        
+
         var magic = reader.ReadBytes(4);
         var major = reader.ReadInt32();
         var minor = reader.ReadInt32();
@@ -248,14 +248,14 @@ public readonly record struct PackageHeader
         var unused4 = reader.ReadInt32();
         var unused5 = reader.ReadInt32();
         var unused6 = reader.ReadInt32();
-        
+
         // Skip remaining bytes to reach HeaderSize
         var remainingBytes = HeaderSize - (int)reader.BaseStream.Position;
         if (remainingBytes > 0)
         {
             reader.ReadBytes(remainingBytes);
         }
-        
+
         return new PackageHeader(
             magic,
             major,
@@ -279,7 +279,7 @@ public readonly record struct PackageHeader
             unused5,
             unused6);
     }
-    
+
     /// <summary>
     /// Write header to a binary writer
     /// </summary>
@@ -287,7 +287,7 @@ public readonly record struct PackageHeader
     public void Write(BinaryWriter writer)
     {
         ArgumentNullException.ThrowIfNull(writer);
-        
+
         writer.Write(_magicBytes);
         writer.Write(Major);
         writer.Write(Minor);
@@ -309,7 +309,7 @@ public readonly record struct PackageHeader
         writer.Write(Unused4);
         writer.Write(Unused5);
         writer.Write(Unused6);
-        
+
         // Pad to HeaderSize
         var currentPos = writer.BaseStream.Position;
         var paddingNeeded = HeaderSize - currentPos;

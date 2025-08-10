@@ -216,6 +216,7 @@
 
 - [ ] **Pull Latest**: Reviewed branch is up-to-date with target branch
 - [ ] **Build Locally**: Code builds and tests pass locally
+- [ ] **Code Quality Check**: Run `.\scripts\check-quality.ps1` to verify formatting and analyzers pass
 - [ ] **Requirements**: Understand the requirements and acceptance criteria
 - [ ] **Architecture**: Change aligns with overall architecture decisions
 
@@ -274,6 +275,7 @@ A pull request is ready to merge when:
 ### For Authors
 
 - **Self-Review First**: Review your own PR before requesting reviews
+- **Run Code Quality Checks**: Execute `.\scripts\check-quality.ps1` before submitting PR
 - **Small PRs**: Keep PRs focused and under 400 lines when possible
 - **Context**: Provide sufficient context in PR description
 - **Address Feedback**: Respond to all review comments promptly

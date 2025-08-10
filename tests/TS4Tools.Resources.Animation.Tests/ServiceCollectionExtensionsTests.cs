@@ -96,10 +96,10 @@ public sealed class ServiceCollectionExtensionsTests
         // Assert
         animationDescriptor.Should().NotBeNull();
         animationDescriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
-        
+
         characterDescriptor.Should().NotBeNull();
         characterDescriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
-        
+
         rigDescriptor.Should().NotBeNull();
         rigDescriptor!.Lifetime.Should().Be(ServiceLifetime.Singleton);
     }
@@ -122,7 +122,7 @@ public sealed class ServiceCollectionExtensionsTests
         animationFactory.Should().NotBeNull();
         characterFactory.Should().NotBeNull();
         rigFactory.Should().NotBeNull();
-        
+
         // Verify they are properly initialized
         animationFactory.SupportedResourceTypes.Should().NotBeEmpty();
         characterFactory.SupportedResourceTypes.Should().NotBeEmpty();

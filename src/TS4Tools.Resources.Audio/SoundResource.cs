@@ -43,22 +43,22 @@ public sealed class SoundResource : ISoundResource, IDisposable
     /// Common resource type for audio controllers.
     /// </summary>
     public const uint AudioControllerResourceType = 0x029E333B;
-    
+
     /// <summary>
     /// Common resource type for audio submix.
     /// </summary>
     public const uint AudioSubmixResourceType = 0x02C9EFF2;
-    
+
     /// <summary>
     /// Common resource type for sound properties.
     /// </summary>
     public const uint SoundPropertiesResourceType = 0x1B25A024;
-    
+
     /// <summary>
     /// Common resource type for music data.
     /// </summary>
     public const uint MusicDataResourceType = 0xC202C770;
-    
+
     /// <summary>
     /// Common resource type for ambience audio.
     /// </summary>
@@ -67,7 +67,7 @@ public sealed class SoundResource : ISoundResource, IDisposable
     private readonly int _requestedApiVersion;
     private readonly ILogger<SoundResource>? _logger;
     private readonly ObservableList<TypedValue> _contentFields;
-    
+
     private ReadOnlyMemory<byte> _audioData;
     private AudioMetadata _metadata;
     private bool _disposed;
@@ -83,12 +83,12 @@ public sealed class SoundResource : ISoundResource, IDisposable
         _requestedApiVersion = requestedApiVersion;
         _logger = logger;
         _contentFields = new ObservableList<TypedValue>();
-        
+
         if (stream != null && stream.Length > 0)
         {
             ParseAudioData(stream);
         }
-        
+
         _logger?.LogDebug("SoundResource initialized with API version {ApiVersion}", requestedApiVersion);
     }
 
@@ -105,12 +105,12 @@ public sealed class SoundResource : ISoundResource, IDisposable
         _logger = logger;
         _contentFields = new ObservableList<TypedValue>();
         _audioData = audioData;
-        
+
         // Detect format if not provided
         var detectedFormat = format ?? DetectAudioFormat(_audioData.Span);
         _metadata = new AudioMetadata { Format = detectedFormat };
-        
-        _logger?.LogDebug("SoundResource initialized with {Size} bytes of {Format} audio data", 
+
+        _logger?.LogDebug("SoundResource initialized with {Size} bytes of {Format} audio data",
                          audioData.Length, detectedFormat);
     }
 
@@ -149,7 +149,7 @@ public sealed class SoundResource : ISoundResource, IDisposable
     /// <inheritdoc />
     public TypedValue this[string name]
     {
-        get 
+        get
         {
             // For now, we don't have named fields, so throw KeyNotFoundException
             throw new KeyNotFoundException($"Content field '{name}' not found");
@@ -211,9 +211,9 @@ public sealed class SoundResource : ISoundResource, IDisposable
     public async Task<AudioMetadata> AnalyzeAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         _logger?.LogDebug("Analyzing audio data for metadata extraction");
-        
+
         // Calculate data size and return metadata with current values
         var metadata = new AudioMetadata
         {
@@ -224,7 +224,7 @@ public sealed class SoundResource : ISoundResource, IDisposable
             BitsPerSample = _metadata.BitsPerSample,
             DataSize = (uint)_audioData.Length // Calculate from actual data
         };
-        
+
         return await Task.FromResult(metadata);
     }
 
@@ -232,20 +232,20 @@ public sealed class SoundResource : ISoundResource, IDisposable
     public void UpdateAudioData(ReadOnlyMemory<byte> audioData, AudioFormat? format = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         _audioData = audioData;
         var detectedFormat = format ?? DetectAudioFormat(audioData.Span);
-        
+
         // Update metadata with new format
-        _metadata = _metadata with 
-        { 
+        _metadata = _metadata with
+        {
             Format = detectedFormat,
             DataSize = (uint)audioData.Length
         };
-        
+
         ResourceChanged?.Invoke(this, EventArgs.Empty);
-        
-        _logger?.LogDebug("Audio data updated: {Size} bytes, format: {Format}", 
+
+        _logger?.LogDebug("Audio data updated: {Size} bytes, format: {Format}",
                          audioData.Length, detectedFormat);
     }
 
@@ -321,20 +321,20 @@ public sealed class SoundResource : ISoundResource, IDisposable
         var data = new byte[stream.Length];
         stream.Position = 0;
         var bytesRead = stream.Read(data, 0, data.Length);
-        
+
         if (bytesRead != stream.Length)
         {
-            _logger?.LogWarning("Expected to read {Expected} bytes but read {Actual} bytes", 
+            _logger?.LogWarning("Expected to read {Expected} bytes but read {Actual} bytes",
                               stream.Length, bytesRead);
         }
 
         _audioData = data;
-        
+
         // Detect format and extract basic metadata
         var format = DetectAudioFormat(data.AsSpan());
         _metadata = ExtractMetadata(data.AsSpan(), format);
-        
-        _logger?.LogDebug("Parsed audio data: {Size} bytes, format: {Format}", 
+
+        _logger?.LogDebug("Parsed audio data: {Size} bytes, format: {Format}",
                          data.Length, format);
     }
 
@@ -351,13 +351,13 @@ public sealed class SoundResource : ISoundResource, IDisposable
         {
             case AudioFormat.Wav:
                 return ExtractWavMetadata(data) ?? metadata;
-            
+
             case AudioFormat.Mp3:
                 return ExtractMp3Metadata(data) ?? metadata;
-            
+
             case AudioFormat.Ogg:
                 return ExtractOggMetadata(data) ?? metadata;
-            
+
             default:
                 return metadata;
         }
@@ -376,19 +376,19 @@ public sealed class SoundResource : ISoundResource, IDisposable
             {
                 var chunkId = data.Slice(position, 4);
                 var chunkSize = BitConverter.ToUInt32(data.Slice(position + 4, 4));
-                
+
                 if (chunkId[0] == 'f' && chunkId[1] == 'm' && chunkId[2] == 't' && chunkId[3] == ' ')
                 {
                     // Found fmt chunk
                     var channels = BitConverter.ToUInt16(data.Slice(position + 10, 2));
                     var sampleRate = BitConverter.ToUInt32(data.Slice(position + 12, 4));
                     var bitsPerSample = BitConverter.ToUInt16(data.Slice(position + 22, 2));
-                    
+
                     // Calculate duration (rough estimate)
                     var dataSize = (uint)data.Length - 44; // Approximate data size
                     var bytesPerSample = (bitsPerSample / 8) * channels;
                     var duration = bytesPerSample > 0 ? dataSize / (double)(sampleRate * bytesPerSample) : 0;
-                    
+
                     return new AudioMetadata
                     {
                         Format = AudioFormat.Wav,
@@ -399,7 +399,7 @@ public sealed class SoundResource : ISoundResource, IDisposable
                         DataSize = (uint)data.Length
                     };
                 }
-                
+
                 position += 8 + (int)chunkSize;
             }
         }
@@ -466,7 +466,7 @@ public sealed class SoundResource : ISoundResource, IDisposable
         // Clear audio data
         _audioData = ReadOnlyMemory<byte>.Empty;
         _metadata = default;
-        
+
         _disposed = true;
         _logger?.LogDebug("SoundResource disposed");
     }

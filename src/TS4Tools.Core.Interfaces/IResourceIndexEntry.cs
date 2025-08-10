@@ -28,22 +28,22 @@ public interface IResourceIndexEntry : IApiVersion, IContentFields, IResourceKey
     /// If the resource was read from a package, the location in the package the resource was read from
     /// </summary>
     uint ChunkOffset { get; set; }
-    
+
     /// <summary>
     /// The number of bytes the resource uses within the package
     /// </summary>
     uint FileSize { get; set; }
-    
+
     /// <summary>
     /// The number of bytes the resource uses in memory
     /// </summary>
     uint MemorySize { get; set; }
-    
+
     /// <summary>
     /// 0xFFFF if FileSize != MemorySize (compressed), else 0x0000
     /// </summary>
     ushort Compressed { get; set; }
-    
+
     /// <summary>
     /// Always 0x0001
     /// </summary>

@@ -50,8 +50,8 @@ public sealed class ApplicationSettingsService : IApplicationSettingsService, ID
     }
 
     /// <inheritdoc />
-    public ApplicationSettings Current 
-    { 
+    public ApplicationSettings Current
+    {
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -66,7 +66,7 @@ public sealed class ApplicationSettingsService : IApplicationSettingsService, ID
     public Task ReloadAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        
+
         // IOptionsMonitor automatically handles reloading from configuration sources
         // This method provides explicit reload capability for scenarios where
         // immediate reload is required

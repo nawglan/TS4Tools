@@ -23,7 +23,7 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         serviceProvider.GetService<GeometryResourceFactory>().Should().NotBeNull();
         serviceProvider.GetService<MeshResourceFactory>().Should().NotBeNull();
     }
@@ -54,10 +54,10 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factory1 = serviceProvider.GetService<GeometryResourceFactory>();
         var factory2 = serviceProvider.GetService<GeometryResourceFactory>();
-        
+
         factory1.Should().BeSameAs(factory2);
     }
 
@@ -91,7 +91,7 @@ public class ServiceCollectionExtensionsTests
         // Assert
         var serviceProvider = services.BuildServiceProvider();
         var factory = serviceProvider.GetService<GeometryResourceFactory>();
-        
+
         factory.Should().NotBeNull();
     }
 
@@ -107,13 +107,13 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceDescriptors = services.ToList();
-        
-        serviceDescriptors.Should().Contain(sd => 
-            sd.ServiceType == typeof(GeometryResourceFactory) && 
+
+        serviceDescriptors.Should().Contain(sd =>
+            sd.ServiceType == typeof(GeometryResourceFactory) &&
             sd.Lifetime == ServiceLifetime.Singleton);
-            
-        serviceDescriptors.Should().Contain(sd => 
-            sd.ServiceType == typeof(MeshResourceFactory) && 
+
+        serviceDescriptors.Should().Contain(sd =>
+            sd.ServiceType == typeof(MeshResourceFactory) &&
             sd.Lifetime == ServiceLifetime.Singleton);
     }
 
@@ -144,7 +144,7 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         result.Should().BeSameAs(services);
-        
+
         var serviceProvider = services.BuildServiceProvider();
         serviceProvider.GetService<GeometryResourceFactory>().Should().NotBeNull();
         serviceProvider.GetService<MeshResourceFactory>().Should().NotBeNull();

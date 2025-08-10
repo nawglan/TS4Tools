@@ -23,14 +23,14 @@ namespace TS4Tools.Core.Resources;
 /// Abstract base class for resource factories providing common functionality.
 /// </summary>
 /// <typeparam name="TResource">The type of resource this factory creates</typeparam>
-public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResource> 
+public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResource>
     where TResource : IResource
 {
     private readonly HashSet<string> _supportedResourceTypes;
     private readonly HashSet<uint> _supportedResourceTypeIds;
     private readonly IReadOnlySet<string> _readOnlySupportedResourceTypes;
     private readonly IReadOnlySet<uint> _readOnlyResourceTypeIds;
-    
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ResourceFactoryBase{TResource}"/> class.
     /// </summary>
@@ -40,7 +40,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     {
         _supportedResourceTypes = new HashSet<string>(supportedResourceTypes, StringComparer.OrdinalIgnoreCase);
         _readOnlySupportedResourceTypes = new global::System.Collections.ObjectModel.ReadOnlySet<string>(_supportedResourceTypes);
-        
+
         // Convert string types to numeric IDs for legacy compatibility
         _supportedResourceTypeIds = new HashSet<uint>();
         var supportedTypesList = supportedResourceTypes.ToList(); // Avoid multiple enumeration
@@ -52,33 +52,33 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             }
         }
         _readOnlyResourceTypeIds = new global::System.Collections.ObjectModel.ReadOnlySet<uint>(_supportedResourceTypeIds);
-        
+
         Priority = priority;
     }
-    
+
     /// <inheritdoc />
     public abstract Task<TResource> CreateResourceAsync(int apiVersion, Stream? stream = null, CancellationToken cancellationToken = default);
-    
+
     /// <inheritdoc />
     async Task<IResource> IResourceFactory.CreateResourceAsync(int apiVersion, Stream? stream, CancellationToken cancellationToken)
     {
         return await CreateResourceAsync(apiVersion, stream, cancellationToken);
     }
-    
+
     /// <inheritdoc />
     public virtual TResource CreateResource(Stream stream, uint resourceType)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        
+
         if (!CanCreateResource(resourceType))
         {
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
-        
+
         // Use async method synchronously for compatibility
         return CreateResourceAsync(1, stream).GetAwaiter().GetResult();
     }
-    
+
     /// <inheritdoc />
     public virtual TResource CreateEmptyResource(uint resourceType)
     {
@@ -86,26 +86,26 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
         {
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
-        
+
         // Use async method synchronously for compatibility
         return CreateResourceAsync(1, null).GetAwaiter().GetResult();
     }
-    
+
     /// <inheritdoc />
     public virtual bool CanCreateResource(uint resourceType)
     {
         return _supportedResourceTypeIds.Contains(resourceType);
     }
-    
+
     /// <inheritdoc />
     public IReadOnlySet<string> SupportedResourceTypes => _readOnlySupportedResourceTypes;
-    
+
     /// <inheritdoc />
     public IReadOnlySet<uint> ResourceTypes => _readOnlyResourceTypeIds;
-    
+
     /// <inheritdoc />
     public int Priority { get; }
-    
+
     /// <summary>
     /// Attempts to convert a resource type string to its numeric ID.
     /// Override this method to provide custom type mappings.
@@ -116,13 +116,13 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     protected virtual bool TryGetResourceTypeId(string resourceType, out uint id)
     {
         id = 0;
-        
+
         // Handle hex string format first
         if (resourceType.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
             return uint.TryParse(resourceType[2..], global::System.Globalization.NumberStyles.HexNumber, null, out id);
         }
-        
+
         // Default mappings for common image types
         id = resourceType.ToUpperInvariant() switch
         {
@@ -135,7 +135,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             "TEX" => 0x2E75C769,   // Texture Resource Type
             _ => 0
         };
-        
+
         return id != 0;
     }
 
@@ -148,13 +148,13 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     private bool TryGetResourceTypeIdSafe(string resourceType, out uint id)
     {
         id = 0;
-        
+
         // Handle hex string format first
         if (resourceType.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
         {
             return uint.TryParse(resourceType[2..], global::System.Globalization.NumberStyles.HexNumber, null, out id);
         }
-        
+
         // Use base implementation in constructor to avoid virtual call
         id = resourceType.ToUpperInvariant() switch
         {
@@ -167,10 +167,10 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             "TEX" => 0x2E75C769,   // Texture Resource Type
             _ => 0
         };
-        
+
         return id != 0;
     }
-    
+
     /// <summary>
     /// Validates that the provided API version is supported.
     /// </summary>
@@ -183,7 +183,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             throw new ArgumentException($"API version must be greater than 0, got {apiVersion}", nameof(apiVersion));
         }
     }
-    
+
     /// <summary>
     /// Creates a memory stream from the provided stream, if not null.
     /// </summary>
@@ -194,7 +194,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
     {
         if (sourceStream == null)
             return null;
-            
+
         var memoryStream = new MemoryStream();
         await sourceStream.CopyToAsync(memoryStream, cancellationToken);
         memoryStream.Position = 0;

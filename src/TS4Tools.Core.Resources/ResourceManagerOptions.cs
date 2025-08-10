@@ -30,47 +30,47 @@ public sealed class ResourceManagerOptions
     /// Configuration section name.
     /// </summary>
     public const string SectionName = "ResourceManager";
-    
+
     /// <summary>
     /// Whether to enable resource caching (default: true).
     /// </summary>
     public bool EnableCaching { get; set; } = true;
-    
+
     /// <summary>
     /// Maximum number of resources to keep in cache (default: 1000).
     /// </summary>
     [Range(1, 100000)]
     public int MaxCacheSize { get; set; } = 1000;
-    
+
     /// <summary>
     /// Maximum memory usage for cache in MB (default: 100MB).
     /// </summary>
     [Range(1, 10000)]
     public int MaxCacheMemoryMB { get; set; } = 100;
-    
+
     /// <summary>
     /// Cache expiration time in minutes (default: 30 minutes).
     /// </summary>
     [Range(1, 1440)]
     public int CacheExpirationMinutes { get; set; } = 30;
-    
+
     /// <summary>
     /// Whether to enable strict validation of resource types (default: true).
     /// </summary>
     public bool EnableStrictValidation { get; set; } = true;
-    
+
     /// <summary>
     /// Whether to throw exceptions on missing resource handlers (default: true).
     /// When false, returns default resource wrapper.
     /// </summary>
     public bool ThrowOnMissingHandler { get; set; } = true;
-    
+
     /// <summary>
     /// Timeout for resource loading operations in seconds (default: 30 seconds).
     /// </summary>
     [Range(1, 3600)]
     public int LoadTimeoutSeconds { get; set; } = 30;
-    
+
     /// <summary>
     /// Whether to enable performance metrics collection (default: true).
     /// </summary>

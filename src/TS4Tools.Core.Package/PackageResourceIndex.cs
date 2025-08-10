@@ -27,13 +27,13 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
     private readonly Dictionary<IResourceKey, IResourceIndexEntry> _index;
     private readonly Dictionary<uint, List<IResourceIndexEntry>> _typeIndex;
     private readonly Dictionary<uint, List<IResourceIndexEntry>> _groupIndex;
-    
+
     /// <inheritdoc />
     public uint IndexType { get; }
-    
+
     /// <inheritdoc />
     public int Count => _index.Count;
-    
+
     /// <inheritdoc />
     public IResourceIndexEntry? this[IResourceKey key]
     {
@@ -43,7 +43,7 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
             return entry;
         }
     }
-    
+
     /// <summary>
     /// Creates a new empty package resource index
     /// </summary>
@@ -55,7 +55,7 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
         _typeIndex = new Dictionary<uint, List<IResourceIndexEntry>>();
         _groupIndex = new Dictionary<uint, List<IResourceIndexEntry>>();
     }
-    
+
     /// <summary>
     /// Creates a package resource index from existing entries
     /// </summary>
@@ -65,26 +65,26 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
         : this(indexType)
     {
         ArgumentNullException.ThrowIfNull(entries);
-        
+
         foreach (var entry in entries)
         {
             AddInternal(entry);
         }
     }
-    
+
     /// <inheritdoc />
     public bool Contains(IResourceKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
         return _index.ContainsKey(key);
     }
-    
+
     /// <inheritdoc />
     public IEnumerable<IResourceKey> GetResourceKeys()
     {
         return _index.Keys;
     }
-    
+
     /// <inheritdoc />
     public IEnumerable<IResourceIndexEntry> GetByResourceType(uint resourceType)
     {
@@ -94,7 +94,7 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
         }
         return Enumerable.Empty<IResourceIndexEntry>();
     }
-    
+
     /// <inheritdoc />
     public IEnumerable<IResourceIndexEntry> GetByResourceGroup(uint resourceGroup)
     {
@@ -104,26 +104,26 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
         }
         return Enumerable.Empty<IResourceIndexEntry>();
     }
-    
+
     /// <inheritdoc />
     public bool TryGetValue(IResourceKey key, [NotNullWhen(true)] out IResourceIndexEntry? entry)
     {
         ArgumentNullException.ThrowIfNull(key);
         return _index.TryGetValue(key, out entry);
     }
-    
+
     /// <inheritdoc />
     public IEnumerator<IResourceIndexEntry> GetEnumerator()
     {
         return _index.Values.GetEnumerator();
     }
-    
+
     /// <inheritdoc />
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
-    
+
     /// <summary>
     /// Add a resource index entry to the index
     /// </summary>
@@ -132,16 +132,16 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
     internal bool Add(IResourceIndexEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        
+
         if (_index.ContainsKey(entry))
         {
             return false;
         }
-        
+
         AddInternal(entry);
         return true;
     }
-    
+
     /// <summary>
     /// Remove a resource index entry from the index
     /// </summary>
@@ -150,14 +150,14 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
     internal bool Remove(IResourceKey key)
     {
         ArgumentNullException.ThrowIfNull(key);
-        
+
         if (!_index.TryGetValue(key, out var entry))
         {
             return false;
         }
-        
+
         _index.Remove(key);
-        
+
         // Remove from type index
         if (_typeIndex.TryGetValue(entry.ResourceType, out var typeEntries))
         {
@@ -167,7 +167,7 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
                 _typeIndex.Remove(entry.ResourceType);
             }
         }
-        
+
         // Remove from group index
         if (_groupIndex.TryGetValue(entry.ResourceGroup, out var groupEntries))
         {
@@ -177,10 +177,10 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
                 _groupIndex.Remove(entry.ResourceGroup);
             }
         }
-        
+
         return true;
     }
-    
+
     /// <summary>
     /// Update an existing resource index entry
     /// </summary>
@@ -189,18 +189,18 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
     internal bool Update(IResourceIndexEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        
+
         if (!_index.ContainsKey(entry))
         {
             return false;
         }
-        
+
         // Remove the old entry and add the new one
         Remove(entry);
         AddInternal(entry);
         return true;
     }
-    
+
     /// <summary>
     /// Clear all entries from the index
     /// </summary>
@@ -210,11 +210,11 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
         _typeIndex.Clear();
         _groupIndex.Clear();
     }
-    
+
     private void AddInternal(IResourceIndexEntry entry)
     {
         _index[entry] = entry;
-        
+
         // Add to type index
         if (!_typeIndex.TryGetValue(entry.ResourceType, out var typeEntries))
         {
@@ -222,7 +222,7 @@ internal sealed class PackageResourceIndex : IPackageResourceIndex
             _typeIndex[entry.ResourceType] = typeEntries;
         }
         typeEntries.Add(entry);
-        
+
         // Add to group index
         if (!_groupIndex.TryGetValue(entry.ResourceGroup, out var groupEntries))
         {

@@ -49,14 +49,14 @@ public sealed class ApplicationSettingsTests
         settings.EnableDetailedLogging.Should().BeFalse();
         settings.AsyncOperationTimeoutMs.Should().Be(30000);
         settings.EnableCrossPlatformFeatures.Should().BeTrue();
-        
+
         settings.Package.Should().NotBeNull();
         settings.Package.CreateBackups.Should().BeTrue();
         settings.Package.MaxBackupCount.Should().Be(10);
         settings.Package.EnableCompression.Should().BeTrue();
         settings.Package.CompressionLevel.Should().Be(6);
         settings.Package.IOBufferSize.Should().Be(65536);
-        
+
         settings.UserInterface.Should().NotBeNull();
         settings.UserInterface.Theme.Should().Be(ThemePreference.System);
         settings.UserInterface.EnableAnimations.Should().BeTrue();
@@ -134,7 +134,7 @@ public sealed class ApplicationSettingsTests
         settings.EnableDetailedLogging.Should().BeTrue();
         settings.AsyncOperationTimeoutMs.Should().Be(15000);
         settings.EnableCrossPlatformFeatures.Should().BeFalse();
-        
+
         settings.Package.Should().BeSameAs(packageSettings);
         settings.UserInterface.Should().BeSameAs(uiSettings);
     }
@@ -154,7 +154,7 @@ public sealed class ApplicationSettingsServiceTests : IDisposable
         _defaultSettings = new ApplicationSettings();
         _mockOptionsMonitor = Substitute.For<IOptionsMonitor<ApplicationSettings>>();
         _mockOptionsMonitor.CurrentValue.Returns(_defaultSettings);
-        
+
         _service = new ApplicationSettingsService(_mockOptionsMonitor);
     }
 
@@ -221,7 +221,7 @@ public sealed class ApplicationSettingsServiceTests : IDisposable
         };
 
         var newSettings = new ApplicationSettings { EnableExtraChecking = false };
-        
+
         // We need to create a more realistic test since we can't easily access internal behavior
         // Instead, let's test the ReloadAsync method which should trigger change detection
         _mockOptionsMonitor.CurrentValue.Returns(newSettings);
@@ -283,10 +283,10 @@ public sealed class SettingsServiceExtensionsTests
 
         // Act
         services.AddTS4ToolsSettings(configuration);
-        
+
         // Add the configuration itself to the service collection as it's needed
         services.AddSingleton<IConfiguration>(configuration);
-        
+
         var serviceProvider = services.BuildServiceProvider();
 
         // Assert

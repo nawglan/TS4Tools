@@ -90,7 +90,7 @@ public class ServiceCollectionExtensionsTests
 
         // Verify service registration by checking the service descriptors
         var serviceDescriptors = services.ToList();
-        
+
         serviceDescriptors.Should().Contain(d => d.ServiceType == typeof(IResourceTypeRegistry) && d.ImplementationType == typeof(ResourceTypeRegistry));
         serviceDescriptors.Should().Contain(d => d.ServiceType == typeof(IFileNameService) && d.ImplementationType == typeof(FileNameService));
     }

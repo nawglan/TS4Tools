@@ -175,7 +175,7 @@ public sealed class ImageResourceFactoryTests : IDisposable
     {
         // Act
         var resource = await _factory.CreateResourceAsync(1, null);
-        
+
         // Assert
         resource.Should().NotBeNull();
         resource.Metadata.Should().NotBeNull();
@@ -405,7 +405,7 @@ public sealed class ImageResourceFactoryTests : IDisposable
 
         // Assert
         resourceTypes.Should().BeAssignableTo<IReadOnlySet<string>>();
-        
+
         // Verify it's actually read-only by checking if it's a mutable collection
         if (resourceTypes is ICollection<string> collection)
         {

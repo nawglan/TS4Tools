@@ -26,7 +26,7 @@ public sealed class ScriptResourceFactoryTests
     public void Constructor_WithNullFactoryLogger_ShouldThrowArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ScriptResourceFactory(null!, _scriptLogger));
     }
 
@@ -34,7 +34,7 @@ public sealed class ScriptResourceFactoryTests
     public void Constructor_WithNullScriptLogger_ShouldThrowArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ScriptResourceFactory(_factoryLogger, null!));
     }
 
@@ -242,7 +242,7 @@ public sealed class ScriptResourceFactoryTests
         var exception = await _factory.Invoking(f => f.CreateResourceAsync(1, dataStream, cts.Token))
             .Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Failed to create script resource*");
-        
+
         exception.And.InnerException.Should().BeOfType<TaskCanceledException>();
     }
 

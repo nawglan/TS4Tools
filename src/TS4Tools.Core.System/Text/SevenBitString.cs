@@ -33,13 +33,13 @@ public static class SevenBitString
     /// <param name="stream"><see cref="Stream"/> from which to read string.</param>
     /// <param name="encoding"><see cref="Encoding"/> to use when reading.</param>
     /// <returns>A <see cref="string"/> value.</returns>
-    public static string Read(Stream stream, Encoding encoding) 
-    { 
+    public static string Read(Stream stream, Encoding encoding)
+    {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(encoding);
-        
+
         using var reader = new BinaryReader(stream, encoding, leaveOpen: true);
-        return reader.ReadString(); 
+        return reader.ReadString();
     }
 
     /// <summary>
@@ -52,17 +52,17 @@ public static class SevenBitString
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(encoding);
-        
+
         var bytes = encoding.GetBytes(value ?? string.Empty);
         using var writer = new BinaryWriter(stream, encoding, leaveOpen: true);
-        
+
         // Write seven-bit encoded length
         Write7BitEncodedInt(writer, bytes.Length);
-        
+
         // Write the string bytes
         writer.Write(bytes);
     }
-    
+
     /// <summary>
     /// Write a string to <see cref="Stream"/> using <see cref="Encoding"/> with modern span-based approach.
     /// </summary>
@@ -73,18 +73,18 @@ public static class SevenBitString
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(encoding);
-        
+
         var maxBytes = encoding.GetMaxByteCount(value.Length);
         Span<byte> buffer = maxBytes <= 256 ? stackalloc byte[maxBytes] : new byte[maxBytes];
-        
+
         var actualBytes = encoding.GetBytes(value, buffer);
         var bytes = buffer[..actualBytes];
-        
+
         using var writer = new BinaryWriter(stream, encoding, leaveOpen: true);
-        
+
         // Write seven-bit encoded length
         Write7BitEncodedInt(writer, bytes.Length);
-        
+
         // Write the string bytes
         writer.Write(bytes);
     }
@@ -112,9 +112,9 @@ public static class BigEndianUnicodeString
     /// </summary>
     /// <param name="stream"><see cref="Stream"/> from which to read string.</param>
     /// <returns>A <see cref="string"/> value.</returns>
-    public static string Read(Stream stream) 
-    { 
-        return SevenBitString.Read(stream, Encoding.BigEndianUnicode); 
+    public static string Read(Stream stream)
+    {
+        return SevenBitString.Read(stream, Encoding.BigEndianUnicode);
     }
 
     /// <summary>
@@ -122,18 +122,18 @@ public static class BigEndianUnicodeString
     /// </summary>
     /// <param name="stream"><see cref="Stream"/> to which to write string.</param>
     /// <param name="value">The <see cref="string"/> to write.</param>
-    public static void Write(Stream stream, string? value) 
-    { 
-        SevenBitString.Write(stream, Encoding.BigEndianUnicode, value); 
+    public static void Write(Stream stream, string? value)
+    {
+        SevenBitString.Write(stream, Encoding.BigEndianUnicode, value);
     }
-    
+
     /// <summary>
     /// Write a string to <see cref="Stream"/> using <see cref="Encoding.BigEndianUnicode"/> with modern span-based approach.
     /// </summary>
     /// <param name="stream"><see cref="Stream"/> to which to write string.</param>
     /// <param name="value">The <see cref="string"/> to write.</param>
-    public static void WriteSpan(Stream stream, ReadOnlySpan<char> value) 
-    { 
-        SevenBitString.WriteSpan(stream, Encoding.BigEndianUnicode, value); 
+    public static void WriteSpan(Stream stream, ReadOnlySpan<char> value)
+    {
+        SevenBitString.WriteSpan(stream, Encoding.BigEndianUnicode, value);
     }
 }

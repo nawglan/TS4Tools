@@ -34,7 +34,7 @@ public class CharacterResourceFactory : ResourceFactoryBase<ICharacterResource>
             _logger.LogDebug("Creating character resource from stream (length: {Length})", stream?.Length ?? 0);
 
             var resource = new CharacterResource();
-            
+
             if (stream != null)
             {
                 await resource.LoadFromStreamAsync(stream, cancellationToken);
@@ -60,7 +60,7 @@ public class CharacterResourceFactory : ResourceFactoryBase<ICharacterResource>
     protected override void ValidateApiVersion(int apiVersion)
     {
         base.ValidateApiVersion(apiVersion);
-        
+
         if (apiVersion > 10) // Reasonable upper bound for API versions
         {
             throw new ArgumentException($"API version {apiVersion} is not supported by {nameof(CharacterResourceFactory)}", nameof(apiVersion));

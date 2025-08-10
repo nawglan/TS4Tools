@@ -21,7 +21,7 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factory = serviceProvider.GetService<IResourceFactory>();
         factory.Should().NotBeNull();
         factory.Should().BeOfType<EffectResourceFactory>();
@@ -50,10 +50,10 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factory1 = serviceProvider.GetService<IResourceFactory>();
         var factory2 = serviceProvider.GetService<IResourceFactory>();
-        
+
         factory1.Should().NotBeSameAs(factory2); // Transient should create new instances
     }
 
@@ -85,10 +85,10 @@ public class ServiceCollectionExtensionsTests
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        
+
         var factory = serviceProvider.GetService<IResourceFactory>();
         factory.Should().NotBeNull();
-        
+
         // Verify logging is available
         var logger = serviceProvider.GetService<ILogger<EffectResourceFactory>>();
         logger.Should().NotBeNull();
@@ -149,7 +149,7 @@ public class ServiceCollectionExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging(); // Add basic logging support
-        
+
         // Act
         services.AddEffectResources();
 
@@ -169,9 +169,9 @@ public class ServiceCollectionExtensionsTests
         services.AddEffectResources();
 
         // Assert
-        var serviceDescriptor = services.FirstOrDefault(x => 
+        var serviceDescriptor = services.FirstOrDefault(x =>
             x.ServiceType == typeof(IResourceFactory));
-        
+
         serviceDescriptor.Should().NotBeNull();
         serviceDescriptor!.Lifetime.Should().Be(ServiceLifetime.Transient);
     }
@@ -186,9 +186,9 @@ public class ServiceCollectionExtensionsTests
         services.AddEffectResources();
 
         // Assert
-        var serviceDescriptor = services.FirstOrDefault(x => 
+        var serviceDescriptor = services.FirstOrDefault(x =>
             x.ServiceType == typeof(IResourceFactory));
-        
+
         serviceDescriptor.Should().NotBeNull();
         serviceDescriptor!.ImplementationType.Should().Be(typeof(EffectResourceFactory));
     }

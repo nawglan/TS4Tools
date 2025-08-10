@@ -73,7 +73,7 @@ public sealed class Phase41IntegrationTests : IDisposable
         registryResult.SuccessfulRegistrations.Should().NotBeEmpty();
 
         // Act & Assert - Test each registered factory through ResourceManager
-        
+
         // Test String Table Resource
         var stringResource = await _resourceManager.CreateResourceAsync("0x220557DA", 1);
         stringResource.Should().NotBeNull();
@@ -122,7 +122,7 @@ public sealed class Phase41IntegrationTests : IDisposable
         // Assert
         createdResources.Should().HaveCount(resourceTypes.Length);
         createdResources.Should().OnlyContain(r => r != null);
-        
+
         // Verify specific types
         createdResources.Should().ContainSingle(r => r is StringTableResource);
         createdResources.Count(r => r is ImageResource).Should().BeGreaterOrEqualTo(3); // DDS, PNG, TGA
@@ -195,7 +195,7 @@ public sealed class Phase41IntegrationTests : IDisposable
         // Assert
         registryStats.TotalRegisteredFactories.Should().BeGreaterThan(0);
         managerStats.TotalResourcesCreated.Should().BeGreaterOrEqualTo(3);
-        
+
         // Verify factory utilization is being tracked
         registryStats.FactoryUtilizationRatio.Should().BeInRange(0.0, 1.0);
     }
@@ -239,7 +239,7 @@ public sealed class Phase41IntegrationTests : IDisposable
         // Assert
         results.Should().HaveCount(resourceTypes.Length);
         results.Should().OnlyContain(r => r.Resource != null);
-        
+
         // Verify each type was created correctly
         var stringResult = results.First(r => r.Type == "0x220557DA");
         stringResult.Resource.Should().BeOfType<StringTableResource>();
@@ -272,44 +272,44 @@ public sealed class Phase41IntegrationTests : IDisposable
     public async Task Phase41Completion_AllComponents_IntegrateCorrectly()
     {
         // This test verifies that Phase 4.1 (Resource Wrapper Integration) is complete
-        
+
         // Arrange & Act
         var registryResult = await _registry.DiscoverAndRegisterFactoriesAsync();
         var managerStats = _resourceManager.GetStatistics();
         var registryStats = _registry.GetStatistics();
 
         // Assert Phase 4.1 completion criteria
-        
+
         // 1. Registry successfully discovers and registers all factories
         registryResult.IsSuccess.Should().BeTrue();
         registryResult.SuccessfulRegistrations.Should().Contain("StringTableResourceFactory");
         registryResult.SuccessfulRegistrations.Should().Contain("ImageResourceFactory");
         registryResult.SuccessfulRegistrations.Should().Contain("CatalogResourceFactory");
         registryResult.SuccessfulRegistrations.Should().Contain("TextResourceFactory");
-        
+
         // 2. ResourceManager has registered factories
         managerStats.RegisteredFactories.Should().BeGreaterThan(0);
-        
+
         // 3. All resource types are supported
         _registry.SupportsResourceType("0x220557DA").Should().BeTrue(); // String
         _registry.SupportsResourceType("0x00B2D882").Should().BeTrue(); // Image
         _registry.SupportsResourceType("0x319E4F1D").Should().BeTrue(); // Catalog
         _registry.SupportsResourceType("0x0069453E").Should().BeTrue(); // Text (one of many text types)
-        
+
         // 4. Priority-based resolution works
         var factories = _registry.GetRegisteredFactories();
         factories.Values.Should().OnlyContain(f => f.Priority > 0);
-        
+
         // 5. Performance monitoring is active
         registryStats.TotalRegisteredFactories.Should().BeGreaterThan(0);
         registryStats.FactoryUtilizationRatio.Should().BeInRange(0.0, 1.0);
-        
+
         // 6. Cross-wrapper compatibility verified by creating each resource type
         var stringResource = await _resourceManager.CreateResourceAsync("0x220557DA", 1);
         var imageResource = await _resourceManager.CreateResourceAsync("0x00B2D882", 1);
         var catalogResource = await _resourceManager.CreateResourceAsync("0x319E4F1D", 1);
         var textResource = await _resourceManager.CreateResourceAsync("0x03B33DDF", 1);
-        
+
         stringResource.Should().BeOfType<StringTableResource>();
         imageResource.Should().BeOfType<ImageResource>();
         catalogResource.Should().BeOfType<CatalogResource>();

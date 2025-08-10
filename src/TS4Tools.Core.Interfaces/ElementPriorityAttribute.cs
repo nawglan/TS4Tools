@@ -53,7 +53,7 @@ public sealed class ElementPriorityAttribute : Attribute
 
         var member = type.GetProperty(fieldName) ??
                     type.GetField(fieldName) as MemberInfo;
-        
+
         if (member?.GetCustomAttribute<ElementPriorityAttribute>() is { } attribute)
         {
             return attribute.Priority;

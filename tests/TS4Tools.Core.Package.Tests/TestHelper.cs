@@ -17,7 +17,7 @@ internal static class TestHelper
     {
         return new MockCompressionService();
     }
-    
+
     /// <summary>
     /// Creates a real compression service instance for integration testing.
     /// </summary>

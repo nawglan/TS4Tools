@@ -17,17 +17,17 @@ internal class Program
     {
         // Set up dependency injection and logging
         var builder = Host.CreateApplicationBuilder(args);
-        
+
         // Add TS4Tools services
         builder.Services.AddTS4ToolsCore(builder.Configuration);
-        
+
         // Add console logging
         builder.Logging.AddConsole();
         builder.Logging.SetMinimumLevel(LogLevel.Information);
-        
+
         var host = builder.Build();
         var logger = host.Services.GetRequiredService<ILogger<Program>>();
-        
+
         try
         {
             if (args.Length == 0)
@@ -38,7 +38,7 @@ internal class Program
             }
 
             var packagePath = args[0];
-            
+
             if (!File.Exists(packagePath))
             {
                 Console.WriteLine($"Error: File not found: {packagePath}");
@@ -46,14 +46,14 @@ internal class Program
             }
 
             logger.LogInformation("Loading package: {PackagePath}", packagePath);
-            
+
             // Get the package factory service
             var packageFactory = host.Services.GetRequiredService<IPackageFactory>();
             var resourceTypeRegistry = host.Services.GetRequiredService<IResourceTypeRegistry>();
-            
+
             // Load the package
             using var package = await packageFactory.LoadFromFileAsync(packagePath);
-            
+
             // Display basic package information
             Console.WriteLine();
             Console.WriteLine("=== Package Information ===");
@@ -61,19 +61,19 @@ internal class Program
             Console.WriteLine($"Created: {package.CreatedDate:yyyy-MM-dd HH:mm:ss}");
             Console.WriteLine($"Modified: {package.ModifiedDate:yyyy-MM-dd HH:mm:ss}");
             Console.WriteLine($"Total Resources: {package.ResourceIndex.Count:N0}");
-            
+
             // Analyze resources by type
             Console.WriteLine();
             Console.WriteLine("=== Resource Analysis ===");
-            
+
             var resourcesByType = package.ResourceIndex
                 .GroupBy(entry => entry.ResourceType)
                 .OrderByDescending(group => group.Count())
                 .ToList();
-            
+
             Console.WriteLine($"{"Type ID",-12} {"Count",-8} {"Total Size",-15} {"Type Name",-30}");
             Console.WriteLine(new string('-', 75));
-            
+
             long totalSize = 0;
             foreach (var group in resourcesByType)
             {
@@ -81,27 +81,27 @@ internal class Program
                 var count = group.Count();
                 var typeSize = group.Sum(entry => (long)entry.FileSize);
                 totalSize += typeSize;
-                
+
                 // Try to get a friendly name for the resource type
                 var typeName = resourceTypeRegistry.GetTag(typeId) ?? "Unknown";
-                
+
                 Console.WriteLine($"0x{typeId:X8}   {count,-8:N0} {FormatBytes(typeSize),-15} {typeName,-30}");
             }
-            
+
             Console.WriteLine(new string('-', 75));
             Console.WriteLine($"{"TOTAL",-12} {package.ResourceIndex.Count,-8:N0} {FormatBytes(totalSize),-15}");
-            
+
             // Show some sample resources
             Console.WriteLine();
             Console.WriteLine("=== Sample Resources ===");
-            
+
             var sampleResources = package.ResourceIndex.Take(5).ToList();
             foreach (var entry in sampleResources)
             {
                 Console.WriteLine($"Resource Key: T=0x{entry.ResourceType:X8}, G=0x{entry.ResourceGroup:X8}, I=0x{entry.Instance:X16}");
                 Console.WriteLine($"  Size: {FormatBytes(entry.FileSize)} (compressed: {entry.Compressed != 0})");
                 Console.WriteLine($"  Position: 0x{entry.ChunkOffset:X8}");
-                
+
                 // Try to load the resource data
                 try
                 {
@@ -110,7 +110,7 @@ internal class Program
                     {
                         var data = resource.AsBytes;
                         Console.WriteLine($"  Data loaded: {data.Length:N0} bytes");
-                        
+
                         // Show first few bytes as hex
                         var previewLength = Math.Min(16, data.Length);
                         var hexPreview = string.Join(" ", data.Take(previewLength).Select(b => $"{b:X2}"));
@@ -121,10 +121,10 @@ internal class Program
                 {
                     Console.WriteLine($"  Error loading resource: {ex.Message}");
                 }
-                
+
                 Console.WriteLine();
             }
-            
+
             logger.LogInformation("Package analysis completed successfully");
         }
         catch (Exception ex)
@@ -133,7 +133,7 @@ internal class Program
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Formats byte counts into human-readable strings.
     /// </summary>
@@ -142,13 +142,13 @@ internal class Program
         string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
         int counter = 0;
         decimal number = bytes;
-        
+
         while (Math.Round(number / 1024) >= 1)
         {
             number = number / 1024;
             counter++;
         }
-        
+
         return $"{number:n1} {suffixes[counter]}";
     }
 }

@@ -208,18 +208,18 @@ public sealed class RigResourceTests : IDisposable
         var computedRootBone = _rigResource.Bones.FirstOrDefault(b => b.ParentName == null);
         computedRootBone.Should().NotBeNull();
         computedRootBone!.Name.Should().Be("Root");
-        
+
         // Check that children are properly associated with their parents by name
         var child1 = _rigResource.Bones.FirstOrDefault(b => b.Name == "Child1");
         var child2 = _rigResource.Bones.FirstOrDefault(b => b.Name == "Child2");
         var grandChild = _rigResource.Bones.FirstOrDefault(b => b.Name == "GrandChild");
-        
+
         child1.Should().NotBeNull();
         child1!.ParentName.Should().Be("Root");
-        
+
         child2.Should().NotBeNull();
         child2!.ParentName.Should().Be("Root");
-        
+
         grandChild.Should().NotBeNull();
         grandChild!.ParentName.Should().Be("Child1");
     }
@@ -230,7 +230,7 @@ public sealed class RigResourceTests : IDisposable
         // Arrange
         var bone1 = new Bone("Bone1", null, new Vector3(1, 0, 0), Quaternion.Identity.ToVector4(), new Vector3(1, 1, 1));
         var bone2 = new Bone("Bone2", null, new Vector3(0, 1, 0), Quaternion.Identity.ToVector4(), new Vector3(1, 1, 1));
-        
+
         _rigResource.AddBone(bone1);
         _rigResource.AddBone(bone2);
 
@@ -326,7 +326,7 @@ public sealed class RigResourceTests : IDisposable
         // Arrange
         var eventFired = false;
         _rigResource.ResourceChanged += (_, _) => eventFired = true;
-        
+
         var bone = new Bone("TestBone", null, new Vector3(1, 2, 3), Quaternion.Identity.ToVector4(), new Vector3(1, 1, 1));
 
         // Act
