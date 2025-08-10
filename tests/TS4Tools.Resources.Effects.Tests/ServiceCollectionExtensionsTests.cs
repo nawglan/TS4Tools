@@ -1,9 +1,4 @@
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using TS4Tools.Core.Resources;
-using TS4Tools.Resources.Effects;
-using Xunit;
 
 namespace TS4Tools.Resources.Effects.Tests;
 

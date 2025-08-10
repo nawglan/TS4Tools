@@ -1,7 +1,3 @@
-using FluentAssertions;
-using TS4Tools.Core.Interfaces;
-using Xunit;
-
 namespace TS4Tools.Resources.Visual.Tests;
 
 public sealed class ThumbnailResourceTests : IDisposable

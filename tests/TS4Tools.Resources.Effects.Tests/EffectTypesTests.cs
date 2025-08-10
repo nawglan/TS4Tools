@@ -1,7 +1,3 @@
-using FluentAssertions;
-using TS4Tools.Resources.Effects;
-using Xunit;
-
 namespace TS4Tools.Resources.Effects.Tests;
 
 public class EffectTypesTests

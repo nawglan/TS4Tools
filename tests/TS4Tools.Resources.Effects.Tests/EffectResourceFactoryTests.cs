@@ -1,8 +1,4 @@
-using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using TS4Tools.Resources.Effects;
-using Xunit;
 
 namespace TS4Tools.Resources.Effects.Tests;
 

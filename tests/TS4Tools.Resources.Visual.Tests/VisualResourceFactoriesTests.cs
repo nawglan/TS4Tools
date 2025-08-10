@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit;
-
 namespace TS4Tools.Resources.Visual.Tests;
 
 public class VisualResourceFactoriesTests
