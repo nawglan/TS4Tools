@@ -1,0 +1,11 @@
+global using System;
+global using System.IO;
+global using System.Threading.Tasks;
+global using AutoFixture;
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using NSubstitute;
+global using TS4Tools.Resources.Characters;
+global using TS4Tools.Tests.Common;
+global using Xunit;
