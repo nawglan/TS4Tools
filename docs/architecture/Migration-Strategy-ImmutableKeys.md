@@ -16,6 +16,7 @@ This document outlines the comprehensive migration strategy for transitioning fr
 ### Code Patterns Requiring Migration
 
 #### Pattern 1: Direct Key Modification
+
 ```csharp
 // ❌ Current pattern - high GC pressure
 var key = package.GetResourceKey(entry);
@@ -28,6 +29,7 @@ return key;
 **Performance Cost**: ~2.3ms per operation + 48 bytes allocation  
 
 #### Pattern 2: Key Construction in Loops
+
 ```csharp
 // ❌ Current pattern - exponential allocation
 foreach (var entry in package.ResourceEntries)
@@ -42,6 +44,7 @@ foreach (var entry in package.ResourceEntries)
 **Performance Cost**: O(n²) memory allocation in large packages  
 
 #### Pattern 3: String-Based Key Operations
+
 ```csharp
 // ❌ Current pattern - string parsing overhead
 public bool IsResourceType(string typeHex)
@@ -58,16 +61,19 @@ public bool IsResourceType(string typeHex)
 ### Phase 1: Foundation (Weeks 1-2)
 
 #### Week 1: Interface Implementation
+
 - [ ] **Day 1-2**: Implement `IImmutableResourceKey` interface
 - [ ] **Day 3-4**: Create `ResourceKey` readonly struct
 - [ ] **Day 5**: Comprehensive unit test suite (95%+ coverage)
 
 #### Week 2: Compatibility Layer
+
 - [ ] **Day 1-2**: Implement `LegacyResourceKeyAdapter`
 - [ ] **Day 3-4**: Add conversion utilities and extension methods
 - [ ] **Day 5**: Integration testing with existing systems
 
 **Success Criteria**:
+
 - ✅ All existing tests pass without modification
 - ✅ Performance benchmarks show 50%+ improvement
 - ✅ Zero breaking changes to public APIs
@@ -75,7 +81,9 @@ public bool IsResourceType(string typeHex)
 ### Phase 2: Hot Path Migration (Weeks 3-4)
 
 #### High-Priority Code Paths (Week 3)
+
 1. **Package.ResourceCache** (145 usages)
+
    ```csharp
    // ✅ Target pattern
    private readonly Dictionary<ResourceKey, IResourceIndexEntry> _cache = new();
@@ -87,6 +95,7 @@ public bool IsResourceType(string typeHex)
    ```
 
 2. **ResourceManager.LoadResource** (89 usages)
+
    ```csharp
    // ✅ Target pattern
    public async Task<IResource> LoadResourceAsync(IImmutableResourceKey key)
@@ -99,6 +108,7 @@ public bool IsResourceType(string typeHex)
    ```
 
 3. **PackageIndex.FindEntries** (67 usages)
+
    ```csharp
    // ✅ Target pattern - SIMD-optimized bulk operations
    public IEnumerable<IResourceIndexEntry> FindByType(uint resourceType)
@@ -109,11 +119,13 @@ public bool IsResourceType(string typeHex)
    ```
 
 #### Medium-Priority Code Paths (Week 4)
+
 1. **Import/Export Operations** (156 usages)
 2. **Resource Validation** (89 usages)
 3. **Search and Filter Operations** (234 usages)
 
 **Success Criteria**:
+
 - ✅ 70% of hot paths migrated to immutable keys
 - ✅ Memory allocation reduced by 40%+ in benchmarks
 - ✅ No performance regressions in any existing functionality
@@ -121,6 +133,7 @@ public bool IsResourceType(string typeHex)
 ### Phase 3: Bulk Migration (Weeks 5-6)
 
 #### Automated Migration Tools (Week 5)
+
 ```powershell
 # PowerShell script for automated pattern migration
 ./scripts/migrate-resource-keys.ps1 -Path "src/" -DryRun
@@ -128,12 +141,14 @@ public bool IsResourceType(string typeHex)
 ```
 
 **Migration Rules**:
+
 1. Replace `new ResourceKey()` with `ResourceKey.Create(...)`
 2. Convert property assignments to `With*()` method calls
 3. Update dictionary declarations to use `ResourceKey` struct
 4. Add performance analyzer suppressions where needed
 
 #### Final Integration (Week 6)
+
 - [ ] **Performance validation**: All benchmarks meet targets
 - [ ] **Integration testing**: Full test suite passes
 - [ ] **Memory profiling**: Verify allocation reductions
@@ -142,6 +157,7 @@ public bool IsResourceType(string typeHex)
 ## Migration Patterns
 
 ### Pattern 1: Key Construction
+
 ```csharp
 // ❌ Before: Mutable construction
 var key = new ResourceKey();
@@ -156,6 +172,7 @@ var key = ResourceKey.Parse("0x12345678", "0x00000000", "0xABCDEF123456789A");
 ```
 
 ### Pattern 2: Key Modification
+
 ```csharp
 // ❌ Before: In-place mutation
 key.ResourceType = newType;
@@ -167,6 +184,7 @@ ProcessResource(updatedKey);
 ```
 
 ### Pattern 3: Dictionary Usage
+
 ```csharp
 // ❌ Before: Reference-type keys
 private readonly Dictionary<ResourceKey, IResource> _cache = new();
@@ -177,6 +195,7 @@ private readonly Dictionary<ResourceKey, IResource> _cache =
 ```
 
 ### Pattern 4: Bulk Operations
+
 ```csharp
 // ❌ Before: Allocating loop
 var results = new List<IResource>();
@@ -196,6 +215,7 @@ var results = LoadResourcesBatch(filteredKeys);  // Batch loading
 ## Backward Compatibility Strategy
 
 ### Adapter Implementation
+
 ```csharp
 public class LegacyResourceKeyAdapter : IResourceIndexEntry
 {
@@ -216,6 +236,7 @@ public class LegacyResourceKeyAdapter : IResourceIndexEntry
 ```
 
 ### Extension Methods for Smooth Transition
+
 ```csharp
 public static class ResourceKeyExtensions
 {
@@ -231,6 +252,7 @@ public static class ResourceKeyExtensions
 ## Performance Validation Strategy
 
 ### Benchmark Suite
+
 ```csharp
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net90)]
@@ -260,6 +282,7 @@ public class ResourceKeyBenchmarks
 ```
 
 ### Performance Targets
+
 | Metric | Current | Target | Validation Method |
 |--------|---------|---------|-------------------|
 | Key Creation | 45μs | 12μs | BenchmarkDotNet |
@@ -272,25 +295,31 @@ public class ResourceKeyBenchmarks
 ### Technical Risks
 
 #### Risk: Performance Regression in Edge Cases
+
 **Probability**: Low  
 **Impact**: Medium  
-**Mitigation**: 
+**Mitigation**:
+
 - Comprehensive benchmark suite covering all usage patterns
 - Performance regression testing in CI pipeline
 - Rollback plan with feature flags
 
 #### Risk: Complex Migration in Legacy Code
+
 **Probability**: Medium  
 **Impact**: Medium  
 **Mitigation**:
+
 - Automated migration tools with dry-run capability
 - Gradual migration with adapter pattern
 - Comprehensive testing at each phase
 
 #### Risk: Developer Resistance to Immutable Patterns
+
 **Probability**: Medium  
 **Impact**: Low  
 **Mitigation**:
+
 - Clear documentation with performance benefits
 - IDE analyzers providing guidance
 - Code review guidelines and examples
@@ -298,9 +327,11 @@ public class ResourceKeyBenchmarks
 ### Business Risks
 
 #### Risk: Extended Migration Timeline
+
 **Probability**: Low  
 **Impact**: Medium  
 **Mitigation**:
+
 - Phased approach allows parallel development
 - Critical paths prioritized first
 - Fallback to adapter pattern if needed
@@ -308,18 +339,21 @@ public class ResourceKeyBenchmarks
 ## Success Metrics
 
 ### Performance Metrics
+
 - [ ] 50%+ reduction in memory allocations
 - [ ] 40%+ improvement in dictionary operations
 - [ ] Zero allocations in steady-state operations
 - [ ] 60%+ reduction in GC pressure
 
 ### Quality Metrics
+
 - [ ] 95%+ test coverage maintained
 - [ ] Zero breaking changes to public APIs
 - [ ] All integration tests pass
 - [ ] Performance benchmarks meet targets
 
 ### Developer Experience Metrics
+
 - [ ] Migration documentation completeness: 100%
 - [ ] Automated tool coverage: 90%+ of patterns
 - [ ] Code review feedback: Positive
@@ -328,16 +362,19 @@ public class ResourceKeyBenchmarks
 ## Timeline and Milestones
 
 ### Week 1-2: Foundation
+
 - **Milestone**: Core immutable key implementation complete
 - **Deliverable**: `IImmutableResourceKey` interface and `ResourceKey` struct
 - **Success Criteria**: Unit tests pass, performance benchmarks show improvement
 
 ### Week 3-4: Hot Path Migration
+
 - **Milestone**: Critical performance paths migrated
 - **Deliverable**: Top 10 hot paths using immutable keys
 - **Success Criteria**: 40% memory reduction, no performance regressions
 
 ### Week 5-6: Bulk Migration
+
 - **Milestone**: Complete migration with automated tools
 - **Deliverable**: All code paths migrated, legacy patterns deprecated
 - **Success Criteria**: All tests pass, performance targets met

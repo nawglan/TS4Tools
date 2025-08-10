@@ -20,7 +20,7 @@ dotnet run "C:\path\to\output\new-package.package"
 
 ## Example Output
 
-```
+```text
 === Creating New Package ===
 Output path: C:\path\to\output\new-package.package
 

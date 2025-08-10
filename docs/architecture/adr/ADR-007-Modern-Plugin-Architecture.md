@@ -881,6 +881,7 @@ public class MyLegacyHandler : AResourceHandler
 1. **Phase 1**: Continue using legacy plugins as-is
 2. **Phase 2**: Gradually migrate to modern plugin interfaces
 3. **Phase 3**: Take advantage of new features (async, DI, validation)
+
 ```
 
 ## Consequences

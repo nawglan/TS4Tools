@@ -90,6 +90,7 @@ builder.Services.AddTS4ToolsCore(builder.Configuration);
 Create environment-specific configuration files:
 
 **appsettings.Development.json**:
+
 ```json
 {
   "TS4Tools": {
@@ -101,6 +102,7 @@ Create environment-specific configuration files:
 ```
 
 **appsettings.Production.json**:
+
 ```json
 {
   "TS4Tools": {

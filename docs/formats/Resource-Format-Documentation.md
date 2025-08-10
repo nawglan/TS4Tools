@@ -20,10 +20,12 @@ Each resource type documentation includes:
 ### Core Game Resources
 
 #### String Tables (STBL)
+
 **Resource Type**: `0x220557DA`  
 **Description**: Localized text content for UI elements, object names, and game text
 
 **Binary Format:**
+
 ```
 Header (8 bytes):
   00-03: Reserved (0x00000000)
@@ -37,6 +39,7 @@ Entry Table:
 ```
 
 **Implementation Example:**
+
 ```csharp
 public class StringTableResource : IResource
 {
@@ -63,10 +66,12 @@ public class StringTableResource : IResource
 ```
 
 #### Image Resources (DDS/PNG)
+
 **Resource Type**: `0x2E75C764` (DDS), `0x2F7D0004` (PNG)  
 **Description**: Textures, UI images, and sprite data
 
 **DDS Format Structure:**
+
 ```
 DDS Header (128 bytes):
   00-03: Magic "DDS " (0x20534444)
@@ -82,16 +87,19 @@ DDS Header (128 bytes):
 ```
 
 **Implementation Notes:**
+
 - Support for BC1-BC7 compression formats
 - Mipmap level handling
 - Alpha channel processing
 - Texture streaming optimization
 
 #### 3D Geometry (GEOM)
+
 **Resource Type**: `0x015A1849`  
 **Description**: 3D mesh data including vertices, normals, UV coordinates
 
 **Format Overview:**
+
 ```
 Header:
   Magic: "GEOM" (4 bytes)
@@ -110,20 +118,24 @@ Vertex Data:
 ### Content Creation Resources
 
 #### Animation Data (ANIM)
+
 **Resource Type**: `0x8EAF13DE`  
 **Description**: Character and object animation sequences
 
 **Structure:**
+
 - Bone hierarchy definitions
 - Keyframe data with timestamps
 - Interpolation mode specifications
 - Animation event markers
 
 #### Audio Resources (AUDIO)
+
 **Resource Type**: `0xF0582F9A`  
 **Description**: Sound effects, music, and voice data
 
 **Supported Formats:**
+
 - Ogg Vorbis compression
 - PCM uncompressed audio
 - Spatial audio metadata
@@ -132,26 +144,31 @@ Vertex Data:
 ### World Building Resources
 
 #### Lot Data (LOT)
+
 **Resource Type**: `0x0604ABDA`  
 **Description**: Lot layout, terrain, and placement information
 
 **Components:**
+
 - Terrain height maps
 - Object placement data
 - Routing information
 - Environmental settings
 
 #### Neighborhood Data (NHBD)
+
 **Resource Type**: `0x0355E0A6`  
 **Description**: World structure and neighborhood definitions
 
 ### Specialized Resources
 
 #### Catalog Resources (CATA)
+
 **Resource Type**: `0x319E4F1D`  
 **Description**: In-game catalog definitions for objects and items
 
 #### Script Resources (SCRIPT)
+
 **Resource Type**: `0x791F5C85`  
 **Description**: Game logic and behavior scripts
 
@@ -225,6 +242,7 @@ public async Task ValidateStringTableFormat(string packageFile)
 Many resources share common header structures:
 
 #### Standard Resource Header
+
 ```
 00-03: Magic Bytes (resource-specific)
 04-07: Version (uint32)
@@ -233,6 +251,7 @@ Many resources share common header structures:
 ```
 
 #### Extended Header (Used by newer formats)
+
 ```
 00-03: Magic Bytes
 04-07: Header Size (uint32)

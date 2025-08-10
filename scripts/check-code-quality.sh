@@ -84,7 +84,7 @@ else
     if [ "$VERBOSE" = true ]; then
         VERBOSITY="diagnostic"
     fi
-    
+
     if ! dotnet format "$SOLUTION_FILE" --verify-no-changes --verbosity "$VERBOSITY"; then
         echo -e "${RED}❌ Code formatting issues detected!${NC}"
         echo ""
@@ -120,7 +120,36 @@ fi
 echo -e "${GREEN}✅ All analyzer checks passed${NC}"
 echo ""
 
-# Step 4: Run tests
+# Step 4: Markdown linting (if available)
+echo -e "${CYAN}📝 Checking markdown formatting...${NC}"
+
+# Check if markdownlint is available
+if command -v markdownlint &> /dev/null; then
+    if [ "$FIX" = true ]; then
+        echo -e "${YELLOW}🔧 Auto-fixing markdown issues...${NC}"
+        if markdownlint --fix **/*.md --ignore node_modules; then
+            echo -e "${GREEN}✅ Markdown formatting applied${NC}"
+        else
+            echo -e "${YELLOW}⚠️  Some markdown issues couldn't be auto-fixed${NC}"
+        fi
+    fi
+
+    # Always check after fixing (or if no fix requested)
+    if markdownlint **/*.md --ignore node_modules; then
+        echo -e "${GREEN}✅ All markdown is properly formatted${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Markdown formatting issues detected (non-critical)${NC}"
+        if [ "$FIX" != true ]; then
+            echo -e "${YELLOW}💡 To fix automatically: ./scripts/check-code-quality.sh --fix${NC}"
+        fi
+    fi
+else
+    echo -e "${YELLOW}⚠️  markdownlint not found - skipping markdown checks${NC}"
+    echo -e "   Install with: npm install -g markdownlint-cli"
+fi
+echo ""
+
+# Step 5: Run tests
 echo -e "${CYAN}🧪 Running unit tests...${NC}"
 if ! dotnet test "$SOLUTION_FILE" --no-build --configuration Release --verbosity minimal --logger "console;verbosity=minimal"; then
     echo -e "${RED}❌ Some tests failed!${NC}"
@@ -135,6 +164,7 @@ echo -e "${GREEN}🎉 All code quality checks passed!${NC}"
 echo ""
 echo -e "${GREEN}✅ Code formatting: OK${NC}"
 echo -e "${GREEN}✅ .NET analyzers: OK${NC}"
+echo -e "${GREEN}✅ Markdown formatting: OK${NC}"
 echo -e "${GREEN}✅ Unit tests: OK${NC}"
 echo ""
 echo -e "${GREEN}🚀 Your code is ready to commit!${NC}"

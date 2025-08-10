@@ -1,0 +1,53 @@
+# markdownlint configuration
+# For detailed rules, see: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+# MD013 - Line length - More lenient for technical documentation
+MD013:
+  # Line length (default 80) - more lenient for technical docs
+  line_length: 120
+  # Number of characters for headings
+  heading_line_length: 100
+  # Number of characters for code blocks
+  code_block_line_length: 150
+  # Include code blocks in line length checks
+  code_blocks: false
+  # Include tables in line length checks
+  tables: false
+  # Include headings in line length checks
+  headings: true
+  # Exclude URLs from line length checks
+  strict: false
+
+# MD022 - Headings should be surrounded by blank lines
+MD022:
+  # Blank lines above heading
+  lines_above: 1
+  # Blank lines below heading
+  lines_below: 1
+
+# MD032 - Lists should be surrounded by blank lines
+MD032: true
+
+# MD040 - Fenced code blocks should have a language specified
+MD040: true
+
+# MD031 - Fenced code blocks should be surrounded by blank lines
+MD031: true
+
+# MD024 - Multiple headings with the same content
+MD024:
+  # Only check sibling headings
+  siblings_only: true
+
+# MD036 - Emphasis used instead of a heading
+MD036:
+  # Punctuation characters
+  punctuation: ".,;:!?"
+
+# MD033 - Allow inline HTML for technical documentation
+MD033: false
+
+# MD029 - Ordered list item prefix - Be flexible
+MD029:
+  # Allow different styles
+  style: "ordered"

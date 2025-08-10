@@ -15,6 +15,7 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 ## Rationale
 
 ### Benefits of .NET 9
+
 1. **Performance**: Native AOT, improved GC, SIMD optimizations
 2. **Cross-Platform**: Windows, macOS, and Linux support
 3. **Modern Language Features**: C# 12, nullable reference types, pattern matching
@@ -34,7 +35,9 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 *Note: .NET 9 is STS (Standard Term Support), but provides latest features for forward compatibility to .NET 10 LTS.
 
 ### Performance Benchmarks
+
 Based on preliminary testing:
+
 - Package loading: 65% faster
 - Memory usage: 45% reduction
 - Startup time: 40% improvement
@@ -43,12 +46,15 @@ Based on preliminary testing:
 ## Alternatives Considered
 
 ### .NET 8 LTS
+
 **Pros:**
+
 - Long-term support until 2026
 - Proven stability in production
 - Full feature set for modern development
 
 **Cons:**
+
 - Missing latest performance optimizations
 - Limited forward compatibility features
 - Missing some C# 12 language enhancements
@@ -56,11 +62,14 @@ Based on preliminary testing:
 **Decision:** Rejected due to rapid .NET release cycle making .NET 9 more forward-compatible
 
 ### .NET 6 LTS
+
 **Pros:**
+
 - Extended LTS support
 - Well-tested platform
 
 **Cons:**
+
 - Missing significant performance improvements
 - Limited modern language features
 - Already mid-lifecycle
@@ -70,18 +79,21 @@ Based on preliminary testing:
 ## Implementation Strategy
 
 ### Phase 1: Core Migration
+
 1. Update all `.csproj` files to target `net9.0`
 2. Replace Windows-specific APIs with cross-platform alternatives
 3. Update package references to .NET 9 compatible versions
 4. Implement modern patterns (dependency injection, options pattern)
 
 ### Phase 2: Optimization
+
 1. Leverage .NET 9 performance features (NativeAOT, SIMD)
 2. Implement modern async patterns
 3. Utilize improved memory management features
 4. Add cross-platform deployment configurations
 
 ### Phase 3: Advanced Features
+
 1. Implement Native AOT for improved startup performance
 2. Add platform-specific optimizations
 3. Leverage new language features for better code quality
@@ -90,6 +102,7 @@ Based on preliminary testing:
 ## Consequences
 
 ### Positive
+
 - **Performance**: Significant improvements in all benchmark areas
 - **Maintainability**: Modern language features improve code quality
 - **Cross-Platform**: Enables deployment to macOS and Linux
@@ -97,28 +110,33 @@ Based on preliminary testing:
 - **Future-Proofing**: Easy migration path to .NET 10 LTS
 
 ### Negative
+
 - **Compatibility**: Breaking changes from .NET Framework patterns
 - **Learning Curve**: Team needs training on modern .NET patterns
 - **Dependencies**: Some legacy packages may need alternatives
 - **Deployment**: New deployment strategies required
 
 ### Neutral
+
 - **Support Lifecycle**: STS vs LTS trade-off acceptable for modernization benefits
 - **Migration Effort**: Significant but necessary for long-term viability
 
 ## Mitigation Strategies
 
 ### Breaking Changes
+
 - Implement adapter patterns for legacy API compatibility
 - Gradual migration with feature flags
 - Comprehensive testing at each migration phase
 
 ### Learning Curve
+
 - Team training on modern .NET patterns
 - Code review guidelines and best practices
 - Architecture documentation and examples
 
 ### Dependencies
+
 - Audit and replace incompatible packages
 - Create compatibility layers where needed
 - Prioritize .NET Standard 2.0+ packages
@@ -126,18 +144,21 @@ Based on preliminary testing:
 ## Success Criteria
 
 ### Technical Metrics
+
 - [ ] All projects successfully target .NET 9
 - [ ] Performance benchmarks show 40%+ improvement
 - [ ] Cross-platform deployment working on Windows, macOS, Linux
 - [ ] Zero critical functionality lost in migration
 
 ### Quality Metrics
+
 - [ ] 95%+ test coverage maintained
 - [ ] All existing integration tests pass
 - [ ] New modern patterns adopted consistently
 - [ ] Code quality metrics improved
 
 ### Timeline
+
 - **Week 1-2**: Core framework migration
 - **Week 3-4**: Performance optimization
 - **Week 5-6**: Advanced features and final validation

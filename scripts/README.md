@@ -5,6 +5,7 @@ This directory contains utility scripts to help with development and code qualit
 ## Code Quality Checker
 
 ### PowerShell (Windows/Cross-platform)
+
 ```powershell
 # Run all checks
 ./scripts/check-code-quality.ps1
@@ -20,6 +21,7 @@ This directory contains utility scripts to help with development and code qualit
 ```
 
 ### Bash (Linux/macOS)
+
 ```bash
 # Make script executable (first time only)
 chmod +x scripts/check-code-quality.sh
@@ -51,6 +53,7 @@ The code quality checker performs the same checks as the CI/CD pipeline:
 You can set up a pre-commit hook to automatically run these checks:
 
 ### Option 1: Simple pre-commit hook
+
 ```bash
 # Create .git/hooks/pre-commit
 #!/bin/sh
@@ -58,6 +61,7 @@ You can set up a pre-commit hook to automatically run these checks:
 ```
 
 ### Option 2: Using pre-commit framework
+
 Install [pre-commit](https://pre-commit.com/) and create `.pre-commit-config.yaml`:
 
 ```yaml
@@ -81,28 +85,34 @@ repos:
 ## IDE Integration
 
 ### Visual Studio Code
+
 Install the C# Dev Kit extension which includes:
+
 - Real-time analyzer feedback
 - Format-on-save capability
 - IntelliSense with analyzer suggestions
 
 ### Visual Studio
+
 Analyzers run automatically and show warnings/errors in the Error List.
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Formatting Errors**
+#### Formatting Errors
+
 - Run `dotnet format TS4Tools.sln` to auto-fix
 - Check `.editorconfig` settings if issues persist
 
-**Analyzer Warnings**
+#### Analyzer Warnings
+
 - CA1515: Make test classes internal → Already suppressed in test projects
 - CA1812: Unused classes → Remove or make them static if containing only static members
 - CS8618: Non-nullable field uninitialized → Add null checks or nullable annotations
 
-**Build Errors**
+#### Build Errors
+
 - Ensure you're using .NET 9.0 SDK
 - Run `dotnet restore` if package references are missing
 - Check for missing project references

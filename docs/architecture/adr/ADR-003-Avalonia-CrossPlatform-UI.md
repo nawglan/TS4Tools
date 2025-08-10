@@ -15,6 +15,7 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 ## Rationale
 
 ### Requirements Analysis
+
 1. **Cross-Platform**: Must run natively on Windows, macOS, and Linux
 2. **Performance**: Must handle large datasets (10k+ resources) efficiently
 3. **Native Feel**: Should integrate well with each platform's conventions
@@ -33,6 +34,7 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 | Flutter | Full | Excellent | Fair | Fair | High |
 
 ### Avalonia Advantages
+
 1. **XAML Familiarity**: WPF developers can leverage existing knowledge
 2. **Performance**: Native rendering with hardware acceleration
 3. **Theming**: Fluent UI themes available for modern appearance
@@ -43,6 +45,7 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 ## Architecture Design
 
 ### MVVM Pattern Implementation
+
 ```csharp
 // ViewModels use ReactiveUI for enhanced MVVM
 public class PackageExplorerViewModel : ReactiveObject
@@ -79,6 +82,7 @@ public class PackageExplorerViewModel : ReactiveObject
 ```
 
 ### Platform-Specific Implementations
+
 ```csharp
 // Platform services with dependency injection
 public interface IDialogService
@@ -102,6 +106,7 @@ public class WindowsDialogService : IDialogService
 ```
 
 ### Theme and Styling Strategy
+
 ```xml
 <!-- Application.axaml - Fluent theme with customizations -->
 <Application.Styles>
@@ -125,6 +130,7 @@ public class WindowsDialogService : IDialogService
 ## Application Structure
 
 ### Main Application Layout
+
 ```
 src/TS4Tools.Desktop/
 ├── App.axaml                    # Application entry point
@@ -152,6 +158,7 @@ src/TS4Tools.Desktop/
 ```
 
 ### Performance Optimizations
+
 1. **Virtualization**: Use `VirtualizingStackPanel` for large lists
 2. **Async Operations**: All file I/O operations are async
 3. **Progressive Loading**: Load resources on-demand
@@ -161,24 +168,28 @@ src/TS4Tools.Desktop/
 ## Migration Strategy
 
 ### Phase 1: Core UI Migration (Week 1-2)
+
 1. Create Avalonia project structure
 2. Implement main window and basic navigation
 3. Convert core Windows Forms dialogs
 4. Establish MVVM patterns
 
 ### Phase 2: Feature Migration (Week 3-4)
+
 1. Package explorer with tree view
 2. Resource editing capabilities
 3. Search and filter functionality
 4. Settings and preferences
 
 ### Phase 3: Platform-Specific Features (Week 5-6)
+
 1. Native file dialogs for each platform
 2. Platform-specific theming
 3. Menu and toolbar integration
 4. Accessibility compliance
 
 ### Phase 4: Advanced Features (Week 7-8)
+
 1. Plugin architecture for custom editors
 2. Advanced resource preview capabilities
 3. Drag-and-drop support
@@ -187,18 +198,21 @@ src/TS4Tools.Desktop/
 ## Platform-Specific Considerations
 
 ### Windows
+
 - Native file dialogs with shell integration
 - Windows 11 theme support
 - Jump lists and taskbar integration
 - High DPI awareness
 
 ### macOS
+
 - Native menu bar integration
 - macOS-style dialogs and sheets
 - Retina display support
 - Sandboxing compatibility
 
 ### Linux
+
 - GTK integration for native feel
 - Desktop environment theme respect
 - File manager integration
@@ -207,12 +221,15 @@ src/TS4Tools.Desktop/
 ## Alternative Frameworks Considered
 
 ### .NET MAUI
+
 **Pros:**
+
 - Microsoft's official cross-platform framework
 - Excellent native integration
 - Strong tooling support
 
 **Cons:**
+
 - Limited Linux support
 - Desktop support still maturing
 - Complex for desktop-first applications
@@ -220,12 +237,15 @@ src/TS4Tools.Desktop/
 **Decision:** Rejected due to incomplete Linux support and desktop focus
 
 ### Electron with Blazor
+
 **Pros:**
+
 - Web technology familiarity
 - Rapid development
 - Cross-platform by default
 
 **Cons:**
+
 - Poor performance with large datasets
 - Large memory footprint
 - Non-native appearance
@@ -233,12 +253,15 @@ src/TS4Tools.Desktop/
 **Decision:** Rejected due to performance concerns
 
 ### Flutter
+
 **Pros:**
+
 - Excellent performance
 - True cross-platform
 - Modern reactive framework
 
 **Cons:**
+
 - Dart language learning curve
 - Limited .NET integration
 - Desktop support still evolving
@@ -248,6 +271,7 @@ src/TS4Tools.Desktop/
 ## Implementation Examples
 
 ### Data Grid with Virtualization
+
 ```xml
 <DataGrid ItemsSource="{Binding Resources}"
           SelectedItem="{Binding SelectedResource}"
@@ -263,6 +287,7 @@ src/TS4Tools.Desktop/
 ```
 
 ### Reactive Search Implementation
+
 ```csharp
 public PackageExplorerViewModel(IPackageService packageService)
 {
@@ -283,6 +308,7 @@ public PackageExplorerViewModel(IPackageService packageService)
 ```
 
 ### Platform-Specific Menu Integration
+
 ```csharp
 // macOS-specific menu bar integration
 #if MACOS
@@ -304,6 +330,7 @@ public void ConfigureMacOSMenu()
 ## Performance Benchmarks
 
 ### Target Performance Metrics
+
 | Scenario | Current (WinForms) | Target (Avalonia) | Validation Method |
 |----------|-------------------|-------------------|-------------------|
 | Application Startup | 2.3s | 1.5s | Startup profiling |
@@ -312,6 +339,7 @@ public void ConfigureMacOSMenu()
 | Memory Usage | 180MB | 120MB | Memory profiler |
 
 ### Optimization Techniques
+
 1. **UI Virtualization**: Only render visible items
 2. **Background Loading**: Load data on background threads
 3. **Caching**: Cache rendered UI elements
@@ -320,6 +348,7 @@ public void ConfigureMacOSMenu()
 ## Testing Strategy
 
 ### Unit Testing
+
 ```csharp
 [Test]
 public void SearchFilter_WithValidTerm_FiltersResults()
@@ -338,6 +367,7 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 ```
 
 ### Integration Testing
+
 - Cross-platform UI automation
 - Performance regression testing
 - Accessibility compliance testing
@@ -346,6 +376,7 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 ## Consequences
 
 ### Positive
+
 - **Cross-Platform**: True native support for Windows, macOS, Linux
 - **Performance**: Better than web-based alternatives
 - **Maintainability**: Modern MVVM patterns with reactive programming
@@ -353,30 +384,35 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 - **Community**: Growing ecosystem with active development
 
 ### Negative
+
 - **Learning Curve**: Team needs Avalonia-specific training
 - **Platform Differences**: Some features require platform-specific code
 - **Maturity**: Newer framework with occasional breaking changes
 - **Documentation**: Less comprehensive than WPF documentation
 
 ### Neutral
+
 - **XAML Complexity**: Similar complexity to WPF development
 - **Performance**: Better than Electron, similar to native frameworks
 
 ## Success Criteria
 
 ### Functional Requirements
+
 - [ ] Application runs natively on Windows 10/11, macOS 12+, Ubuntu 20.04+
 - [ ] All legacy Windows Forms functionality migrated
 - [ ] Performance meets or exceeds legacy application
 - [ ] Native platform integration (dialogs, themes, accessibility)
 
 ### Quality Requirements
+
 - [ ] 95%+ unit test coverage for ViewModels
 - [ ] Cross-platform UI automation tests
 - [ ] Accessibility compliance on all platforms
 - [ ] Performance benchmarks meet targets
 
 ### User Experience
+
 - [ ] Native look and feel on each platform
 - [ ] Responsive UI with large datasets (10k+ items)
 - [ ] Keyboard shortcuts work consistently
@@ -385,12 +421,14 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 ## Future Considerations
 
 ### Plugin Architecture
+
 - MVVM-based plugin system
 - Custom resource editor plugins
 - Theme and style customization
 - Extension points for new resource types
 
 ### Advanced Features
+
 - Multi-window support
 - Advanced docking panels
 - Scripting integration

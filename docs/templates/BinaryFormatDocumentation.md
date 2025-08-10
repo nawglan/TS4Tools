@@ -75,9 +75,11 @@
 ### Version Differences
 
 #### Version 1
+
 - [Version 1 specific details]
 
 #### Version 2  
+
 - [Version 2 changes from v1]
 
 ### Platform Variations
@@ -169,10 +171,12 @@ function serializeResource(resource):
 ## Tools and Utilities
 
 ### Hex Editors
+
 - [Recommended hex editors]
 - [Useful plugins/templates]
 
 ### Analysis Tools
+
 - [Tools for analyzing this format]
 - [Custom utilities developed]
 

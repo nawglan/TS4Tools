@@ -9,6 +9,7 @@
 The greenfield migration requires TS4Tools to work identically across Windows, Linux, and macOS while maintaining perfect compatibility with The Sims 4 package files. The DBPF (DataBase Packed File) format and associated resource types have specific binary layouts, endianness requirements, and compression algorithms that must work identically across all platforms.
 
 Key compatibility challenges:
+
 - Binary file format parsing must be platform-agnostic
 - Compression algorithms (ZLIB, RefPack, etc.) must produce identical output
 - File path handling differences between operating systems

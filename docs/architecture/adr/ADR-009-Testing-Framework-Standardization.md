@@ -21,6 +21,7 @@ We will standardize on **xUnit** as the exclusive testing framework for the TS4T
 ## Rationale
 
 ### Technical Advantages of xUnit
+
 1. **Modern Architecture**: Built from the ground up for .NET Core/.NET 5+
 2. **Parallel Execution**: Excellent support for parallel test execution
 3. **Extensibility**: Rich extensibility model for custom assertions and fixtures
@@ -28,6 +29,7 @@ We will standardize on **xUnit** as the exclusive testing framework for the TS4T
 5. **Performance**: Generally faster execution compared to alternatives
 
 ### Project-Specific Benefits
+
 1. **Consistency**: 83+ existing test files already use xUnit
 2. **Migration Cost**: Zero migration cost since we're already standardized
 3. **Team Familiarity**: Development team already experienced with xUnit patterns
@@ -47,6 +49,7 @@ We will standardize on **xUnit** as the exclusive testing framework for the TS4T
 ## Architecture Implications
 
 ### Test Organization
+
 ```csharp
 // Standard test class structure
 public class PackageServiceTests
@@ -75,6 +78,7 @@ public class PackageServiceTests
 ```
 
 ### Fixture Management
+
 ```csharp
 // Collection fixtures for shared state
 [CollectionDefinition("Database Collection")]
@@ -95,6 +99,7 @@ public class DatabaseTests
 ```
 
 ### Custom Assertions
+
 ```csharp
 // Project-specific assertion extensions
 public static class PackageAssertions
@@ -111,17 +116,20 @@ public static class PackageAssertions
 ## Implementation Guidelines
 
 ### 1. Test Structure Standards
+
 - Use `[Fact]` for simple tests
 - Use `[Theory]` with `[InlineData]` for parameterized tests
 - Follow Arrange-Act-Assert pattern
 - Use descriptive test method names
 
 ### 2. Assertion Libraries
+
 - **Primary**: xUnit built-in assertions
 - **Enhanced**: FluentAssertions for complex scenarios
 - **Mocking**: NSubstitute (already established)
 
 ### 3. Test Categories
+
 ```csharp
 // Use traits for test categorization
 [Trait("Category", "Unit")]
@@ -130,6 +138,7 @@ public static class PackageAssertions
 ```
 
 ### 4. CI/CD Integration
+
 ```xml
 <!-- In test projects -->
 <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
@@ -140,16 +149,19 @@ public static class PackageAssertions
 ## Migration Strategy
 
 ### Phase 1: Enforcement (Immediate)
+
 - Document xUnit as mandatory in coding standards
 - Update project templates to include xUnit references
 - Add EditorConfig rules to enforce xUnit patterns
 
 ### Phase 2: Tooling (Week 1)
+
 - Configure CI/CD pipelines for xUnit test discovery
 - Set up test result reporting and coverage collection
 - Create custom project templates with xUnit scaffolding
 
 ### Phase 3: Enhancement (Week 2)
+
 - Develop project-specific assertion extensions
 - Create shared test utilities and fixtures
 - Implement performance benchmarking integration
@@ -157,16 +169,19 @@ public static class PackageAssertions
 ## Benefits
 
 ### Developer Experience
+
 - **Consistency**: Single framework reduces context switching
 - **Productivity**: Rich tooling and IDE integration
 - **Learning Curve**: Team already familiar with xUnit patterns
 
 ### Quality Assurance
+
 - **Reliability**: Mature, battle-tested framework
 - **Performance**: Fast test execution enables rapid feedback
 - **Coverage**: Excellent code coverage integration
 
 ### Maintenance
+
 - **Single Dependency**: Reduces framework maintenance burden
 - **Community Support**: Active development and community
 - **Long-term Viability**: Strong Microsoft and community backing
@@ -174,14 +189,17 @@ public static class PackageAssertions
 ## Risks and Mitigations
 
 ### Risk: Framework Lock-in
+
 - **Mitigation**: xUnit interfaces are standard .NET testing patterns
 - **Impact**: Low - migration patterns are well-established if needed
 
 ### Risk: Learning Curve for New Developers
+
 - **Mitigation**: xUnit is widely used in .NET community
 - **Impact**: Low - extensive documentation and examples available
 
 ### Risk: Advanced Testing Scenarios
+
 - **Mitigation**: xUnit extensibility covers complex scenarios
 - **Impact**: Low - proven in large-scale projects
 
@@ -195,6 +213,7 @@ public static class PackageAssertions
 ## Related Standards
 
 ### Code Style
+
 ```csharp
 // Test naming convention
 public void Should_ThrowException_When_InputIsNull()
@@ -204,6 +223,7 @@ public void Should_ThrowException_When_InputIsNull()
 ```
 
 ### Project Structure
+
 ```
 tests/
 ├── TS4Tools.Core.*.Tests/     # Unit tests
@@ -215,6 +235,7 @@ tests/
 ## Consequences
 
 ### Positive
+
 - ✅ Consistent testing approach across all components
 - ✅ Reduced learning curve for developers
 - ✅ Excellent tooling and CI/CD integration
@@ -222,11 +243,13 @@ tests/
 - ✅ Strong community and ecosystem support
 
 ### Negative
+
 - ❌ Lock-in to specific testing framework (mitigated by standard patterns)
 - ❌ Some advanced NUnit features not directly available
 - ❌ Potential need for custom extensions for specialized scenarios
 
 ### Neutral
+
 - 📋 Requires documentation and training for new team members
 - 📋 Need to maintain xUnit-specific knowledge and best practices
 

@@ -34,6 +34,7 @@ This document analyzes API compatibility between the legacy Sims4Tools system an
 ### Core Interface Compatibility
 
 #### IResource Interface
+
 **Status**: ✅ **100% Compatible**
 
 ```csharp
@@ -55,12 +56,14 @@ public interface IResource : IApiVersion, IContentFields, IDisposable
 ```
 
 **Compatibility Notes**:
+
 - Identical method signatures preserved
 - Event handling mechanism unchanged
 - Property access patterns identical
 - Disposal semantics maintained
 
 #### IResourceKey Interface
+
 **Status**: ✅ **100% Compatible**
 
 ```csharp
@@ -86,6 +89,7 @@ public interface IResourceKey : IComparable<IResourceKey>, IEquatable<IResourceK
 ```
 
 **Compatibility Notes**:
+
 - All legacy methods preserved exactly
 - New methods added without breaking existing code
 - Hash code generation algorithm identical
@@ -94,9 +98,11 @@ public interface IResourceKey : IComparable<IResourceKey>, IEquatable<IResourceK
 ### Resource Handler Compatibility
 
 #### String Table Resources (STBL)
+
 **Status**: ✅ **100% Compatible**
 
 **Legacy API Preservation**:
+
 ```csharp
 // Legacy method signatures preserved exactly
 public class StringTableResource
@@ -121,15 +127,18 @@ public class StringTableResource : IResource
 ```
 
 **Validation Results**:
+
 - ✅ All 34 legacy method signatures preserved
 - ✅ Property accessors behave identically
 - ✅ Event firing patterns unchanged
 - ✅ Exception types and messages identical
 
 #### Image Resources (DDS)
+
 **Status**: ✅ **99% Compatible** - Minor enhancement
 
 **Compatibility Analysis**:
+
 ```csharp
 // Legacy DDS API (preserved)
 public class DDSResource
@@ -161,9 +170,11 @@ public class DDSResource : IResource
 **Enhancements**: Async methods added (optional to use)
 
 #### 3D Geometry Resources (GEOM)
+
 **Status**: ⚠️ **94% Compatible** - Minor signature differences
 
 **Identified Differences**:
+
 ```csharp
 // Legacy method
 public Vertex[] GetVertices()
@@ -173,6 +184,7 @@ public IReadOnlyList<Vertex> GetVertices()
 ```
 
 **Compatibility Solution**:
+
 ```csharp
 // Adapter pattern maintains compatibility
 public Vertex[] GetVertices() => GetVerticesEnumerable().ToArray();
@@ -182,9 +194,11 @@ public IReadOnlyList<Vertex> GetVerticesEnumerable() => _vertices.AsReadOnly();
 ### Plugin System Compatibility
 
 #### Legacy Plugin Loading
+
 **Status**: ⚠️ **94% Compatible** - Modern AssemblyLoadContext impact
 
 **Legacy Pattern**:
+
 ```csharp
 // Old Assembly.LoadFile() approach (security risk)
 Assembly assembly = Assembly.LoadFile(pluginPath);
@@ -192,6 +206,7 @@ Type[] types = assembly.GetExportedTypes();
 ```
 
 **TS4Tools Modern Approach**:
+
 ```csharp
 // Modern AssemblyLoadContext (secure, isolated)
 using var context = new PluginLoadContext(pluginPath);
@@ -200,6 +215,7 @@ Type[] types = assembly.GetExportedTypes();
 ```
 
 **Compatibility Bridge**:
+
 ```csharp
 public class LegacyPluginAdapter
 {
@@ -214,6 +230,7 @@ public class LegacyPluginAdapter
 ```
 
 #### AResourceHandler Plugin Interface
+
 **Status**: ✅ **100% Compatible**
 
 ```csharp
@@ -240,9 +257,11 @@ public abstract class AResourceHandler : IResourceHandler
 ### Package Operations Compatibility
 
 #### Package Loading/Saving
+
 **Status**: ✅ **100% Compatible**
 
 **API Preservation Verification**:
+
 ```csharp
 // Legacy API (preserved exactly)
 public interface IPackage
@@ -273,6 +292,7 @@ public interface IPackage
 ### Utility Function Compatibility
 
 #### Hash Functions
+
 **Status**: ✅ **100% Compatible**
 
 ```csharp
@@ -288,6 +308,7 @@ Assert.Equal(legacyHash, TS4ToolsHash);
 ```
 
 #### String Utilities  
+
 **Status**: ✅ **99% Compatible**
 
 ```csharp
@@ -306,6 +327,7 @@ public static class SevenBitString
 ### Golden Master Validation
 
 #### Package Round-trip Testing
+
 ```csharp
 [Theory]
 [InlineData("ClientStrings0.package")]
@@ -326,6 +348,7 @@ public async Task ValidatePackageCompatibility(string packageFile)
 ```
 
 #### Resource Processing Validation
+
 ```csharp
 [Fact]
 public void ValidateStringTableCompatibility()
@@ -344,6 +367,7 @@ public void ValidateStringTableCompatibility()
 ### Plugin Compatibility Testing
 
 #### Legacy Plugin Validation
+
 ```csharp
 [Theory]
 [InlineData("CustomResourceHandler.dll")]
@@ -365,6 +389,7 @@ public async Task ValidateLegacyPlugin(string pluginFile)
 ### API Surface Testing
 
 #### Reflection-Based Validation
+
 ```csharp
 [Fact]
 public void ValidatePublicAPICompatibility()
@@ -385,11 +410,13 @@ public void ValidatePublicAPICompatibility()
 ### Minor Breaking Changes (2)
 
 #### 1. Exception Message Format
+
 **Issue**: Error message formatting slightly different  
 **Impact**: Low - Only affects error handling code that parses messages  
 **Mitigation**: Preserve legacy message formats in TS4Tools
 
 **Example**:
+
 ```csharp
 // Legacy: "Resource not found: 0x12345678"
 // TS4Tools: "Resource not found: Type=0x12345678"
@@ -399,6 +426,7 @@ throw new ResourceNotFoundException($"Resource not found: 0x{resourceType:X8}");
 ```
 
 #### 2. Async Method Overload Resolution
+
 **Issue**: Method overload resolution may prefer async methods  
 **Impact**: Very low - Only in ambiguous call scenarios  
 **Mitigation**: Explicit method attribute to prefer sync versions
@@ -406,16 +434,19 @@ throw new ResourceNotFoundException($"Resource not found: 0x{resourceType:X8}");
 ### Compatibility Risks
 
 #### 1. Plugin Assembly Loading
+
 **Risk Level**: Medium  
 **Description**: Modern AssemblyLoadContext may expose different behavior  
 **Mitigation**: Comprehensive legacy plugin testing, compatibility shims
 
 #### 2. Undocumented Behavior Dependencies
+
 **Risk Level**: Low-Medium  
 **Description**: Code may depend on undocumented legacy behaviors  
 **Mitigation**: Extensive Golden Master testing, community feedback
 
 #### 3. Performance Characteristic Changes  
+
 **Risk Level**: Low  
 **Description**: Performance improvements may break timing-dependent code  
 **Mitigation**: Performance regression testing, configurable behavior
@@ -423,6 +454,7 @@ throw new ResourceNotFoundException($"Resource not found: 0x{resourceType:X8}");
 ## Migration Support Tools
 
 ### Compatibility Analyzer
+
 ```csharp
 public class CompatibilityAnalyzer
 {
@@ -445,6 +477,7 @@ public class CompatibilityAnalyzer
 ```
 
 ### Legacy Code Bridge
+
 ```csharp
 // Provides legacy-compatible interfaces over modern implementation
 public static class LegacyBridge

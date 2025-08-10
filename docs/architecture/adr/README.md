@@ -52,6 +52,7 @@ This directory contains Architecture Decision Records (ADRs) documenting key arc
 ## Reading Guide
 
 ### For New Team Members
+
 Start with these ADRs to understand the overall architecture:
 
 1. **ADR-004**: Greenfield Migration Strategy - Provides context for why we're doing a complete rewrite
@@ -59,6 +60,7 @@ Start with these ADRs to understand the overall architecture:
 3. **ADR-002**: Dependency Injection - Modern architecture patterns
 
 ### For Plugin Developers
+
 Essential reading for community plugin development:
 
 1. **ADR-007**: Modern Plugin Architecture - How to build modern plugins
@@ -67,6 +69,7 @@ Essential reading for community plugin development:
 4. **ADR-011**: Native Dependency Strategy - Platform-specific implementations
 
 ### For Quality Assurance  
+
 Critical for testing and validation:
 
 1. **ADR-006**: Golden Master Testing Strategy - Primary testing approach
@@ -76,6 +79,7 @@ Critical for testing and validation:
 5. **ADR-013**: Static Analysis and Code Quality - Quality gates and standards
 
 ### For User Experience and Migration
+
 Essential for migration planning and user support:
 
 1. **ADR-012**: Rollback and Migration Architecture - Safe user data migration
@@ -95,6 +99,7 @@ Essential for migration planning and user support:
    - Quality attributes
 
 2. **Use ADR Template**:
+
    ```
    # ADR-XXX: [Decision Title]
    
@@ -135,30 +140,35 @@ Essential for migration planning and user support:
 Based on the documented ADRs, the TS4Tools architecture follows these principles:
 
 ### 1. **Compatibility First** (ADR-004, ADR-006, ADR-008)
+
 - 100% backward compatibility with existing files and workflows
 - Byte-perfect file format preservation  
 - Golden master testing for validation
 - Legacy plugin support via adapters
 
 ### 2. **Cross-Platform by Design** (ADR-001, ADR-003, ADR-008)
+
 - .NET 9 for universal platform support
 - Avalonia UI for native cross-platform experience
 - Platform abstraction layers for file system differences
 - Consistent behavior across Windows, Linux, and macOS
 
 ### 3. **Modern Architecture Patterns** (ADR-002, ADR-005, ADR-007)
+
 - Dependency injection for testability and maintainability
 - Modern async/await patterns throughout
 - Clean architecture with proper separation of concerns  
 - Plugin architecture supporting both legacy and modern approaches
 
 ### 4. **Quality and Testing** (ADR-006)
+
 - Golden master testing for regression prevention
 - Comprehensive test coverage including real-world scenarios
 - Continuous integration across all platforms
 - Performance monitoring and benchmarking
 
 ### 5. **Community and Ecosystem** (ADR-004, ADR-007)
+
 - Preserve existing modding community investments
 - Provide clear migration path for plugin developers
 - Maintain API compatibility where possible

@@ -8,10 +8,12 @@
 ## � **PROJECT STATUS DOCUMENTATION**
 
 ### **Primary Status References**
+
 - **Implementation Status:** See [CHANGELOG.md](CHANGELOG.md) - detailed implementation history, completed features, and technical achievements
 - **Phase Completion Status:** See [MIGRATION_ROADMAP.md](MIGRATION_ROADMAP.md) - current phase status, upcoming work, and overall project progression
 
 ### **Current Status (January 13, 2025)**
+
 - **Phase 0:** ✅ COMPLETE - All foundation requirements implemented  
 - **Build Status:** ✅ 929/929 tests passing (100% success rate)
 - **Critical Blockers:** ✅ RESOLVED - No P0 issues remaining
@@ -24,6 +26,7 @@
 ## �🚨 CRITICAL MIGRATION PHILOSOPHY
 
 ### **GREENFIELD REWRITE - NOT IN-PLACE MIGRATION**
+
 - **Extract business logic patterns**, never copy code structures
 - **Preserve 100% API compatibility** for existing tools and plugins
 - **Modern .NET 9 implementation** with identical external behavior
@@ -32,6 +35,7 @@
 ## ⚡ CRITICAL DIRECTIVES (Read First)
 
 ### 🚨 MANDATORY VALIDATION BEFORE ANY WORK
+
 ```powershell
 # ALWAYS execute this sequence before starting:
 cd "c:\Users\nawgl\code\TS4Tools"
@@ -44,7 +48,7 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
 1. **ASSEMBLY LOADING CRISIS RESOLUTION**
    - Replace `Assembly.LoadFile()` with `AssemblyLoadContext.LoadFromAssemblyPath()`
    - Priority P0 - BLOCKING issue that breaks .NET 9 compatibility
-   
+
 2. **GOLDEN MASTER TESTING MANDATORY**
    - Every migrated component must pass byte-perfect compatibility tests
    - Use real Sims 4 .package files for validation (Steam: `\Electronic Arts\The Sims 4\Data\Client\*.package`)
@@ -81,6 +85,7 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
    - **Helper Integration APIs** unchanged (`.helper` file format, `IRunHelper` interface)
 
 ### 🎯 DECISION TREE: When to Use Which Approach
+
 - **New feature/class** → Create with tests first (TDD)
 - **Legacy modernization** → Refactor with comprehensive test coverage
 - **Build errors** → Fix immediately, never suppress without justification
@@ -88,6 +93,7 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
 - **External dependencies** → Abstract behind interfaces for testing
 
 ### 📋 PRE-COMMIT CHECKLIST (All Must Be ✅)
+
 - [ ] Run code quality script: `.\scripts\check-quality.ps1` (or `.\scripts\check-quality.ps1 -Fix` to auto-fix)
 - [ ] Zero build errors and warnings
 - [ ] All tests passing (100%)
@@ -98,14 +104,16 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
 ## �️ ENVIRONMENT & COMMANDS
 
 ### System Configuration
+
 - **OS:** Windows with PowerShell v5.1
 - **Command Chaining:** Use `;` not `&&`
 - **Working Directory:** `c:\Users\nawgl\code\TS4Tools` (ALWAYS cd here first)
-- **Project Structure:** 
+- **Project Structure:**
   - Source: `src/TS4Tools.Core.*/`
   - Tests: `tests/TS4Tools.*.Tests/`
 
 ### Standard Command Patterns
+
 ```powershell
 # Full validation sequence (use before/after major changes)
 cd "c:\Users\nawgl\code\TS4Tools"; dotnet clean; dotnet restore; dotnet build TS4Tools.sln --verbosity minimal; dotnet test TS4Tools.sln --verbosity minimal
@@ -119,6 +127,7 @@ dotnet test TS4Tools.sln [test-project] --verbosity minimal
 ## �️ ARCHITECTURE REQUIREMENTS
 
 ### Non-Negotiable Patterns
+
 1. **Dependency Injection** - Constructor injection only, no static dependencies
 2. **Interface Segregation** - Every service behind focused interface
 3. **Pure Functions** - Stateless, deterministic methods where possible
@@ -232,11 +241,13 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
 ## 🧪 TESTING IMPERATIVES
 
 ### Test-First Approach
+
 - **New Code:** Write tests before implementation (TDD)
 - **Legacy Code:** Add tests during refactoring
 - **Coverage Goal:** 100% for new code, improve existing incrementally
 
 ### Required Testing Patterns
+
 **MANDATORY:** Use **xUnit** testing framework throughout the project (established standard with 83+ existing test files).
 
 ```csharp
@@ -270,11 +281,13 @@ public async Task Should_[ExpectedBehavior]_When_[Scenario]()
 ## ⚙️ STATIC ANALYSIS PROTOCOL
 
 ### Warning Resolution Strategy
+
 1. **First:** Fix by improving code design
 2. **Last Resort:** Suppress with documented justification
 3. **Never:** Ignore or suppress without reason
 
 ### Common Justified Suppressions
+
 ```csharp
 #pragma warning disable CA1051 // Do not declare visible instance fields
 // JUSTIFICATION: Performance-critical handler pattern requires public fields for hot path access
@@ -294,6 +307,7 @@ public readonly struct HandlerData { public int Value; }
 ### Current Migration Phase Context (August 7, 2025)
 
 **Phase 0: Foundation & Analysis Complete** - Golden Master Implementation Required
+
 - ✅ Modern .NET 9 solution structure established
 - ✅ Cross-platform CI/CD pipeline setup  
 - ✅ Golden master test framework created
@@ -305,26 +319,31 @@ public readonly struct HandlerData { public int Value; }
 ### Phase-Specific AI Agent Priorities (SIMS4TOOLS Alignment)
 
 #### Phase 1: Core Foundation (Months 4-7) - DBPF PERFECTION
+
 - **Priority 1:** Modern DbpfHeader/PackageIndex with identical parsing logic
 - **Priority 2:** Resource streaming infrastructure for multi-GB files
 - **Critical Success:** 100% round-trip compatibility with existing .package files
 
 #### Phase 2: Business Logic Migration (Months 8-9) - SYSTEMATIC APPROACH  
+
 - **Priority 1:** Port all 20+ resource wrappers with golden master tests
 - **Priority 2:** Migrate compression algorithms (ZLIB, RefPack, DDS hybrid strategy)
 - **Critical Success:** All existing plugins work via adapter pattern
 
 #### Phase 3: Cross-Platform UI (Months 10-13) - EXTENSIVE TESTING
+
 - **Priority 1:** Avalonia UI with MainForm feature parity
 - **Priority 2:** Helper applications cross-platform port (ModelViewer, ThumbnailHelper, etc.)
 - **Critical Success:** All user workflows identical across Win/Linux/macOS
 
 #### Phase 4: Finalization & Launch (Months 14-15)
+
 - **Priority 1:** Comprehensive compatibility testing (99.9%+ real-world packages)
 - **Priority 2:** Community beta testing and feedback integration  
 - **Critical Success:** Production-ready replacement with user adoption plan
 
 ### Mandatory Pre-Commit Sequence
+
 ```powershell
 cd "c:\Users\nawgl\code\TS4Tools"
 
@@ -341,11 +360,13 @@ dotnet test TS4Tools.sln --verbosity minimal
 ```
 
 ### Required Documentation Updates
+
 - **MIGRATION_ROADMAP.md:** Mark phase ✅ COMPLETED with date
 - **CHANGELOG.md:** Document technical achievements and improvements
 - **Progress Metrics:** Update completion percentage (current: 33%, 21/63 phases)
 
 ### Commit Message Format
+
 ```
 feat(component): brief description
 
@@ -409,18 +430,21 @@ TECHNICAL IMPACT: [Performance, maintainability, or compatibility improvements]
 ## 📊 PROJECT STATUS & CONTEXT
 
 ### Current State (August 7, 2025)
+
 - **Completion:** Phase 0 Framework Complete - Golden Master Validation Implementation Required
 - **Active Priority:** Golden Master Testing Implementation (BLOCKING)
 - **Test Status:** 90/90 tests passing (100%) ✅
 - **Next Priority:** Per MIGRATION_ROADMAP.md and SIMS4TOOLS_MIGRATION_DOCUMENTATION.md specifications
 
 ### Key Project Files
+
 - **MIGRATION_ROADMAP.md** - Current phase details and future planning (15-month timeline)
 - **SIMS4TOOLS_MIGRATION_DOCUMENTATION.md** - Comprehensive migration requirements and constraints
 - **CHANGELOG.md** - Historical record of completed work  
 - **All files must be updated upon phase completion**
 
 ### Success Metrics (SIMS4TOOLS Alignment)
+
 - **100% File Format Compatibility** - Byte-perfect round-trip testing with real Sims 4 packages
 - **99.9%+ Real-World Package Compatibility** - Golden master validation against Steam installation packages
 - **Performance Parity** - Startup ≤3-5s, large file handling ≤original+10%, memory usage stable/improved
@@ -431,12 +455,14 @@ TECHNICAL IMPACT: [Performance, maintainability, or compatibility improvements]
 ## 🎯 DECISION FRAMEWORK FOR AI ASSISTANTS
 
 ### When to Read Additional Context
+
 - **Unknown errors:** Use `get_errors` tool to see actual compiler/analyzer messages
 - **Test failures:** Read test output and related source files
 - **Architecture questions:** Review existing patterns in similar classes
 - **Performance concerns:** Check for existing benchmarks and patterns
 
 ### When to Create vs. Modify
+
 - **New feature:** Create with TDD approach, tests first
 - **Bug fix:** Add regression test, then fix
 - **Refactoring:** Ensure tests exist, then modernize
@@ -504,12 +530,14 @@ public interface IRollbackService
 ### Community Impact Management
 
 #### Plugin Ecosystem Transition
+
 - **Legacy Support:** All existing AResourceHandler plugins MUST work via adapters
 - **Documentation:** Clear migration path for plugin developers
 - **Compatibility Testing:** Validate with real third-party plugins during beta
 - **Support Timeline:** Legacy version LTS mode during transition period
 
 #### Helper Tool Integration
+
 - **Backward Compatibility:** All .helper files continue working
 - **Cross-Platform Discovery:** Automatic detection of tools across platforms  
 - **Execution Abstraction:** Platform-specific process launching patterns
@@ -566,6 +594,7 @@ dotnet clean; dotnet restore; dotnet build TS4Tools.sln --verbosity minimal; dot
 ### 📋 **Decision Framework Integration**
 
 **When working on any phase:**
+
 1. **Read SIMS4TOOLS_MIGRATION_DOCUMENTATION.md** for context and constraints
 2. **Check MIGRATION_ROADMAP.md** for current phase priorities and timeline
 3. **Validate against golden master tests** with real Sims 4 packages

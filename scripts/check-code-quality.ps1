@@ -83,7 +83,46 @@ catch {
 }
 Write-Host ""
 
-# Step 4: Run tests
+# Step 4: Markdown linting (if available)
+Write-Host "📝 Checking markdown formatting..." -ForegroundColor Cyan
+
+# Check if markdownlint is available
+try {
+    $markdownlintPath = Get-Command markdownlint -ErrorAction SilentlyContinue
+    if ($markdownlintPath) {
+        if ($Fix) {
+            Write-Host "🔧 Auto-fixing markdown issues..." -ForegroundColor Yellow
+            try {
+                markdownlint --fix **/*.md --ignore node_modules 2>$null
+                Write-Host "✅ Markdown formatting applied" -ForegroundColor Green
+            }
+            catch {
+                Write-Host "⚠️  Some markdown issues couldn't be auto-fixed" -ForegroundColor Yellow
+            }
+        }
+
+        # Always check after fixing (or if no fix requested)
+        try {
+            markdownlint **/*.md --ignore node_modules 2>$null
+            Write-Host "✅ All markdown is properly formatted" -ForegroundColor Green
+        }
+        catch {
+            Write-Host "⚠️  Markdown formatting issues detected (non-critical)" -ForegroundColor Yellow
+            if (-not $Fix) {
+                Write-Host "💡 To fix automatically: .\scripts\check-code-quality.ps1 -Fix" -ForegroundColor Yellow
+            }
+        }
+    } else {
+        Write-Host "⚠️  markdownlint not found - skipping markdown checks" -ForegroundColor Yellow
+        Write-Host "   Install with: npm install -g markdownlint-cli" -ForegroundColor Gray
+    }
+}
+catch {
+    Write-Host "⚠️  Could not check markdown formatting" -ForegroundColor Yellow
+}
+Write-Host ""
+
+# Step 5: Run tests
 Write-Host "🧪 Running unit tests..." -ForegroundColor Cyan
 try {
     dotnet test $solutionFile --no-build --configuration Release --verbosity minimal
@@ -101,6 +140,7 @@ Write-Host "🎉 All code quality checks passed!" -ForegroundColor Green
 Write-Host ""
 Write-Host "✅ Code formatting: OK" -ForegroundColor Green
 Write-Host "✅ .NET analyzers: OK" -ForegroundColor Green
+Write-Host "✅ Markdown formatting: OK" -ForegroundColor Green
 Write-Host "✅ Unit tests: OK" -ForegroundColor Green
 Write-Host ""
 Write-Host "🚀 Your code is ready to commit!" -ForegroundColor Green

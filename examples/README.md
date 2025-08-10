@@ -5,15 +5,18 @@ This directory contains working examples demonstrating how to use TS4Tools for v
 ## Available Examples
 
 ### 1. BasicPackageReader
+
 **Purpose**: Demonstrates basic package reading and analysis functionality.
 
 **Features**:
+
 - Load and inspect package files
 - Display package statistics and resource information
 - Show resource type analysis with friendly names
 - Preview resource data with hex dumps
 
 **Usage**:
+
 ```bash
 cd BasicPackageReader
 dotnet run "path/to/your/package.package"
@@ -22,15 +25,18 @@ dotnet run "path/to/your/package.package"
 [View README](BasicPackageReader/README.md)
 
 ### 2. PackageCreator
+
 **Purpose**: Shows how to create new package files from scratch.
 
 **Features**:
+
 - Create empty packages
 - Add custom text, binary, and metadata resources
 - Save packages to disk
 - Verify created packages
 
 **Usage**:
+
 ```bash
 cd PackageCreator
 dotnet run "path/to/output/new-package.package"
@@ -41,18 +47,23 @@ dotnet run "path/to/output/new-package.package"
 ## Building and Running Examples
 
 ### Prerequisites
+
 - .NET 9 SDK
 - TS4Tools solution built successfully
 
 ### Build All Examples
+
 From the TS4Tools root directory:
+
 ```bash
 dotnet build examples/BasicPackageReader
 dotnet build examples/PackageCreator
 ```
 
 ### Run Examples
+
 Each example is a standalone console application:
+
 ```bash
 # Basic Package Reader
 cd examples/BasicPackageReader
@@ -66,7 +77,9 @@ dotnet run -- "C:\path\to\output\new-file.package"
 ## Common Patterns Demonstrated
 
 ### 1. Dependency Injection Setup
+
 All examples show proper DI configuration:
+
 ```csharp
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddTS4ToolsCore();
@@ -75,21 +88,27 @@ builder.Logging.AddConsole();
 ```
 
 ### 2. Service Usage
+
 Examples demonstrate proper service usage patterns:
+
 ```csharp
 var packageFactory = host.Services.GetRequiredService<IPackageFactory>();
 var resourceTypeRegistry = host.Services.GetRequiredService<IResourceTypeRegistry>();
 ```
 
 ### 3. Resource Management
+
 Proper disposal and resource management:
+
 ```csharp
 using var package = await packageFactory.LoadFromFileAsync(packagePath);
 // Package automatically disposed when scope exits
 ```
 
 ### 4. Error Handling
+
 Comprehensive error handling with logging:
+
 ```csharp
 try
 {
@@ -107,12 +126,14 @@ catch (Exception ex)
 To create a new example project:
 
 1. **Create project directory**:
+
    ```bash
    mkdir examples/YourExample
    cd examples/YourExample
    ```
 
 2. **Create project file**:
+
    ```xml
    <Project Sdk="Microsoft.NET.Sdk">
      <PropertyGroup>
@@ -134,6 +155,7 @@ To create a new example project:
    ```
 
 3. **Create Program.cs**:
+
    ```csharp
    using Microsoft.Extensions.DependencyInjection;
    using Microsoft.Extensions.Hosting;
@@ -155,14 +177,18 @@ To create a new example project:
 Examples can be tested with sample package files:
 
 ### Creating Test Data
+
 Use the PackageCreator example to generate test packages:
+
 ```bash
 cd examples/PackageCreator
 dotnet run -- "test-data/sample.package"
 ```
 
 ### Validation
+
 Use the BasicPackageReader to validate created packages:
+
 ```bash
 cd examples/BasicPackageReader
 dotnet run -- "test-data/sample.package"
@@ -171,6 +197,7 @@ dotnet run -- "test-data/sample.package"
 ## Integration with Documentation
 
 These examples are referenced in the main documentation:
+
 - [Getting Started Guide](../docs/getting-started.md) - Basic usage patterns
 - [API Reference](../docs/api-reference.md) - Detailed API examples  
 - [Advanced Features](../docs/advanced-features.md) - Complex scenarios
@@ -189,6 +216,7 @@ When contributing new examples:
 ## Support
 
 If you have questions about the examples:
+
 - Check the individual README files in each example directory
 - Review the main [Getting Started Guide](../docs/getting-started.md)
 - See the [API Reference](../docs/api-reference.md) for detailed documentation

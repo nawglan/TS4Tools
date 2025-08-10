@@ -77,6 +77,7 @@ Measures performance of fundamental package operations:
 - **Bulk Operations**: Multiple resource processing scenarios
 
 **Key Metrics:**
+
 - Loading time by package size (1MB, 10MB, 100MB+)
 - Memory allocation patterns
 - I/O operation efficiency
@@ -94,6 +95,7 @@ Analyzes resource-specific operation performance:
 - **Format Conversion**: Cross-format operation costs
 
 **Resource Types Covered:**
+
 - String tables (STBL)
 - Image resources (DDS, PNG)
 - 3D geometry (GEOM, MLOD)
@@ -202,6 +204,7 @@ CI/CD pipeline integration:
 ### Performance Regression Detection
 
 Automated alerting when:
+
 - Mean execution time increases >20%
 - Memory allocation increases >30%
 - Standard deviation increases >50% (inconsistency)
@@ -211,6 +214,7 @@ Automated alerting when:
 ### Common Performance Patterns
 
 #### 1. Async I/O Optimization
+
 ```csharp
 // Prefer async methods for I/O operations
 [Benchmark]
@@ -222,6 +226,7 @@ public async Task LoadPackageAsync()
 ```
 
 #### 2. Memory Pool Usage
+
 ```csharp
 // Use memory pools for repeated allocations
 private static readonly ArrayPool<byte> BytePool = ArrayPool<byte>.Shared;
@@ -242,6 +247,7 @@ public void ProcessResource()
 ```
 
 #### 3. Span<T> for Performance
+
 ```csharp
 // Use Span<T> for zero-allocation operations
 [Benchmark]
@@ -255,16 +261,19 @@ public void ParseResourceHeader()
 ### Resource-Specific Optimizations
 
 #### String Resources
+
 - Use StringPool for repeated string instances
 - Implement lazy loading for large string tables
 - Cache parsed string table structures
 
 #### Image Resources
+
 - Stream processing for large images
 - Format-specific optimized parsers
 - Lazy thumbnail generation
 
 #### Binary Resources
+
 - Memory-mapped files for large data
 - Incremental parsing strategies
 - Efficient diff algorithms
@@ -281,6 +290,7 @@ public void ParseResourceHeader()
 ### Performance Dashboard
 
 Key metrics tracked:
+
 - Package operation latency (p50, p95, p99)
 - Memory usage patterns
 - Throughput measurements
@@ -360,6 +370,7 @@ public void MemoryIntensiveOperation()
 ### Troubleshooting
 
 Common benchmark issues:
+
 - **JIT Compilation**: Ensure proper warmup iterations
 - **Background Processes**: Run on dedicated machines
 - **Clock Resolution**: Use high-resolution timers

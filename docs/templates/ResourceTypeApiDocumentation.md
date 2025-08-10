@@ -13,6 +13,7 @@
 ## Binary Format Specification
 
 ### Header Structure
+
 ```
 Offset  | Size | Type   | Description
 --------|------|--------|-------------
@@ -24,6 +25,7 @@ Offset  | Size | Type   | Description
 ```
 
 ### Data Structure
+
 ```
 [Detailed binary format description]
 ```
@@ -33,6 +35,7 @@ Offset  | Size | Type   | Description
 ### Interfaces
 
 #### I[ResourceTypeName]
+
 ```csharp
 public interface I[ResourceTypeName] : IResource
 {
@@ -53,6 +56,7 @@ public interface I[ResourceTypeName] : IResource
 ### Implementation Class
 
 #### [ResourceTypeName]
+
 ```csharp
 public class [ResourceTypeName] : I[ResourceTypeName]
 {
@@ -63,6 +67,7 @@ public class [ResourceTypeName] : I[ResourceTypeName]
 ### Factory Class
 
 #### [ResourceTypeName]Factory
+
 ```csharp
 public class [ResourceTypeName]Factory : IResourceFactory
 {
@@ -73,6 +78,7 @@ public class [ResourceTypeName]Factory : IResourceFactory
 ## Usage Examples
 
 ### Creating from Binary Data
+
 ```csharp
 // Load from package
 using var package = await packageFactory.LoadFromFileAsync("example.package");
@@ -87,6 +93,7 @@ if (resource is I[ResourceTypeName] typedResource)
 ```
 
 ### Creating New Resource
+
 ```csharp
 // Create new empty resource
 var newResource = resourceManager.CreateResource<[ResourceTypeName]>();
@@ -97,6 +104,7 @@ using var outputStream = await newResource.SerializeAsync();
 ```
 
 ### Modifying Existing Resource
+
 ```csharp
 // Load, modify, and save
 var resource = await LoadResource() as I[ResourceTypeName];
@@ -109,31 +117,37 @@ await package.UpdateResourceAsync(resourceIndex, modifiedStream);
 ## Migration from Legacy Implementation
 
 ### Property Mappings
+
 | Legacy Property | TS4Tools Property | Notes |
 |----------------|-------------------|--------|
 | `OldPropertyName` | `NewPropertyName` | [Migration notes] |
 
 ### Method Mappings
+
 | Legacy Method | TS4Tools Method | Notes |
 |--------------|-----------------|--------|
 | `OldMethod()` | `NewMethodAsync()` | [Migration notes] |
 
 ### Breaking Changes
+
 - [List any breaking changes from legacy implementation]
 - [Migration guidance for existing code]
 
 ## Implementation Notes
 
 ### Design Decisions
+
 - [Key architectural decisions made during implementation]
 - [Rationale for API design choices]
 
 ### Performance Considerations
+
 - [Performance characteristics]
 - [Memory usage patterns]
 - [Optimization opportunities]
 
 ### Cross-Platform Compatibility
+
 - [Platform-specific considerations]
 - [Endianness handling]
 - [File path handling]
@@ -141,6 +155,7 @@ await package.UpdateResourceAsync(resourceIndex, modifiedStream);
 ## Testing
 
 ### Test Coverage
+
 - ✅ Binary format parsing
 - ✅ Round-trip serialization  
 - ✅ Property validation
@@ -148,6 +163,7 @@ await package.UpdateResourceAsync(resourceIndex, modifiedStream);
 - ✅ Performance benchmarks
 
 ### Golden Master Tests
+
 ```csharp
 [Fact]
 public async Task [ResourceTypeName]_RoundTripSerialization_ShouldPreserveBinaryEquivalence()

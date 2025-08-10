@@ -9,6 +9,7 @@ The TS4Tools Plugin System provides a modern, secure, and extensible architectur
 ### Core Interfaces
 
 #### IPluginLoadContext
+
 Manages the lifecycle of plugin assemblies with proper isolation:
 
 ```csharp
@@ -24,6 +25,7 @@ public interface IPluginLoadContext : IDisposable
 ```
 
 #### IPluginManager
+
 Central coordination for plugin discovery, loading, and management:
 
 ```csharp
@@ -37,6 +39,7 @@ public interface IPluginManager : IDisposable
 ```
 
 #### IPluginDiscoveryService
+
 Handles plugin discovery and metadata validation:
 
 ```csharp
@@ -51,20 +54,26 @@ public interface IPluginDiscoveryService
 ## Key Features
 
 ### 1. Assembly Isolation
+
 Each plugin loads in its own `AssemblyLoadContext`, providing:
+
 - **Security**: Isolated execution environments
 - **Stability**: Plugin crashes don't affect the host application
 - **Memory Management**: Proper cleanup when plugins are unloaded
 - **Version Isolation**: Multiple versions of dependencies can coexist
 
 ### 2. Legacy Compatibility
+
 The system maintains backward compatibility with existing Sims4Tools plugins through:
+
 - **Adapter Pattern**: Legacy `AResourceHandler` plugins work without changes
 - **API Bridging**: Modern interfaces wrap legacy functionality
 - **Gradual Migration**: Plugins can be updated incrementally
 
 ### 3. Modern Plugin Development
+
 New plugins can leverage modern .NET features:
+
 - **Dependency Injection**: Full IoC container integration
 - **Async Operations**: Non-blocking plugin operations
 - **Configuration**: Modern configuration binding
@@ -75,16 +84,19 @@ New plugins can leverage modern .NET features:
 ### Plugin Loading Process
 
 1. **Discovery Phase**
+
    ```csharp
    var plugins = await pluginDiscovery.DiscoverPluginsAsync(pluginDirectory);
    ```
 
 2. **Validation Phase**
+
    ```csharp
    var validPlugins = plugins.Where(p => pluginDiscovery.ValidatePluginCompatibility(p));
    ```
 
 3. **Loading Phase**
+
    ```csharp
    foreach (var plugin in validPlugins)
    {
@@ -163,13 +175,16 @@ public class PluginModule : IPluginModule
 ## Migration from Legacy System
 
 ### Legacy Assembly.LoadFile() Issues
+
 The original system used `Assembly.LoadFile()` which caused:
+
 - **Security Vulnerabilities**: Unrestricted assembly loading
 - **Memory Leaks**: No proper assembly unloading
 - **Version Conflicts**: DLL hell with conflicting dependencies
 - **Cross-Platform Issues**: Platform-specific loading behaviors
 
 ### Modern AssemblyLoadContext Benefits
+
 - **Proper Isolation**: Each plugin in separate context
 - **Clean Unloading**: Memory is properly reclaimed
 - **Dependency Management**: Better handling of plugin dependencies
@@ -178,12 +193,14 @@ The original system used `Assembly.LoadFile()` which caused:
 ## Performance Characteristics
 
 ### Plugin Loading Performance
+
 - **Cold Start**: ~50-100ms per plugin (depending on size)
 - **Warm Start**: ~10-20ms for cached descriptors
 - **Memory Overhead**: ~2-5MB per loaded context
 - **Unload Time**: ~10-50ms with proper cleanup
 
 ### Best Practices
+
 1. **Lazy Loading**: Load plugins only when needed
 2. **Caching**: Cache plugin metadata for faster startup
 3. **Batch Operations**: Load multiple plugins concurrently
@@ -192,16 +209,19 @@ The original system used `Assembly.LoadFile()` which caused:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Plugin discovery and validation logic
 - Assembly loading and isolation
 - Error handling and recovery scenarios
 
 ### Integration Tests
+
 - End-to-end plugin loading workflows
 - Legacy plugin compatibility
 - Resource handler registration and execution
 
 ### Performance Tests
+
 - Plugin loading time benchmarks
 - Memory usage monitoring
 - Concurrent plugin loading scenarios
@@ -209,13 +229,16 @@ The original system used `Assembly.LoadFile()` which caused:
 ## Future Enhancements
 
 ### Planned Features
+
 1. **Hot Reloading**: Dynamic plugin updates without restart
 2. **Plugin Marketplace**: Centralized plugin distribution
 3. **Advanced Sandboxing**: More granular security controls
 4. **Plugin Analytics**: Usage tracking and performance monitoring
 
 ### API Evolution
+
 The plugin system is designed for backward compatibility while allowing gradual evolution:
+
 - New interfaces can be added without breaking existing plugins
 - Legacy adapters will be maintained for several major versions
 - Migration tools will help upgrade legacy plugins to modern APIs
@@ -223,13 +246,16 @@ The plugin system is designed for backward compatibility while allowing gradual 
 ## Troubleshooting
 
 ### Common Issues
+
 1. **Plugin Not Loading**: Check plugin descriptor validity
 2. **Dependency Conflicts**: Verify plugin dependencies
 3. **Performance Issues**: Monitor plugin resource usage
 4. **Legacy Compatibility**: Use adapter pattern for old plugins
 
 ### Debugging
+
 Enable detailed plugin logging:
+
 ```json
 {
   "Logging": {

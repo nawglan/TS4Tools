@@ -19,7 +19,7 @@ dotnet run "C:\path\to\your\file.package"
 
 ## Example Output
 
-```
+```text
 === Package Information ===
 File Path: C:\path\to\your\file.package
 Created: 2024-01-15 10:30:45

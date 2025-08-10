@@ -1,6 +1,7 @@
 # TS4Tools - Modern Sims 4 Package Editor
 
-> **📝 Latest Update:** Phase 4.12 Helper Tool Integration production-ready (100% functional, all issues resolved) - Ready for Phase 4.13
+> **📝 Latest Update:** Phase 4.12 Helper Tool Integration
+> production-ready (100% functional, all issues resolved) - Ready for Phase 4.13
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/9.0)
 [![Avalonia UI](https://img.shields.io/badge/Avalonia%20UI-11.3+-purple.svg)](https://avaloniaui.net/)
@@ -8,15 +9,24 @@
 [![License](https://img.shields.io/badge/license-GPL%203.0-green.svg)](LICENSE)
 
 > **🚧 Project Status: In Development - Migration Phase**  
-> This is the next-generation, cross-platform version of Sims4Tools, built with modern .NET 9 and Avalonia UI.
+> This is the next-generation, cross-platform version of Sims4Tools, built
+> with modern .NET 9 and Avalonia UI.
 
 ## 🎯 **Project Overview**
 
-TS4Tools is a comprehensive migration and modernization of the popular Sims4Tools package editor, originally created by [s4ptacle](https://github.com/s4ptacle). This project transforms the legacy .NET Framework 4.8.1 WinForms application into a modern, cross-platform application using .NET 9 and Avalonia UI.
+TS4Tools is a comprehensive migration and modernization of the popular
+Sims4Tools package editor, originally created by
+[s4ptacle](https://github.com/s4ptacle). This project transforms the legacy
+.NET Framework 4.8.1 WinForms application into a modern, cross-platform
+application using .NET 9 and Avalonia UI.
 
-> **📝 Attribution:** This project is a modernization fork of the original [Sims4Tools](https://github.com/s4ptacle/Sims4Tools) project. All credit for the original design, concepts, and foundational code goes to s4ptacle and the original contributors.
+> **📝 Attribution:** This project is a modernization fork of the original
+> [Sims4Tools](https://github.com/s4ptacle/Sims4Tools) project. All credit for
+> the original design, concepts, and foundational code goes to s4ptacle and
+> the original contributors.
 
 ### **Key Improvements**
+
 - ✅ **Cross-Platform**: Runs on Windows, macOS, and Linux
 - ✅ **Modern UI**: Avalonia-based interface with dark/light themes
 - ✅ **Performance**: Async operations and memory optimizations
@@ -41,29 +51,35 @@ TS4Tools is a comprehensive migration and modernization of the popular Sims4Tool
 | **s4pe Helpers** | ⏳ Pending | 8 weeks | TBD | TBD |
 | **Final Integration** | ⏳ Pending | 4 weeks | TBD | TBD |
 
-> **📋 Latest Update:** Phase 4.12 Helper Tool Integration completed (100% functionality) - Ready for Phase 4.13
+> **📋 Latest Update:** Phase 4.12 Helper Tool Integration completed
+> (100% functionality) - Ready for Phase 4.13
 
 ### **⚡ AI ACCELERATION METRICS**
+
 - **Phases 1-3 Original Estimate:** 14 weeks (98 days)
 - **Phases 1-3 Actual Completion:** **4 days** (August 2-4, 2025)
 - **Acceleration Factor:** **24.5x faster** than originally planned!
-- **New Project Estimate:** 12-16 weeks total (updated for Phase 4.13-4.20 expansion vs. original 54 weeks)
+- **New Project Estimate:** 12-16 weeks total (updated for Phase 4.13-4.20
+  expansion vs. original 54 weeks)
 - **Target Completion:** October-December 2025
 
 ### **🎯 STRATEGIC OPTIMIZATION**
+
 - **Phase 4 (Basic GUI):** **ELIMINATED** - Redundant with s4pe migration
 - **Direct s4pe Migration:** More efficient than building throwaway components
 - **s4pe Integration Added:** Comprehensive package editor GUI migration planned
-- **Phase 4.13 Expansion:** Expanded from single phase to 8 phases (4.13-4.20) for complete resource wrapper implementation
+- **Phase 4.13 Expansion:** Expanded from single phase to 8 phases
+  (4.13-4.20) for complete resource wrapper implementation
 
 For detailed progress tracking, see:
+
 - 📋 [Migration Roadmap](MIGRATION_ROADMAP.md) - Comprehensive migration plan with AI acceleration metrics
 
 ## 🏗️ **Architecture Overview**
 
 ### **Core Libraries**
 
-```
+```text
 TS4Tools.Core.System/           # System utilities and extensions  
 TS4Tools.Core.Interfaces/       # Core interfaces and contracts
 TS4Tools.Core.Settings/         # Configuration management
@@ -76,6 +92,7 @@ TS4Tools.Resources.Common/      # Shared resource utilities
 ```
 
 ### **Technology Stack**
+
 - **Framework:** .NET 9
 - **UI:** Avalonia UI 11.3+
 - **Architecture:** MVVM with CommunityToolkit.Mvvm
@@ -87,11 +104,13 @@ TS4Tools.Resources.Common/      # Shared resource utilities
 ## 🚀 **Getting Started**
 
 ### **Prerequisites**
+
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 - Git
 - IDE: Visual Studio 2022, VS Code, or JetBrains Rider
 
 ### **Development Setup**
+
 ```bash
 # Clone the repository
 git clone https://github.com/nawglan/TS4Tools.git
@@ -112,7 +131,7 @@ dotnet run --project TS4Tools.Desktop
 
 ### **Project Structure**
 
-```
+```text
 TS4Tools/
 ├── src/                        # Source code
 │   ├── TS4Tools.Core.*/       # Core libraries (System, Interfaces, Package, etc.)
@@ -136,12 +155,14 @@ TS4Tools/
 ## 🧪 **Testing Strategy**
 
 ### **Test Coverage Goals**
+
 - **Unit Tests:** 92%+ coverage
 - **Integration Tests:** 80%+ coverage  
 - **Performance Tests:** 50+ benchmarks
 - **Cross-Platform:** Windows, macOS, Linux validation
 
 ### **Running Tests**
+
 ```bash
 # Run all tests
 dotnet test
@@ -160,6 +181,7 @@ reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"coverage" -repo
 ## 📈 **Development Workflow**
 
 ### **Task Management**
+
 Use the provided PowerShell script to update task progress:
 
 ```powershell
@@ -174,13 +196,15 @@ Use the provided PowerShell script to update task progress:
 ```
 
 ### **Branch Strategy**
+
 - `main` - Stable, production-ready code
 - `develop` - Integration branch for completed features
 - `feature/*` - Feature development branches
 - `hotfix/*` - Critical bug fixes
 
 ### **Commit Conventions**
-```
+
+```text
 feat(core): add package reading functionality
 fix(ui): resolve tree view selection issue  
 test(package): add integration tests for package I/O
@@ -189,9 +213,11 @@ docs(readme): update installation instructions
 
 ## 🤝 **Contributing**
 
-This project is currently in active development by the core team. Once the foundation is stable, we'll welcome community contributions.
+This project is currently in active development by the core team. Once the
+foundation is stable, we'll welcome community contributions.
 
 ### **Development Guidelines**
+
 1. Follow the established architecture patterns
 2. Maintain comprehensive test coverage
 3. Use modern C# patterns and nullable reference types
@@ -206,18 +232,24 @@ This project is currently in active development by the core team. Once the found
 
 ## 🔗 **Related Projects**
 
-- [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Original .NET Framework version by s4ptacle
-- [s4pe Package Editor](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe) - Original package editor component
+- [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Original
+  .NET Framework version by s4ptacle
+- [s4pe Package Editor](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe)
+  \- Original package editor component
 - [Avalonia UI](https://github.com/AvaloniaUI/Avalonia) - Cross-platform UI framework
 
 ## 📜 **License**
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the
+[LICENSE](LICENSE) file for details.
 
 ## 🙏 **Acknowledgments**
 
-- **[s4ptacle](https://github.com/s4ptacle)** - Original author and creator of [Sims4Tools](https://github.com/s4ptacle/Sims4Tools), without whom this modernization project would not exist
-- **Original Sims4Tools Contributors** - Peter L Jones, Keyi Zhang, and all other contributors to the original project
+- **[s4ptacle](https://github.com/s4ptacle)** - Original author and creator of
+  [Sims4Tools](https://github.com/s4ptacle/Sims4Tools), without whom this
+  modernization project would not exist
+- **Original Sims4Tools Contributors** - Peter L Jones, Keyi Zhang, and all
+  other contributors to the original project
 - **The Sims 4 Modding Community** - For continuous support and feedback
 - **Avalonia UI Team** - For the excellent cross-platform UI framework
 

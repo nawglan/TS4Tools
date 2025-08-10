@@ -9,6 +9,7 @@ This guide will help you get up and running with the TS4Tools codebase, understa
 ## 🚀 Quick Start (15 minutes)
 
 ### Prerequisites
+
 - **Windows 10/11** (primary development platform)
 - **Visual Studio 2022** (v17.9+) or **VS Code** with C# extension
 - **.NET 9 SDK** (latest version)
@@ -16,6 +17,7 @@ This guide will help you get up and running with the TS4Tools codebase, understa
 - **PowerShell 5.1+** (included with Windows)
 
 ### Environment Setup
+
 ```powershell
 # 1. Clone the repository
 git clone https://github.com/nawglan/TS4Tools.git
@@ -33,7 +35,9 @@ dotnet run --project TS4Tools.Desktop
 ```
 
 ### Verify Installation
+
 If everything is working correctly, you should see:
+
 - ✅ Clean build with no errors
 - ✅ All tests passing (95%+ success rate)
 - ✅ Desktop application starts and displays main window
@@ -43,6 +47,7 @@ If everything is working correctly, you should see:
 ## 📚 Architecture Overview
 
 ### Project Structure
+
 ```
 TS4Tools/
 ├── src/                          # Source code
@@ -62,6 +67,7 @@ TS4Tools/
 ### Key Architectural Principles
 
 #### 1. Dependency Injection (DI)
+
 We use Microsoft's built-in DI container for loose coupling and testability.
 
 ```csharp
@@ -90,6 +96,7 @@ public class PackageReader
 ```
 
 #### 2. Modern C# Patterns
+
 We leverage C# 12 features for cleaner, more maintainable code.
 
 ```csharp
@@ -117,6 +124,7 @@ public IResource? FindResource(string? resourceName)
 ```
 
 #### 3. Cross-Platform Design
+
 All code should work on Windows, macOS, and Linux.
 
 ```csharp
@@ -144,6 +152,7 @@ public void ShowDialog()
 ### 1. Setting Up Your IDE
 
 #### Visual Studio 2022
+
 1. Install with ".NET desktop development" workload
 2. Enable these extensions:
    - **SonarLint** for code quality
@@ -151,6 +160,7 @@ public void ShowDialog()
    - **ReSharper** (optional, for advanced refactoring)
 
 #### VS Code
+
 1. Install these extensions:
    - **C#** (Microsoft)
    - **GitLens** for Git integration
@@ -159,7 +169,9 @@ public void ShowDialog()
 ### 2. Code Style and Standards
 
 #### EditorConfig
+
 We use `.editorconfig` for consistent formatting:
+
 ```ini
 # Already configured in the repository
 root = true
@@ -171,6 +183,7 @@ trim_trailing_whitespace = true
 ```
 
 #### Naming Conventions
+
 ```csharp
 // Interfaces: PascalCase with 'I' prefix
 public interface IResourceManager { }
@@ -194,6 +207,7 @@ public const int MaxResourceSize = 1024;
 ### 3. Testing Standards
 
 #### Unit Test Structure (AAA Pattern)
+
 ```csharp
 [Test]
 public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
@@ -215,6 +229,7 @@ public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
 ```
 
 #### Test Categories
+
 - **Unit Tests**: Fast, isolated, no external dependencies
 - **Integration Tests**: Test component interactions
 - **Performance Tests**: Benchmark critical operations
@@ -222,6 +237,7 @@ public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
 ### 4. Git Workflow
 
 #### Branch Naming
+
 ```bash
 # Feature branches
 feature/resource-caching-improvement
@@ -236,6 +252,7 @@ hotfix/critical-crash-on-startup
 ```
 
 #### Commit Messages (Conventional Commits)
+
 ```bash
 # Features
 feat(resources): add immutable resource key implementation
@@ -260,6 +277,7 @@ refactor(di): migrate static classes to dependency injection
 ### Adding a New Resource Type
 
 1. **Create the Interface**
+
 ```csharp
 public interface ITextureResource : IResource
 {
@@ -271,6 +289,7 @@ public interface ITextureResource : IResource
 ```
 
 2. **Implement the Resource**
+
 ```csharp
 public class TextureResource : ResourceBase, ITextureResource
 {
@@ -290,6 +309,7 @@ public class TextureResource : ResourceBase, ITextureResource
 ```
 
 3. **Create the Factory**
+
 ```csharp
 public class TextureResourceFactory : ResourceFactoryBase<ITextureResource>
 {
@@ -307,11 +327,13 @@ public class TextureResourceFactory : ResourceFactoryBase<ITextureResource>
 ```
 
 4. **Register in DI Container**
+
 ```csharp
 services.AddTransient<IResourceFactory<ITextureResource>, TextureResourceFactory>();
 ```
 
 5. **Add Unit Tests**
+
 ```csharp
 public class TextureResourceTests
 {
@@ -336,6 +358,7 @@ public class TextureResourceTests
 ### Adding a New Feature
 
 1. **Create Feature Branch**
+
 ```bash
 git checkout -b feature/new-resource-export
 ```
@@ -351,6 +374,7 @@ git checkout -b feature/new-resource-export
    - Add usage examples
 
 4. **Performance Testing**
+
 ```csharp
 [MemoryDiagnoser]
 [SimpleJob(RuntimeMoniker.Net90)]
@@ -367,7 +391,9 @@ public class ResourceExportBenchmarks
 ### Debugging Common Issues
 
 #### Performance Problems
+
 1. **Use BenchmarkDotNet for profiling**
+
 ```csharp
 dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 ```
@@ -376,6 +402,7 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 3. **Check for async/await anti-patterns**
 
 #### Cross-Platform Issues
+
 1. **Test on all supported platforms**
 2. **Use `Path.Combine()` instead of string concatenation**
 3. **Be aware of case-sensitive file systems (Linux/macOS)**
@@ -385,18 +412,21 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 ## 📖 Learning Resources
 
 ### Required Reading
+
 1. **[Migration Roadmap](MIGRATION_ROADMAP.md)** - Understand the project direction
 2. **[ADR-001: .NET 9 Framework](docs/architecture/adr/ADR-001-DotNet9-Framework.md)**
 3. **[ADR-002: Dependency Injection](docs/architecture/adr/ADR-002-Dependency-Injection.md)**
 4. **[ADR-003: Avalonia UI](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md)**
 
 ### Recommended Learning
+
 - **Dependency Injection**: [Microsoft DI Documentation](https://docs.microsoft.com/en-us/dotnet/core/extensions/dependency-injection)
 - **Avalonia UI**: [Avalonia Documentation](https://docs.avaloniaui.net/)
 - **Async/Await**: [Async Programming Patterns](https://docs.microsoft.com/en-us/dotnet/csharp/async)
 - **Testing**: [xUnit Documentation](https://xunit.net/docs/getting-started/netcore/cmdline)
 
 ### Internal Documentation
+
 - **[Technical Debt Registry](docs/technical-debt-registry.md)** - Known issues and improvements
 - **[Performance Guidelines](docs/performance-guidelines.md)** - Optimization best practices
 - **[Code Review Checklist](docs/code-review-checklist.md)** - What to look for in reviews
@@ -406,11 +436,13 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 ## 🤝 Getting Help
 
 ### Communication Channels
+
 - **Daily Standups**: Monday/Wednesday/Friday at 9:00 AM
 - **Architecture Reviews**: Bi-weekly on Wednesdays
 - **Code Reviews**: All PRs require 2 approvals
 
 ### Who to Ask
+
 - **Architecture Questions**: Lead Developer
 - **UI/UX Questions**: UI Team Lead  
 - **Performance Issues**: Senior Developer
@@ -419,10 +451,13 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 ### Common Questions
 
 #### Q: Why did we choose Avalonia over MAUI?
+
 A: See [ADR-003](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md). MAUI has limited Linux support, and desktop scenarios aren't as mature.
 
 #### Q: How do I add a new configuration setting?
+
 A: Add it to the appropriate `Options` class and register with DI:
+
 ```csharp
 public class ResourceManagerOptions
 {
@@ -435,10 +470,13 @@ services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceMan
 ```
 
 #### Q: When should I use async/await?
+
 A: For any I/O operations (file access, network, database). CPU-bound operations generally don't need async unless you're doing long-running work.
 
 #### Q: How do I handle cross-platform differences?
+
 A: Use dependency injection with platform-specific implementations:
+
 ```csharp
 #if WINDOWS
 services.AddScoped<IDialogService, WindowsDialogService>();
@@ -452,23 +490,27 @@ services.AddScoped<IDialogService, MacDialogService>();
 ## 🎯 Your First Contribution
 
 ### Week 1: Environment Setup
+
 - [ ] Set up development environment
 - [ ] Build and run all tests successfully
 - [ ] Read core architecture documents
 - [ ] Complete this onboarding guide
 
 ### Week 2: Small Contribution
+
 - [ ] Pick a "good first issue" from GitHub Issues
 - [ ] Create feature branch and implement solution
 - [ ] Add unit tests (aim for 95%+ coverage)
 - [ ] Submit PR with proper commit messages
 
 ### Week 3: Code Review Participation
+
 - [ ] Review 2-3 PRs from other developers
 - [ ] Participate in architecture discussion
 - [ ] Suggest improvements or ask questions
 
 ### Month 1 Goal
+
 - [ ] Successfully merge first feature PR
 - [ ] Understand core architecture patterns
 - [ ] Comfortable with development workflow
@@ -479,6 +521,7 @@ services.AddScoped<IDialogService, MacDialogService>();
 ## 📋 Checklists
 
 ### Before Committing Code
+
 - [ ] All tests pass locally (`dotnet test`)
 - [ ] Code follows style guidelines (EditorConfig)
 - [ ] XML documentation added for public APIs
@@ -486,6 +529,7 @@ services.AddScoped<IDialogService, MacDialogService>();
 - [ ] Cross-platform compatibility verified
 
 ### Before Submitting PR
+
 - [ ] Feature branch up-to-date with main
 - [ ] Conventional commit messages used
 - [ ] PR description explains changes and rationale
@@ -494,6 +538,7 @@ services.AddScoped<IDialogService, MacDialogService>();
 - [ ] Documentation updated if needed
 
 ### Code Review Checklist
+
 - [ ] Does the code follow SOLID principles?
 - [ ] Are dependencies properly injected?
 - [ ] Is error handling appropriate?

@@ -15,6 +15,7 @@ We will adopt Microsoft's built-in dependency injection container (`Microsoft.Ex
 ## Rationale
 
 ### Problems with Current Architecture
+
 1. **Static Dependencies**: Hard to test and mock
 2. **Tight Coupling**: Direct instantiation creates rigid dependencies
 3. **Configuration**: Scattered throughout codebase
@@ -22,6 +23,7 @@ We will adopt Microsoft's built-in dependency injection container (`Microsoft.Ex
 5. **Lifecycle Management**: Manual resource management prone to leaks
 
 ### Benefits of Dependency Injection
+
 1. **Testability**: Easy mocking and unit testing
 2. **Maintainability**: Loose coupling and clear dependencies
 3. **Configuration**: Centralized configuration management
@@ -31,6 +33,7 @@ We will adopt Microsoft's built-in dependency injection container (`Microsoft.Ex
 ## Implementation Design
 
 ### Service Registration Architecture
+
 ```csharp
 public static class ServiceCollectionExtensions
 {
@@ -64,6 +67,7 @@ public static class ServiceCollectionExtensions
 | Configuration Options | Singleton | Immutable configuration data |
 
 ### Legacy Compatibility Layer
+
 ```csharp
 // Adapter for legacy static access patterns
 public static class LegacyServiceLocator
@@ -90,6 +94,7 @@ public static class LegacyServiceLocator
 ### Core Service Categories
 
 #### 1. Package Services
+
 ```csharp
 // Package reading and writing
 services.AddScoped<IPackageReader, PackageReader>();
@@ -98,6 +103,7 @@ services.AddSingleton<IPackageFactory, PackageFactory>();
 ```
 
 #### 2. Resource Services
+
 ```csharp
 // Resource management and factories
 services.AddScoped<IResourceManager, ResourceManager>();
@@ -106,6 +112,7 @@ services.RegisterResourceFactories(); // Auto-registration of all resource facto
 ```
 
 #### 3. System Services
+
 ```csharp
 // File system, logging, configuration
 services.AddSingleton<IFileSystem, FileSystem>();
@@ -114,6 +121,7 @@ services.AddOptions<ApplicationSettings>().BindConfiguration("TS4Tools");
 ```
 
 #### 4. Platform Services
+
 ```csharp
 // Platform-specific implementations
 #if WINDOWS
@@ -128,18 +136,21 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 ## Migration Strategy
 
 ### Phase 1: Infrastructure Setup (Week 1)
+
 1. Add `Microsoft.Extensions.DependencyInjection` package
 2. Create service registration extensions
 3. Implement basic container initialization
 4. Add legacy compatibility layer
 
 ### Phase 2: Core Services Migration (Week 2-3)
+
 1. Convert static classes to injectable services
 2. Update constructors to accept dependencies
 3. Register services with appropriate lifetimes
 4. Update unit tests to use dependency injection
 
 ### Phase 3: Legacy Cleanup (Week 4)
+
 1. Remove static dependencies
 2. Eliminate service locator pattern usage
 3. Complete constructor injection adoption
@@ -148,12 +159,15 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 ## Alternative Containers Considered
 
 ### Autofac
+
 **Pros:**
+
 - Rich feature set
 - Advanced lifetime management
 - Module system
 
 **Cons:**
+
 - Additional complexity
 - Extra dependency
 - Overkill for current needs
@@ -161,11 +175,14 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 **Decision:** Rejected due to Microsoft DI being sufficient
 
 ### Castle Windsor
+
 **Pros:**
+
 - Mature container
 - Advanced features
 
 **Cons:**
+
 - Heavy dependency
 - Complex configuration
 - Declining maintenance
@@ -173,11 +190,14 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 **Decision:** Rejected due to complexity and maintenance concerns
 
 ### Unity Container
+
 **Pros:**
+
 - Microsoft-backed
 - Good performance
 
 **Cons:**
+
 - Less integrated with modern .NET
 - Additional dependency
 
@@ -186,6 +206,7 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 ## Implementation Examples
 
 ### Before: Static Dependencies
+
 ```csharp
 // ❌ Old pattern - tightly coupled, hard to test
 public class PackageReader
@@ -202,6 +223,7 @@ public class PackageReader
 ```
 
 ### After: Dependency Injection
+
 ```csharp
 // ✅ New pattern - loosely coupled, easily testable
 public class PackageReader : IPackageReader
@@ -229,6 +251,7 @@ public class PackageReader : IPackageReader
 ```
 
 ### Unit Testing Benefits
+
 ```csharp
 [Test]
 public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
@@ -255,12 +278,14 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 ## Performance Considerations
 
 ### Container Performance
+
 - **Registration**: One-time cost at startup
 - **Resolution**: ~100ns per service (negligible)
 - **Memory**: ~40 bytes per registration
 - **Startup**: +10ms for full service registration
 
 ### Optimization Strategies
+
 1. **Singleton Services**: Cache expensive-to-create services
 2. **Factory Patterns**: For services with dynamic parameters
 3. **Lazy Initialization**: For rarely-used services
@@ -269,6 +294,7 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 ## Consequences
 
 ### Positive
+
 - **Testability**: 90% improvement in unit test coverage capability
 - **Maintainability**: Clear dependency graphs and separation of concerns
 - **Configuration**: Centralized, type-safe configuration management
@@ -276,29 +302,34 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 - **Performance**: Better resource lifecycle management
 
 ### Negative
+
 - **Learning Curve**: Team needs training on DI patterns
 - **Initial Complexity**: More setup code required
 - **Runtime Overhead**: Minimal (~100ns per resolution)
 
 ### Neutral
+
 - **Code Volume**: Slightly more code for registration and constructors
 - **Debugging**: Different debugging patterns for service resolution
 
 ## Success Criteria
 
 ### Technical Metrics
+
 - [ ] 95%+ of classes use constructor injection
 - [ ] Zero static dependencies in core business logic
 - [ ] Service resolution performance < 1ms for complex object graphs
 - [ ] All services properly disposed of at application shutdown
 
 ### Quality Metrics
+
 - [ ] Unit test coverage increased by 40%+
 - [ ] Integration tests use proper service mocking
 - [ ] No memory leaks from improper service lifecycle management
 - [ ] Configuration centralized and type-safe
 
 ### Developer Experience
+
 - [ ] Service registration is clear and organized
 - [ ] IDE provides good IntelliSense for injected services
 - [ ] Documentation covers DI patterns and best practices
@@ -307,6 +338,7 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 ## Best Practices
 
 ### Constructor Injection
+
 ```csharp
 // ✅ Good: Clear dependencies, null checks, readonly fields
 public class ResourceManager : IResourceManager
@@ -323,6 +355,7 @@ public class ResourceManager : IResourceManager
 ```
 
 ### Service Registration
+
 ```csharp
 // ✅ Good: Organized, documented, proper lifetimes
 services.AddScoped<IResourceManager, ResourceManager>(); // Per-operation state
@@ -331,6 +364,7 @@ services.AddTransient<IResourceValidator, ResourceValidator>(); // Lightweight s
 ```
 
 ### Configuration Binding
+
 ```csharp
 // ✅ Good: Type-safe configuration with validation
 services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceManager"));

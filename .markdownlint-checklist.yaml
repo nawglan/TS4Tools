@@ -1,0 +1,32 @@
+# markdownlint configuration for checklist files
+# For detailed rules, see: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+# MD013 - Line length - More lenient for checklist files
+MD013:
+  # Line length (default 80) - more lenient for checklists
+  line_length: 120
+  # Number of characters for headings
+  heading_line_length: 100
+  # Number of characters for code blocks
+  code_block_line_length: 120
+  # Include code blocks in line length checks
+  code_blocks: false
+  # Include tables in line length checks
+  tables: false
+  # Include headings in line length checks
+  headings: true
+  # Exclude URLs from line length checks
+  strict: false
+
+# MD024 - Multiple headings with the same content
+MD024:
+  # Allow duplicate headings in different sections
+  siblings_only: true
+  # Allow duplicate headings
+  allow_different_nesting: true
+
+# MD022 - Headings should be surrounded by blank lines
+MD022: true
+
+# MD032 - Lists should be surrounded by blank lines
+MD032: true

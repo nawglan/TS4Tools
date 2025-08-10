@@ -30,6 +30,7 @@ Assembly dotNetDll = Assembly.LoadFile(path);  // BREAKS IN .NET 8+
 ```
 
 ### Root Cause
+
 - **Legacy Pattern**: Direct file loading without context management
 - **.NET Evolution**: AssemblyLoadContext becomes primary loading mechanism
 - **Plugin Dependencies**: Complex cross-assembly type resolution required
