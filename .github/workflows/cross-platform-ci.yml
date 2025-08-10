@@ -45,29 +45,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal
 
-    - name: Verify package restoration
-      run: |
-        echo "🔍 Verifying NuGet package restoration..."
-        echo "ℹ️ This ensures all dependencies are correctly resolved before building."
-
-        # Check if restore was successful by attempting a build without actual compilation
-        dotnet build ${{ env.SOLUTION_FILE }} --no-restore --verbosity minimal --nologo --property:DesignTimeBuild=true --property:BuildProjectReferences=false
-
-        if [ $? -ne 0 ]; then
-          echo ""
-          echo "❌ Package restoration verification failed!"
-          echo ""
-          echo "🔧 This usually indicates missing NuGet packages or version conflicts."
-          echo "💡 Try running locally:"
-          echo "   dotnet clean ${{ env.SOLUTION_FILE }}"
-          echo "   dotnet restore ${{ env.SOLUTION_FILE }} --verbosity normal"
-          echo "   dotnet build ${{ env.SOLUTION_FILE }}"
-          echo ""
-          exit 1
-        fi
-
-        echo "✅ All packages restored successfully!"
-
     - name: Build solution
       run: |
         dotnet build ${{ env.SOLUTION_FILE }} --no-restore --configuration Release --verbosity minimal

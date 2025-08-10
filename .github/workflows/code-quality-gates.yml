@@ -37,29 +37,6 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore TS4Tools.sln --verbosity normal
 
-    - name: Verify package restoration
-      run: |
-        Write-Host "🔍 Verifying NuGet package restoration..."
-        Write-Host "ℹ️ This ensures all dependencies are correctly resolved before building."
-
-        # Check if restore was successful by attempting a build without actual compilation
-        dotnet build TS4Tools.sln --no-restore --verbosity minimal --nologo --property:DesignTimeBuild=true --property:BuildProjectReferences=false
-
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host ""
-          Write-Error "❌ Package restoration verification failed!"
-          Write-Host ""
-          Write-Host "🔧 This usually indicates missing NuGet packages or version conflicts."
-          Write-Host "💡 Try running locally:"
-          Write-Host "   dotnet clean TS4Tools.sln"
-          Write-Host "   dotnet restore TS4Tools.sln --verbosity normal"
-          Write-Host "   dotnet build TS4Tools.sln"
-          Write-Host ""
-          exit 1
-        }
-
-        Write-Host "✅ All packages restored successfully!"
-
     - name: Check code formatting
       run: |
         Write-Host "🔍 Checking code formatting with dotnet format..."
@@ -107,29 +84,6 @@ jobs:
 
     - name: Restore dependencies
       run: dotnet restore TS4Tools.sln --verbosity normal
-
-    - name: Verify package restoration
-      run: |
-        Write-Host "🔍 Verifying NuGet package restoration..."
-        Write-Host "ℹ️ This ensures all dependencies are correctly resolved before building."
-
-        # Check if restore was successful by attempting a build without actual compilation
-        dotnet build TS4Tools.sln --no-restore --verbosity minimal --nologo --property:DesignTimeBuild=true --property:BuildProjectReferences=false
-
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host ""
-          Write-Error "❌ Package restoration verification failed!"
-          Write-Host ""
-          Write-Host "🔧 This usually indicates missing NuGet packages or version conflicts."
-          Write-Host "💡 Try running locally:"
-          Write-Host "   dotnet clean TS4Tools.sln"
-          Write-Host "   dotnet restore TS4Tools.sln --verbosity normal"
-          Write-Host "   dotnet build TS4Tools.sln"
-          Write-Host ""
-          exit 1
-        }
-
-        Write-Host "✅ All packages restored successfully!"
 
     - name: Build solution
       run: |
