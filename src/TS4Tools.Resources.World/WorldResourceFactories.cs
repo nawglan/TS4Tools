@@ -124,3 +124,63 @@ public sealed class NeighborhoodResourceFactory : ResourceFactoryBase<Neighborho
         return resource;
     }
 }
+
+/// <summary>
+/// Factory for creating lot description resources that handle detailed lot metadata and properties.
+/// </summary>
+public sealed class LotDescriptionResourceFactory : ResourceFactoryBase<LotDescriptionResource>
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LotDescriptionResourceFactory"/> class.
+    /// </summary>
+    public LotDescriptionResourceFactory() : base(new[] { "LOTDESC", "0xC9C81B9B" }, priority: 50)
+    {
+    }
+
+    /// <inheritdoc/>
+    public override async Task<LotDescriptionResource> CreateResourceAsync(
+        int apiVersion,
+        Stream? stream = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = new ResourceKey(0xC9C81B9B, 0x00000000, 0x0000000000000000);
+        var resource = new LotDescriptionResource(key, 1);
+
+        if (stream != null)
+        {
+            await resource.LoadFromStreamAsync(stream, cancellationToken);
+        }
+
+        return resource;
+    }
+}
+
+/// <summary>
+/// Factory for creating region description resources that define geographical regions and boundaries.
+/// </summary>
+public sealed class RegionDescriptionResourceFactory : ResourceFactoryBase<RegionDescriptionResource>
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RegionDescriptionResourceFactory"/> class.
+    /// </summary>
+    public RegionDescriptionResourceFactory() : base(new[] { "REGIONDESC", "0x39006E00" }, priority: 50)
+    {
+    }
+
+    /// <inheritdoc/>
+    public override async Task<RegionDescriptionResource> CreateResourceAsync(
+        int apiVersion,
+        Stream? stream = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = new ResourceKey(0x39006E00, 0x00000000, 0x0000000000000000);
+        var resource = new RegionDescriptionResource(key, 1);
+
+        if (stream != null)
+        {
+            await resource.LoadFromStreamAsync(stream, cancellationToken);
+        }
+
+        return resource;
+    }
+}

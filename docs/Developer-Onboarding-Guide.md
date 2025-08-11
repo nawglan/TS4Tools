@@ -1,13 +1,70 @@
-﻿# TS4Tools Developer Onboarding Guide
+# TS4Tools Developer Onboarding Guide
 
 **Welcome to the TS4Tools Development Team!**
 
-This guide will help you get up and running with the TS4Tools codebase,
-understand our architecture decisions, and contribute effectively to the project.
+This guide will help you understand the TS4Tools codebase, learn how to create tests,
+and contribute new features. It's designed for entry-level C# engineers who want to
+become productive contributors to this Sims 4 modding tools project.
+
+## What You'll Learn
+
+1. **Codebase Architecture** - How the project is organized and key patterns
+2. **Development Setup** - Getting your environment ready for coding
+3. **Creating Tests** - Our testing patterns and how to write effective tests
+4. **Adding Features** - Step-by-step guide to implementing new functionality
+5. **Code Standards** - Conventions and best practices we follow
+6. **Common Tasks** - Practical examples of typical development work
+
+> **IMPORTANT NOTE**: This project has multiple .sln files! Always use `TS4Tools.sln` for all dotnet commands.
+
+### Overall Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "User Interface"
+        UI[TS4Tools.Desktop<br/>Avalonia UI App]
+    end
+    
+    subgraph "Core Layer"
+        PKG[TS4Tools.Core.Package<br/>File I/O Operations]
+        RES[TS4Tools.Core.Resources<br/>Resource Management]
+        SYS[TS4Tools.Core.System<br/>Utilities & Extensions]
+    end
+    
+    subgraph "Contracts"
+        INT[TS4Tools.Core.Interfaces<br/>All Interface Contracts]
+    end
+    
+    subgraph "Resource Implementations"
+        STR[StringTable Resources]
+        IMG[Image Resources]
+        TXT[Text Resources]
+        OTHER[60+ Other Resource Types]
+    end
+    
+    subgraph "External"
+        SIMS[Sims 4 .package Files]
+        STEAM[Steam Installation]
+    end
+    
+    UI --> RES
+    UI --> PKG
+    PKG --> SIMS
+    RES --> INT
+    PKG --> INT
+    SYS --> INT
+    
+    RES --> STR
+    RES --> IMG
+    RES --> TXT
+    RES --> OTHER
+    
+    PKG --> STEAM
+```
 
 ---
 
-## ðŸš€ Quick Start (15 minutes)
+## [QUICK START] Get Running in 10 minutes
 
 ### Prerequisites
 
@@ -15,514 +72,383 @@ understand our architecture decisions, and contribute effectively to the project
 - **Visual Studio 2022** (v17.9+) or **VS Code** with C# extension
 - **.NET 9 SDK** (latest version)
 - **Git** for version control
-- **PowerShell 5.1+** (included with Windows)
-- **Sims 4 Installation** (Steam/Origin) for Golden Master testing - see [Steam Installation Guide](#sims-4-setup-for-testing)
 
-### Environment Setup
+### Get the Code Running
 
 ```powershell
-
-# 1. Clone the repository
-
+# 1. Clone and build (IMPORTANT: Always specify the solution file)
 git clone https://github.com/nawglan/TS4Tools.git
 cd TS4Tools
+dotnet restore TS4Tools.sln
+dotnet build TS4Tools.sln
 
-# 2. Restore packages and build
+# 2. Run tests to verify everything works
+dotnet test TS4Tools.sln
 
-dotnet restore
-dotnet build
-
-# 3. Run tests to verify setup
-
-dotnet test
-
-# 4. Start the desktop application
-
-dotnet run --project TS4Tools.Desktop
+# 3. Start the desktop application
+dotnet run --project TS4Tools.Desktop/TS4Tools.Desktop.csproj
 ```
 
-### Verify Installation
+**Success indicators:**
 
-If everything is working correctly, you should see:
-
-- âœ… Clean build with no errors
-- âœ… All tests passing (95%+ success rate)
-- âœ… Desktop application starts and displays main window
+- [X] Clean build with no errors
+- [X] Tests passing (95%+ success rate is normal)  
+- [X] Desktop application opens
 
 ---
 
-## ðŸš¨ **CRITICAL: Golden Master Testing Requirements**
-
-> **âš ï¸ MANDATORY:** All development work must pass Golden Master compatibility tests
-
-### What is Golden Master Testing?
-
-Golden Master Testing ensures **byte-perfect compatibility** with the original
-Sims4Tools. Every resource wrapper implementation must produce identical output
-to the legacy system.
-
-### Sims 4 Setup for Testing
-
-```powershell
-
-# Option 1: Steam Installation (Recommended)
-
-# Install from Steam (Game folder: C:\Program Files (x86)\Steam\steamapps\common\The Sims 4\)
-
-# Option 2: EA App/Origin Installation
-
-# Install from EA App (Game folder: C:\Program Files\EA Games\The Sims 4\)
-
-# Verify Golden Master tests work
-
-cd "C:\Users\nawgl\code\TS4Tools"
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
-```
-
-### Golden Master Validation Workflow
-
-```powershell
-
-# Before starting any resource wrapper work
-
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --filter "Category!=Integration"
-
-# After completing resource implementation
-
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity normal
-```
-
-**Expected Result**: All Golden Master tests should pass with **ZERO tolerance** for failures.
-
----
-
-## ðŸ“‹ **CRITICAL: Phase-Based Development Workflow**
-
-TS4Tools development follows a **phase-based approach** with strict completion criteria.
-
-### Current Phase Status
-
-Check the current phase before starting work:
-
-```powershell
-
-# Always check current phase status
-
-Get-Content "PHASE_4_14_COMPLETION_STATUS.md" | Select-String "STATUS"
-```
-
-### Phase Completion Requirements
-
-**Before ANY phase can be marked complete:**
-
-- [ ] All Golden Master tests passing for affected components (100%)
-- [ ] Performance benchmarks within 10% of baseline
-- [ ] Real Sims 4 package compatibility validated
-- [ ] Assembly loading patterns use modern AssemblyLoadContext
-- [ ] API signatures preserved exactly for backward compatibility
-
-### Phase Handover Process
-
-1. **Pre-Phase Checklist**: Check `PHASE_X_XX_CHECKLIST.md` for your assigned phase
-2. **Implementation**: Follow test-driven development with Golden Master validation
-3. **Completion Validation**: Run full validation sequence
-4. **Documentation**: Update phase completion status
-5. **Handover**: Prepare next phase prerequisites
-
----
-
-## ðŸš¨ **CRITICAL: Resource Wrapper Development Patterns**
-
-> **Primary Work**: 95% of development involves implementing resource wrappers
-
-### Standard Resource Wrapper Structure
-
-Every resource wrapper follows this pattern:
-
-```csharp
-// 1. Interface Definition
-public interface IMyResource : IResource
-{
-    // Resource-specific properties
-    string MyProperty { get; }
-}
-
-// 2. Implementation with Factory Pattern
-public class MyResource : IMyResource
-{
-    // Constructor with dependency injection
-    public MyResource(int apiVersion, Stream? stream, ILogger<MyResource> logger)
-    {
-        // Implementation
-    }
-}
-
-// 3. Factory Registration
-public class MyResourceFactory : ResourceFactoryBase<IMyResource>
-{
-    protected override async Task<IMyResource> CreateResourceCoreAsync(
-        int apiVersion, Stream? stream, CancellationToken cancellationToken)
-    {
-        return new MyResource(apiVersion, stream, _logger);
-    }
-}
-
-// 4. Service Registration in ServiceCollectionExtensions.cs
-services.AddResourceFactory<IMyResource, MyResourceFactory>();
-```
-
-### Mandatory Resource Wrapper Requirements
-
-1. **Binary Format Compliance**: Must match legacy format exactly
-2. **Factory Pattern**: All resources created via factories
-3. **Dependency Injection**: Constructor injection required
-4. **Golden Master Testing**: Byte-perfect compatibility tests
-5. **Performance Parity**: Must meet/exceed legacy performance
-
----
-
-## âš¡ **CRITICAL: Pre-Commit Validation Sequence**
-
-> **MANDATORY**: Run this sequence before every commit
-
-```powershell
-
-# Navigate to project root
-
-cd "c:\Users\nawgl\code\TS4Tools"
-
-# 1. Code quality and formatting
-
-.\scripts\check-quality.ps1 -Fix
-
-# 2. Build verification (ZERO errors/warnings allowed)
-
-dotnet build TS4Tools.sln --verbosity minimal
-
-# 3. Test validation (100% pass rate required)
-
-dotnet test TS4Tools.sln --verbosity minimal
-
-# 4. Golden Master validation (if working on resource wrappers)
-
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
-```
-
-**All steps MUST pass** before committing code.
-
----
-
-## ðŸš¨ **CRITICAL: SIMS4TOOLS Compatibility Context**
-
-### The Assembly Loading Crisis
-
-The original Sims4Tools uses `Assembly.LoadFile()` which **breaks completely**
-**in .NET 8+**. This is why we're doing a greenfield rewrite.
-
-**Critical Rules:**
-
-- Never use `Assembly.LoadFile()` - use `AssemblyLoadContext.LoadFromAssemblyPath()`
-- All plugin loading must use modern patterns
-- 100% API compatibility must be maintained for external tools
-
-### API Compatibility Requirements
-
-```csharp
-// âœ… REQUIRED: Maintain exact method signatures
-public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry)
-{
-    // Modern implementation, identical signature
-}
-
-// âŒ FORBIDDEN: Breaking API changes
-public async Task<IResource> GetResourceAsync(int apiVersion, IPackage package, IResourceIndexEntry entry)
-{
-    // This breaks compatibility even though it's "better"
-}
-```
-
-### Business Logic Extraction Rules
-
-- Extract domain knowledge, not code structures
-- Modern .NET 9 implementation with identical external behavior
-- Preserve plugin ecosystem (20+ resource wrappers must continue working)
-
----
-
-## ðŸ“š Architecture Overview
+## [CODEBASE] Understanding the Structure
 
 ### Project Structure
 
 ```text
 TS4Tools/
-â”œâ”€â”€ src/                          # Source code
-â”‚   â”œâ”€â”€ TS4Tools.Core.Interfaces/ # Contracts and abstractions
-â”‚   â”œâ”€â”€ TS4Tools.Core.System/     # Cross-platform system utilities
-â”‚   â”œâ”€â”€ TS4Tools.Core.Settings/   # Configuration management
-â”‚   â”œâ”€â”€ TS4Tools.Core.Package/    # Package reading/writing
-â”‚   â”œâ”€â”€ TS4Tools.Core.Resources/  # Resource management
-â”‚   â””â”€â”€ ...
-â”œâ”€â”€ tests/                        # Unit and integration tests
-â”œâ”€â”€ benchmarks/                   # Performance benchmarks
-â”œâ”€â”€ docs/                         # Documentation
-â”œâ”€â”€ scripts/                      # Build and utility scripts
-â””â”€â”€ TS4Tools.Desktop/            # Avalonia UI application
++-- src/                           # All source code lives here
+|   +-- TS4Tools.Core.Interfaces/  # Contracts (what classes must implement)
+|   +-- TS4Tools.Core.System/      # Basic utilities and helpers
+|   +-- TS4Tools.Core.Package/     # Reading/writing Sims 4 .package files
+|   +-- TS4Tools.Core.Resources/   # Managing different types of game content
+|   +-- TS4Tools.Resources.*/      # Specific resource implementations
+|   +-- TS4Tools.Desktop/          # The main UI application
++-- tests/                         # All test code
++-- docs/                          # Documentation (like this guide!)
++-- scripts/                       # Build and utility scripts
 ```
 
-### Key Architectural Principles
+### How Components Work Together
 
-#### 1. Dependency Injection (DI)
-
-We use Microsoft's built-in DI container for loose coupling and testability.
-
-```csharp
-// âœ… Good: Constructor injection
-public class PackageReader : IPackageReader
-{
-    private readonly ILogger<PackageReader> _logger;
-    private readonly IFileSystem _fileSystem;
-
-    public PackageReader(ILogger<PackageReader> logger, IFileSystem fileSystem)
-    {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
-    }
-}
-
-// âŒ Avoid: Static dependencies
-public class PackageReader
-{
-    public void ReadPackage()
-    {
-        var logger = LogManager.GetLogger(); // Hard to test
-        var fs = new FileSystem();           // Tightly coupled
-    }
-}
+```mermaid
+graph TD
+    A[TS4Tools.Desktop] --> B[TS4Tools.Core.Resources]
+    A --> C[TS4Tools.Core.Package]
+    B --> D[TS4Tools.Core.Interfaces]
+    C --> D
+    B --> E[Resource Factories]
+    E --> F[StringTableResource]
+    E --> G[TextureResource]
+    E --> H[Other Resources]
+    C --> I[Package Reader/Writer]
+    I --> J[.package Files]
 ```
 
-#### 2. Modern C# Patterns
+### Key Concepts You Need to Know
 
-We leverage C# 12 features for cleaner, more maintainable code.
+#### 1. What are "Resources"?
+
+In Sims 4, everything is a **resource** - textures, 3D models, text strings, animations, etc.
+Each resource has:
+- A **Type ID** (like 0x220557DA for text strings)
+- **Data** (the actual content)
+- **Metadata** (size, version, etc.)
+
+#### 2. The Factory Pattern
+
+We use the Factory Pattern to create resources:
 
 ```csharp
-// âœ… Modern patterns
-public record ResourceKey(uint Type, uint Group, ulong Instance);
+// Instead of: new TextureResource()
+// We use: await textureFactory.CreateAsync(stream)
 
-public async Task<IResource?> LoadResourceAsync(ResourceKey key)
+public interface IResourceFactory<T>
 {
-    return key switch
-    {
-        { Type: 0x12345678 } => await LoadTextureAsync(key),
-        { Type: 0x87654321 } => await LoadMeshAsync(key),
-        _ => null
-    };
-}
-
-// Use nullable reference types
-public IResource? FindResource(string? resourceName)
-{
-    if (string.IsNullOrEmpty(resourceName))
-        return null;
-
-    return _cache.TryGetValue(resourceName, out var resource) ? resource : null;
+    Task<T> CreateAsync(Stream data);
 }
 ```
 
-#### 3. Cross-Platform Design
+**Factory Pattern Flow:**
 
-All code should work on Windows, macOS, and Linux.
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Registry as Resource Registry
+    participant Factory as Resource Factory
+    participant Resource as Resource Instance
+    
+    App->>Registry: GetFactory(resourceTypeId)
+    Registry->>Factory: Returns factory for type
+    App->>Factory: CreateAsync(stream)
+    Factory->>Resource: new Resource(stream, deps)
+    Resource-->>Factory: Resource instance
+    Factory-->>App: Returns configured resource
+```
+
+**Why?** It allows us to:
+
+- Inject dependencies (logging, configuration, etc.)
+- Handle different versions of the same resource type
+- Make testing easier with mock factories
+
+#### 3. Dependency Injection (DI)
+
+We use Microsoft's DI container to provide dependencies:
 
 ```csharp
-// âœ… Cross-platform file operations
-public class FileSystemService : IFileSystem
+// Instead of creating dependencies directly:
+public class BadExample
 {
-    public async Task<string[]> ReadAllLinesAsync(string path)
+    public void ProcessFile()
     {
-        // Uses .NET cross-platform APIs
-        return await File.ReadAllLinesAsync(path);
+        var logger = new FileLogger("app.log");     // Hard to test
+        var reader = new FileReader();              // Tightly coupled
     }
 }
 
-// âŒ Avoid: Platform-specific APIs
-public void ShowDialog()
+// We inject them through the constructor:
+public class GoodExample
 {
-    MessageBox.Show("Hello"); // Windows-only
+    private readonly ILogger<GoodExample> _logger;
+    private readonly IFileReader _reader;
+
+    public GoodExample(ILogger<GoodExample> logger, IFileReader reader)
+    {
+        _logger = logger;
+        _reader = reader;
+    }
+}
+```
+
+#### 4. Async/Await Pattern
+
+File operations are async to keep the UI responsive:
+
+```csharp
+// File operations use async
+public async Task<IPackage> LoadPackageAsync(string filePath)
+{
+    using var stream = await File.OpenReadAsync(filePath);
+    return await _packageFactory.CreateAsync(stream);
 }
 ```
 
 ---
 
-## ðŸ› ï¸ Development Workflow
+## [TESTING] Creating Tests
 
-### 1. Setting Up Your IDE
+### Test Structure (AAA Pattern)
 
-#### Visual Studio 2022
-
-1. Install with ".NET desktop development" workload
-2. Enable these extensions:
-
-   - **SonarLint** for code quality
-   - **GitHub Copilot** for AI assistance
-   - **ReSharper** (optional, for advanced refactoring)
-
-#### VS Code
-
-1. Install these extensions:
-
-   - **C#** (Microsoft)
-   - **GitLens** for Git integration
-   - **SonarLint** for code quality
-
-### 2. Code Style and Standards
-
-#### EditorConfig
-
-We use `.editorconfig` for consistent formatting:
-
-```ini
-
-# Already configured in the repository
-
-root = true
-
-[*.cs]
-indent_style = space
-indent_size = 4
-trim_trailing_whitespace = true
-```
-
-#### Naming Conventions
-
-```csharp
-// Interfaces: PascalCase with 'I' prefix
-public interface IResourceManager { }
-
-// Classes: PascalCase
-public class ResourceManager : IResourceManager { }
-
-// Methods: PascalCase
-public async Task LoadResourceAsync() { }
-
-// Fields: camelCase with underscore prefix
-private readonly ILogger _logger;
-
-// Properties: PascalCase
-public string ResourceType { get; set; }
-
-// Constants: PascalCase
-public const int MaxResourceSize = 1024;
-```
-
-### 3. Testing Standards
-
-#### Unit Test Structure (AAA Pattern)
+All tests follow **Arrange, Act, Assert**:
 
 ```csharp
 [Test]
-public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
+public async Task LoadPackage_WithValidFile_ReturnsPackage()
 {
-    // Arrange
-    var key = new ResourceKey(0x12345678, 0x00000000, 0x123456789ABCDEF0);
-    var mockFileSystem = Substitute.For<IFileSystem>();
-    mockFileSystem.FileExistsAsync(Arg.Any<string>()).Returns(true);
+    // Arrange - Set up test data
+    var filePath = "test-data/valid-package.package";
+    var loader = new PackageLoader(_mockLogger.Object);
 
-    var resourceManager = new ResourceManager(mockFileSystem, _logger);
+    // Act - Execute the code being tested
+    var result = await loader.LoadPackageAsync(filePath);
 
-    // Act
-    var result = await resourceManager.LoadResourceAsync(key);
-
-    // Assert
+    // Assert - Verify the results
     result.Should().NotBeNull();
-    result.ResourceType.Should().Be(0x12345678);
+    result.ResourceCount.Should().Be(42);
 }
 ```
 
-#### Test Categories
+### Test Architecture Overview
 
-- **Unit Tests**: Fast, isolated, no external dependencies
-- **Integration Tests**: Test component interactions
-- **Performance Tests**: Benchmark critical operations
-
-### 4. Git Workflow
-
-#### Branch Naming
-
-```bash
-
-# Feature branches
-
-feature/resource-caching-improvement
-feature/cross-platform-dialogs
-
-# Bug fixes
-
-bugfix/memory-leak-in-package-reader
-bugfix/null-reference-in-settings
-
-# Hotfixes
-
-hotfix/critical-crash-on-startup
+```mermaid
+graph LR
+    A[Test Project] --> B[Unit Tests]
+    A --> C[Integration Tests]
+    B --> D[Mock Dependencies]
+    C --> E[Real Dependencies]
+    D --> F[NSubstitute Mocks]
+    E --> G[Test Database/Files]
+    B --> H[FluentAssertions]
+    C --> H
 ```
 
-#### Commit Messages (Conventional Commits)
+### Types of Tests We Write
 
-```bash
+#### 1. Unit Tests
+Test a single class in isolation:
 
-# Features
+```csharp
+public class StringTableResourceTests
+{
+    private readonly ILogger<StringTableResource> _mockLogger;
 
-feat(resources): add immutable resource key implementation
+    public StringTableResourceTests()
+    {
+        _mockLogger = Substitute.For<ILogger<StringTableResource>>();
+    }
 
-# Bug fixes
+    [Test]
+    public void Constructor_WithValidStream_ParsesStrings()
+    {
+        // Arrange
+        var testData = CreateTestStringTableData();
+        using var stream = new MemoryStream(testData);
 
-fix(package): resolve memory leak in resource cache
+        // Act
+        var resource = new StringTableResource(1, stream, _mockLogger);
 
-# Documentation
+        // Assert
+        resource.Strings.Should().HaveCount(3);
+        resource.Strings["HELLO"].Should().Be("Hello World");
+    }
+}
+```
 
-docs(readme): update installation instructions
+#### 2. Integration Tests
+Test multiple components working together:
 
-# Performance improvements
+```csharp
+[Test]
+public async Task PackageLoader_WithRealFile_LoadsAllResources()
+{
+    // Arrange
+    var packagePath = "test-data/real-sims4-package.package";
+    var serviceCollection = new ServiceCollection();
+    serviceCollection.AddTS4ToolsServices(); // Our DI setup
+    var serviceProvider = serviceCollection.BuildServiceProvider();
+    
+    var loader = serviceProvider.GetRequiredService<IPackageLoader>();
 
-perf(loading): optimize package reading with async streams
+    // Act
+    var package = await loader.LoadAsync(packagePath);
 
-# Refactoring
+    // Assert
+    package.Resources.Should().NotBeEmpty();
+    // Verify specific resource types were loaded correctly
+    package.GetResourcesOfType<IStringTableResource>().Should().NotBeEmpty();
+}
+```
 
-refactor(di): migrate static classes to dependency injection
+### Test Data Management
+
+We store test files in `test-data/` directories:
+
+```
+tests/
+├── TS4Tools.Tests/
+│   ├── test-data/
+│   │   ├── valid-package.package
+│   │   ├── corrupted-package.package
+│   │   └── string-table-samples/
+│   └── StringTableResourceTests.cs
+```
+
+### Writing Good Test Names
+
+Use descriptive names that explain the scenario:
+
+```csharp
+// ✅ Good - explains what's being tested and expected outcome
+[Test]
+public void ParseStringTable_WithMissingHashKey_ThrowsInvalidDataException()
+
+// ❌ Bad - unclear what this tests
+[Test]
+public void TestStringTable()
+```
+
+### Using FluentAssertions
+
+We use FluentAssertions for readable test assertions:
+
+```csharp
+// [GOOD] Fluent and readable
+result.Should().NotBeNull();
+result.Count.Should().BeGreaterThan(0);
+result.Should().Contain(item => item.Name == "expected-name");
+
+// [AVOID] Traditional asserts (less readable)
+Assert.NotNull(result);
+Assert.True(result.Count > 0);
+Assert.True(result.Any(item => item.Name == "expected-name"));
 ```
 
 ---
 
-## ðŸ—ï¸ Common Development Tasks
+## [FEATURES] Adding New Features
 
-### Adding a New Resource Type
+### Feature Development Workflow
 
-#### Step 1: Create the Interface
+```mermaid
+flowchart TD
+    A[Start: New Feature Request] --> B[Research Binary Format]
+    B --> C[Create Interface Contract]
+    C --> D[Write Failing Tests]
+    D --> E[Implement Resource Class]
+    E --> F[Create Factory]
+    F --> G[Register in DI]
+    G --> H[Run Tests]
+    H --> I{Tests Pass?}
+    I -->|No| D
+    I -->|Yes| J[Integration Testing]
+    J --> K[Performance Testing]
+    K --> L[Code Review]
+    L --> M[Done]
+```
+
+### Step-by-Step Guide: Adding a New Resource Type
+
+Let's walk through adding support for a new resource type: `MoodletResource`.
+
+#### Step 1: Define the Interface
+
+Create the contract that defines what a Moodlet resource can do:
 
 ```csharp
-public interface ITextureResource : IResource
+// File: src/TS4Tools.Core.Interfaces/Resources/IMoodletResource.cs
+public interface IMoodletResource : IResource
 {
-    int Width { get; }
-    int Height { get; }
-    TextureFormat Format { get; }
-    byte[] PixelData { get; }
+    string MoodletName { get; }
+    string Description { get; }
+    int Duration { get; }
+    MoodletType Type { get; }
+}
+
+public enum MoodletType
+{
+    Positive,
+    Negative,
+    Neutral
 }
 ```
 
-#### Step 2: Implement the Resource
+#### Step 2: Create the Implementation
 
 ```csharp
-public class TextureResource : ResourceBase, ITextureResource
+// File: src/TS4Tools.Resources.Gameplay/MoodletResource.cs
+public class MoodletResource : ResourceBase, IMoodletResource
 {
-    public int Width { get; private set; }
-    public int Height { get; private set; }
-    public TextureFormat Format { get; private set; }
-    public byte[] PixelData { get; private set; }
+    private readonly ILogger<MoodletResource> _logger;
 
-    // Constructor with dependency injection
-    public TextureResource(int apiVersion, Stream stream, ILogger<TextureResource> logger)
-        : base(apiVersion, stream)
+    public string MoodletName { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
+    public int Duration { get; private set; }
+    public MoodletType Type { get; private set; }
+
+    public MoodletResource(int apiVersion, Stream? stream, ILogger<MoodletResource> logger)
+        : base(apiVersion)
     {
-        _logger = logger;
-        ParseTextureData();
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        
+        if (stream != null)
+        {
+            ParseMoodletData(stream);
+        }
+    }
+
+    private void ParseMoodletData(Stream stream)
+    {
+        using var reader = new BinaryReader(stream);
+        
+        // Read the binary format (you'll need to research the actual format)
+        var nameLength = reader.ReadInt32();
+        MoodletName = Encoding.UTF8.GetString(reader.ReadBytes(nameLength));
+        
+        var descLength = reader.ReadInt32();
+        Description = Encoding.UTF8.GetString(reader.ReadBytes(descLength));
+        
+        Duration = reader.ReadInt32();
+        Type = (MoodletType)reader.ReadByte();
+
+        _logger.LogDebug("Parsed moodlet: {Name} ({Type}), Duration: {Duration}",
+            MoodletName, Type, Duration);
     }
 }
 ```
@@ -530,494 +456,450 @@ public class TextureResource : ResourceBase, ITextureResource
 #### Step 3: Create the Factory
 
 ```csharp
-public class TextureResourceFactory : ResourceFactoryBase<ITextureResource>
+// File: src/TS4Tools.Resources.Gameplay/MoodletResourceFactory.cs
+public class MoodletResourceFactory : ResourceFactoryBase<IMoodletResource>
 {
+    // This tells the system which resource type IDs this factory handles
     public override IReadOnlySet<string> SupportedResourceTypes =>
-        new HashSet<string> { "0x12345678" };
+        new HashSet<string> { "0x12345678" }; // Replace with actual moodlet type ID
 
-    protected override async Task<ITextureResource> CreateResourceCoreAsync(
+    protected override async Task<IMoodletResource> CreateResourceCoreAsync(
         int apiVersion,
         Stream? stream,
         CancellationToken cancellationToken)
     {
-        return new TextureResource(apiVersion, stream, _logger);
+        // We don't actually need async here, but the interface requires it
+        await Task.CompletedTask;
+        
+        return new MoodletResource(apiVersion, stream, _logger);
     }
 }
 ```
 
-#### Step 4: Register in DI Container
+#### Step 4: Register in Dependency Injection
 
 ```csharp
-services.AddTransient<IResourceFactory<ITextureResource>, TextureResourceFactory>();
+// File: src/TS4Tools.Resources.Gameplay/ServiceCollectionExtensions.cs
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddGameplayResources(this IServiceCollection services)
+    {
+        services.AddResourceFactory<IMoodletResource, MoodletResourceFactory>();
+        return services;
+    }
+}
 ```
 
-#### Step 5: Add Unit Tests
+#### Step 5: Write Tests First (TDD)
 
 ```csharp
-public class TextureResourceTests
+// File: tests/TS4Tools.Resources.Gameplay.Tests/MoodletResourceTests.cs
+public class MoodletResourceTests
 {
+    private readonly ILogger<MoodletResource> _mockLogger;
+
+    public MoodletResourceTests()
+    {
+        _mockLogger = Substitute.For<ILogger<MoodletResource>>();
+    }
+
     [Test]
-    public void Constructor_WithValidStream_ParsesTextureData()
+    public void Constructor_WithValidStream_ParsesMoodletData()
     {
         // Arrange
-        var stream = CreateTestTextureStream();
-        var logger = Substitute.For<ILogger<TextureResource>>();
+        var testData = CreateTestMoodletData();
+        using var stream = new MemoryStream(testData);
 
         // Act
-        var texture = new TextureResource(1, stream, logger);
+        var moodlet = new MoodletResource(1, stream, _mockLogger);
 
         // Assert
-        texture.Width.Should().Be(512);
-        texture.Height.Should().Be(512);
-        texture.Format.Should().Be(TextureFormat.DXT5);
+        moodlet.MoodletName.Should().Be("Happy");
+        moodlet.Description.Should().Be("This Sim is feeling happy!");
+        moodlet.Duration.Should().Be(240); // 4 hours in minutes
+        moodlet.Type.Should().Be(MoodletType.Positive);
     }
-}
-```
 
-### Adding a New Feature
-
-1. **Create Feature Branch**
-
-```bash
-git checkout -b feature/new-resource-export
-```
-
-1. **Follow TDD Approach**
-
-   - Write failing tests first
-   - Implement minimum code to pass tests
-   - Refactor for quality
-
-2. **Update Documentation**
-
-   - Add XML comments to public APIs
-   - Update architectural docs if needed
-   - Add usage examples
-
-3. **Performance Testing**
-
-```csharp
-[MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net90)]
-public class ResourceExportBenchmarks
-{
-    [Benchmark]
-    public async Task ExportResource_LargeTexture()
+    [Test]
+    public void Constructor_WithNullStream_CreatesEmptyMoodlet()
     {
-        await _exporter.ExportAsync(_largeTexture, _outputPath);
+        // Act
+        var moodlet = new MoodletResource(1, null, _mockLogger);
+
+        // Assert
+        moodlet.MoodletName.Should().BeEmpty();
+        moodlet.Description.Should().BeEmpty();
+        moodlet.Duration.Should().Be(0);
+        moodlet.Type.Should().Be(MoodletType.Neutral);
+    }
+
+    private byte[] CreateTestMoodletData()
+    {
+        using var stream = new MemoryStream();
+        using var writer = new BinaryWriter(stream);
+
+        // Write test data in the expected binary format
+        var nameBytes = Encoding.UTF8.GetBytes("Happy");
+        writer.Write(nameBytes.Length);
+        writer.Write(nameBytes);
+
+        var descBytes = Encoding.UTF8.GetBytes("This Sim is feeling happy!");
+        writer.Write(descBytes.Length);
+        writer.Write(descBytes);
+
+        writer.Write(240); // Duration
+        writer.Write((byte)MoodletType.Positive); // Type
+
+        return stream.ToArray();
     }
 }
 ```
 
-### Debugging Common Issues
+### Requirements for New Features
 
-#### Performance Problems
+#### Before Starting Development
 
-1. **Use BenchmarkDotNet for profiling**
+1. **Research the Format**: Understand the binary structure of the resource
+   - Use hex editors to examine real game files
+   - Document the byte structure in comments
+   - Check existing similar resources for patterns
+
+2. **Create Test Data**: Build sample files that represent typical usage
+   - Valid data for happy path testing
+   - Edge cases (empty strings, maximum values)
+   - Invalid data for error handling testing
+
+3. **Check Dependencies**: Identify what services your feature needs
+   - Logging (always include)
+   - Configuration settings
+   - Other resource types it might reference
+
+#### During Development
+
+1. **Write Tests First**: Follow TDD principles
+   - Start with simple constructor tests
+   - Add parsing tests with real data
+   - Test error conditions
+
+2. **Use Dependency Injection**: Never create dependencies directly
+   - Inject through constructor
+   - Use interfaces, not concrete types
+   - Register in ServiceCollectionExtensions
+
+3. **Follow Coding Standards**: Maintain consistency
+   - Use async for file operations
+   - Add XML documentation to public members
+   - Follow naming conventions
+   - Include proper error handling
+
+#### After Implementation
+
+1. **Integration Testing**: Test with real game files
+2. **Performance Testing**: Ensure acceptable performance
+3. **Documentation**: Update API docs and examples
+4. **Code Review**: Have another developer review your changes
+
+---
+
+## [STANDARDS] Code Standards and Conventions
+
+### Naming Conventions
 
 ```csharp
-dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
+// Interfaces: PascalCase with 'I' prefix
+public interface IResourceFactory<T> { }
+
+// Classes: PascalCase
+public class StringTableResource { }
+
+// Methods: PascalCase
+public async Task LoadAsync() { }
+
+// Private fields: camelCase with underscore prefix
+private readonly ILogger _logger;
+
+// Properties: PascalCase
+public string ResourceName { get; set; }
+
+// Local variables: camelCase
+var resourceCount = 42;
+
+// Constants: PascalCase
+public const int MaxFileSize = 1024 * 1024;
 ```
 
-1. **Memory profiling with dotMemory or PerfView**
-2. **Check for async/await anti-patterns**
+### Error Handling Patterns
 
-#### Cross-Platform Issues
+```csharp
+// [GOOD] Specific exceptions with helpful messages
+public void ValidateResourceType(uint typeId)
+{
+    if (typeId == 0)
+        throw new ArgumentException("Resource type ID cannot be zero", nameof(typeId));
+        
+    if (!IsValidResourceType(typeId))
+        throw new NotSupportedException($"Resource type 0x{typeId:X8} is not supported");
+}
 
-1. **Test on all supported platforms**
-2. **Use `Path.Combine()` instead of string concatenation**
-3. **Be aware of case-sensitive file systems (Linux/macOS)**
+// [GOOD] Async error handling
+public async Task<IResource> LoadResourceAsync(string path)
+{
+    try
+    {
+        using var stream = await File.OpenReadAsync(path);
+        return await _factory.CreateAsync(stream);
+    }
+    catch (FileNotFoundException)
+    {
+        _logger.LogWarning("Resource file not found: {Path}", path);
+        throw;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to load resource from {Path}", path);
+        throw new ResourceLoadException($"Cannot load resource from {path}", ex);
+    }
+}
+```
+
+### Documentation Standards
+
+Add XML documentation to all public APIs:
+
+```csharp
+/// <summary>
+/// Loads a Sims 4 package file and returns all contained resources.
+/// </summary>
+/// <param name="filePath">Path to the .package file to load</param>
+/// <param name="cancellationToken">Token to cancel the operation</param>
+/// <returns>A package containing all loaded resources</returns>
+/// <exception cref="FileNotFoundException">Thrown when the package file doesn't exist</exception>
+/// <exception cref="InvalidDataException">Thrown when the file is not a valid package</exception>
+public async Task<IPackage> LoadPackageAsync(string filePath, CancellationToken cancellationToken = default)
+{
+    // Implementation here
+}
+```
+
+### Modern C# Features We Use
+
+```csharp
+// Records for immutable data
+public record ResourceKey(uint Type, uint Group, ulong Instance);
+
+// Pattern matching
+public string GetResourceDescription(IResource resource) => resource switch
+{
+    IStringTableResource str => $"String table with {str.Count} entries",
+    ITextureResource tex => $"Texture {tex.Width}x{tex.Height}",
+    _ => "Unknown resource type"
+};
+
+// Nullable reference types
+public IResource? FindResource(string? name)
+{
+    if (string.IsNullOrEmpty(name))
+        return null;
+        
+    return _resources.FirstOrDefault(r => r.Name == name);
+}
+
+// Using declarations for automatic disposal
+public async Task ProcessFileAsync(string path)
+{
+    using var stream = File.OpenRead(path);
+    await ProcessStreamAsync(stream);
+} // stream is automatically disposed here
+```
 
 ---
 
-## ðŸ“– Learning Resources
+## [TASKS] Common Development Tasks
 
-### Required Reading
+### IMPORTANT: Always Specify the Solution File
 
-1. **[Migration Roadmap](MIGRATION_ROADMAP.md)** - Understand the project direction
-2. **[ADR-001: .NET 9 Framework](docs/architecture/adr/ADR-001-DotNet9-Framework.md)**
-3. **[ADR-002: Dependency Injection](docs/architecture/adr/ADR-002-Dependency-Injection.md)**
-4. **[ADR-003: Avalonia UI](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md)**
-
-### Recommended Learning
-
-- **Dependency Injection**: [Microsoft DI Documentation](https://docs.microsoft.com/en-us/dotnet/core/extensions/dependency-injection)
-- **Avalonia UI**: [Avalonia Documentation](https://docs.avaloniaui.net/)
-- **Async/Await**: [Async Programming Patterns](https://docs.microsoft.com/en-us/dotnet/csharp/async)
-- **Testing**: [xUnit Documentation](https://xunit.net/docs/getting-started/netcore/cmdline)
-
-### Internal Documentation
-
-- **[Technical Debt Registry](docs/technical-debt-registry.md)** - Known issues and improvements
-- **[Performance Guidelines](docs/performance-guidelines.md)** - Optimization best practices
-- **[Code Review Checklist](docs/code-review-checklist.md)** - What to look for in reviews
-
----
-
-## ðŸ› ï¸ **Essential Development Tools & Scripts**
-
-### PowerShell Helper Scripts
+**This project has multiple solution files!** Always specify `TS4Tools.sln`:
 
 ```powershell
-
-# Quality check and auto-fix (run before every commit)
-
-.\scripts\check-quality.ps1 -Fix
-
-# Create new resource wrapper boilerplate
-
-.\scripts\New-ResourceWrapper.ps1 -ResourceName "MyResource" -ResourceType "0x12345678"
-
-# Update project progress tracking
-
-.\scripts\Update-Progress.ps1
-```
-
-### Development Shortcuts
-
-```powershell
-
-# Quick development cycle
-
-cd "c:\Users\nawgl\code\TS4Tools"
-dotnet build TS4Tools.sln --verbosity minimal
-dotnet test --filter "Category!=Integration" --verbosity minimal
-
-# Full validation (before major commits)
-
-dotnet clean
-dotnet restore
-dotnet build TS4Tools.sln --verbosity minimal
-dotnet test TS4Tools.sln --verbosity minimal
-```
-
-### BenchmarkDotNet Performance Testing
-
-```powershell
-
-# Run performance benchmarks
-
-dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
-
-# Run specific benchmark category
-
-dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release -- --filter "*ResourceParsing*"
-```
-
----
-
-## ðŸš¨ **Critical Project Context**
-
-### Why TS4Tools Exists
-
-1. **Assembly Loading Crisis**: Original uses `Assembly.LoadFile()` which breaks in .NET 8+
-2. **Technical Debt**: 114+ legacy projects with interdependencies
-3. **Cross-Platform Need**: Community wants Linux/macOS support
-4. **Modern Architecture**: Need for dependency injection, async/await, proper testing
-
-### What Makes This Project Unique
-
-- **Greenfield Rewrite**: Not migrating code, extracting business logic
-- **100% API Compatibility**: External tools must work without changes
-- **Golden Master Testing**: Byte-perfect validation with real game files
-- **Plugin Ecosystem**: 20+ resource wrappers must continue working
-- **Community Impact**: Used by thousands of Sims 4 modders worldwide
-
-### Success Criteria
-
-- **Performance**: Must match or exceed legacy system
-- **Compatibility**: 100% backward compatibility for plugins/tools
-- **Quality**: 95%+ test coverage, clean static analysis
-- **Cross-Platform**: True Windows/macOS/Linux support
-
----
-
-## ðŸŽ¯ **Quick Reference Cheat Sheet**
-
-### Daily Development Commands
-
-```powershell
-
-# Start of day
-
-cd "c:\Users\nawgl\code\TS4Tools"
-git pull
-dotnet restore
-
-# Before any work
-
-dotnet test --filter "Category!=Integration" --verbosity minimal
-
-# Before committing
-
-.\scripts\check-quality.ps1 -Fix
-dotnet build TS4Tools.sln --verbosity minimal
-dotnet test --verbosity minimal
-
-# Golden Master validation (resource wrapper work)
-
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
-```
-
-### Emergency Troubleshooting
-
-```powershell
-
-# Clean build issues
-
-dotnet clean
-dotnet restore --force
+# CORRECT - Always specify the solution file
 dotnet build TS4Tools.sln
+dotnet test TS4Tools.sln
+dotnet restore TS4Tools.sln
 
-# Reset to known good state
-
-git status
-git stash  # if you have uncommitted changes
-git pull
-
-# Check current phase status
-
-Get-Content "PHASE_*_COMPLETION_STATUS.md" | Select-String "STATUS"
+# WRONG - Will build the wrong solution or fail
+dotnet build
+dotnet test
 ```
 
-### Key Files to Check Before Starting Work
+### Development Workflow Diagram
 
-1. **`MIGRATION_ROADMAP.md`** - Overall project status
-2. **`PHASE_X_XX_CHECKLIST.md`** - Current phase requirements
-3. **`AI_ASSISTANT_GUIDELINES.md`** - Detailed development standards
-4. **`CHANGELOG.md`** - Recent changes and completed work
-
----
-
-## ðŸ¤ Getting Help
-
-### Communication Channels
-
-- **Daily Standups**: Monday/Wednesday/Friday at 9:00 AM
-- **Architecture Reviews**: Bi-weekly on Wednesdays
-- **Code Reviews**: All PRs require 2 approvals
-
-### Who to Ask
-
-- **Architecture Questions**: Lead Developer
-- **UI/UX Questions**: UI Team Lead
-- **Performance Issues**: Senior Developer
-- **Testing Help**: QA Team Lead
-
-### Common Questions
-
-#### Q: Why did we choose Avalonia over MAUI?
-
-A: See [ADR-003](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md).
-MAUI has limited Linux support, and desktop scenarios aren't as mature.
-
-#### Q: How do I add a new configuration setting?
-
-A: Add it to the appropriate `Options` class and register with DI:
-
-```csharp
-public class ResourceManagerOptions
-{
-    public bool EnableCaching { get; set; } = true;
-    public int CacheSize { get; set; } = 1000;
-}
-
-// In Startup.cs
-services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceManager"));
+```mermaid
+flowchart LR
+    A[Edit Code] --> B[Build Solution]
+    B --> C{Build Success?}
+    C -->|No| D[Fix Errors] --> A
+    C -->|Yes| E[Run Tests]
+    E --> F{Tests Pass?}
+    F -->|No| G[Fix Tests] --> A
+    F -->|Yes| H[Commit Changes]
+    
+    B -.-> I[dotnet build TS4Tools.sln]
+    E -.-> J[dotnet test TS4Tools.sln]
 ```
 
-#### Q: When should I use async/await?
+### Finding Examples in the Codebase
 
-A: For any I/O operations (file access, network, database). CPU-bound
-operations generally don't need async unless you're doing long-running work.
-
-#### Q: How do I handle cross-platform differences?
-
-A: Use dependency injection with platform-specific implementations:
-
-```csharp
-#if WINDOWS
-services.AddScoped<IDialogService, WindowsDialogService>();
-#elif MACOS
-services.AddScoped<IDialogService, MacDialogService>();
-#endif
-```
-
----
-
-## ðŸŽ¯ Your First Contribution
-
-### Week 1: Environment Setup
-
-- [ ] Set up development environment
-- [ ] Build and run all tests successfully
-- [ ] Read core architecture documents
-- [ ] Complete this onboarding guide
-
-### Week 2: Small Contribution
-
-- [ ] Pick a "good first issue" from GitHub Issues
-- [ ] Create feature branch and implement solution
-- [ ] Add unit tests (aim for 95%+ coverage)
-- [ ] Submit PR with proper commit messages
-
-### Week 3: Code Review Participation
-
-- [ ] Review 2-3 PRs from other developers
-- [ ] Participate in architecture discussion
-- [ ] Suggest improvements or ask questions
-
-### Month 1 Goal
-
-- [ ] Successfully merge first feature PR
-- [ ] Understand core architecture patterns
-- [ ] Comfortable with development workflow
-- [ ] Contributing to team discussions
-
----
-
-## ðŸ“‹ Checklists
-
-### Before Committing Code
-
-- [ ] All tests pass locally (`dotnet test`)
-- [ ] Code follows style guidelines (EditorConfig)
-- [ ] XML documentation added for public APIs
-- [ ] Performance impact considered and tested
-- [ ] Cross-platform compatibility verified
-
-### Before Submitting PR
-
-- [ ] Feature branch up-to-date with main
-- [ ] Conventional commit messages used
-- [ ] PR description explains changes and rationale
-- [ ] Unit tests added/updated (95%+ coverage)
-- [ ] Integration tests pass
-- [ ] Documentation updated if needed
-
-### Code Review Checklist
-
-- [ ] Does the code follow SOLID principles?
-- [ ] Are dependencies properly injected?
-- [ ] Is error handling appropriate?
-- [ ] Are there any potential memory leaks?
-- [ ] Is the code cross-platform compatible?
-- [ ] Are unit tests comprehensive?
-- [ ] **Do Golden Master tests pass?** (Critical for resource wrappers)
-- [ ] **Does it maintain API compatibility?** (Check method signatures)
-- [ ] **Are assembly loading patterns modern?** (No `Assembly.LoadFile()`)
-
----
-
-## ðŸš¨ **Common Pitfalls & Troubleshooting**
-
-### Golden Master Test Failures
+When you need to understand how something works, look at existing implementations:
 
 ```powershell
+# Find all resource implementations
+grep -r "class.*Resource.*:" src/ --include="*.cs"
 
-# If Golden Master tests fail:
+# Find factory examples
+grep -r "ResourceFactory" src/ --include="*.cs"
 
-# 1. Check if Sims 4 is installed and path is correct
-
-# 2. Verify test data integrity
-
-dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity diagnostic
-
-# 3. Regenerate test data if needed (ask team lead first)
-
-# Note: This should be rare - most failures indicate implementation issues
-
+# Look for test examples
+grep -r "public.*Test" tests/ --include="*.cs"
 ```
 
-### Resource Wrapper Common Mistakes
+### Adding a New Service to DI
 
+1. Create the interface:
 ```csharp
-// âŒ DON'T: Break API compatibility
-public async Task<byte[]> GetDataAsync() // This breaks legacy compatibility
-
-// âœ… DO: Maintain synchronous APIs with async implementation
-public byte[] GetData()
+public interface IMyService
 {
-    return GetDataAsync().GetAwaiter().GetResult();
-}
-
-private async Task<byte[]> GetDataAsync() // Internal async implementation
-{
-    // Modern async implementation
+    Task<string> ProcessAsync(string input);
 }
 ```
 
-### Performance Issues
-
+2. Create the implementation:
 ```csharp
-// âŒ DON'T: Block async operations
-var result = SomeAsyncMethod().Result; // Can cause deadlocks
-
-// âœ… DO: Use proper async patterns
-var result = await SomeAsyncMethod().ConfigureAwait(false);
-
-// âœ… DO: Use streaming for large files
-using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
-// Process in chunks, don't load entire file
-```
-
-### Cross-Platform Issues
-
-```csharp
-// âŒ DON'T: Use Windows-specific paths
-var path = "C:\\temp\\file.txt";
-
-// âœ… DO: Use cross-platform path construction
-var path = Path.Combine(Path.GetTempPath(), "file.txt");
-
-// âŒ DON'T: Assume case-insensitive file systems
-File.Exists("File.TXT"); // May fail on Linux
-
-// âœ… DO: Use exact case or normalize
-File.Exists(Path.GetFullPath("file.txt").ToLowerInvariant());
-```
-
-### Dependency Injection Problems
-
-```csharp
-// âŒ DON'T: Static dependencies (untestable)
-public class MyService
-{
-    public void DoWork()
-    {
-        var logger = LogManager.GetCurrentClassLogger(); // Hard to test
-    }
-}
-
-// âœ… DO: Constructor injection (testable)
-public class MyService
+public class MyService : IMyService
 {
     private readonly ILogger<MyService> _logger;
-
+    
     public MyService(ILogger<MyService> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _logger = logger;
+    }
+    
+    public async Task<string> ProcessAsync(string input)
+    {
+        _logger.LogDebug("Processing input: {Input}", input);
+        // Implementation here
+        return await Task.FromResult($"Processed: {input}");
     }
 }
 ```
 
+3. Register in DI:
+```csharp
+// In ServiceCollectionExtensions.cs
+services.AddScoped<IMyService, MyService>();
+```
+
+### Debugging Tips
+
+#### Use the Debugger Effectively
+
+1. Set breakpoints on exception catches to see what's failing
+2. Use conditional breakpoints for loops: `item.Name == "specific-name"`
+3. Use the "Locals" window to inspect object state
+
+#### Logging for Development
+
+```csharp
+_logger.LogDebug("Loading resource {Type} from {Path}", resourceType, filePath);
+_logger.LogInformation("Successfully loaded {Count} resources", resources.Count);
+_logger.LogWarning("Resource {Name} has invalid data, using defaults", resourceName);
+_logger.LogError(ex, "Failed to process resource {Type}", resourceType);
+```
+
+#### Common Issues and Solutions
+
+**Problem**: Tests fail with NullReferenceException
+**Solution**: Check that all dependencies are properly mocked in test setup
+
+**Problem**: DI container can't resolve service
+**Solution**: Verify service is registered in ServiceCollectionExtensions.cs
+
+**Problem**: File loading fails
+**Solution**: Check file paths are absolute and files exist in test-data directories
+
 ---
 
-**Welcome to the team!** ðŸŽ‰
+## 🎯 What to Focus On
 
-**Essential Success Tips:**
+### For Your First Week
 
-- **Read First**: Always check `MIGRATION_ROADMAP.md` and current `PHASE_X_XX_CHECKLIST.md` before starting
-- **Test Early**: Run Golden Master tests before and after every change
-- **Ask Questions**: Complex legacy system - better to ask than break compatibility
-- **Follow Phases**: Work within the established phase structure
-- **Validate Always**: Use `.\scripts\check-quality.ps1 -Fix` before every commit
+1. **Explore the codebase** - Open files, read code, understand the structure
+2. **Run existing tests** - See how tests are written and what they verify
+3. **Make a small change** - Fix a typo, add a log message, improve a comment
+4. **Write a simple test** - Pick an existing class and add a new test case
 
-We value clean code, comprehensive testing, and collaborative development. This project serves
-thousands of Sims 4 modders worldwide - quality and compatibility are paramount.
+### For Your First Month
+
+1. **Implement a simple resource type** - Start with something straightforward
+2. **Add comprehensive tests** - Practice the testing patterns we use
+3. **Understand the factory pattern** - This is central to how resources work
+4. **Get comfortable with async/await** - Most operations are asynchronous
+
+### For Your First Three Months
+
+1. **Contribute to complex features** - Take on larger implementation tasks
+2. **Review others' code** - Help maintain code quality
+3. **Improve documentation** - Help future developers (like this guide!)
+4. **Optimize performance** - Identify and fix bottlenecks
 
 ---
 
-**Last Updated**: August 10, 2025 *(Updated with critical Golden Master & phase requirements)*
-**Next Review**: Monthly updates based on team feedback
+## [HELP] Getting Help
 
+### Where to Look First
+
+1. **This documentation** - Start with the docs in the `docs/` folder
+2. **Existing code** - Look for similar implementations
+3. **Tests** - They show how code is supposed to be used
+4. **Git history** - See how features were implemented previously
+
+### How to Ask for Help
+
+When you're stuck, provide context:
+
+1. **What you're trying to do** - "I'm implementing a new resource type"
+2. **What you've tried** - "I followed the pattern from StringTableResource"
+3. **What's happening** - "Tests pass but the resource doesn't load correctly"
+4. **Error messages** - Include full stack traces
+5. **Code samples** - Show the specific code that's not working
+
+### Code Review Guidelines
+
+When your code is ready for review:
+
+1. **Self-review first** - Read through your own changes
+2. **Write clear commit messages** - Explain what and why
+3. **Include tests** - Don't submit code without tests
+4. **Update documentation** - If you changed public APIs
+5. **Keep changes focused** - One feature per pull request
+
+---
+
+## [READY] You're Ready to Start
+
+By now you should understand:
+
+- [X] How the TS4Tools codebase is organized
+- [X] Our development patterns (DI, factories, async)
+- [X] How to write tests using our testing standards
+- [X] The step-by-step process for adding new features
+- [X] Our code standards and conventions
+- [X] How to get help when you need it
+
+**Next Steps:**
+
+1. Set up your development environment
+2. Run the existing tests to make sure everything works
+3. Pick a small task from the issue tracker
+4. Start coding!
+
+Welcome to the team!

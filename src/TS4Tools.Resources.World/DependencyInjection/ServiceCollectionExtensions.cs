@@ -20,31 +20,37 @@
 using Microsoft.Extensions.DependencyInjection;
 using TS4Tools.Core.Resources;
 
-namespace TS4Tools.Resources.Geometry.DependencyInjection;
+namespace TS4Tools.Resources.World.DependencyInjection;
 
 /// <summary>
-/// Extension methods for registering geometry resource services with dependency injection.
+/// Extension methods for registering world resource services with dependency injection.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds geometry resource services to the service collection.
+    /// Adds world resource services to the service collection.
     /// </summary>
     /// <param name="services">The service collection to add to.</param>
     /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddGeometryResources(this IServiceCollection services)
+    public static IServiceCollection AddWorldResources(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
 
         // Register resource factories
-        services.AddSingleton<IResourceFactory, GeometryResourceFactory>();
-        services.AddSingleton<IResourceFactory, MeshResourceFactory>();
-        services.AddSingleton<IResourceFactory, ModularResourceFactory>();
+        services.AddSingleton<IResourceFactory, WorldResourceFactory>();
+        services.AddSingleton<IResourceFactory, TerrainResourceFactory>();
+        services.AddSingleton<IResourceFactory, LotResourceFactory>();
+        services.AddSingleton<IResourceFactory, NeighborhoodResourceFactory>();
+        services.AddSingleton<IResourceFactory, LotDescriptionResourceFactory>();
+        services.AddSingleton<IResourceFactory, RegionDescriptionResourceFactory>();
 
         // Register typed factories
-        services.AddSingleton<GeometryResourceFactory>();
-        services.AddSingleton<MeshResourceFactory>();
-        services.AddSingleton<ModularResourceFactory>();
+        services.AddSingleton<WorldResourceFactory>();
+        services.AddSingleton<TerrainResourceFactory>();
+        services.AddSingleton<LotResourceFactory>();
+        services.AddSingleton<NeighborhoodResourceFactory>();
+        services.AddSingleton<LotDescriptionResourceFactory>();
+        services.AddSingleton<RegionDescriptionResourceFactory>();
 
         return services;
     }

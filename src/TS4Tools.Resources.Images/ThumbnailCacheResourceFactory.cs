@@ -17,35 +17,37 @@
  *  along with TS4Tools.  If not, see <http://www.gnu.org/licenses/>.     *
  ***************************************************************************/
 
-using Microsoft.Extensions.DependencyInjection;
+using TS4Tools.Core.Package;
 using TS4Tools.Core.Resources;
 
-namespace TS4Tools.Resources.Geometry.DependencyInjection;
+namespace TS4Tools.Resources.Images;
 
 /// <summary>
-/// Extension methods for registering geometry resource services with dependency injection.
+/// Factory for creating thumbnail cache resources that manage cached thumbnails for UI performance.
 /// </summary>
-public static class ServiceCollectionExtensions
+public sealed class ThumbnailCacheResourceFactory : ResourceFactoryBase<ThumbnailCacheResource>
 {
     /// <summary>
-    /// Adds geometry resource services to the service collection.
+    /// Initializes a new instance of the <see cref="ThumbnailCacheResourceFactory"/> class.
     /// </summary>
-    /// <param name="services">The service collection to add to.</param>
-    /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddGeometryResources(this IServiceCollection services)
+    public ThumbnailCacheResourceFactory() : base(new[] { "THUMBCACHE", "0x3C1AF1F2" }, priority: 50)
     {
-        ArgumentNullException.ThrowIfNull(services);
+    }
 
-        // Register resource factories
-        services.AddSingleton<IResourceFactory, GeometryResourceFactory>();
-        services.AddSingleton<IResourceFactory, MeshResourceFactory>();
-        services.AddSingleton<IResourceFactory, ModularResourceFactory>();
+    /// <inheritdoc/>
+    public override async Task<ThumbnailCacheResource> CreateResourceAsync(
+        int apiVersion,
+        Stream? stream = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = new ResourceKey(0x3C1AF1F2, 0x00000000, 0x0000000000000000);
+        var resource = new ThumbnailCacheResource(key, 1);
 
-        // Register typed factories
-        services.AddSingleton<GeometryResourceFactory>();
-        services.AddSingleton<MeshResourceFactory>();
-        services.AddSingleton<ModularResourceFactory>();
+        if (stream != null)
+        {
+            await resource.LoadFromStreamAsync(stream, cancellationToken);
+        }
 
-        return services;
+        return resource;
     }
 }
