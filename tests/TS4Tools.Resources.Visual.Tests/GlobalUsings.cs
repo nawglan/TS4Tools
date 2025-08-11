@@ -30,4 +30,5 @@ global using Microsoft.Extensions.Logging;
 global using NSubstitute;
 global using Xunit;
 global using TS4Tools.Core.Interfaces;
+global using TS4Tools.Core.Package;
 global using TS4Tools.Resources.Visual;

@@ -33,14 +33,4 @@
     <ProjectReference Include="..\..\src\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Visual\TS4Tools.Resources.Visual.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Using Include="Xunit" />
-    <Using Include="FluentAssertions" />
-    <Using Include="NSubstitute" />
-    <Using Include="AutoFixture" />
-    <Using Include="System.Threading" />
-    <Using Include="TS4Tools.Core.Interfaces" />
-    <Using Include="TS4Tools.Core.Package" />
-    <Using Include="TS4Tools.Resources.Visual" />
-  </ItemGroup>
 </Project>
