@@ -26,9 +26,4 @@
     <ProjectReference Include="..\..\src\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.System\TS4Tools.Core.System.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Using Include="Xunit" />
-    <Using Include="FluentAssertions" />
-    <Using Include="NSubstitute" />
-  </ItemGroup>
 </Project>

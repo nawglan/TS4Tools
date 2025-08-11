@@ -1,9 +1,14 @@
 global using System;
 global using System.Collections.Generic;
+global using System.ComponentModel.DataAnnotations;
 global using System.IO;
 global using System.Linq;
 global using System.Threading.Tasks;
-
+global using FluentAssertions;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using NSubstitute;
+global using Xunit;
 global using TS4Tools.Core.Interfaces;
 global using TS4Tools.Core.Package;
 global using TS4Tools.Extensions;
