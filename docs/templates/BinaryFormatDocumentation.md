@@ -1,9 +1,9 @@
-# Binary Format Documentation Template
+﻿# Binary Format Documentation Template
 
-**Resource Type:** [ResourceTypeName]  
-**Type ID:** `0x[TypeID]`  
-**Endianness:** Little Endian  
-**Version Documented:** [Version]  
+**Resource Type:** [ResourceTypeName]
+**Type ID:** `0x[TypeID]`
+**Endianness:** Little Endian
+**Version Documented:** [Version]
 
 ## Format Overview
 
@@ -16,7 +16,7 @@
 ```
 [File Layout Diagram]
 +-------------------+
-| Header            | 
+| Header            |
 +-------------------+
 | Data Section 1    |
 +-------------------+
@@ -78,7 +78,7 @@
 
 - [Version 1 specific details]
 
-#### Version 2  
+#### Version 2
 
 - [Version 2 changes from v1]
 
@@ -92,7 +92,7 @@
 ### Parsing Guidelines
 
 1. **Magic Number Validation:** Always verify magic number first
-2. **Version Handling:** Check version and handle appropriately  
+2. **Version Handling:** Check version and handle appropriately
 3. **Bounds Checking:** Validate all size fields before reading
 4. **Error Handling:** [Specific error conditions to check]
 
@@ -133,7 +133,7 @@ Hex Dump:
 function parseResource(stream):
     header = parseHeader(stream)
     validateMagic(header.magic)
-    
+
     switch header.version:
         case 1: return parseV1(stream, header)
         case 2: return parseV2(stream, header)
@@ -195,6 +195,7 @@ function serializeResource(resource):
 
 ---
 
-**Documentation Status:** [Draft/Review/Final]  
-**Last Updated:** [Date]  
+**Documentation Status:** [Draft/Review/Final]
+**Last Updated:** [Date]
 **Validated Against:** [Game version/sample files]
+

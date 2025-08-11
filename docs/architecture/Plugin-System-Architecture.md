@@ -1,4 +1,4 @@
-# Plugin System Architecture
+﻿# Plugin System Architecture
 
 ## Overview
 
@@ -142,14 +142,14 @@ New plugins can leverage modern .NET features:
 public class CustomImageResourceHandler : IResourceHandler
 {
     private readonly ILogger<CustomImageResourceHandler> _logger;
-    
+
     public CustomImageResourceHandler(ILogger<CustomImageResourceHandler> logger)
     {
         _logger = logger;
     }
-    
+
     public bool CanHandle(uint resourceType) => resourceType == 0x2E75C764;
-    
+
     public async Task<IResource> CreateResourceAsync(Stream data, IResourceKey key, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating custom image resource for key {Key}", key);
@@ -274,5 +274,6 @@ Enable detailed plugin logging:
 
 ---
 
-*Last Updated: August 8, 2025*  
+*Last Updated: August 8, 2025*
 *For implementation details, see TS4Tools.Core.Plugins source code*
+

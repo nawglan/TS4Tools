@@ -1,4 +1,4 @@
-# Resource Format Documentation
+﻿# Resource Format Documentation
 
 ## Overview
 
@@ -21,7 +21,7 @@ Each resource type documentation includes:
 
 #### String Tables (STBL)
 
-**Resource Type**: `0x220557DA`  
+**Resource Type**: `0x220557DA`
 **Description**: Localized text content for UI elements, object names, and game text
 
 **Binary Format:**
@@ -34,7 +34,7 @@ Header (8 bytes):
 Entry Table:
   For each entry:
     00-03: String ID (uint32)
-    04: String Length (byte)  
+    04: String Length (byte)
     05-XX: UTF-8 String Data
 ```
 
@@ -44,21 +44,21 @@ Entry Table:
 public class StringTableResource : IResource
 {
     private Dictionary<uint, string> _entries = new();
-    
+
     protected override void Parse(Stream stream)
     {
         using var reader = new BinaryReader(stream);
-        
+
         var reserved = reader.ReadUInt32(); // Should be 0
         var entryCount = reader.ReadUInt32();
-        
+
         for (int i = 0; i < entryCount; i++)
         {
             var stringId = reader.ReadUInt32();
             var length = reader.ReadByte();
             var bytes = reader.ReadBytes(length);
             var text = Encoding.UTF8.GetString(bytes);
-            
+
             _entries[stringId] = text;
         }
     }
@@ -67,7 +67,7 @@ public class StringTableResource : IResource
 
 #### Image Resources (DDS/PNG)
 
-**Resource Type**: `0x2E75C764` (DDS), `0x2F7D0004` (PNG)  
+**Resource Type**: `0x2E75C764` (DDS), `0x2F7D0004` (PNG)
 **Description**: Textures, UI images, and sprite data
 
 **DDS Format Structure:**
@@ -95,7 +95,7 @@ DDS Header (128 bytes):
 
 #### 3D Geometry (GEOM)
 
-**Resource Type**: `0x015A1849`  
+**Resource Type**: `0x015A1849`
 **Description**: 3D mesh data including vertices, normals, UV coordinates
 
 **Format Overview:**
@@ -110,7 +110,7 @@ Header:
 Vertex Data:
   Per vertex (variable size based on format):
     Position: float3 (12 bytes)
-    Normal: float3 (12 bytes)  
+    Normal: float3 (12 bytes)
     UV: float2 (8 bytes)
     Additional data as specified
 ```
@@ -119,7 +119,7 @@ Vertex Data:
 
 #### Animation Data (ANIM)
 
-**Resource Type**: `0x8EAF13DE`  
+**Resource Type**: `0x8EAF13DE`
 **Description**: Character and object animation sequences
 
 **Structure:**
@@ -131,7 +131,7 @@ Vertex Data:
 
 #### Audio Resources (AUDIO)
 
-**Resource Type**: `0xF0582F9A`  
+**Resource Type**: `0xF0582F9A`
 **Description**: Sound effects, music, and voice data
 
 **Supported Formats:**
@@ -145,7 +145,7 @@ Vertex Data:
 
 #### Lot Data (LOT)
 
-**Resource Type**: `0x0604ABDA`  
+**Resource Type**: `0x0604ABDA`
 **Description**: Lot layout, terrain, and placement information
 
 **Components:**
@@ -157,19 +157,19 @@ Vertex Data:
 
 #### Neighborhood Data (NHBD)
 
-**Resource Type**: `0x0355E0A6`  
+**Resource Type**: `0x0355E0A6`
 **Description**: World structure and neighborhood definitions
 
 ### Specialized Resources
 
 #### Catalog Resources (CATA)
 
-**Resource Type**: `0x319E4F1D`  
+**Resource Type**: `0x319E4F1D`
 **Description**: In-game catalog definitions for objects and items
 
 #### Script Resources (SCRIPT)
 
-**Resource Type**: `0x791F5C85`  
+**Resource Type**: `0x791F5C85`
 **Description**: Game logic and behavior scripts
 
 ## Format Validation
@@ -184,28 +184,28 @@ public class FormatValidator
     public ValidationResult ValidateStringTable(byte[] data)
     {
         var result = new ValidationResult();
-        
+
         // Check minimum size
         if (data.Length < 8)
         {
             result.AddError("STBL file too small for header");
             return result;
         }
-        
+
         // Validate reserved field
         var reserved = BitConverter.ToUInt32(data, 0);
         if (reserved != 0)
         {
             result.AddWarning($"Non-zero reserved field: 0x{reserved:X8}");
         }
-        
+
         // Validate entry count vs file size
         var entryCount = BitConverter.ToUInt32(data, 4);
         if (entryCount > (data.Length - 8) / 5) // Minimum 5 bytes per entry
         {
             result.AddError("Entry count exceeds possible file size");
         }
-        
+
         return result;
     }
 }
@@ -223,13 +223,13 @@ public async Task ValidateStringTableFormat(string packageFile)
 {
     // Load original package
     var originalData = await LoadTestPackage(packageFile);
-    
+
     // Parse with TS4Tools
     var resource = await StringTableResource.ParseAsync(originalData);
-    
+
     // Re-serialize
     var newData = await resource.SerializeAsync();
-    
+
     // Validate byte-for-byte identical
     Assert.Equal(originalData, newData);
 }
@@ -246,7 +246,7 @@ Many resources share common header structures:
 ```
 00-03: Magic Bytes (resource-specific)
 04-07: Version (uint32)
-08-0B: Data Size (uint32)  
+08-0B: Data Size (uint32)
 0C-0F: Flags (uint32)
 ```
 
@@ -303,20 +303,20 @@ public abstract class ResourceParser<T> where T : IResource, new()
     public async Task<T> ParseAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         var resource = new T();
-        
+
         try
         {
             // Validate stream
             if (stream.Length < GetMinimumSize())
                 throw new InvalidDataException("Resource data too small");
-            
+
             // Read header
             var header = await ReadHeaderAsync(stream, cancellationToken);
             ValidateHeader(header);
-            
+
             // Parse content based on version
             await ParseContentAsync(stream, header, resource, cancellationToken);
-            
+
             return resource;
         }
         catch (Exception ex)
@@ -325,7 +325,7 @@ public abstract class ResourceParser<T> where T : IResource, new()
             throw new ParseException($"Failed to parse {typeof(T).Name}", ex);
         }
     }
-    
+
     protected abstract int GetMinimumSize();
     protected abstract Task<ResourceHeader> ReadHeaderAsync(Stream stream, CancellationToken cancellationToken);
     protected abstract void ValidateHeader(ResourceHeader header);
@@ -342,8 +342,8 @@ public class ParseException : Exception
 {
     public long StreamPosition { get; }
     public string ResourceType { get; }
-    
-    public ParseException(string message, long position, string resourceType) 
+
+    public ParseException(string message, long position, string resourceType)
         : base($"{message} at position 0x{position:X8} in {resourceType}")
     {
         StreamPosition = position;
@@ -374,11 +374,11 @@ public class VersionHandler
         return (resourceType, version) switch
         {
             (0x220557DA, >= 5) => new StringTableV5Parser(),
-            (0x220557DA, >= 3) => new StringTableV3Parser(), 
+            (0x220557DA, >= 3) => new StringTableV3Parser(),
             (0x220557DA, _) => new StringTableV1Parser(),
-            
+
             (0x2E75C764, _) => new DDSResourceParser(),
-            
+
             _ => new GenericResourceParser()
         };
     }
@@ -391,17 +391,17 @@ public class VersionHandler
 
 ```
 test-data/
-├── packages/
-│   ├── base-game/          # Original EA packages
-│   ├── expansion-packs/    # EP-specific resources  
-│   └── custom/            # Community-created content
-├── individual-resources/
-│   ├── stbl/              # String table samples
-│   ├── dds/               # Texture samples
-│   └── geom/              # Geometry samples
-└── validation/
-    ├── malformed/         # Invalid data for error testing
-    └── edge-cases/        # Boundary condition tests
+â”œâ”€â”€ packages/
+â”‚   â”œâ”€â”€ base-game/          # Original EA packages
+â”‚   â”œâ”€â”€ expansion-packs/    # EP-specific resources
+â”‚   â””â”€â”€ custom/            # Community-created content
+â”œâ”€â”€ individual-resources/
+â”‚   â”œâ”€â”€ stbl/              # String table samples
+â”‚   â”œâ”€â”€ dds/               # Texture samples
+â”‚   â””â”€â”€ geom/              # Geometry samples
+â””â”€â”€ validation/
+    â”œâ”€â”€ malformed/         # Invalid data for error testing
+    â””â”€â”€ edge-cases/        # Boundary condition tests
 ```
 
 ### Comprehensive Format Testing
@@ -417,7 +417,7 @@ public class FormatCompatibilityTests
     {
         var package = await LoadPackage(packageFile);
         var errors = new List<string>();
-        
+
         foreach (var resource in package.Resources)
         {
             try
@@ -429,8 +429,8 @@ public class FormatCompatibilityTests
                 errors.Add($"{resource.Key}: {ex.Message}");
             }
         }
-        
-        Assert.AreEqual(0, errors.Count, 
+
+        Assert.AreEqual(0, errors.Count,
             $"Format validation errors in {version}:\n{string.Join("\n", errors)}");
     }
 }
@@ -475,5 +475,6 @@ Each resource type should include:
 
 ---
 
-*Last Updated: August 8, 2025*  
+*Last Updated: August 8, 2025*
 *For complete format specifications, see individual resource type documentation*
+

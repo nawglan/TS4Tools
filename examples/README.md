@@ -1,4 +1,4 @@
-# Examples Directory
+﻿# Examples Directory
 
 This directory contains working examples demonstrating how to use TS4Tools for various scenarios.
 
@@ -65,11 +65,14 @@ dotnet build examples/PackageCreator
 Each example is a standalone console application:
 
 ```bash
+
 # Basic Package Reader
+
 cd examples/BasicPackageReader
 dotnet run -- "C:\path\to\your\file.package"
 
 # Package Creator
+
 cd examples/PackageCreator
 dotnet run -- "C:\path\to\output\new-file.package"
 ```
@@ -141,12 +144,12 @@ To create a new example project:
        <TargetFramework>net9.0</TargetFramework>
        <Nullable>enable</Nullable>
      </PropertyGroup>
-     
+
      <ItemGroup>
        <ProjectReference Include="..\..\src\TS4Tools.Core.Package\TS4Tools.Core.Package.csproj" />
        <ProjectReference Include="..\..\src\TS4Tools.Core.DependencyInjection\TS4Tools.Core.DependencyInjection.csproj" />
      </ItemGroup>
-     
+
      <ItemGroup>
        <PackageReference Include="Microsoft.Extensions.Hosting" />
        <PackageReference Include="Microsoft.Extensions.Logging.Console" />
@@ -160,13 +163,13 @@ To create a new example project:
    using Microsoft.Extensions.DependencyInjection;
    using Microsoft.Extensions.Hosting;
    using TS4Tools.Core.DependencyInjection;
-   
+
    var builder = Host.CreateApplicationBuilder(args);
    builder.Services.AddTS4ToolsCore();
    builder.Logging.AddConsole();
-   
+
    var host = builder.Build();
-   
+
    // Your example code here
    ```
 
@@ -199,7 +202,7 @@ dotnet run -- "test-data/sample.package"
 These examples are referenced in the main documentation:
 
 - [Getting Started Guide](../docs/getting-started.md) - Basic usage patterns
-- [API Reference](../docs/api-reference.md) - Detailed API examples  
+- [API Reference](../docs/api-reference.md) - Detailed API examples
 - [Advanced Features](../docs/advanced-features.md) - Complex scenarios
 
 ## Contributing Examples
@@ -220,3 +223,4 @@ If you have questions about the examples:
 - Check the individual README files in each example directory
 - Review the main [Getting Started Guide](../docs/getting-started.md)
 - See the [API Reference](../docs/api-reference.md) for detailed documentation
+

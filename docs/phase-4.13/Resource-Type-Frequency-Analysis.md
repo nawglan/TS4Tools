@@ -1,13 +1,13 @@
-# Resource Type Frequency Analysis
+﻿# Resource Type Frequency Analysis
 
 ## Overview
 
 This document provides a comprehensive analysis of resource type frequency and distribution across The Sims 4 package files, based on analysis of real game packages from Steam installation.
 
-**Analysis Date**: August 8, 2025  
-**Data Source**: Steam installation of The Sims 4 (All Packs)  
-**Packages Analyzed**: 247 official packages  
-**Total Resources**: 1,847,392 resources  
+**Analysis Date**: August 8, 2025
+**Data Source**: Steam installation of The Sims 4 (All Packs)
+**Packages Analyzed**: 247 official packages
+**Total Resources**: 1,847,392 resources
 **Analysis Method**: Automated scanning with TS4Tools.Core.Package
 
 ## Executive Summary
@@ -70,7 +70,7 @@ This document provides a comprehensive analysis of resource type frequency and d
 
 #### DDS Images - `0x2E75C764`
 
-- **Count**: 264,789  
+- **Count**: 264,789
 - **Average Size**: 87.3 KB
 - **Size Range**: 136 bytes - 16.7 MB
 - **Formats**: DXT1, DXT3, DXT5, BC7
@@ -81,7 +81,7 @@ This document provides a comprehensive analysis of resource type frequency and d
 
 - **Count**: 187,542
 - **Average Size**: 1.8 KB
-- **Size Range**: 24 bytes - 245 KB  
+- **Size Range**: 24 bytes - 245 KB
 - **Usage**: Buy/Build mode catalog entries
 - **Implementation Priority**: **High** - Required for object creation
 
@@ -151,7 +151,7 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 - **Dominant Types**: String tables, core gameplay content
 - **Average Package Size**: 45.2 MB
 
-#### Expansion Pack Packages  
+#### Expansion Pack Packages
 
 - **Count**: 156 packages
 - **Resources**: 1,097,234 (59.4%)
@@ -160,7 +160,7 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 
 #### Stuff Pack Packages
 
-- **Count**: 32 packages  
+- **Count**: 32 packages
 - **Resources**: 187,429 (10.1%)
 - **Dominant Types**: Catalog data, textures, objects
 - **Average Package Size**: 34.1 MB
@@ -182,7 +182,7 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 
 #### Medium Packages (10-100MB)
 
-- **Count**: 164 packages  
+- **Count**: 164 packages
 - **Typical Content**: Expansion pack content, gameplay packs
 - **Resource Concentration**: Moderate variety, mixed sizes
 
@@ -204,7 +204,7 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 ### High Priority Resources (Implement Second)
 
 1. **Catalog Data** - Required for Buy/Build mode
-2. **Neighborhood Data** - Required for world editing  
+2. **Neighborhood Data** - Required for world editing
 3. **3D Geometry** - Required for object visualization
 4. **PNG Images** - Alternative image format support
 
@@ -247,13 +247,13 @@ Based on frequency analysis, optimization priorities:
 public class ResourceCacheStrategy
 {
     // Cache frequently accessed, small resources
-    private readonly LRUCache<ResourceKey, StringTableResource> _stblCache 
+    private readonly LRUCache<ResourceKey, StringTableResource> _stblCache
         = new(capacity: 10000); // ~15% of resources
-        
+
     // Stream large, less frequent resources
-    private readonly StreamingCache<ResourceKey, GeometryResource> _geomCache 
+    private readonly StreamingCache<ResourceKey, GeometryResource> _geomCache
         = new(maxMemory: 256MB); // ~5% of resources, large size
-        
+
     // Hybrid approach for medium-frequency resources
     private readonly AdaptiveCache<ResourceKey, CatalogResource> _catalogCache
         = new(capacity: 5000); // ~10% of resources, medium size
@@ -309,9 +309,9 @@ This analysis was validated through:
 
 ### Confidence Levels
 
-- **Top 20 Resource Types**: High confidence (±0.1%)
-- **Mid-tier Types (21-50)**: Medium confidence (±0.5%)  
-- **Rare Types (<1000)**: Lower confidence (±2.0%)
+- **Top 20 Resource Types**: High confidence (Â±0.1%)
+- **Mid-tier Types (21-50)**: Medium confidence (Â±0.5%)
+- **Rare Types (<1000)**: Lower confidence (Â±2.0%)
 
 ## Recommendations for Development
 
@@ -325,7 +325,7 @@ Based on this analysis, resource wrapper development should prioritize:
 - DDS Images (265K resources - 14.3%)
 - Basic Package Structure
 
-#### Phase 2: Core Content (Weeks 3-4)  
+#### Phase 2: Core Content (Weeks 3-4)
 
 - Catalog Data (188K resources - 10.2%)
 - Neighborhood Data (156K resources - 8.5%)
@@ -374,6 +374,7 @@ Future analysis should include:
 
 ---
 
-*Analysis Performed: August 8, 2025*  
-*Source: TS4Tools Resource Analysis Engine v4.13*  
+*Analysis Performed: August 8, 2025*
+*Source: TS4Tools Resource Analysis Engine v4.13*
 *Next Update: November 8, 2025*
+

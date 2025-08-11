@@ -1,7 +1,7 @@
-# ADR-011: Native Dependency Strategy (Hybrid Approach)
+﻿# ADR-011: Native Dependency Strategy (Hybrid Approach)
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
+**Status:** Accepted
+**Date:** August 8, 2025
 **Deciders:** Architecture Team, Platform Team, Performance Team
 
 ## Context
@@ -105,7 +105,7 @@ public static class NativeDependencyConfiguration
         {
             services.AddSingleton<IDDSCompressionService, ManagedDDSCompressionService>();
         }
-        
+
         // 3D Graphics - Tier 2 (Important)
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -116,7 +116,7 @@ public static class NativeDependencyConfiguration
         {
             services.AddTransient<I3DModelViewer, AvaloniaModelViewer>();
         }
-        
+
         return services;
     }
 }
@@ -133,13 +133,13 @@ public class NativeDDSCompressionService : IDDSCompressionService
 {
     [DllImport("squishinterface_x64.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern int CompressImage(byte[] rgba, int width, int height, byte[] output, int flags);
-    
+
     public async Task<byte[]> CompressAsync(byte[] imageData, DDSFormat format)
     {
         // Use native squish library for optimal performance
         // Same performance as legacy Sims4Tools
     }
-    
+
     public bool IsNativeAccelerationAvailable => true;
 }
 ```
@@ -147,16 +147,16 @@ public class NativeDDSCompressionService : IDDSCompressionService
 #### Cross-Platform Fallback
 
 ```csharp
-public class ManagedDDSCompressionService : IDDSCompressionService  
+public class ManagedDDSCompressionService : IDDSCompressionService
 {
     private readonly BCnEncoder _encoder = new BCnEncoder();
-    
+
     public async Task<byte[]> CompressAsync(byte[] imageData, DDSFormat format)
     {
         // Use BCnEncoder managed library
         // 2-3x slower but fully functional
     }
-    
+
     public bool IsNativeAccelerationAvailable => false;
 }
 ```
@@ -167,9 +167,9 @@ public class ManagedDDSCompressionService : IDDSCompressionService
 
 | Option | Performance | Cross-Platform | Maintenance | Decision |
 |--------|-------------|----------------|-------------|----------|
-| Keep WinForms on Windows | ✅ Excellent | ❌ Windows-only | ✅ No changes | 🤔 Evaluate |
-| Silk.NET + Avalonia | ⚠️ Good | ✅ Full | ⚠️ New dependency | 🎯 Preferred |
-| Pure Avalonia 3D | ⚠️ Limited | ✅ Full | ✅ Minimal | ⚠️ Backup |
+| Keep WinForms on Windows | âœ… Excellent | âŒ Windows-only | âœ… No changes | ðŸ¤” Evaluate |
+| Silk.NET + Avalonia | âš ï¸ Good | âœ… Full | âš ï¸ New dependency | ðŸŽ¯ Preferred |
+| Pure Avalonia 3D | âš ï¸ Limited | âœ… Full | âœ… Minimal | âš ï¸ Backup |
 
 #### Implementation Approach
 
@@ -241,7 +241,7 @@ public class NativeLibraryLoader
     {
         var architecture = RuntimeInformation.OSArchitecture;
         var platform = GetPlatformIdentifier();
-        
+
         var libraryPath = Path.Combine("native", platform, architecture.ToString(), libraryName);
         return NativeLibrary.TryLoad(libraryPath, out _);
     }
@@ -276,10 +276,10 @@ public class DDSCompressionBenchmark
 {
     [Benchmark]
     public byte[] NativeCompression() => _nativeService.Compress(_testImage);
-    
-    [Benchmark]  
+
+    [Benchmark]
     public byte[] ManagedCompression() => _managedService.Compress(_testImage);
-    
+
     // Target: Native should be < 2x performance difference from managed
 }
 ```
@@ -314,11 +314,11 @@ public class DDSCompressionBenchmark
 
 | Platform | Native DDS | Managed DDS | 3D Graphics | Audio |
 |----------|------------|-------------|-------------|-------|
-| Windows 11 x64 | ✅ | ✅ | ✅ | ✅ |
-| Windows 10 x64 | ✅ | ✅ | ✅ | ✅ |
-| macOS Intel | ❌ | ✅ | ✅ | ⚠️ |
-| macOS ARM | ❌ | ✅ | ✅ | ⚠️ |
-| Ubuntu 20+ | ❌ | ✅ | ✅ | ⚠️ |
+| Windows 11 x64 | âœ… | âœ… | âœ… | âœ… |
+| Windows 10 x64 | âœ… | âœ… | âœ… | âœ… |
+| macOS Intel | âŒ | âœ… | âœ… | âš ï¸ |
+| macOS ARM | âŒ | âœ… | âœ… | âš ï¸ |
+| Ubuntu 20+ | âŒ | âœ… | âœ… | âš ï¸ |
 
 ## Risk Management
 
@@ -363,7 +363,7 @@ public class DDSCompressionBenchmark
 ## Success Metrics
 
 1. **Performance**: Native implementations within 10% of legacy performance
-2. **Compatibility**: 95%+ feature functionality on all target platforms  
+2. **Compatibility**: 95%+ feature functionality on all target platforms
 3. **Reliability**: < 1% crash rate related to native dependency issues
 4. **User Satisfaction**: No user complaints about missing critical functionality
 
@@ -371,41 +371,41 @@ public class DDSCompressionBenchmark
 
 ### Completed
 
-- ✅ Architecture design and interfaces defined
-- ✅ Native DDS compression wrapper (Windows)
+- âœ… Architecture design and interfaces defined
+- âœ… Native DDS compression wrapper (Windows)
 
-### In Progress  
+### In Progress
 
-- 🚧 Managed DDS compression implementation (BCnEncoder)
-- 🚧 3D graphics evaluation (Silk.NET vs WinForms)
+- ðŸš§ Managed DDS compression implementation (BCnEncoder)
+- ðŸš§ 3D graphics evaluation (Silk.NET vs WinForms)
 
 ### Planned
 
-- ⏳ Audio processing abstraction
-- ⏳ Platform integration services
-- ⏳ Comprehensive testing matrix
+- â³ Audio processing abstraction
+- â³ Platform integration services
+- â³ Comprehensive testing matrix
 
 ## Consequences
 
 ### Positive
 
-- ✅ True cross-platform functionality with performance optimization
-- ✅ Graceful degradation maintains usability on all platforms
-- ✅ Clear upgrade path as native libraries become available
-- ✅ Reduced risk from native dependency issues
+- âœ… True cross-platform functionality with performance optimization
+- âœ… Graceful degradation maintains usability on all platforms
+- âœ… Clear upgrade path as native libraries become available
+- âœ… Reduced risk from native dependency issues
 
-### Negative  
+### Negative
 
-- ❌ Implementation complexity with multiple code paths
-- ❌ Testing overhead for platform/implementation combinations
-- ❌ Deployment complexity with conditional native libraries
-- ❌ Documentation overhead for platform-specific differences
+- âŒ Implementation complexity with multiple code paths
+- âŒ Testing overhead for platform/implementation combinations
+- âŒ Deployment complexity with conditional native libraries
+- âŒ Documentation overhead for platform-specific differences
 
 ### Neutral
 
-- 📋 Performance monitoring required to validate approach
-- 📋 User education about platform-specific capabilities
-- 📋 Regular evaluation of native vs managed performance
+- ðŸ“‹ Performance monitoring required to validate approach
+- ðŸ“‹ User education about platform-specific capabilities
+- ðŸ“‹ Regular evaluation of native vs managed performance
 
 ## Related Decisions
 
@@ -416,6 +416,7 @@ public class DDSCompressionBenchmark
 
 ---
 
-**Implementation Status:** 🚧 **IN PROGRESS** - Architecture complete, implementations underway  
-**Review Date:** September 8, 2025  
+**Implementation Status:** ðŸš§ **IN PROGRESS** - Architecture complete, implementations underway
+**Review Date:** September 8, 2025
 **Document Owner:** Architecture Team, Platform Team
+

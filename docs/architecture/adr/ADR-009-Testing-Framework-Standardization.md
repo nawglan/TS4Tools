@@ -1,7 +1,7 @@
-# ADR-009: Testing Framework Standardization
+﻿# ADR-009: Testing Framework Standardization
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
+**Status:** Accepted
+**Date:** August 8, 2025
 **Deciders:** Architecture Team, Quality Assurance Team
 
 ## Context
@@ -39,12 +39,12 @@ We will standardize on **xUnit** as the exclusive testing framework for the TS4T
 
 | Feature | xUnit | NUnit | MSTest |
 |---------|-------|-------|---------|
-| .NET 9 Support | ✅ Excellent | ✅ Good | ✅ Good |
-| Parallel Execution | ✅ Built-in | ✅ Available | ❌ Limited |
-| Extensibility | ✅ Excellent | ✅ Good | ⚠️ Limited |
-| Community | ✅ Active | ✅ Mature | ⚠️ Smaller |
-| Performance | ✅ Fast | ✅ Good | ⚠️ Slower |
-| Current Usage | ✅ 83+ files | ❌ None | ❌ None |
+| .NET 9 Support | âœ… Excellent | âœ… Good | âœ… Good |
+| Parallel Execution | âœ… Built-in | âœ… Available | âŒ Limited |
+| Extensibility | âœ… Excellent | âœ… Good | âš ï¸ Limited |
+| Community | âœ… Active | âœ… Mature | âš ï¸ Smaller |
+| Performance | âœ… Fast | âœ… Good | âš ï¸ Slower |
+| Current Usage | âœ… 83+ files | âŒ None | âŒ None |
 
 ## Architecture Implications
 
@@ -55,18 +55,18 @@ We will standardize on **xUnit** as the exclusive testing framework for the TS4T
 public class PackageServiceTests
 {
     private readonly ITestOutputHelper _output;
-    
+
     public PackageServiceTests(ITestOutputHelper output)
     {
         _output = output;
     }
-    
+
     [Fact]
     public void ShouldLoadPackageSuccessfully()
     {
         // Arrange, Act, Assert pattern
     }
-    
+
     [Theory]
     [InlineData("test1.package")]
     [InlineData("test2.package")]
@@ -90,7 +90,7 @@ public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
 public class DatabaseTests
 {
     private readonly DatabaseFixture _fixture;
-    
+
     public DatabaseTests(DatabaseFixture fixture)
     {
         _fixture = fixture;
@@ -226,32 +226,32 @@ public void Should_ThrowException_When_InputIsNull()
 
 ```
 tests/
-├── TS4Tools.Core.*.Tests/     # Unit tests
-├── TS4Tools.Tests.Integration/ # Integration tests
-├── TS4Tools.Tests.Common/     # Shared test utilities
-└── TS4Tools.Tests.Performance/ # Performance tests
+â”œâ”€â”€ TS4Tools.Core.*.Tests/     # Unit tests
+â”œâ”€â”€ TS4Tools.Tests.Integration/ # Integration tests
+â”œâ”€â”€ TS4Tools.Tests.Common/     # Shared test utilities
+â””â”€â”€ TS4Tools.Tests.Performance/ # Performance tests
 ```
 
 ## Consequences
 
 ### Positive
 
-- ✅ Consistent testing approach across all components
-- ✅ Reduced learning curve for developers
-- ✅ Excellent tooling and CI/CD integration
-- ✅ High-performance test execution
-- ✅ Strong community and ecosystem support
+- âœ… Consistent testing approach across all components
+- âœ… Reduced learning curve for developers
+- âœ… Excellent tooling and CI/CD integration
+- âœ… High-performance test execution
+- âœ… Strong community and ecosystem support
 
 ### Negative
 
-- ❌ Lock-in to specific testing framework (mitigated by standard patterns)
-- ❌ Some advanced NUnit features not directly available
-- ❌ Potential need for custom extensions for specialized scenarios
+- âŒ Lock-in to specific testing framework (mitigated by standard patterns)
+- âŒ Some advanced NUnit features not directly available
+- âŒ Potential need for custom extensions for specialized scenarios
 
 ### Neutral
 
-- 📋 Requires documentation and training for new team members
-- 📋 Need to maintain xUnit-specific knowledge and best practices
+- ðŸ“‹ Requires documentation and training for new team members
+- ðŸ“‹ Need to maintain xUnit-specific knowledge and best practices
 
 ## Related Decisions
 
@@ -261,6 +261,7 @@ tests/
 
 ---
 
-**Implementation Status:** ✅ **COMPLETE** - Already implemented across 83+ test files  
-**Review Date:** September 8, 2025  
+**Implementation Status:** âœ… **COMPLETE** - Already implemented across 83+ test files
+**Review Date:** September 8, 2025
 **Document Owner:** Architecture Team, QA Team
+

@@ -1,19 +1,19 @@
-# TS4Tools Getting Started Guide
+﻿# TS4Tools Getting Started Guide
 
 ## Introduction
 
-TS4Tools is a modern, cross-platform .NET library for working with The Sims 4 package files (.package).  
-Whether you're building mod tools, content analyzers, or custom Sims 4 utilities, TS4Tools provides a  
+TS4Tools is a modern, cross-platform .NET library for working with The Sims 4 package files (.package).
+Whether you're building mod tools, content analyzers, or custom Sims 4 utilities, TS4Tools provides a
 comprehensive API for reading, writing, and manipulating game resources.
 
 ## Why Choose TS4Tools?
 
-- **🚀 Modern .NET 9**: Built with the latest C# features and performance optimizations
-- **🌍 Cross-Platform**: Works seamlessly on Windows, macOS, and Linux
-- **⚡ High Performance**: Optimized with `Span<T>`, `Memory<T>`, and async patterns
-- **🛡️ Type Safe**: Full nullable reference types and comprehensive error handling
-- **📦 NuGet Ready**: Easy installation via package manager
-- **🎯 Focused API**: Clean, intuitive interfaces designed for real-world use cases
+- **ðŸš€ Modern .NET 9**: Built with the latest C# features and performance optimizations
+- **ðŸŒ Cross-Platform**: Works seamlessly on Windows, macOS, and Linux
+- **âš¡ High Performance**: Optimized with `Span<T>`, `Memory<T>`, and async patterns
+- **ðŸ›¡ï¸ Type Safe**: Full nullable reference types and comprehensive error handling
+- **ðŸ“¦ NuGet Ready**: Easy installation via package manager
+- **ðŸŽ¯ Focused API**: Clean, intuitive interfaces designed for real-world use cases
 
 ## What You Can Build
 
@@ -21,7 +21,7 @@ TS4Tools enables you to create powerful applications for The Sims 4 community:
 
 ### **Content Analysis Tools**
 
-- Package file validators and analyzers  
+- Package file validators and analyzers
 - Resource dependency trackers
 - Mod compatibility checkers
 - Performance impact analyzers
@@ -135,7 +135,7 @@ foreach (var resourceKey in stringResources.Take(5)) // First 5 resources
 {
     var resourceEntry = package.ResourceIndex[resourceKey];
     var resourceData = await package.GetResourceDataAsync(resourceKey);
-    
+
     Console.WriteLine($"Resource {resourceKey.InstanceId:X16}: {resourceData.Length} bytes");
 }
 ```
@@ -225,7 +225,7 @@ var host = builder.Build();
 - **EnableLogging**: Enable/disable internal logging (default: true)
 - **LogLevel**: Minimum log level (Debug, Information, Warning, Error)
 - **TempDirectory**: Temporary file storage location (default: system temp)
-- **MaxCacheSize**: Maximum number of cached resources (default: 1000)  
+- **MaxCacheSize**: Maximum number of cached resources (default: 1000)
 - **EnableResourceCaching**: Cache frequently accessed resources (default: true)
 - **ResourceCacheTimeout**: How long to cache resources (default: 30 minutes)
 - **DefaultEncoding**: Text encoding for string resources (default: UTF-8)
@@ -243,32 +243,32 @@ using TS4Tools.Core.Package;
 class ModAnalyzer
 {
     private readonly IPackageFactory _packageFactory;
-    
+
     public ModAnalyzer(IPackageFactory packageFactory)
     {
         _packageFactory = packageFactory;
     }
-    
+
     public async Task AnalyzeMod(string packagePath)
     {
         var package = await _packageFactory.LoadFromFileAsync(packagePath);
-        
+
         Console.WriteLine($"=== Analyzing: {Path.GetFileName(packagePath)} ===");
         Console.WriteLine($"Total Resources: {package.ResourceIndex.Count}");
-        
+
         // Group resources by type
         var resourcesByType = package.ResourceIndex.Keys
             .GroupBy(key => key.ResourceType)
             .OrderBy(group => group.Key)
             .ToList();
-        
+
         foreach (var group in resourcesByType)
         {
             var typeName = GetResourceTypeName(group.Key);
             Console.WriteLine($"  {typeName}: {group.Count()} resources");
         }
     }
-    
+
     private static string GetResourceTypeName(uint resourceType)
     {
         return resourceType switch
@@ -300,25 +300,25 @@ await analyzer.AnalyzeMod(@"C:\MyMods\MyMod.package");
 class ResourceExtractor
 {
     private readonly IPackageFactory _packageFactory;
-    
+
     public ResourceExtractor(IPackageFactory packageFactory)
     {
         _packageFactory = packageFactory;
     }
-    
+
     public async Task ExtractAllImages(string packagePath, string outputDirectory)
     {
         var package = await _packageFactory.LoadFromFileAsync(packagePath);
-        
+
         // Find all image resources
         var imageResources = package.ResourceIndex.Keys
             .Where(key => IsImageResource(key.ResourceType))
             .ToList();
-        
+
         Console.WriteLine($"Found {imageResources.Count} image resources");
-        
+
         Directory.CreateDirectory(outputDirectory);
-        
+
         foreach (var resourceKey in imageResources)
         {
             try
@@ -327,7 +327,7 @@ class ResourceExtractor
                 var extension = GetImageExtension(resourceKey.ResourceType);
                 var filename = $"{resourceKey.InstanceId:X16}{extension}";
                 var outputPath = Path.Combine(outputDirectory, filename);
-                
+
                 await File.WriteAllBytesAsync(outputPath, resourceData);
                 Console.WriteLine($"Extracted: {filename}");
             }
@@ -337,7 +337,7 @@ class ResourceExtractor
             }
         }
     }
-    
+
     private static bool IsImageResource(uint resourceType)
     {
         return resourceType switch
@@ -350,7 +350,7 @@ class ResourceExtractor
             _ => false
         };
     }
-    
+
     private static string GetImageExtension(uint resourceType)
     {
         return resourceType switch
@@ -385,11 +385,11 @@ When working with Sims 4 packages, you'll encounter these resource types frequen
 ### Memory Management
 
 ```csharp
-// ✅ Good: Dispose packages when done
+// âœ… Good: Dispose packages when done
 using var package = await packageFactory.LoadFromFileAsync(path);
 // Package automatically disposed here
 
-// ✅ Good: Process resources in batches for large packages
+// âœ… Good: Process resources in batches for large packages
 var resources = package.ResourceIndex.Keys.Take(100);
 foreach (var resource in resources)
 {
@@ -400,10 +400,10 @@ foreach (var resource in resources)
 ### Async Best Practices
 
 ```csharp
-// ✅ Good: Use ConfigureAwait(false) in libraries
+// âœ… Good: Use ConfigureAwait(false) in libraries
 var package = await packageFactory.LoadFromFileAsync(path).ConfigureAwait(false);
 
-// ✅ Good: Process multiple packages concurrently
+// âœ… Good: Process multiple packages concurrently
 var packages = await Task.WhenAll(
     packagePaths.Select(path => packageFactory.LoadFromFileAsync(path))
 );
@@ -456,50 +456,50 @@ class Program
         var builder = Host.CreateApplicationBuilder();
         builder.Services.AddTS4ToolsCore();
         builder.Logging.SetMinimumLevel(LogLevel.Warning); // Reduce noise
-        
+
         var host = builder.Build();
         var packageFactory = host.Services.GetRequiredService<IPackageFactory>();
-        
+
         // Get package path from user
         Console.WriteLine("Enter the path to a Sims 4 package file:");
         var packagePath = Console.ReadLine();
-        
+
         if (string.IsNullOrEmpty(packagePath) || !File.Exists(packagePath))
         {
             Console.WriteLine("Invalid file path!");
             return;
         }
-        
+
         try
         {
             // Load and analyze the package
             Console.WriteLine("Loading package...");
             using var package = await packageFactory.LoadFromFileAsync(packagePath);
-            
-            Console.WriteLine($"\n✅ Successfully loaded: {Path.GetFileName(packagePath)}");
-            Console.WriteLine($"📦 Total resources: {package.ResourceIndex.Count:N0}");
-            Console.WriteLine($"💾 File size: {new FileInfo(packagePath).Length:N0} bytes");
-            
+
+            Console.WriteLine($"\nâœ… Successfully loaded: {Path.GetFileName(packagePath)}");
+            Console.WriteLine($"ðŸ“¦ Total resources: {package.ResourceIndex.Count:N0}");
+            Console.WriteLine($"ðŸ’¾ File size: {new FileInfo(packagePath).Length:N0} bytes");
+
             // Show resource breakdown
             var breakdown = package.ResourceIndex.Keys
                 .GroupBy(key => key.ResourceType)
                 .OrderByDescending(group => group.Count())
                 .Take(10)
                 .ToList();
-            
-            Console.WriteLine("\n🔍 Top 10 Resource Types:");
+
+            Console.WriteLine("\nðŸ” Top 10 Resource Types:");
             foreach (var group in breakdown)
             {
                 Console.WriteLine($"  0x{group.Key:X8}: {group.Count():N0} resources");
             }
-            
-            Console.WriteLine("\n✨ Analysis complete!");
+
+            Console.WriteLine("\nâœ¨ Analysis complete!");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error: {ex.Message}");
+            Console.WriteLine($"âŒ Error: {ex.Message}");
         }
-        
+
         Console.WriteLine("\nPress any key to exit...");
         Console.ReadKey();
     }
@@ -518,7 +518,7 @@ class Program
 ### Building Your Application
 
 1. **Start Simple**: Begin with basic package reading and resource enumeration
-2. **Add Features**: Gradually add resource extraction, analysis, or creation features  
+2. **Add Features**: Gradually add resource extraction, analysis, or creation features
 3. **Optimize**: Use the performance guide to optimize for your specific use case
 4. **Test Thoroughly**: Test with various package types and sizes from the community
 
@@ -539,6 +539,7 @@ If you'd like to contribute to TS4Tools development:
 
 ---
 
-**Happy coding!** 🎮✨
+**Happy coding!** ðŸŽ®âœ¨
 
 Last updated: August 10, 2025
+

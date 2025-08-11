@@ -1,4 +1,4 @@
-# Benchmarking Guide
+﻿# Benchmarking Guide
 
 ## Overview
 
@@ -12,9 +12,9 @@ The benchmarking system is organized into focused benchmark suites:
 
 ```
 benchmarks/
-├── TS4Tools.Benchmarks/                 # General performance benchmarks
-├── TS4Tools.Performance.Benchmarks/    # Comprehensive performance suite
-└── shared/                             # Common benchmarking utilities
+â”œâ”€â”€ TS4Tools.Benchmarks/                 # General performance benchmarks
+â”œâ”€â”€ TS4Tools.Performance.Benchmarks/    # Comprehensive performance suite
+â””â”€â”€ shared/                             # Common benchmarking utilities
 ```
 
 ### Key Components
@@ -24,7 +24,7 @@ benchmarks/
 ```csharp
 [Config(typeof(StandardConfig))]
 [MemoryDiagnoser]
-[ThreadingDiagnoser] 
+[ThreadingDiagnoser]
 [EventPipeProfiler(EventPipeProfile.CpuSampling)]
 public class PackageOperationsBenchmarks
 {
@@ -52,11 +52,11 @@ public class StandardConfig : ManualConfig
         AddJob(Job.Default
             .WithRuntime(CoreRuntime.Net90)
             .WithGcMode(new GcMode { Server = true }));
-            
+
         AddExporter(MarkdownExporter.GitHub);
         AddExporter(CsvExporter.Default);
         AddExporter(HtmlExporter.Default);
-        
+
         AddDiagnoser(MemoryDiagnoser.Default);
         AddDiagnoser(ThreadingDiagnoser.Default);
     }
@@ -72,7 +72,7 @@ public class StandardConfig : ManualConfig
 Measures performance of fundamental package operations:
 
 - **Package Loading**: DBPF file parsing and resource index creation
-- **Package Saving**: Serialization and compression performance  
+- **Package Saving**: Serialization and compression performance
 - **Resource Extraction**: Individual resource access patterns
 - **Bulk Operations**: Multiple resource processing scenarios
 
@@ -138,13 +138,13 @@ Measures utility function performance:
 
 ```
 Package Loading Performance (10MB file):
-┌─────────────────┬──────────────────┬─────────────────┐
-│ Version         │ Mean Time (ms)   │ Memory (MB)     │
-├─────────────────┼──────────────────┼─────────────────┤
-│ Legacy (4.8.1)  │ 245.3 ± 12.4     │ 45.2 ± 3.1      │
-│ TS4Tools v4.13  │ 48.7 ± 2.1       │ 18.9 ± 1.2      │
-│ Improvement     │ 5.0x faster      │ 2.4x less       │
-└─────────────────┴──────────────────┴─────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚ Version         â”‚ Mean Time (ms)   â”‚ Memory (MB)     â”‚
+â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+â”‚ Legacy (4.8.1)  â”‚ 245.3 Â± 12.4     â”‚ 45.2 Â± 3.1      â”‚
+â”‚ TS4Tools v4.13  â”‚ 48.7 Â± 2.1       â”‚ 18.9 Â± 1.2      â”‚
+â”‚ Improvement     â”‚ 5.0x faster      â”‚ 2.4x less       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ## Running Benchmarks
@@ -152,13 +152,17 @@ Package Loading Performance (10MB file):
 ### Command Line Execution
 
 ```powershell
+
 # Run all benchmarks
+
 dotnet run --project benchmarks\TS4Tools.Performance.Benchmarks --configuration Release
 
 # Run specific benchmark category
+
 dotnet run --project benchmarks\TS4Tools.Performance.Benchmarks --configuration Release -- --filter "*PackageOperations*"
 
 # Export results to specific format
+
 dotnet run --project benchmarks\TS4Tools.Performance.Benchmarks --configuration Release -- --exporters GitHub
 ```
 
@@ -175,6 +179,7 @@ Visual Studio and Rider support:
 CI/CD pipeline integration:
 
 ```yaml
+
 - name: Run Performance Benchmarks
   run: |
     dotnet run --project benchmarks/TS4Tools.Performance.Benchmarks --configuration Release
@@ -306,7 +311,7 @@ Key metrics tracked:
       "memoryThreshold": "50MB"
     },
     "resourceProcessing": {
-      "meanTimeThreshold": "10ms", 
+      "meanTimeThreshold": "10ms",
       "memoryThreshold": "5MB"
     }
   }
@@ -320,7 +325,7 @@ Key metrics tracked:
 ```csharp
 [Benchmark]
 [Arguments(1_000, "small")]
-[Arguments(10_000, "medium")]  
+[Arguments(10_000, "medium")]
 [Arguments(100_000, "large")]
 public void ProcessResourceCount(int count, string category)
 {
@@ -400,5 +405,6 @@ Common benchmark issues:
 
 ---
 
-*Last Updated: August 8, 2025*  
+*Last Updated: August 8, 2025*
 *For benchmark implementations, see benchmarks/ directory*
+

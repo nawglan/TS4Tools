@@ -1,8 +1,8 @@
-# ADR-007: Modern Plugin Architecture with Legacy Compatibility
+﻿# ADR-007: Modern Plugin Architecture with Legacy Compatibility
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
-**Deciders:** Architecture Team, Community Representatives  
+**Status:** Accepted
+**Date:** August 8, 2025
+**Deciders:** Architecture Team, Community Representatives
 
 ## Context
 
@@ -27,21 +27,21 @@ We will implement a **modern plugin architecture with a legacy compatibility lay
 
 | Requirement | Priority | Legacy System | Modern System | Compatibility Impact |
 |-------------|----------|---------------|---------------|----------------------|
-| **Existing Plugin Support** | **CRITICAL** | ✅ Via AResourceHandler | ✅ Via adapter pattern | **MUST preserve 100%** |
-| **Modern DI Integration** | **HIGH** | ❌ Static pattern | ✅ Constructor injection | **Additive only** |
-| **Async/Await Support** | **HIGH** | ❌ Sync only | ✅ Async-first | **Additive only** |
-| **Resource Type Discovery** | **MEDIUM** | ✅ Via registration | ✅ Improved discovery | **Enhanced, compatible** |
-| **Error Handling** | **HIGH** | ⚠️ Basic | ✅ Comprehensive | **Non-breaking improvement** |
-| **Performance** | **HIGH** | ⚠️ Moderate | ✅ Optimized | **Must not regress** |
+| **Existing Plugin Support** | **CRITICAL** | âœ… Via AResourceHandler | âœ… Via adapter pattern | **MUST preserve 100%** |
+| **Modern DI Integration** | **HIGH** | âŒ Static pattern | âœ… Constructor injection | **Additive only** |
+| **Async/Await Support** | **HIGH** | âŒ Sync only | âœ… Async-first | **Additive only** |
+| **Resource Type Discovery** | **MEDIUM** | âœ… Via registration | âœ… Improved discovery | **Enhanced, compatible** |
+| **Error Handling** | **HIGH** | âš ï¸ Basic | âœ… Comprehensive | **Non-breaking improvement** |
+| **Performance** | **HIGH** | âš ï¸ Moderate | âœ… Optimized | **Must not regress** |
 
 ### Plugin Ecosystem Impact
 
 The Sims modding community has developed numerous plugins over the years. Breaking compatibility would:
 
-- ❌ Fragment the community between old and new tools
-- ❌ Require all plugin developers to rewrite their code
-- ❌ Create adoption barriers for the new TS4Tools
-- ❌ Risk losing valuable community contributions
+- âŒ Fragment the community between old and new tools
+- âŒ Require all plugin developers to rewrite their code
+- âŒ Create adoption barriers for the new TS4Tools
+- âŒ Risk losing valuable community contributions
 
 ## Architecture Design
 
@@ -55,7 +55,7 @@ public interface IResourcePlugin
     Version Version { get; }
     string Description { get; }
     IEnumerable<ResourceTypeInfo> SupportedTypes { get; }
-    
+
     Task<bool> CanHandleAsync(ResourceTypeInfo resourceType);
     Task<IResource> CreateResourceAsync(ResourceCreationContext context);
     Task<ValidationResult> ValidateResourceAsync(IResource resource);
@@ -92,23 +92,23 @@ public class LegacyResourceHandlerAdapter : IResourcePlugin
 {
     private readonly AResourceHandler _legacyHandler;
     private readonly ILogger<LegacyResourceHandlerAdapter> _logger;
-    
+
     public LegacyResourceHandlerAdapter(AResourceHandler legacyHandler, ILogger<LegacyResourceHandlerAdapter> logger)
     {
         _legacyHandler = legacyHandler ?? throw new ArgumentNullException(nameof(legacyHandler));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        
+
         // Extract metadata from legacy handler
         Name = _legacyHandler.GetType().Name;
         Version = GetVersionFromAssembly(_legacyHandler.GetType().Assembly);
         SupportedTypes = ExtractSupportedTypes(_legacyHandler);
     }
-    
+
     public string Name { get; }
     public Version Version { get; }
     public string Description => $"Legacy plugin adapter for {Name}";
     public IEnumerable<ResourceTypeInfo> SupportedTypes { get; }
-    
+
     public async Task<bool> CanHandleAsync(ResourceTypeInfo resourceType)
     {
         return await Task.Run(() =>
@@ -119,13 +119,13 @@ public class LegacyResourceHandlerAdapter : IResourcePlugin
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Legacy handler {Handler} failed CanHandle check for {Type}", 
+                _logger.LogWarning(ex, "Legacy handler {Handler} failed CanHandle check for {Type}",
                     Name, resourceType.TypeId);
                 return false;
             }
         });
     }
-    
+
     public async Task<IResource> CreateResourceAsync(ResourceCreationContext context)
     {
         return await Task.Run(() =>
@@ -138,54 +138,54 @@ public class LegacyResourceHandlerAdapter : IResourcePlugin
                 {
                     throw new PluginException($"Resource type {context.ResourceType} not supported by {Name}");
                 }
-                
+
                 var constructor = resourceType.GetConstructor(new[] { typeof(int), typeof(Stream) });
                 if (constructor == null)
                 {
                     throw new PluginException($"Resource type {resourceType.Name} missing required constructor");
                 }
-                
+
                 // Create resource using legacy pattern
                 var resource = (IResource)constructor.Invoke(new object[] { 0, context.Data });
-                
-                _logger.LogDebug("Successfully created resource {Type} using legacy handler {Handler}", 
+
+                _logger.LogDebug("Successfully created resource {Type} using legacy handler {Handler}",
                     context.ResourceType, Name);
-                    
+
                 return resource;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Legacy handler {Handler} failed to create resource {Type}", 
+                _logger.LogError(ex, "Legacy handler {Handler} failed to create resource {Type}",
                     Name, context.ResourceType);
                 throw new PluginException($"Legacy plugin {Name} failed to create resource", ex);
             }
         });
     }
-    
+
     public async Task<ValidationResult> ValidateResourceAsync(IResource resource)
     {
         // Legacy handlers don't have validation - assume valid
         return await Task.FromResult(ValidationResult.Success());
     }
-    
+
     public async Task InitializeAsync(IPluginContext context)
     {
         // Legacy handlers don't have lifecycle - no-op
         _logger.LogDebug("Legacy handler {Handler} initialized", Name);
         await Task.CompletedTask;
     }
-    
+
     public async Task ShutdownAsync()
     {
-        // Legacy handlers don't have lifecycle - no-op  
+        // Legacy handlers don't have lifecycle - no-op
         _logger.LogDebug("Legacy handler {Handler} shutdown", Name);
         await Task.CompletedTask;
     }
-    
+
     private IEnumerable<ResourceTypeInfo> ExtractSupportedTypes(AResourceHandler handler)
     {
         var supportedTypes = new List<ResourceTypeInfo>();
-        
+
         try
         {
             // Use reflection to extract supported resource types
@@ -204,7 +204,7 @@ public class LegacyResourceHandlerAdapter : IResourcePlugin
         {
             _logger.LogWarning(ex, "Failed to extract supported types from legacy handler {Handler}", Name);
         }
-        
+
         return supportedTypes;
     }
 }
@@ -231,7 +231,7 @@ public class ModernPluginManager : IPluginManager
     private readonly ILogger<ModernPluginManager> _logger;
     private readonly ConcurrentDictionary<string, IResourcePlugin> _plugins = new();
     private readonly ConcurrentDictionary<string, List<IResourcePlugin>> _typeToPlugins = new();
-    
+
     public ModernPluginManager(
         IAssemblyLoadContextManager assemblyLoader,
         IServiceProvider serviceProvider,
@@ -241,21 +241,21 @@ public class ModernPluginManager : IPluginManager
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
-    
+
     public async Task<IEnumerable<IResourcePlugin>> DiscoverPluginsAsync(string directory)
     {
         var discoveredPlugins = new List<IResourcePlugin>();
-        
+
         if (!Directory.Exists(directory))
         {
             _logger.LogWarning("Plugin directory does not exist: {Directory}", directory);
             return discoveredPlugins;
         }
-        
+
         var assemblyFiles = Directory.GetFiles(directory, "*.dll", SearchOption.AllDirectories);
-        _logger.LogInformation("Scanning {Count} assemblies for plugins in {Directory}", 
+        _logger.LogInformation("Scanning {Count} assemblies for plugins in {Directory}",
             assemblyFiles.Length, directory);
-        
+
         var discoveryTasks = assemblyFiles.Select(async assemblyPath =>
         {
             try
@@ -268,35 +268,35 @@ public class ModernPluginManager : IPluginManager
                 return Enumerable.Empty<IResourcePlugin>();
             }
         });
-        
+
         var results = await Task.WhenAll(discoveryTasks);
         discoveredPlugins.AddRange(results.SelectMany(r => r));
-        
+
         _logger.LogInformation("Discovered {Count} plugins total", discoveredPlugins.Count);
         return discoveredPlugins;
     }
-    
+
     private async Task<IEnumerable<IResourcePlugin>> DiscoverPluginsInAssemblyAsync(string assemblyPath)
     {
         var plugins = new List<IResourcePlugin>();
-        
+
         try
         {
             var assembly = _assemblyLoader.LoadFromPath(assemblyPath);
             var types = _assemblyLoader.GetTypesFromAssembly(assembly);
-            
+
             // Look for modern plugins first
             var modernPlugins = await DiscoverModernPluginsAsync(types);
             plugins.AddRange(modernPlugins);
-            
+
             // Look for legacy resource handlers
             var legacyPlugins = await DiscoverLegacyPluginsAsync(types);
             plugins.AddRange(legacyPlugins);
-            
+
             if (plugins.Any())
             {
-                _logger.LogDebug("Found {Count} plugins in {Assembly}: {PluginNames}", 
-                    plugins.Count, Path.GetFileName(assemblyPath), 
+                _logger.LogDebug("Found {Count} plugins in {Assembly}: {PluginNames}",
+                    plugins.Count, Path.GetFileName(assemblyPath),
                     string.Join(", ", plugins.Select(p => p.Name)));
             }
         }
@@ -304,27 +304,27 @@ public class ModernPluginManager : IPluginManager
         {
             _logger.LogError(ex, "Error discovering plugins in assembly: {Assembly}", assemblyPath);
         }
-        
+
         return plugins;
     }
-    
+
     private async Task<IEnumerable<IResourcePlugin>> DiscoverModernPluginsAsync(Type[] types)
     {
         var plugins = new List<IResourcePlugin>();
-        
+
         var modernPluginTypes = types
             .Where(t => typeof(IResourcePlugin).IsAssignableFrom(t))
             .Where(t => !t.IsInterface && !t.IsAbstract)
             .Where(t => t.GetConstructor(Type.EmptyTypes) != null || HasServiceConstructor(t));
-        
+
         foreach (var pluginType in modernPluginTypes)
         {
             try
             {
                 var plugin = CreateModernPlugin(pluginType);
                 plugins.Add(plugin);
-                
-                _logger.LogDebug("Discovered modern plugin: {Plugin} v{Version}", 
+
+                _logger.LogDebug("Discovered modern plugin: {Plugin} v{Version}",
                     plugin.Name, plugin.Version);
             }
             catch (Exception ex)
@@ -332,30 +332,30 @@ public class ModernPluginManager : IPluginManager
                 _logger.LogWarning(ex, "Failed to create modern plugin: {Type}", pluginType.Name);
             }
         }
-        
+
         return plugins;
     }
-    
+
     private async Task<IEnumerable<IResourcePlugin>> DiscoverLegacyPluginsAsync(Type[] types)
     {
         var plugins = new List<IResourcePlugin>();
-        
+
         var legacyHandlerTypes = types
             .Where(t => t.IsSubclassOf(typeof(AResourceHandler)))
             .Where(t => !t.IsAbstract)
             .Where(t => t.GetConstructor(Type.EmptyTypes) != null);
-        
+
         foreach (var handlerType in legacyHandlerTypes)
         {
             try
             {
                 var handler = (AResourceHandler)Activator.CreateInstance(handlerType);
-                var adapter = new LegacyResourceHandlerAdapter(handler, 
+                var adapter = new LegacyResourceHandlerAdapter(handler,
                     _serviceProvider.GetRequiredService<ILogger<LegacyResourceHandlerAdapter>>());
-                    
+
                 plugins.Add(adapter);
-                
-                _logger.LogDebug("Discovered legacy plugin: {Plugin} v{Version} with {TypeCount} types", 
+
+                _logger.LogDebug("Discovered legacy plugin: {Plugin} v{Version} with {TypeCount} types",
                     adapter.Name, adapter.Version, adapter.SupportedTypes.Count());
             }
             catch (Exception ex)
@@ -363,10 +363,10 @@ public class ModernPluginManager : IPluginManager
                 _logger.LogWarning(ex, "Failed to create legacy plugin adapter: {Type}", handlerType.Name);
             }
         }
-        
+
         return plugins;
     }
-    
+
     public async Task<IResourcePlugin> GetPluginForResourceTypeAsync(string resourceType)
     {
         if (_typeToPlugins.TryGetValue(resourceType, out var candidates))
@@ -384,12 +384,12 @@ public class ModernPluginManager : IPluginManager
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Plugin {Plugin} failed CanHandle check for {Type}", 
+                    _logger.LogWarning(ex, "Plugin {Plugin} failed CanHandle check for {Type}",
                         plugin.Name, resourceType);
                 }
             }
         }
-        
+
         _logger.LogDebug("No plugin found for resource type: {Type}", resourceType);
         return null;
     }
@@ -425,7 +425,7 @@ public class PluginContext : IPluginContext
         HostVersion = hostVersion;
         Properties = new ConcurrentDictionary<string, object>();
     }
-    
+
     public IServiceProvider ServiceProvider { get; }
     public IConfiguration Configuration { get; }
     public ILogger Logger { get; }
@@ -439,7 +439,7 @@ public class ExampleModernResourcePlugin : IResourcePlugin
 {
     private readonly ILogger<ExampleModernResourcePlugin> _logger;
     private readonly IResourceSerializer _serializer;
-    
+
     // Modern constructor with DI
     public ExampleModernResourcePlugin(
         ILogger<ExampleModernResourcePlugin> logger,
@@ -448,11 +448,11 @@ public class ExampleModernResourcePlugin : IResourcePlugin
         _logger = logger;
         _serializer = serializer;
     }
-    
+
     public string Name => "Example Modern Plugin";
     public Version Version => new Version(2, 0, 0);
     public string Description => "Example of modern plugin architecture";
-    
+
     public IEnumerable<ResourceTypeInfo> SupportedTypes => new[]
     {
         new ResourceTypeInfo
@@ -463,17 +463,17 @@ public class ExampleModernResourcePlugin : IResourcePlugin
             MinimumVersion = new Version(1, 0, 0)
         }
     };
-    
+
     public async Task<bool> CanHandleAsync(ResourceTypeInfo resourceType)
     {
         return SupportedTypes.Any(t => t.TypeId.Equals(resourceType.TypeId, StringComparison.OrdinalIgnoreCase));
     }
-    
+
     public async Task<IResource> CreateResourceAsync(ResourceCreationContext context)
     {
-        _logger.LogDebug("Creating resource {Type} for instance {Instance}", 
+        _logger.LogDebug("Creating resource {Type} for instance {Instance}",
             context.ResourceType, context.ResourceInstance);
-            
+
         try
         {
             // Modern async implementation
@@ -486,35 +486,35 @@ public class ExampleModernResourcePlugin : IResourcePlugin
             throw new PluginException($"Failed to create {context.ResourceType} resource", ex);
         }
     }
-    
+
     public async Task<ValidationResult> ValidateResourceAsync(IResource resource)
     {
         if (resource is ExampleResource exampleResource)
         {
             return await ValidateExampleResourceAsync(exampleResource);
         }
-        
+
         return ValidationResult.Error("Resource type not supported for validation");
     }
-    
+
     public async Task InitializeAsync(IPluginContext context)
     {
         _logger.LogInformation("Initializing {Plugin} v{Version}", Name, Version);
-        
+
         // Plugin-specific initialization
         await LoadConfigurationAsync(context.Configuration);
         await ValidateEnvironmentAsync(context);
-        
+
         _logger.LogInformation("{Plugin} initialized successfully", Name);
     }
-    
+
     public async Task ShutdownAsync()
     {
         _logger.LogInformation("Shutting down {Plugin}", Name);
-        
+
         // Cleanup resources
         await FlushPendingOperationsAsync();
-        
+
         _logger.LogInformation("{Plugin} shutdown complete", Name);
     }
 }
@@ -546,7 +546,7 @@ public class HybridPluginManager : IPluginManager
 public static class WrapperDealer
 {
     private static IPluginManager _pluginManager;
-    
+
     public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)
     {
         // Use plugin manager internally while preserving external API
@@ -556,7 +556,7 @@ public static class WrapperDealer
             var context = new ResourceCreationContext { /* ... */ };
             return await plugin.CreateResourceAsync(context);
         }
-        
+
         // Fallback to default behavior
         return CreateDefaultResource(APIversion, pkg, rie);
     }
@@ -584,14 +584,14 @@ public class TemplateModernPlugin : IResourcePlugin
 public class OptimizedPluginManager : IPluginManager
 {
     private readonly Lazy<Task<IEnumerable<IResourcePlugin>>> _lazyPlugins;
-    
+
     public OptimizedPluginManager(/* dependencies */)
     {
         // Lazy loading of plugins to improve startup time
         _lazyPlugins = new Lazy<Task<IEnumerable<IResourcePlugin>>>(
             async () => await DiscoverAllPluginsAsync());
     }
-    
+
     public async Task<IResourcePlugin> GetPluginForResourceTypeAsync(string resourceType)
     {
         // Use cache-first lookup for performance
@@ -599,15 +599,15 @@ public class OptimizedPluginManager : IPluginManager
         {
             return cachedPlugin;
         }
-        
+
         var plugins = await _lazyPlugins.Value;
         var plugin = plugins.FirstOrDefault(p => p.SupportedTypes.Any(t => t.TypeId == resourceType));
-        
+
         if (plugin != null)
         {
             _typeToPluginCache[resourceType] = plugin;
         }
-        
+
         return plugin;
     }
 }
@@ -620,18 +620,18 @@ public class MemoryEfficientPluginManager : IPluginManager, IDisposable
 {
     private readonly ConcurrentBag<WeakReference<IResourcePlugin>> _plugins = new();
     private readonly Timer _cleanupTimer;
-    
+
     public MemoryEfficientPluginManager()
     {
         // Periodic cleanup of unreferenced plugins
-        _cleanupTimer = new Timer(CleanupUnreferencedPlugins, null, 
+        _cleanupTimer = new Timer(CleanupUnreferencedPlugins, null,
             TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
-    
+
     private void CleanupUnreferencedPlugins(object state)
     {
         var toRemove = new List<WeakReference<IResourcePlugin>>();
-        
+
         foreach (var weakRef in _plugins)
         {
             if (!weakRef.TryGetTarget(out _))
@@ -639,12 +639,12 @@ public class MemoryEfficientPluginManager : IPluginManager, IDisposable
                 toRemove.Add(weakRef);
             }
         }
-        
+
         foreach (var weak in toRemove)
         {
             _plugins.TryTake(out weak);
         }
-        
+
         if (toRemove.Count > 0)
         {
             _logger.LogDebug("Cleaned up {Count} unreferenced plugin references", toRemove.Count);
@@ -663,7 +663,7 @@ public class PluginCompatibilityTests
 {
     private IPluginManager _pluginManager;
     private IServiceProvider _serviceProvider;
-    
+
     [TestInitialize]
     public void Setup()
     {
@@ -674,55 +674,55 @@ public class PluginCompatibilityTests
         _serviceProvider = services.BuildServiceProvider();
         _pluginManager = _serviceProvider.GetRequiredService<IPluginManager>();
     }
-    
+
     [TestMethod]
     public async Task LegacyPlugin_LoadsCorrectly()
     {
         // Arrange
         var legacyPluginPath = Path.Combine(TestDataDirectory, "LegacyTestPlugin.dll");
-        
+
         // Act
         var plugins = await _pluginManager.DiscoverPluginsAsync(Path.GetDirectoryName(legacyPluginPath));
-        
+
         // Assert
         Assert.IsTrue(plugins.Any(), "Should discover at least one plugin");
         var legacyPlugin = plugins.FirstOrDefault(p => p.Name.Contains("LegacyTest"));
         Assert.IsNotNull(legacyPlugin, "Should find legacy test plugin");
         Assert.IsInstanceOfType(legacyPlugin, typeof(LegacyResourceHandlerAdapter));
     }
-    
+
     [TestMethod]
     public async Task ModernPlugin_LoadsCorrectly()
     {
         // Arrange
         var modernPluginPath = Path.Combine(TestDataDirectory, "ModernTestPlugin.dll");
-        
+
         // Act
         var plugins = await _pluginManager.DiscoverPluginsAsync(Path.GetDirectoryName(modernPluginPath));
-        
+
         // Assert
         var modernPlugin = plugins.FirstOrDefault(p => p.Name.Contains("ModernTest"));
         Assert.IsNotNull(modernPlugin, "Should find modern test plugin");
         Assert.IsTrue(modernPlugin.GetType().GetInterfaces().Contains(typeof(IResourcePlugin)));
     }
-    
+
     [TestMethod]
     public async Task BothPluginTypes_CanCoexist()
     {
         // Arrange
         var pluginDirectory = TestDataDirectory;
-        
+
         // Act
         var plugins = await _pluginManager.DiscoverPluginsAsync(pluginDirectory);
         await _pluginManager.InitializeAllPluginsAsync();
-        
+
         // Assert
         var legacyCount = plugins.Count(p => p is LegacyResourceHandlerAdapter);
         var modernCount = plugins.Count(p => !(p is LegacyResourceHandlerAdapter));
-        
+
         Assert.IsTrue(legacyCount > 0, "Should have legacy plugins");
         Assert.IsTrue(modernCount > 0, "Should have modern plugins");
-        
+
         // Verify both types work
         foreach (var plugin in plugins)
         {
@@ -730,33 +730,33 @@ public class PluginCompatibilityTests
             Assert.IsTrue(supportedTypes.Any(), $"Plugin {plugin.Name} should support some types");
         }
     }
-    
+
     [TestMethod]
     public async Task PluginResourceCreation_ProducesIdenticalResults()
     {
         // Arrange
         var testResourceType = "0x12345678";
         var testData = GetTestResourceData();
-        
+
         var legacyHandler = new TestLegacyResourceHandler();
-        var legacyAdapter = new LegacyResourceHandlerAdapter(legacyHandler, 
+        var legacyAdapter = new LegacyResourceHandlerAdapter(legacyHandler,
             _serviceProvider.GetRequiredService<ILogger<LegacyResourceHandlerAdapter>>());
-        
+
         var modernPlugin = new TestModernResourcePlugin();
-        
+
         // Act
         var legacyResult = await legacyAdapter.CreateResourceAsync(new ResourceCreationContext
         {
             ResourceType = testResourceType,
             Data = new MemoryStream(testData)
         });
-        
+
         var modernResult = await modernPlugin.CreateResourceAsync(new ResourceCreationContext
         {
             ResourceType = testResourceType,
             Data = new MemoryStream(testData)
         });
-        
+
         // Assert
         Assert.AreEqual(legacyResult.GetType(), modernResult.GetType());
         CollectionAssert.AreEqual(legacyResult.AsBytes, modernResult.AsBytes);
@@ -779,18 +779,18 @@ public class PluginPerformanceTests
         // Arrange
         var testDirectory = CreateTestPluginDirectory(pluginCount);
         var pluginManager = CreatePluginManager();
-        
+
         // Act
         var stopwatch = Stopwatch.StartNew();
         var plugins = await pluginManager.DiscoverPluginsAsync(testDirectory);
         stopwatch.Stop();
-        
+
         // Assert
         Assert.AreEqual(pluginCount, plugins.Count());
-        Assert.IsTrue(stopwatch.ElapsedMilliseconds < pluginCount * 10, 
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds < pluginCount * 10,
             $"Plugin discovery took too long: {stopwatch.ElapsedMilliseconds}ms for {pluginCount} plugins");
     }
-    
+
     [TestMethod]
     public async Task PluginResourceCreation_PerformanceComparable()
     {
@@ -798,7 +798,7 @@ public class PluginPerformanceTests
         var legacyHandler = new TestLegacyResourceHandler();
         var modernPlugin = new TestModernResourcePlugin();
         var testData = GetLargeTestResourceData();
-        
+
         // Act - Legacy
         var legacyStopwatch = Stopwatch.StartNew();
         for (int i = 0; i < 100; i++)
@@ -806,7 +806,7 @@ public class PluginPerformanceTests
             var legacyResult = await CreateResourceWithLegacyHandler(legacyHandler, testData);
         }
         legacyStopwatch.Stop();
-        
+
         // Act - Modern
         var modernStopwatch = Stopwatch.StartNew();
         for (int i = 0; i < 100; i++)
@@ -814,10 +814,10 @@ public class PluginPerformanceTests
             var modernResult = await CreateResourceWithModernPlugin(modernPlugin, testData);
         }
         modernStopwatch.Stop();
-        
+
         // Assert - Modern should be no more than 20% slower than legacy
         var slowdownRatio = (double)modernStopwatch.ElapsedMilliseconds / legacyStopwatch.ElapsedMilliseconds;
-        Assert.IsTrue(slowdownRatio <= 1.2, 
+        Assert.IsTrue(slowdownRatio <= 1.2,
             $"Modern plugin too slow: {slowdownRatio:P0} vs legacy");
     }
 }
@@ -828,6 +828,7 @@ public class PluginPerformanceTests
 ### Plugin Developer Guide
 
 ```markdown
+
 # TS4Tools Plugin Development Guide
 
 ## Modern Plugin Development (Recommended)
@@ -839,7 +840,7 @@ public class MyResourcePlugin : IResourcePlugin
 {
     public string Name => "My Resource Plugin";
     public Version Version => new Version(1, 0, 0);
-    
+
     // Implement required methods...
 }
 ```
@@ -853,7 +854,7 @@ public class MyResourcePlugin : IResourcePlugin
 {
     private readonly ILogger<MyResourcePlugin> _logger;
     private readonly IResourceValidator _validator;
-    
+
     public MyResourcePlugin(ILogger<MyResourcePlugin> logger, IResourceValidator validator)
     {
         _logger = logger;
@@ -915,8 +916,8 @@ public class MyLegacyHandler : AResourceHandler
 | Metric | Target | Measurement Method |
 |--------|--------|--------------------|
 | **Legacy Plugin Compatibility** | 100% | Automated test suite with existing plugins |
-| **Performance Overhead** | ≤ 5% | Benchmark comparison of legacy vs adapted |
-| **Plugin Discovery Time** | ≤ 2x legacy | Startup time measurement |
+| **Performance Overhead** | â‰¤ 5% | Benchmark comparison of legacy vs adapted |
+| **Plugin Discovery Time** | â‰¤ 2x legacy | Startup time measurement |
 | **Modern Plugin Adoption** | 25% within 6 months | Plugin repository analysis |
 | **Community Satisfaction** | 90%+ positive feedback | Developer surveys |
 
@@ -926,3 +927,4 @@ public class MyLegacyHandler : AResourceHandler
 - ADR-002: Dependency Injection (enables modern plugin DI)
 - ADR-004: Greenfield Migration Strategy (provides context)
 - ADR-006: Golden Master Testing Strategy (validates plugin compatibility)
+

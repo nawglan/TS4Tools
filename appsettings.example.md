@@ -1,4 +1,4 @@
-# TS4Tools Configuration Example
+﻿# TS4Tools Configuration Example
 
 This is an example configuration file that demonstrates how to set up TS4Tools with your Sims 4 installation directory.
 
@@ -46,4 +46,5 @@ This is an example configuration file that demonstrates how to set up TS4Tools w
 
 ## Security Warning
 
-⚠️ **Never commit this file to version control** - it contains local system paths and should remain private.
+âš ï¸ **Never commit this file to version control** - it contains local system paths and should remain private.
+

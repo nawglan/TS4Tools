@@ -1,8 +1,8 @@
-# ADR-003: Cross-Platform UI with Avalonia
+﻿# ADR-003: Cross-Platform UI with Avalonia
 
-**Status:** Accepted  
-**Date:** August 3, 2025  
-**Deciders:** Architecture Team, UI/UX Team  
+**Status:** Accepted
+**Date:** August 3, 2025
+**Deciders:** Architecture Team, UI/UX Team
 
 ## Context
 
@@ -27,9 +27,9 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 
 | Framework | Cross-Platform | Performance | Native Feel | MVVM | Learning Curve |
 |-----------|----------------|-------------|-------------|------|----------------|
-| **✅ Avalonia** | Full | Excellent | Good | Excellent | Medium |
+| **âœ… Avalonia** | Full | Excellent | Good | Excellent | Medium |
 | .NET MAUI | Limited | Good | Excellent | Good | Medium |
-| Electron + Blazor | Full | Poor | Poor | Good | Low |  
+| Electron + Blazor | Full | Poor | Poor | Good | Low |
 | WPF | Windows Only | Excellent | Excellent | Excellent | Low |
 | Flutter | Full | Excellent | Fair | Fair | High |
 
@@ -52,26 +52,26 @@ public class PackageExplorerViewModel : ReactiveObject
 {
     private ObservableCollection<ResourceViewModel> _resources = new();
     private string _searchFilter = string.Empty;
-    
+
     public ObservableCollection<ResourceViewModel> Resources
     {
         get => _resources;
         set => this.RaiseAndSetIfChanged(ref _resources, value);
     }
-    
+
     public string SearchFilter
     {
         get => _searchFilter;
         set => this.RaiseAndSetIfChanged(ref _searchFilter, value);
     }
-    
+
     // Reactive command with async support
     public ReactiveCommand<Unit, Unit> LoadPackageCommand { get; }
-    
+
     public PackageExplorerViewModel(IPackageService packageService)
     {
         LoadPackageCommand = ReactiveCommand.CreateFromTask(LoadPackageAsync);
-        
+
         // Reactive filtering
         this.WhenAnyValue(x => x.SearchFilter)
             .Throttle(TimeSpan.FromMilliseconds(300))
@@ -119,7 +119,7 @@ public class WindowsDialogService : IDialogService
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource SystemChromeLowColor}" />
     </Style>
-    
+
     <Style Selector="DataGrid">
         <Setter Property="GridLinesVisibility" Value="Horizontal" />
         <Setter Property="AlternatingRowBackground" Value="{DynamicResource SystemBaseLowColor}" />
@@ -133,28 +133,28 @@ public class WindowsDialogService : IDialogService
 
 ```
 src/TS4Tools.Desktop/
-├── App.axaml                    # Application entry point
-├── ViewModels/
-│   ├── MainWindowViewModel.cs   # Main application state
-│   ├── PackageExplorerViewModel.cs
-│   ├── ResourceEditorViewModel.cs
-│   └── SettingsViewModel.cs
-├── Views/
-│   ├── MainWindow.axaml         # Main application window
-│   ├── PackageExplorerView.axaml
-│   ├── ResourceEditorView.axaml
-│   └── SettingsView.axaml
-├── Controls/                    # Custom controls
-│   ├── ResourceTreeView.axaml
-│   ├── HexEditor.axaml
-│   └── ImagePreview.axaml
-├── Services/                    # UI services
-│   ├── IDialogService.cs
-│   ├── IThemeService.cs
-│   └── Platform/                # Platform-specific implementations
-└── Styles/
-    ├── TS4ToolsTheme.axaml
-    └── Controls/
+â”œâ”€â”€ App.axaml                    # Application entry point
+â”œâ”€â”€ ViewModels/
+â”‚   â”œâ”€â”€ MainWindowViewModel.cs   # Main application state
+â”‚   â”œâ”€â”€ PackageExplorerViewModel.cs
+â”‚   â”œâ”€â”€ ResourceEditorViewModel.cs
+â”‚   â””â”€â”€ SettingsViewModel.cs
+â”œâ”€â”€ Views/
+â”‚   â”œâ”€â”€ MainWindow.axaml         # Main application window
+â”‚   â”œâ”€â”€ PackageExplorerView.axaml
+â”‚   â”œâ”€â”€ ResourceEditorView.axaml
+â”‚   â””â”€â”€ SettingsView.axaml
+â”œâ”€â”€ Controls/                    # Custom controls
+â”‚   â”œâ”€â”€ ResourceTreeView.axaml
+â”‚   â”œâ”€â”€ HexEditor.axaml
+â”‚   â””â”€â”€ ImagePreview.axaml
+â”œâ”€â”€ Services/                    # UI services
+â”‚   â”œâ”€â”€ IDialogService.cs
+â”‚   â”œâ”€â”€ IThemeService.cs
+â”‚   â””â”€â”€ Platform/                # Platform-specific implementations
+â””â”€â”€ Styles/
+    â”œâ”€â”€ TS4ToolsTheme.axaml
+    â””â”€â”€ Controls/
 ```
 
 ### Performance Optimizations
@@ -298,8 +298,8 @@ public PackageExplorerViewModel(IPackageService packageService)
         .Where(filter => !string.IsNullOrWhiteSpace(filter))
         .SelectMany(filter => Observable.FromAsync(() => SearchResourcesAsync(filter)))
         .ObserveOn(RxApp.MainThreadScheduler);
-    
-    searchResults.Subscribe(results => 
+
+    searchResults.Subscribe(results =>
     {
         FilteredResources.Clear();
         FilteredResources.AddRange(results);
@@ -316,12 +316,12 @@ public void ConfigureMacOSMenu()
 {
     var menuBar = new NativeMenuBar();
     var fileMenu = new NativeMenu("File");
-    
+
     fileMenu.Add(new NativeMenuItem("Open Package...")
     {
         Command = LoadPackageCommand
     });
-    
+
     NativeMenu.SetMenu(this, menuBar);
 }
 #endif
@@ -356,10 +356,10 @@ public void SearchFilter_WithValidTerm_FiltersResults()
     // Arrange
     var viewModel = new PackageExplorerViewModel(mockPackageService);
     viewModel.Resources.AddRange(CreateTestResources());
-    
+
     // Act
     viewModel.SearchFilter = "texture";
-    
+
     // Assert - using reactive testing
     viewModel.FilteredResources.Should().HaveCount(3);
     viewModel.FilteredResources.Should().OnlyContain(r => r.Name.Contains("texture"));
@@ -436,6 +436,7 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 
 ---
 
-**Status**: Accepted and In Progress  
-**Related ADRs**: ADR-001 (.NET 9), ADR-002 (Dependency Injection)  
+**Status**: Accepted and In Progress
+**Related ADRs**: ADR-001 (.NET 9), ADR-002 (Dependency Injection)
 **Next Review**: After Phase 1.6 completion
+

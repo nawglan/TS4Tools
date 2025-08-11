@@ -1,4 +1,4 @@
-# TS4Tools API Reference
+﻿# TS4Tools API Reference
 
 ## Core Interfaces
 
@@ -15,12 +15,12 @@ public interface IPackage : IDisposable, IAsyncDisposable
     string? FilePath { get; }
     DateTime CreationTime { get; }
     DateTime UpdatedTime { get; }
-    
+
     // Methods
     Task SaveAsync(CancellationToken cancellationToken = default);
     Task SaveAsAsync(string filePath, CancellationToken cancellationToken = default);
     Task CompactAsync(CancellationToken cancellationToken = default);
-    
+
     // Resource Management
     IResource? GetResource(IResourceKey key);
     void AddResource(IResourceKey key, IResource resource);
@@ -97,7 +97,7 @@ public interface IResourceKey : IEquatable<IResourceKey>, IComparable<IResourceK
 // Create resource key
 var key = new ResourceKey(
     resourceType: 0x12345678,
-    resourceGroup: 0x87654321, 
+    resourceGroup: 0x87654321,
     instance: 0x1234567890ABCDEF
 );
 
@@ -118,7 +118,7 @@ public interface IResource
 {
     Stream Stream { get; }
     byte[] AsBytes();
-    
+
     // Change notification
     event EventHandler? Changed;
 }
@@ -135,10 +135,10 @@ if (resource != null)
     using var stream = resource.Stream;
     var buffer = new byte[1024];
     var bytesRead = await stream.ReadAsync(buffer);
-    
+
     // As byte array (convenient for small resources)
     var allData = resource.AsBytes();
-    
+
     // Listen for changes
     resource.Changed += (sender, e) => Console.WriteLine("Resource modified");
 }
@@ -190,21 +190,21 @@ public class ApplicationSettings
 {
     [Required]
     public bool EnableLogging { get; set; } = true;
-    
+
     [Required]
     public string LogLevel { get; set; } = "Information";
-    
+
     [Required]
     [DirectoryPath]
     public string TempDirectory { get; set; } = "temp";
-    
+
     [Range(1, 10000)]
     public int MaxCacheSize { get; set; } = 1000;
-    
+
     public bool EnableResourceCaching { get; set; } = true;
-    
+
     public TimeSpan ResourceCacheTimeout { get; set; } = TimeSpan.FromMinutes(30);
-    
+
     [Required]
     public string DefaultEncoding { get; set; } = "UTF-8";
 }
@@ -308,7 +308,7 @@ using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 try
 {
     var package = await packageFactory.LoadFromFileAsync(
-        "large-package.package", 
+        "large-package.package",
         cancellation.Token);
 }
 catch (OperationCanceledException)
@@ -361,18 +361,18 @@ Create custom resource implementations:
 public class CustomResource : IResource
 {
     private readonly MemoryStream _stream;
-    
+
     public CustomResource(byte[] data)
     {
         _stream = new MemoryStream(data);
     }
-    
+
     public Stream Stream => _stream;
-    
+
     public byte[] AsBytes() => _stream.ToArray();
-    
+
     public event EventHandler? Changed;
-    
+
     protected virtual void OnChanged() => Changed?.Invoke(this, EventArgs.Empty);
 }
 ```
@@ -393,3 +393,4 @@ public static class MyServiceExtensions
     }
 }
 ```
+

@@ -1,4 +1,4 @@
-# Basic Package Reader Example
+﻿# Basic Package Reader Example
 
 This example demonstrates how to use TS4Tools to read and analyze a Sims 4 package file.
 
@@ -27,13 +27,13 @@ Modified: 2024-01-15 10:30:45
 Total Resources: 1,247
 
 === Resource Analysis ===
-Type ID      Count    Total Size      Type Name                     
+Type ID      Count    Total Size      Type Name
 ---------------------------------------------------------------------------
-0x220557DA   456      2.3 MB          Image Resource               
-0x0333406C   289      1.8 MB          STBL Resource                
-0x319E4F1D   156      892.5 KB        OBJD Resource                
-0x0D338A3A   89       445.2 KB        Unknown                      
-0x545AC67A   67       234.1 KB        Unknown                      
+0x220557DA   456      2.3 MB          Image Resource
+0x0333406C   289      1.8 MB          STBL Resource
+0x319E4F1D   156      892.5 KB        OBJD Resource
+0x0D338A3A   89       445.2 KB        Unknown
+0x545AC67A   67       234.1 KB        Unknown
 ---------------------------------------------------------------------------
 TOTAL        1,247    5.7 MB
 
@@ -96,7 +96,8 @@ if (resource != null)
 ## Dependencies
 
 - TS4Tools.Core.Package
-- TS4Tools.Core.DependencyInjection  
+- TS4Tools.Core.DependencyInjection
 - TS4Tools.Extensions
 - Microsoft.Extensions.Hosting
 - Microsoft.Extensions.Logging.Console
+

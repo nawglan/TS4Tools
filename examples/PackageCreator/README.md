@@ -1,4 +1,4 @@
-# Package Creator Example
+﻿# Package Creator Example
 
 This example demonstrates how to create a new Sims 4 package file from scratch using TS4Tools.
 
@@ -6,7 +6,7 @@ This example demonstrates how to create a new Sims 4 package file from scratch u
 
 - Create a new empty package
 - Add custom text resources
-- Add custom binary resources  
+- Add custom binary resources
 - Add JSON metadata resources
 - Save the package to disk
 - Verify the created package by loading it back
@@ -82,12 +82,12 @@ var resourceKey = new ResourceKey(
 public class CustomResource : IResource
 {
     private readonly MemoryStream _stream;
-    
+
     public CustomResource(byte[] data)
     {
         _stream = new MemoryStream(data);
     }
-    
+
     public Stream Stream => _stream;
     public byte[] AsBytes() => _stream.ToArray();
     public event EventHandler? Changed;
@@ -140,3 +140,4 @@ This example is useful for:
 - TS4Tools.Extensions
 - Microsoft.Extensions.Hosting
 - Microsoft.Extensions.Logging.Console
+

@@ -1,8 +1,8 @@
-# ADR-002: Adopt Dependency Injection Container
+﻿# ADR-002: Adopt Dependency Injection Container
 
-**Status:** Accepted  
-**Date:** August 3, 2025  
-**Deciders:** Architecture Team, Senior Developers  
+**Status:** Accepted
+**Date:** August 3, 2025
+**Deciders:** Architecture Team, Senior Developers
 
 ## Context
 
@@ -43,14 +43,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPackageFactory, PackageFactory>();
         services.AddScoped<IResourceManager, ResourceManager>();
         services.AddTransient<IResourceFactory<IResource>, DefaultResourceFactory>();
-        
+
         // Configuration
         services.Configure<ApplicationSettings>(configuration.GetSection("TS4Tools"));
         services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceManager"));
-        
+
         // Platform-specific services
         services.AddPlatformServices();
-        
+
         return services;
     }
 }
@@ -73,17 +73,17 @@ public static class ServiceCollectionExtensions
 public static class LegacyServiceLocator
 {
     private static IServiceProvider? _serviceProvider;
-    
+
     [Obsolete("Use constructor injection instead. This will be removed in Phase 3.0")]
     public static void Initialize(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
-    
+
     [Obsolete("Use constructor injection instead. This will be removed in Phase 3.0")]
     public static T GetService<T>() where T : notnull
     {
-        return _serviceProvider?.GetRequiredService<T>() 
+        return _serviceProvider?.GetRequiredService<T>()
             ?? throw new InvalidOperationException("Service locator not initialized");
     }
 }
@@ -208,7 +208,7 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 ### Before: Static Dependencies
 
 ```csharp
-// ❌ Old pattern - tightly coupled, hard to test
+// âŒ Old pattern - tightly coupled, hard to test
 public class PackageReader
 {
     public IPackage ReadPackage(string path)
@@ -216,7 +216,7 @@ public class PackageReader
         var logger = LogManager.GetLogger("PackageReader"); // Static dependency
         var settings = Settings.Current; // Static configuration
         var fileSystem = new FileSystem(); // Direct instantiation
-        
+
         // ... implementation
     }
 }
@@ -225,13 +225,13 @@ public class PackageReader
 ### After: Dependency Injection
 
 ```csharp
-// ✅ New pattern - loosely coupled, easily testable
+// âœ… New pattern - loosely coupled, easily testable
 public class PackageReader : IPackageReader
 {
     private readonly ILogger<PackageReader> _logger;
     private readonly IOptions<PackageReaderSettings> _settings;
     private readonly IFileSystem _fileSystem;
-    
+
     public PackageReader(
         ILogger<PackageReader> logger,
         IOptions<PackageReaderSettings> settings,
@@ -241,7 +241,7 @@ public class PackageReader : IPackageReader
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
     }
-    
+
     public async Task<IPackage> ReadPackageAsync(string path, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Reading package from {Path}", path);
@@ -260,15 +260,15 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
     var logger = Substitute.For<ILogger<PackageReader>>();
     var settings = Options.Create(new PackageReaderSettings());
     var fileSystem = Substitute.For<IFileSystem>();
-    
+
     fileSystem.FileExistsAsync(Arg.Any<string>()).Returns(true);
     fileSystem.OpenReadAsync(Arg.Any<string>()).Returns(new MemoryStream());
-    
+
     var reader = new PackageReader(logger, settings, fileSystem);
-    
+
     // Act
     var result = await reader.ReadPackageAsync("test.package");
-    
+
     // Assert
     result.Should().NotBeNull();
     logger.Received().LogInformation(Arg.Any<string>(), Arg.Any<object[]>());
@@ -340,12 +340,12 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 ### Constructor Injection
 
 ```csharp
-// ✅ Good: Clear dependencies, null checks, readonly fields
+// âœ… Good: Clear dependencies, null checks, readonly fields
 public class ResourceManager : IResourceManager
 {
     private readonly ILogger<ResourceManager> _logger;
     private readonly IResourceFactory _factory;
-    
+
     public ResourceManager(ILogger<ResourceManager> logger, IResourceFactory factory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -357,7 +357,7 @@ public class ResourceManager : IResourceManager
 ### Service Registration
 
 ```csharp
-// ✅ Good: Organized, documented, proper lifetimes
+// âœ… Good: Organized, documented, proper lifetimes
 services.AddScoped<IResourceManager, ResourceManager>(); // Per-operation state
 services.AddSingleton<IPackageFactory, PackageFactory>(); // Stateless factory
 services.AddTransient<IResourceValidator, ResourceValidator>(); // Lightweight service
@@ -366,7 +366,7 @@ services.AddTransient<IResourceValidator, ResourceValidator>(); // Lightweight s
 ### Configuration Binding
 
 ```csharp
-// ✅ Good: Type-safe configuration with validation
+// âœ… Good: Type-safe configuration with validation
 services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceManager"));
 services.AddOptions<ResourceManagerOptions>()
     .ValidateDataAnnotations()
@@ -381,6 +381,7 @@ services.AddOptions<ResourceManagerOptions>()
 
 ---
 
-**Status**: Accepted and Implemented  
-**Next Review**: After Phase 1.6 completion  
+**Status**: Accepted and Implemented
+**Next Review**: After Phase 1.6 completion
 **Impact**: High - Fundamental architectural change affecting all services
+

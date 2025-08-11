@@ -1,4 +1,4 @@
-# TS4Tools Advanced Features Guide
+﻿# TS4Tools Advanced Features Guide
 
 ## Performance Optimization
 
@@ -41,9 +41,9 @@ using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 try
 {
     var package = await packageFactory.LoadFromFileAsync(
-        largePath, 
+        largePath,
         cts.Token);
-        
+
     await package.CompactAsync(cts.Token);
     await package.SaveAsync(cts.Token);
 }
@@ -129,7 +129,7 @@ public class CustomApplicationSettings : ApplicationSettings, IValidatableObject
                 "Cache size cannot exceed 10,000 entries",
                 new[] { nameof(MaxCacheSize) });
         }
-        
+
         if (!Directory.Exists(TempDirectory))
         {
             yield return new ValidationResult(
@@ -151,22 +151,22 @@ public class ImageResource : IResource
 {
     private readonly byte[] _imageData;
     private readonly string _format;
-    
+
     public ImageResource(byte[] imageData, string format)
     {
         _imageData = imageData;
         _format = format;
     }
-    
+
     public Stream Stream => new MemoryStream(_imageData);
     public byte[] AsBytes() => _imageData;
-    
+
     public string Format => _format;
     public int Width { get; private set; }
     public int Height { get; private set; }
-    
+
     public event EventHandler? Changed;
-    
+
     public void Resize(int newWidth, int newHeight)
     {
         // Implementation for resizing
@@ -174,7 +174,7 @@ public class ImageResource : IResource
         Height = newHeight;
         OnChanged();
     }
-    
+
     protected virtual void OnChanged() => Changed?.Invoke(this, EventArgs.Empty);
 }
 ```
@@ -198,7 +198,7 @@ public class ImageResourceFactory : IImageResourceFactory
         var format = Path.GetExtension(imagePath).ToLowerInvariant();
         return new ImageResource(data, format);
     }
-    
+
     public async Task<ImageResource> CreateFromStreamAsync(Stream imageStream, string format)
     {
         using var memoryStream = new MemoryStream();
@@ -221,22 +221,22 @@ public interface IResourceProcessor<T> where T : IResource
 public class ImageCompressionProcessor : IResourceProcessor<ImageResource>
 {
     private readonly ILogger<ImageCompressionProcessor> _logger;
-    
+
     public ImageCompressionProcessor(ILogger<ImageCompressionProcessor> logger)
     {
         _logger = logger;
     }
-    
+
     public async Task<ImageResource> ProcessAsync(ImageResource resource, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Compressing image resource");
-        
+
         // Implement compression logic
         var compressedData = await CompressImageAsync(resource.AsBytes(), cancellationToken);
-        
+
         return new ImageResource(compressedData, resource.Format);
     }
-    
+
     private async Task<byte[]> CompressImageAsync(byte[] imageData, CancellationToken cancellationToken)
     {
         // Implementation details...
@@ -256,20 +256,20 @@ public class BatchPackageProcessor
 {
     private readonly IPackageFactory _packageFactory;
     private readonly ILogger<BatchPackageProcessor> _logger;
-    
+
     public BatchPackageProcessor(IPackageFactory packageFactory, ILogger<BatchPackageProcessor> logger)
     {
         _packageFactory = packageFactory;
         _logger = logger;
     }
-    
-    public async Task ProcessDirectoryAsync(string inputDirectory, string outputDirectory, 
+
+    public async Task ProcessDirectoryAsync(string inputDirectory, string outputDirectory,
         Func<IPackage, Task> processor, CancellationToken cancellationToken = default)
     {
         var packageFiles = Directory.GetFiles(inputDirectory, "*.package", SearchOption.AllDirectories);
-        
+
         _logger.LogInformation("Processing {Count} packages", packageFiles.Length);
-        
+
         var semaphore = new SemaphoreSlim(Environment.ProcessorCount);
         var tasks = packageFiles.Select(async filePath =>
         {
@@ -283,22 +283,22 @@ public class BatchPackageProcessor
                 semaphore.Release();
             }
         });
-        
+
         await Task.WhenAll(tasks);
     }
-    
+
     private async Task ProcessSinglePackageAsync(string inputPath, string outputDirectory,
         Func<IPackage, Task> processor, CancellationToken cancellationToken)
     {
         try
         {
             using var package = await _packageFactory.LoadFromFileAsync(inputPath, cancellationToken);
-            
+
             await processor(package);
-            
+
             var outputPath = Path.Combine(outputDirectory, Path.GetFileName(inputPath));
             await package.SaveAsAsync(outputPath, cancellationToken);
-            
+
             _logger.LogInformation("Processed: {FileName}", Path.GetFileName(inputPath));
         }
         catch (Exception ex)
@@ -322,41 +322,41 @@ public interface IPackageValidator
 public class PackageValidator : IPackageValidator
 {
     private readonly ILogger<PackageValidator> _logger;
-    
+
     public PackageValidator(ILogger<PackageValidator> logger)
     {
         _logger = logger;
     }
-    
+
     public async Task<ValidationResult> ValidateAsync(IPackage package, CancellationToken cancellationToken = default)
     {
         var result = new ValidationResult();
-        
+
         // Validate header
         ValidateHeader(package.Header, result);
-        
+
         // Validate resources
         await ValidateResourcesAsync(package, result, cancellationToken);
-        
+
         // Validate integrity
         await ValidateIntegrityAsync(package, result, cancellationToken);
-        
+
         return result;
     }
-    
+
     private void ValidateHeader(PackageHeader header, ValidationResult result)
     {
         if (header.MajorVersion < 2)
         {
             result.AddError("Unsupported package version");
         }
-        
+
         if (header.ResourceCount == 0)
         {
             result.AddWarning("Package contains no resources");
         }
     }
-    
+
     private async Task ValidateResourcesAsync(IPackage package, ValidationResult result, CancellationToken cancellationToken)
     {
         foreach (var entry in package.ResourceIndex)
@@ -369,7 +369,7 @@ public class PackageValidator : IPackageValidator
                     result.AddError($"Resource not accessible: {entry.Key}");
                     continue;
                 }
-                
+
                 var data = resource.AsBytes();
                 if (data.Length != entry.Value.FileSize)
                 {
@@ -382,7 +382,7 @@ public class PackageValidator : IPackageValidator
             }
         }
     }
-    
+
     private async Task ValidateIntegrityAsync(IPackage package, ValidationResult result, CancellationToken cancellationToken)
     {
         // Implement integrity checks (checksums, etc.)
@@ -394,9 +394,9 @@ public class ValidationResult
 {
     public List<string> Errors { get; } = new();
     public List<string> Warnings { get; } = new();
-    
+
     public bool IsValid => Errors.Count == 0;
-    
+
     public void AddError(string message) => Errors.Add(message);
     public void AddWarning(string message) => Warnings.Add(message);
 }
@@ -426,17 +426,17 @@ public static class PathHelper
     {
         if (string.IsNullOrEmpty(path))
             return path;
-            
+
         // Replace all separators with the platform-appropriate one
         return path.Replace('\\', Path.DirectorySeparatorChar)
                   .Replace('/', Path.DirectorySeparatorChar);
     }
-    
+
     public static string ToUniversalPath(string path)
     {
         if (string.IsNullOrEmpty(path))
             return path;
-            
+
         // Use forward slashes for universal representation
         return path.Replace('\\', '/');
     }
@@ -462,12 +462,12 @@ public class WindowsPlatformService : IPlatformService
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         return Path.Combine(documentsPath, "Electronic Arts", "The Sims 4", "Mods");
     }
-    
+
     public async Task<bool> IsPackageFileAsync(string filePath)
     {
         return Path.GetExtension(filePath).Equals(".package", StringComparison.OrdinalIgnoreCase);
     }
-    
+
     public async Task OpenPackageInDefaultEditorAsync(string filePath)
     {
         Process.Start(new ProcessStartInfo
@@ -499,7 +499,7 @@ public static class PlatformServiceExtensions
         {
             services.AddSingleton<IPlatformService, DefaultPlatformService>();
         }
-        
+
         return services;
     }
 }
@@ -525,16 +525,16 @@ public class PluginManager
 {
     private readonly List<ITS4ToolsPlugin> _plugins = new();
     private readonly ILogger<PluginManager> _logger;
-    
+
     public PluginManager(ILogger<PluginManager> logger)
     {
         _logger = logger;
     }
-    
+
     public async Task LoadPluginsFromDirectoryAsync(string pluginDirectory, IServiceProvider serviceProvider)
     {
         var pluginFiles = Directory.GetFiles(pluginDirectory, "*.dll");
-        
+
         foreach (var pluginFile in pluginFiles)
         {
             try
@@ -542,13 +542,13 @@ public class PluginManager
                 var assembly = Assembly.LoadFrom(pluginFile);
                 var pluginTypes = assembly.GetTypes()
                     .Where(t => t.IsClass && !t.IsAbstract && typeof(ITS4ToolsPlugin).IsAssignableFrom(t));
-                
+
                 foreach (var pluginType in pluginTypes)
                 {
                     var plugin = (ITS4ToolsPlugin)Activator.CreateInstance(pluginType)!;
                     await plugin.InitializeAsync(serviceProvider);
                     _plugins.Add(plugin);
-                    
+
                     _logger.LogInformation("Loaded plugin: {Name} v{Version}", plugin.Name, plugin.Version);
                 }
             }
@@ -558,7 +558,7 @@ public class PluginManager
             }
         }
     }
-    
+
     public async Task<ITS4ToolsPlugin?> FindHandlerAsync(IResourceKey resourceKey)
     {
         foreach (var plugin in _plugins)
@@ -568,10 +568,11 @@ public class PluginManager
                 return plugin;
             }
         }
-        
+
         return null;
     }
 }
 ```
 
 This advanced features guide provides comprehensive examples of how to extend and optimize TS4Tools for production use cases.
+

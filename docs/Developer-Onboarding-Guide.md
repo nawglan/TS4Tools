@@ -1,13 +1,13 @@
-# TS4Tools Developer Onboarding Guide
+﻿# TS4Tools Developer Onboarding Guide
 
 **Welcome to the TS4Tools Development Team!**
 
-This guide will help you get up and running with the TS4Tools codebase,  
+This guide will help you get up and running with the TS4Tools codebase,
 understand our architecture decisions, and contribute effectively to the project.
 
 ---
 
-## 🚀 Quick Start (15 minutes)
+## ðŸš€ Quick Start (15 minutes)
 
 ### Prerequisites
 
@@ -21,18 +21,23 @@ understand our architecture decisions, and contribute effectively to the project
 ### Environment Setup
 
 ```powershell
+
 # 1. Clone the repository
+
 git clone https://github.com/nawglan/TS4Tools.git
 cd TS4Tools
 
 # 2. Restore packages and build
+
 dotnet restore
 dotnet build
 
 # 3. Run tests to verify setup
+
 dotnet test
 
 # 4. Start the desktop application
+
 dotnet run --project TS4Tools.Desktop
 ```
 
@@ -40,32 +45,36 @@ dotnet run --project TS4Tools.Desktop
 
 If everything is working correctly, you should see:
 
-- ✅ Clean build with no errors
-- ✅ All tests passing (95%+ success rate)
-- ✅ Desktop application starts and displays main window
+- âœ… Clean build with no errors
+- âœ… All tests passing (95%+ success rate)
+- âœ… Desktop application starts and displays main window
 
 ---
 
-## 🚨 **CRITICAL: Golden Master Testing Requirements**
+## ðŸš¨ **CRITICAL: Golden Master Testing Requirements**
 
-> **⚠️ MANDATORY:** All development work must pass Golden Master compatibility tests
+> **âš ï¸ MANDATORY:** All development work must pass Golden Master compatibility tests
 
 ### What is Golden Master Testing?
 
-Golden Master Testing ensures **byte-perfect compatibility** with the original  
-Sims4Tools. Every resource wrapper implementation must produce identical output  
+Golden Master Testing ensures **byte-perfect compatibility** with the original
+Sims4Tools. Every resource wrapper implementation must produce identical output
 to the legacy system.
 
 ### Sims 4 Setup for Testing
 
 ```powershell
+
 # Option 1: Steam Installation (Recommended)
+
 # Install from Steam (Game folder: C:\Program Files (x86)\Steam\steamapps\common\The Sims 4\)
 
-# Option 2: EA App/Origin Installation  
+# Option 2: EA App/Origin Installation
+
 # Install from EA App (Game folder: C:\Program Files\EA Games\The Sims 4\)
 
 # Verify Golden Master tests work
+
 cd "C:\Users\nawgl\code\TS4Tools"
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
 ```
@@ -73,10 +82,13 @@ dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
 ### Golden Master Validation Workflow
 
 ```powershell
+
 # Before starting any resource wrapper work
+
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --filter "Category!=Integration"
 
 # After completing resource implementation
+
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity normal
 ```
 
@@ -84,7 +96,7 @@ dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity normal
 
 ---
 
-## 📋 **CRITICAL: Phase-Based Development Workflow**
+## ðŸ“‹ **CRITICAL: Phase-Based Development Workflow**
 
 TS4Tools development follows a **phase-based approach** with strict completion criteria.
 
@@ -93,7 +105,9 @@ TS4Tools development follows a **phase-based approach** with strict completion c
 Check the current phase before starting work:
 
 ```powershell
+
 # Always check current phase status
+
 Get-Content "PHASE_4_14_COMPLETION_STATUS.md" | Select-String "STATUS"
 ```
 
@@ -117,7 +131,7 @@ Get-Content "PHASE_4_14_COMPLETION_STATUS.md" | Select-String "STATUS"
 
 ---
 
-## 🚨 **CRITICAL: Resource Wrapper Development Patterns**
+## ðŸš¨ **CRITICAL: Resource Wrapper Development Patterns**
 
 > **Primary Work**: 95% of development involves implementing resource wrappers
 
@@ -167,24 +181,30 @@ services.AddResourceFactory<IMyResource, MyResourceFactory>();
 
 ---
 
-## ⚡ **CRITICAL: Pre-Commit Validation Sequence**
+## âš¡ **CRITICAL: Pre-Commit Validation Sequence**
 
 > **MANDATORY**: Run this sequence before every commit
 
 ```powershell
+
 # Navigate to project root
+
 cd "c:\Users\nawgl\code\TS4Tools"
 
 # 1. Code quality and formatting
+
 .\scripts\check-quality.ps1 -Fix
 
 # 2. Build verification (ZERO errors/warnings allowed)
+
 dotnet build TS4Tools.sln --verbosity minimal
 
-# 3. Test validation (100% pass rate required)  
+# 3. Test validation (100% pass rate required)
+
 dotnet test TS4Tools.sln --verbosity minimal
 
 # 4. Golden Master validation (if working on resource wrappers)
+
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
 ```
 
@@ -192,11 +212,11 @@ dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
 
 ---
 
-## 🚨 **CRITICAL: SIMS4TOOLS Compatibility Context**
+## ðŸš¨ **CRITICAL: SIMS4TOOLS Compatibility Context**
 
 ### The Assembly Loading Crisis
 
-The original Sims4Tools uses `Assembly.LoadFile()` which **breaks completely**  
+The original Sims4Tools uses `Assembly.LoadFile()` which **breaks completely**
 **in .NET 8+**. This is why we're doing a greenfield rewrite.
 
 **Critical Rules:**
@@ -208,13 +228,13 @@ The original Sims4Tools uses `Assembly.LoadFile()` which **breaks completely**
 ### API Compatibility Requirements
 
 ```csharp
-// ✅ REQUIRED: Maintain exact method signatures
+// âœ… REQUIRED: Maintain exact method signatures
 public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry)
 {
     // Modern implementation, identical signature
 }
 
-// ❌ FORBIDDEN: Breaking API changes
+// âŒ FORBIDDEN: Breaking API changes
 public async Task<IResource> GetResourceAsync(int apiVersion, IPackage package, IResourceIndexEntry entry)
 {
     // This breaks compatibility even though it's "better"
@@ -229,24 +249,24 @@ public async Task<IResource> GetResourceAsync(int apiVersion, IPackage package, 
 
 ---
 
-## 📚 Architecture Overview
+## ðŸ“š Architecture Overview
 
 ### Project Structure
 
 ```text
 TS4Tools/
-├── src/                          # Source code
-│   ├── TS4Tools.Core.Interfaces/ # Contracts and abstractions
-│   ├── TS4Tools.Core.System/     # Cross-platform system utilities
-│   ├── TS4Tools.Core.Settings/   # Configuration management
-│   ├── TS4Tools.Core.Package/    # Package reading/writing
-│   ├── TS4Tools.Core.Resources/  # Resource management
-│   └── ...
-├── tests/                        # Unit and integration tests
-├── benchmarks/                   # Performance benchmarks
-├── docs/                         # Documentation
-├── scripts/                      # Build and utility scripts
-└── TS4Tools.Desktop/            # Avalonia UI application
+â”œâ”€â”€ src/                          # Source code
+â”‚   â”œâ”€â”€ TS4Tools.Core.Interfaces/ # Contracts and abstractions
+â”‚   â”œâ”€â”€ TS4Tools.Core.System/     # Cross-platform system utilities
+â”‚   â”œâ”€â”€ TS4Tools.Core.Settings/   # Configuration management
+â”‚   â”œâ”€â”€ TS4Tools.Core.Package/    # Package reading/writing
+â”‚   â”œâ”€â”€ TS4Tools.Core.Resources/  # Resource management
+â”‚   â””â”€â”€ ...
+â”œâ”€â”€ tests/                        # Unit and integration tests
+â”œâ”€â”€ benchmarks/                   # Performance benchmarks
+â”œâ”€â”€ docs/                         # Documentation
+â”œâ”€â”€ scripts/                      # Build and utility scripts
+â””â”€â”€ TS4Tools.Desktop/            # Avalonia UI application
 ```
 
 ### Key Architectural Principles
@@ -256,12 +276,12 @@ TS4Tools/
 We use Microsoft's built-in DI container for loose coupling and testability.
 
 ```csharp
-// ✅ Good: Constructor injection
+// âœ… Good: Constructor injection
 public class PackageReader : IPackageReader
 {
     private readonly ILogger<PackageReader> _logger;
     private readonly IFileSystem _fileSystem;
-    
+
     public PackageReader(ILogger<PackageReader> logger, IFileSystem fileSystem)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -269,7 +289,7 @@ public class PackageReader : IPackageReader
     }
 }
 
-// ❌ Avoid: Static dependencies
+// âŒ Avoid: Static dependencies
 public class PackageReader
 {
     public void ReadPackage()
@@ -285,7 +305,7 @@ public class PackageReader
 We leverage C# 12 features for cleaner, more maintainable code.
 
 ```csharp
-// ✅ Modern patterns
+// âœ… Modern patterns
 public record ResourceKey(uint Type, uint Group, ulong Instance);
 
 public async Task<IResource?> LoadResourceAsync(ResourceKey key)
@@ -303,7 +323,7 @@ public IResource? FindResource(string? resourceName)
 {
     if (string.IsNullOrEmpty(resourceName))
         return null;
-        
+
     return _cache.TryGetValue(resourceName, out var resource) ? resource : null;
 }
 ```
@@ -313,7 +333,7 @@ public IResource? FindResource(string? resourceName)
 All code should work on Windows, macOS, and Linux.
 
 ```csharp
-// ✅ Cross-platform file operations
+// âœ… Cross-platform file operations
 public class FileSystemService : IFileSystem
 {
     public async Task<string[]> ReadAllLinesAsync(string path)
@@ -323,7 +343,7 @@ public class FileSystemService : IFileSystem
     }
 }
 
-// ❌ Avoid: Platform-specific APIs
+// âŒ Avoid: Platform-specific APIs
 public void ShowDialog()
 {
     MessageBox.Show("Hello"); // Windows-only
@@ -332,7 +352,7 @@ public void ShowDialog()
 
 ---
 
-## 🛠️ Development Workflow
+## ðŸ› ï¸ Development Workflow
 
 ### 1. Setting Up Your IDE
 
@@ -340,6 +360,7 @@ public void ShowDialog()
 
 1. Install with ".NET desktop development" workload
 2. Enable these extensions:
+
    - **SonarLint** for code quality
    - **GitHub Copilot** for AI assistance
    - **ReSharper** (optional, for advanced refactoring)
@@ -347,6 +368,7 @@ public void ShowDialog()
 #### VS Code
 
 1. Install these extensions:
+
    - **C#** (Microsoft)
    - **GitLens** for Git integration
    - **SonarLint** for code quality
@@ -358,7 +380,9 @@ public void ShowDialog()
 We use `.editorconfig` for consistent formatting:
 
 ```ini
+
 # Already configured in the repository
+
 root = true
 
 [*.cs]
@@ -401,12 +425,12 @@ public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
     var key = new ResourceKey(0x12345678, 0x00000000, 0x123456789ABCDEF0);
     var mockFileSystem = Substitute.For<IFileSystem>();
     mockFileSystem.FileExistsAsync(Arg.Any<string>()).Returns(true);
-    
+
     var resourceManager = new ResourceManager(mockFileSystem, _logger);
-    
+
     // Act
     var result = await resourceManager.LoadResourceAsync(key);
-    
+
     // Assert
     result.Should().NotBeNull();
     result.ResourceType.Should().Be(0x12345678);
@@ -424,40 +448,50 @@ public async Task LoadResourceAsync_WithValidKey_ReturnsResource()
 #### Branch Naming
 
 ```bash
+
 # Feature branches
+
 feature/resource-caching-improvement
 feature/cross-platform-dialogs
 
 # Bug fixes
+
 bugfix/memory-leak-in-package-reader
 bugfix/null-reference-in-settings
 
 # Hotfixes
+
 hotfix/critical-crash-on-startup
 ```
 
 #### Commit Messages (Conventional Commits)
 
 ```bash
+
 # Features
+
 feat(resources): add immutable resource key implementation
 
 # Bug fixes
+
 fix(package): resolve memory leak in resource cache
 
 # Documentation
+
 docs(readme): update installation instructions
 
 # Performance improvements
+
 perf(loading): optimize package reading with async streams
 
 # Refactoring
+
 refactor(di): migrate static classes to dependency injection
 ```
 
 ---
 
-## 🏗️ Common Development Tasks
+## ðŸ—ï¸ Common Development Tasks
 
 ### Adding a New Resource Type
 
@@ -482,7 +516,7 @@ public class TextureResource : ResourceBase, ITextureResource
     public int Height { get; private set; }
     public TextureFormat Format { get; private set; }
     public byte[] PixelData { get; private set; }
-    
+
     // Constructor with dependency injection
     public TextureResource(int apiVersion, Stream stream, ILogger<TextureResource> logger)
         : base(apiVersion, stream)
@@ -498,12 +532,12 @@ public class TextureResource : ResourceBase, ITextureResource
 ```csharp
 public class TextureResourceFactory : ResourceFactoryBase<ITextureResource>
 {
-    public override IReadOnlySet<string> SupportedResourceTypes => 
+    public override IReadOnlySet<string> SupportedResourceTypes =>
         new HashSet<string> { "0x12345678" };
-    
+
     protected override async Task<ITextureResource> CreateResourceCoreAsync(
-        int apiVersion, 
-        Stream? stream, 
+        int apiVersion,
+        Stream? stream,
         CancellationToken cancellationToken)
     {
         return new TextureResource(apiVersion, stream, _logger);
@@ -528,10 +562,10 @@ public class TextureResourceTests
         // Arrange
         var stream = CreateTestTextureStream();
         var logger = Substitute.For<ILogger<TextureResource>>();
-        
+
         // Act
         var texture = new TextureResource(1, stream, logger);
-        
+
         // Assert
         texture.Width.Should().Be(512);
         texture.Height.Should().Be(512);
@@ -549,11 +583,13 @@ git checkout -b feature/new-resource-export
 ```
 
 1. **Follow TDD Approach**
+
    - Write failing tests first
    - Implement minimum code to pass tests
    - Refactor for quality
 
 2. **Update Documentation**
+
    - Add XML comments to public APIs
    - Update architectural docs if needed
    - Add usage examples
@@ -594,7 +630,7 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 
 ---
 
-## 📖 Learning Resources
+## ðŸ“– Learning Resources
 
 ### Required Reading
 
@@ -618,32 +654,39 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 
 ---
 
-## 🛠️ **Essential Development Tools & Scripts**
+## ðŸ› ï¸ **Essential Development Tools & Scripts**
 
 ### PowerShell Helper Scripts
 
 ```powershell
+
 # Quality check and auto-fix (run before every commit)
+
 .\scripts\check-quality.ps1 -Fix
 
 # Create new resource wrapper boilerplate
+
 .\scripts\New-ResourceWrapper.ps1 -ResourceName "MyResource" -ResourceType "0x12345678"
 
 # Update project progress tracking
+
 .\scripts\Update-Progress.ps1
 ```
 
 ### Development Shortcuts
 
 ```powershell
+
 # Quick development cycle
+
 cd "c:\Users\nawgl\code\TS4Tools"
 dotnet build TS4Tools.sln --verbosity minimal
 dotnet test --filter "Category!=Integration" --verbosity minimal
 
 # Full validation (before major commits)
+
 dotnet clean
-dotnet restore  
+dotnet restore
 dotnet build TS4Tools.sln --verbosity minimal
 dotnet test TS4Tools.sln --verbosity minimal
 ```
@@ -651,16 +694,19 @@ dotnet test TS4Tools.sln --verbosity minimal
 ### BenchmarkDotNet Performance Testing
 
 ```powershell
+
 # Run performance benchmarks
+
 dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release
 
 # Run specific benchmark category
+
 dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release -- --filter "*ResourceParsing*"
 ```
 
 ---
 
-## 🚨 **Critical Project Context**
+## ðŸš¨ **Critical Project Context**
 
 ### Why TS4Tools Exists
 
@@ -686,55 +732,64 @@ dotnet run --project benchmarks/TS4Tools.Benchmarks -c Release -- --filter "*Res
 
 ---
 
-## 🎯 **Quick Reference Cheat Sheet**
+## ðŸŽ¯ **Quick Reference Cheat Sheet**
 
 ### Daily Development Commands
 
 ```powershell
+
 # Start of day
+
 cd "c:\Users\nawgl\code\TS4Tools"
 git pull
 dotnet restore
 
 # Before any work
+
 dotnet test --filter "Category!=Integration" --verbosity minimal
 
-# Before committing  
+# Before committing
+
 .\scripts\check-quality.ps1 -Fix
 dotnet build TS4Tools.sln --verbosity minimal
 dotnet test --verbosity minimal
 
 # Golden Master validation (resource wrapper work)
+
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity minimal
 ```
 
 ### Emergency Troubleshooting
 
 ```powershell
+
 # Clean build issues
+
 dotnet clean
 dotnet restore --force
 dotnet build TS4Tools.sln
 
 # Reset to known good state
+
 git status
 git stash  # if you have uncommitted changes
 git pull
 
 # Check current phase status
+
 Get-Content "PHASE_*_COMPLETION_STATUS.md" | Select-String "STATUS"
 ```
 
 ### Key Files to Check Before Starting Work
 
 1. **`MIGRATION_ROADMAP.md`** - Overall project status
-2. **`PHASE_X_XX_CHECKLIST.md`** - Current phase requirements  
+2. **`PHASE_X_XX_CHECKLIST.md`** - Current phase requirements
 3. **`AI_ASSISTANT_GUIDELINES.md`** - Detailed development standards
 4. **`CHANGELOG.md`** - Recent changes and completed work
 
 ---
 
-## 🤝 Getting Help
+## ðŸ¤ Getting Help
 
 ### Communication Channels
 
@@ -745,7 +800,7 @@ Get-Content "PHASE_*_COMPLETION_STATUS.md" | Select-String "STATUS"
 ### Who to Ask
 
 - **Architecture Questions**: Lead Developer
-- **UI/UX Questions**: UI Team Lead  
+- **UI/UX Questions**: UI Team Lead
 - **Performance Issues**: Senior Developer
 - **Testing Help**: QA Team Lead
 
@@ -753,7 +808,7 @@ Get-Content "PHASE_*_COMPLETION_STATUS.md" | Select-String "STATUS"
 
 #### Q: Why did we choose Avalonia over MAUI?
 
-A: See [ADR-003](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md).  
+A: See [ADR-003](docs/architecture/adr/ADR-003-Avalonia-CrossPlatform-UI.md).
 MAUI has limited Linux support, and desktop scenarios aren't as mature.
 
 #### Q: How do I add a new configuration setting?
@@ -773,7 +828,7 @@ services.Configure<ResourceManagerOptions>(configuration.GetSection("ResourceMan
 
 #### Q: When should I use async/await?
 
-A: For any I/O operations (file access, network, database). CPU-bound  
+A: For any I/O operations (file access, network, database). CPU-bound
 operations generally don't need async unless you're doing long-running work.
 
 #### Q: How do I handle cross-platform differences?
@@ -783,14 +838,14 @@ A: Use dependency injection with platform-specific implementations:
 ```csharp
 #if WINDOWS
 services.AddScoped<IDialogService, WindowsDialogService>();
-#elif MACOS  
+#elif MACOS
 services.AddScoped<IDialogService, MacDialogService>();
 #endif
 ```
 
 ---
 
-## 🎯 Your First Contribution
+## ðŸŽ¯ Your First Contribution
 
 ### Week 1: Environment Setup
 
@@ -821,7 +876,7 @@ services.AddScoped<IDialogService, MacDialogService>();
 
 ---
 
-## 📋 Checklists
+## ðŸ“‹ Checklists
 
 ### Before Committing Code
 
@@ -854,28 +909,34 @@ services.AddScoped<IDialogService, MacDialogService>();
 
 ---
 
-## 🚨 **Common Pitfalls & Troubleshooting**
+## ðŸš¨ **Common Pitfalls & Troubleshooting**
 
 ### Golden Master Test Failures
 
 ```powershell
+
 # If Golden Master tests fail:
+
 # 1. Check if Sims 4 is installed and path is correct
+
 # 2. Verify test data integrity
+
 dotnet test tests/TS4Tools.Tests.GoldenMaster/ --verbosity diagnostic
 
 # 3. Regenerate test data if needed (ask team lead first)
+
 # Note: This should be rare - most failures indicate implementation issues
+
 ```
 
 ### Resource Wrapper Common Mistakes
 
 ```csharp
-// ❌ DON'T: Break API compatibility
+// âŒ DON'T: Break API compatibility
 public async Task<byte[]> GetDataAsync() // This breaks legacy compatibility
 
-// ✅ DO: Maintain synchronous APIs with async implementation
-public byte[] GetData() 
+// âœ… DO: Maintain synchronous APIs with async implementation
+public byte[] GetData()
 {
     return GetDataAsync().GetAwaiter().GetResult();
 }
@@ -889,13 +950,13 @@ private async Task<byte[]> GetDataAsync() // Internal async implementation
 ### Performance Issues
 
 ```csharp
-// ❌ DON'T: Block async operations
+// âŒ DON'T: Block async operations
 var result = SomeAsyncMethod().Result; // Can cause deadlocks
 
-// ✅ DO: Use proper async patterns
+// âœ… DO: Use proper async patterns
 var result = await SomeAsyncMethod().ConfigureAwait(false);
 
-// ✅ DO: Use streaming for large files  
+// âœ… DO: Use streaming for large files
 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
 // Process in chunks, don't load entire file
 ```
@@ -903,23 +964,23 @@ using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
 ### Cross-Platform Issues
 
 ```csharp
-// ❌ DON'T: Use Windows-specific paths
+// âŒ DON'T: Use Windows-specific paths
 var path = "C:\\temp\\file.txt";
 
-// ✅ DO: Use cross-platform path construction
+// âœ… DO: Use cross-platform path construction
 var path = Path.Combine(Path.GetTempPath(), "file.txt");
 
-// ❌ DON'T: Assume case-insensitive file systems
+// âŒ DON'T: Assume case-insensitive file systems
 File.Exists("File.TXT"); // May fail on Linux
 
-// ✅ DO: Use exact case or normalize
+// âœ… DO: Use exact case or normalize
 File.Exists(Path.GetFullPath("file.txt").ToLowerInvariant());
 ```
 
 ### Dependency Injection Problems
 
 ```csharp
-// ❌ DON'T: Static dependencies (untestable)
+// âŒ DON'T: Static dependencies (untestable)
 public class MyService
 {
     public void DoWork()
@@ -928,11 +989,11 @@ public class MyService
     }
 }
 
-// ✅ DO: Constructor injection (testable)
+// âœ… DO: Constructor injection (testable)
 public class MyService
 {
     private readonly ILogger<MyService> _logger;
-    
+
     public MyService(ILogger<MyService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -942,7 +1003,7 @@ public class MyService
 
 ---
 
-**Welcome to the team!** 🎉
+**Welcome to the team!** ðŸŽ‰
 
 **Essential Success Tips:**
 
@@ -957,5 +1018,6 @@ thousands of Sims 4 modders worldwide - quality and compatibility are paramount.
 
 ---
 
-**Last Updated**: August 10, 2025 *(Updated with critical Golden Master & phase requirements)*  
+**Last Updated**: August 10, 2025 *(Updated with critical Golden Master & phase requirements)*
 **Next Review**: Monthly updates based on team feedback
+

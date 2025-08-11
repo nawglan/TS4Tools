@@ -1,8 +1,8 @@
-# ADR-005: Assembly Loading Modernization
+﻿# ADR-005: Assembly Loading Modernization
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
-**Deciders:** Architecture Team, Senior Developers  
+**Status:** Accepted
+**Date:** August 8, 2025
+**Deciders:** Architecture Team, Senior Developers
 
 ## Context
 
@@ -24,7 +24,7 @@ Assembly dotNetDll = Assembly.LoadFile(path);  // BREAKS IN .NET 8+
 
 // Why it breaks:
 // 1. AssemblyLoadContext isolation changes behavior
-// 2. Type identity issues across contexts  
+// 2. Type identity issues across contexts
 // 3. Plugin assembly resolution failures
 // 4. Memory leak potential with unloadable contexts
 ```
@@ -53,15 +53,15 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
 {
     private readonly ConcurrentDictionary<string, AssemblyLoadContext> _contexts = new();
     private readonly ILogger<ModernAssemblyLoadContextManager> _logger;
-    
+
     public Assembly LoadFromPath(string assemblyPath)
     {
         var contextName = Path.GetFileNameWithoutExtension(assemblyPath);
-        
+
         // Use shared context for plugin compatibility
-        var context = _contexts.GetOrAdd(contextName, name => 
+        var context = _contexts.GetOrAdd(contextName, name =>
             new AssemblyLoadContext(name, isCollectible: true));
-            
+
         try
         {
             return context.LoadFromAssemblyPath(assemblyPath);
@@ -72,7 +72,7 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
             throw new PluginLoadException($"Cannot load assembly: {assemblyPath}", ex);
         }
     }
-    
+
     public Type[] GetTypesFromAssembly(Assembly assembly)
     {
         try
@@ -82,12 +82,12 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
         catch (ReflectionTypeLoadException ex)
         {
             // Return successfully loaded types, log failures
-            _logger.LogWarning("Some types failed to load from {Assembly}: {Errors}", 
+            _logger.LogWarning("Some types failed to load from {Assembly}: {Errors}",
                 assembly.FullName, string.Join(", ", ex.LoaderExceptions.Select(e => e?.Message)));
             return ex.Types.Where(t => t != null).ToArray();
         }
     }
-    
+
     public void UnloadContext(string contextName)
     {
         if (_contexts.TryRemove(contextName, out var context))
@@ -105,19 +105,19 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
 public static class WrapperDealer
 {
     private static IAssemblyLoadContextManager _assemblyManager;
-    
+
     static WrapperDealer()
     {
         _assemblyManager = ServiceProvider.GetService<IAssemblyLoadContextManager>();
     }
-    
+
     // Existing method signature preserved exactly
     public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)
     {
         // Implementation uses modern loading internally
         return _resourceService.GetResource(APIversion, pkg, rie);
     }
-    
+
     // Plugin discovery with modern loading
     internal static void LoadPluginAssemblies(string directory)
     {
@@ -128,7 +128,7 @@ public static class WrapperDealer
                 // Modern assembly loading
                 var assembly = _assemblyManager.LoadFromPath(assemblyPath);
                 var types = _assemblyManager.GetTypesFromAssembly(assembly);
-                
+
                 // Existing registration logic preserved
                 RegisterResourceHandlers(types);
             }
@@ -149,12 +149,12 @@ public static class WrapperDealer
 public class LegacyPluginAdapter
 {
     private readonly IAssemblyLoadContextManager _assemblyManager;
-    
+
     public async Task<IEnumerable<IResourceWrapper>> AdaptLegacyHandlersAsync(Assembly assembly)
     {
         var wrappers = new List<IResourceWrapper>();
         var types = _assemblyManager.GetTypesFromAssembly(assembly);
-        
+
         foreach (var type in types)
         {
             if (IsLegacyResourceHandler(type))
@@ -164,14 +164,14 @@ public class LegacyPluginAdapter
                 wrappers.Add(adapter);
             }
         }
-        
+
         return wrappers;
     }
-    
+
     private bool IsLegacyResourceHandler(Type type)
     {
-        return type.IsSubclassOf(typeof(AResourceHandler)) && 
-               !type.IsAbstract && 
+        return type.IsSubclassOf(typeof(AResourceHandler)) &&
+               !type.IsAbstract &&
                type.GetConstructor(Type.EmptyTypes) != null;
     }
 }
@@ -179,16 +179,16 @@ public class LegacyPluginAdapter
 public class LegacyResourceHandlerAdapter : IResourceWrapper
 {
     private readonly AResourceHandler _legacyHandler;
-    
+
     public LegacyResourceHandlerAdapter(Type handlerType)
     {
         _legacyHandler = (AResourceHandler)Activator.CreateInstance(handlerType);
     }
-    
+
     public async Task<IResource> CreateResourceAsync(string resourceType, Stream data)
     {
         // Bridge synchronous legacy API to modern async interface
-        return await Task.Run(() => 
+        return await Task.Run(() =>
         {
             var constructor = _legacyHandler[resourceType]?.GetConstructor(
                 new[] { typeof(int), typeof(Stream) });
@@ -242,11 +242,11 @@ public async Task LoadLegacyPlugin_MaintainsCompatibility()
 {
     var manager = new ModernAssemblyLoadContextManager();
     var assembly = manager.LoadFromPath("TestPlugin.dll");
-    
+
     // Verify legacy AResourceHandler can be instantiated and used
     var types = manager.GetTypesFromAssembly(assembly);
     var handlerType = types.FirstOrDefault(t => t.IsSubclassOf(typeof(AResourceHandler)));
-    
+
     Assert.NotNull(handlerType);
     var handler = Activator.CreateInstance(handlerType) as AResourceHandler;
     Assert.NotNull(handler);
@@ -262,7 +262,7 @@ public class PluginLoadException : Exception
 {
     public string AssemblyPath { get; }
     public LoadFailureReason Reason { get; }
-    
+
     public PluginLoadException(string assemblyPath, LoadFailureReason reason, Exception innerException)
         : base($"Plugin load failed: {assemblyPath} - {reason}", innerException)
     {
@@ -311,18 +311,18 @@ public class OptimizedAssemblyLoadContextManager : IAssemblyLoadContextManager, 
 {
     private readonly Timer _cleanupTimer;
     private readonly ConcurrentDictionary<string, WeakReference<AssemblyLoadContext>> _contexts = new();
-    
+
     public OptimizedAssemblyLoadContextManager()
     {
         // Cleanup unused contexts every 5 minutes
-        _cleanupTimer = new Timer(CleanupUnusedContexts, null, 
+        _cleanupTimer = new Timer(CleanupUnusedContexts, null,
             TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
     }
-    
+
     private void CleanupUnusedContexts(object state)
     {
         var keysToRemove = new List<string>();
-        
+
         foreach (var kvp in _contexts)
         {
             if (!kvp.Value.TryGetTarget(out var context))
@@ -330,7 +330,7 @@ public class OptimizedAssemblyLoadContextManager : IAssemblyLoadContextManager, 
                 keysToRemove.Add(kvp.Key);
             }
         }
-        
+
         foreach (var key in keysToRemove)
         {
             _contexts.TryRemove(key, out _);
@@ -346,22 +346,22 @@ public class CachingAssemblyLoader : IAssemblyLoadContextManager
 {
     private readonly ConcurrentDictionary<string, Assembly> _assemblyCache = new();
     private readonly ConcurrentDictionary<string, DateTime> _lastModified = new();
-    
+
     public Assembly LoadFromPath(string assemblyPath)
     {
         var lastWrite = File.GetLastWriteTime(assemblyPath);
-        
+
         if (_assemblyCache.TryGetValue(assemblyPath, out var cached) &&
             _lastModified.TryGetValue(assemblyPath, out var cachedTime) &&
             cachedTime >= lastWrite)
         {
             return cached; // Return cached assembly if file hasn't changed
         }
-        
+
         var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
         _assemblyCache[assemblyPath] = assembly;
         _lastModified[assemblyPath] = lastWrite;
-        
+
         return assembly;
     }
 }
@@ -379,9 +379,9 @@ public async Task LoadFromPath_ValidAssembly_ReturnsAssembly(string fileName)
 {
     var testPath = Path.Combine(TestDataDirectory, fileName);
     var manager = new ModernAssemblyLoadContextManager();
-    
+
     var assembly = manager.LoadFromPath(testPath);
-    
+
     Assert.NotNull(assembly);
     Assert.Equal(Path.GetFileNameWithoutExtension(fileName), assembly.GetName().Name);
 }
@@ -390,10 +390,10 @@ public async Task LoadFromPath_ValidAssembly_ReturnsAssembly(string fileName)
 public void LoadFromPath_InvalidPath_ThrowsPluginLoadException()
 {
     var manager = new ModernAssemblyLoadContextManager();
-    
-    var exception = Assert.Throws<PluginLoadException>(() => 
+
+    var exception = Assert.Throws<PluginLoadException>(() =>
         manager.LoadFromPath("NonexistentFile.dll"));
-        
+
     Assert.Equal(LoadFailureReason.FileNotFound, exception.Reason);
 }
 ```
@@ -407,16 +407,16 @@ public async Task FullWorkflow_LoadAndExecutePlugin_MaintainsCompatibility()
     // Test complete workflow: load assembly -> instantiate handler -> process resource
     var manager = new ModernAssemblyLoadContextManager();
     var adapter = new LegacyPluginAdapter(manager);
-    
+
     var assembly = manager.LoadFromPath("TestResourceHandler.dll");
     var wrappers = await adapter.AdaptLegacyHandlersAsync(assembly);
-    
+
     Assert.Single(wrappers);
-    
+
     var wrapper = wrappers.First();
     using var testStream = new MemoryStream(TestResourceData);
     var resource = await wrapper.CreateResourceAsync("0x12345678", testStream);
-    
+
     Assert.NotNull(resource);
     Assert.IsAssignableFrom<IResource>(resource);
 }
@@ -430,7 +430,7 @@ public async Task FullWorkflow_LoadAndExecutePlugin_MaintainsCompatibility()
 public class SecureAssemblyLoader : IAssemblyLoadContextManager
 {
     private readonly IAssemblyValidator _validator;
-    
+
     public Assembly LoadFromPath(string assemblyPath)
     {
         // Validate assembly before loading
@@ -439,7 +439,7 @@ public class SecureAssemblyLoader : IAssemblyLoadContextManager
         {
             throw new SecurityException($"Assembly validation failed: {validationResult.ErrorMessage}");
         }
-        
+
         return AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyPath);
     }
 }
@@ -487,8 +487,8 @@ public class AssemblyValidationResult
 | Metric | Target | Measurement |
 |--------|--------|-------------|
 | **Plugin Compatibility** | 100% | Automated test suite with existing plugins |
-| **Load Performance** | ≤ +5% vs original | Assembly load time benchmarks |
-| **Memory Usage** | ≤ original | Memory profiling during plugin loading |
+| **Load Performance** | â‰¤ +5% vs original | Assembly load time benchmarks |
+| **Memory Usage** | â‰¤ original | Memory profiling during plugin loading |
 | **Error Rate** | <1% | Production telemetry |
 
 ## Related Decisions
@@ -497,3 +497,4 @@ public class AssemblyValidationResult
 - ADR-002: Dependency Injection (provides service abstraction)
 - ADR-004: Greenfield Migration Strategy (context for this modernization)
 - ADR-007: Plugin Architecture Modernization
+

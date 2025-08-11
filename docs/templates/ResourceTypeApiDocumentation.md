@@ -1,10 +1,10 @@
-# [ResourceTypeName] API Documentation
+﻿# [ResourceTypeName] API Documentation
 
-**Resource Type ID:** `0x[TypeID]`  
-**Legacy Class:** `[LegacyClassName]`  
-**TS4Tools Implementation:** `[NewClassName]`  
-**Package:** `TS4Tools.Resources.[Category]`  
-**Status:** [Implementation Status]  
+**Resource Type ID:** `0x[TypeID]`
+**Legacy Class:** `[LegacyClassName]`
+**TS4Tools Implementation:** `[NewClassName]`
+**Package:** `TS4Tools.Resources.[Category]`
+**Status:** [Implementation Status]
 
 ## Overview
 
@@ -43,7 +43,7 @@ public interface I[ResourceTypeName] : IResource
     /// [Property description]
     /// </summary>
     [PropertyType] PropertyName { get; set; }
-    
+
     /// <summary>
     /// [Method description]
     /// </summary>
@@ -156,11 +156,11 @@ await package.UpdateResourceAsync(resourceIndex, modifiedStream);
 
 ### Test Coverage
 
-- ✅ Binary format parsing
-- ✅ Round-trip serialization  
-- ✅ Property validation
-- ✅ Edge case handling
-- ✅ Performance benchmarks
+- âœ… Binary format parsing
+- âœ… Round-trip serialization
+- âœ… Property validation
+- âœ… Edge case handling
+- âœ… Performance benchmarks
 
 ### Golden Master Tests
 
@@ -187,6 +187,7 @@ public async Task [ResourceTypeName]_RoundTripSerialization_ShouldPreserveBinary
 
 ---
 
-**Last Updated:** [Date]  
-**Author:** [Author Name]  
+**Last Updated:** [Date]
+**Author:** [Author Name]
 **Review Status:** [Review Status]
+

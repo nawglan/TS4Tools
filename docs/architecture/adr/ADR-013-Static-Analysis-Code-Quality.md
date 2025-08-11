@@ -1,7 +1,7 @@
-# ADR-013: Static Analysis and Code Quality Standards
+﻿# ADR-013: Static Analysis and Code Quality Standards
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
+**Status:** Accepted
+**Date:** August 8, 2025
 **Deciders:** Architecture Team, Development Team, Quality Assurance Team
 
 ## Context
@@ -9,7 +9,7 @@
 The TS4Tools project represents a critical modernization of legacy Sims4Tools with significantly higher quality requirements:
 
 1. **Legacy Technical Debt**: Original codebase has accumulated significant technical debt
-2. **Cross-Platform Requirements**: Code must work reliably across Windows, macOS, and Linux  
+2. **Cross-Platform Requirements**: Code must work reliably across Windows, macOS, and Linux
 3. **Community Impact**: Tools are used by thousands of modders and content creators
 4. **Long-term Maintenance**: Modern codebase must be maintainable for years to come
 5. **Performance Criticality**: Package processing operations must be efficient and reliable
@@ -21,7 +21,7 @@ Without systematic code quality enforcement, the project risks recreating the ma
 We will implement **comprehensive static analysis and code quality standards** with the following components:
 
 1. **Multi-Layer Analysis**: Compiler warnings, Roslyn analyzers, SonarAnalyzer, and custom rules
-2. **Graduated Enforcement**: Warnings → Errors progression with clear timelines
+2. **Graduated Enforcement**: Warnings â†’ Errors progression with clear timelines
 3. **Quality Gates**: Automated quality checks in CI/CD pipeline
 4. **Suppression Policy**: Controlled suppression with justification requirements
 5. **Team Standards**: Coding conventions and architectural guidelines
@@ -37,7 +37,7 @@ We will implement **comprehensive static analysis and code quality standards** w
 - Graceful error handling and recovery
 - Memory safety for long-running operations
 
-#### Maintainability Requirements  
+#### Maintainability Requirements
 
 - Code must be readable and understandable by new team members
 - Consistent patterns and conventions across codebase
@@ -62,7 +62,7 @@ We will implement **comprehensive static analysis and code quality standards** w
 #### SonarAnalyzer.CSharp (Selected)
 
 - **Pros**: Excellent coverage, proven enterprise tool
-- **Cons**: Some false positives, configuration complexity  
+- **Cons**: Some false positives, configuration complexity
 - **Decision**: Secondary layer for advanced analysis
 
 #### Custom Roslyn Analyzers (Selected for Specific Cases)
@@ -84,20 +84,26 @@ We will implement **comprehensive static analysis and code quality standards** w
 #### 1. Solution-Level Configuration (.editorconfig)
 
 ```ini
+
 # Root EditorConfig file
+
 root = true
 
 [*.cs]
+
 # Code Style Rules
+
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 
-# Language Rules  
+# Language Rules
+
 csharp_prefer_braces = true:warning
 csharp_prefer_simple_using_statement = true:suggestion
 csharp_style_namespace_declarations = file_scoped:warning
 
 # Naming Conventions
+
 dotnet_naming_rule.interfaces_should_be_prefixed_with_i.severity = warning
 dotnet_naming_symbols.interface.applicable_kinds = interface
 dotnet_naming_symbols.interface.required_prefix = I
@@ -112,15 +118,15 @@ dotnet_naming_style.pascal_case.capitalization = pascal_case
     <!-- Enable all warnings as errors (graduated approach) -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>CS1591;CS1587;CS1572</WarningsNotAsErrors>
-    
+
     <!-- Enable nullable reference types -->
     <Nullable>enable</Nullable>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    
+
     <!-- Code analysis configuration -->
     <CodeAnalysisRuleSet>$(MSBuildThisFileDirectory)CodeAnalysis.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="SonarAnalyzer.CSharp" Version="9.12.0.78982">
       <PrivateAssets>all</PrivateAssets>
@@ -139,11 +145,11 @@ dotnet_naming_style.pascal_case.capitalization = pascal_case
   <Rule Id="CA1001" Action="Error" />  <!-- Types that own disposable fields should be disposable -->
   <Rule Id="CA1002" Action="Warning" /> <!-- Do not expose generic lists -->
   <Rule Id="CA1031" Action="Info" />   <!-- Do not catch general exception types -->
-  
+
   <!-- Microsoft.CodeQuality.CSharp.Analyzers -->
   <Rule Id="CA1802" Action="Warning" /> <!-- Use literals where appropriate -->
   <Rule Id="CA1822" Action="Suggestion" /> <!-- Mark members as static -->
-  
+
   <!-- SonarAnalyzer.CSharp -->
   <Rule Id="S1066" Action="Warning" /> <!-- Mergeable if statements should be combined -->
   <Rule Id="S1172" Action="Warning" /> <!-- Unused method parameters should be removed -->
@@ -168,10 +174,10 @@ public class PackageResourceAnalyzer : DiagnosticAnalyzer
         DiagnosticSeverity.Error,
         true,
         "Package resources can cause memory leaks if not properly disposed");
-        
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => 
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
         ImmutableArray.Create(PackageResourceDisposalRule);
-        
+
     public override void Initialize(AnalysisContext context)
     {
         context.RegisterSyntaxNodeAction(AnalyzeClassDeclaration, SyntaxKind.ClassDeclaration);
@@ -182,7 +188,7 @@ public class PackageResourceAnalyzer : DiagnosticAnalyzer
 #### Architectural Pattern Enforcement
 
 ```csharp
-[DiagnosticAnalyzer(LanguageNames.CSharp)]  
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ServiceLifetimeAnalyzer : DiagnosticAnalyzer
 {
     // Rule: Service classes must have correct lifetime registration
@@ -209,7 +215,7 @@ public class ServiceLifetimeAnalyzer : DiagnosticAnalyzer
 #### Warning Resolution Strategy
 
 1. **Critical Warnings** (Week 1): Fix immediately (resource leaks, null reference, async issues)
-2. **Important Warnings** (Week 2): Address systematically (naming, style, complexity)  
+2. **Important Warnings** (Week 2): Address systematically (naming, style, complexity)
 3. **Style Warnings** (Week 3): Batch fix with automated tools
 4. **Informational** (Ongoing): Address during normal development
 
@@ -232,7 +238,7 @@ public class ServiceLifetimeAnalyzer : DiagnosticAnalyzer
 
 ### Phase 3: Enforcement (Week 3)
 
-#### Graduated Warning → Error Promotion
+#### Graduated Warning â†’ Error Promotion
 
 ```xml
 <!-- Week 3: Promote resolved warning categories to errors -->
@@ -248,17 +254,19 @@ public class ServiceLifetimeAnalyzer : DiagnosticAnalyzer
 #### Quality Gate Implementation
 
 ```yaml
+
 # Azure DevOps Pipeline
+
 - task: DotNetCoreCLI@2
   displayName: 'Code Analysis'
   inputs:
     command: 'build'
     projects: '**/*.csproj'
     arguments: '--configuration Release --verbosity normal'
-    
+
 - task: SonarCloudAnalyze@1
   displayName: 'Run SonarCloud Analysis'
-  
+
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish Code Coverage'
   inputs:
@@ -292,7 +300,7 @@ catch (Exception ex) // Required by legacy API
 
 ```csharp
 // Acceptable: Performance-critical path with justification
-[SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic", 
+[SuppressMessage("Microsoft.Performance", "CA1822:MarkMembersAsStatic",
     Justification = "Method accesses instance state in release builds")]
 public unsafe byte* GetPackageDataPointer()
 {
@@ -336,12 +344,12 @@ public class CodeQualityMetrics
     public int CyclomaticComplexity { get; set; }
     public int LinesOfCode { get; set; }
     public double MaintainabilityIndex { get; set; }
-    
-    // Quality metrics  
+
+    // Quality metrics
     public int TotalWarnings { get; set; }
     public int SuppressedWarnings { get; set; }
     public double CodeCoverage { get; set; }
-    
+
     // Trend analysis
     public List<QualityTrend> WeeklyTrends { get; set; }
 }
@@ -352,12 +360,14 @@ public class CodeQualityMetrics
 ```yaml
 quality_gates:
   # Blocking conditions
+
   - total_warnings: 0  # No warnings allowed in main branch
   - code_coverage: ">= 85%"  # Minimum coverage requirement
   - duplicated_lines: "< 3%"  # Duplication threshold
   - maintainability_rating: "A"  # SonarQube maintainability rating
-  
+
   # Warning conditions
+
   - cognitive_complexity: "> 15"  # Flag complex methods
   - file_length: "> 500 lines"   # Flag large files
 ```
@@ -372,11 +382,11 @@ quality_gates:
   "omnisharp.enableRoslynAnalyzers": true,
   "omnisharp.enableEditorConfigSupport": true,
   "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": false,
-  
+
   // Code formatting
   "editor.formatOnSave": true,
   "csharp.format.enable": true,
-  
+
   // Problem highlighting
   "problems.decorations.enabled": true
 }
@@ -386,23 +396,26 @@ quality_gates:
 
 ```bash
 #!/bin/bash
+
 # .git/hooks/pre-commit
 
 # Run code analysis on changed files
+
 dotnet build --verbosity quiet --nologo --no-restore
 if [ $? -ne 0 ]; then
-    echo "❌ Build failed. Please fix errors before committing."
+    echo "âŒ Build failed. Please fix errors before committing."
     exit 1
 fi
 
 # Run code formatting check
+
 dotnet format --verify-no-changes --verbosity quiet
 if [ $? -ne 0 ]; then
-    echo "❌ Code formatting issues found. Run 'dotnet format' to fix."
+    echo "âŒ Code formatting issues found. Run 'dotnet format' to fix."
     exit 1
 fi
 
-echo "✅ Code quality checks passed"
+echo "âœ… Code quality checks passed"
 exit 0
 ```
 
@@ -469,24 +482,24 @@ exit 0
 
 ### Positive
 
-- ✅ Consistent, high-quality codebase with automated enforcement
-- ✅ Early detection of bugs, performance issues, and maintainability problems
-- ✅ Improved developer knowledge through analysis rule education
-- ✅ Reduced technical debt accumulation over time
-- ✅ Enhanced confidence in cross-platform reliability
+- âœ… Consistent, high-quality codebase with automated enforcement
+- âœ… Early detection of bugs, performance issues, and maintainability problems
+- âœ… Improved developer knowledge through analysis rule education
+- âœ… Reduced technical debt accumulation over time
+- âœ… Enhanced confidence in cross-platform reliability
 
 ### Negative
 
-- ❌ Initial productivity impact during rule adoption period
-- ❌ Potential developer frustration with strict enforcement
-- ❌ Analysis tool maintenance and configuration overhead
-- ❌ False positive investigation and suppression management
+- âŒ Initial productivity impact during rule adoption period
+- âŒ Potential developer frustration with strict enforcement
+- âŒ Analysis tool maintenance and configuration overhead
+- âŒ False positive investigation and suppression management
 
 ### Neutral
 
-- 📋 Need for team education on analysis rules and patterns
-- 📋 Regular review and updates of quality standards
-- 📋 Integration with development workflow and tools
+- ðŸ“‹ Need for team education on analysis rules and patterns
+- ðŸ“‹ Regular review and updates of quality standards
+- ðŸ“‹ Integration with development workflow and tools
 
 ## Related Decisions
 
@@ -497,6 +510,7 @@ exit 0
 
 ---
 
-**Implementation Status:** 🚧 **IN PROGRESS** - Basic analyzers enabled, graduated rollout underway  
-**Review Date:** September 8, 2025  
+**Implementation Status:** ðŸš§ **IN PROGRESS** - Basic analyzers enabled, graduated rollout underway
+**Review Date:** September 8, 2025
 **Document Owner:** Architecture Team, Development Team
+

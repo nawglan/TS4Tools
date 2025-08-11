@@ -1,8 +1,8 @@
-# ADR-001: Adopt .NET 9 as Target Framework
+﻿# ADR-001: Adopt .NET 9 as Target Framework
 
-**Status:** Accepted  
-**Date:** August 3, 2025  
-**Deciders:** Architecture Team, Project Lead  
+**Status:** Accepted
+**Date:** August 3, 2025
+**Deciders:** Architecture Team, Project Lead
 
 ## Context
 
@@ -27,10 +27,10 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 
 | Framework | Cross-Platform | Performance | Modern Features | Support Lifecycle |
 |-----------|----------------|-------------|-----------------|-------------------|
-| .NET Framework 4.0 | ❌ Windows Only | Baseline | Limited | Maintenance Mode |
-| .NET 6 (LTS) | ✅ | +40% | Full | Until Nov 2024 |
-| .NET 8 (LTS) | ✅ | +60% | Full | Until Nov 2026 |
-| **✅ .NET 9** | ✅ | +80% | Latest | Until May 2025* |
+| .NET Framework 4.0 | âŒ Windows Only | Baseline | Limited | Maintenance Mode |
+| .NET 6 (LTS) | âœ… | +40% | Full | Until Nov 2024 |
+| .NET 8 (LTS) | âœ… | +60% | Full | Until Nov 2026 |
+| **âœ… .NET 9** | âœ… | +80% | Latest | Until May 2025* |
 
 *Note: .NET 9 is STS (Standard Term Support), but provides latest features for forward compatibility to .NET 10 LTS.
 
@@ -172,3 +172,4 @@ Regular reviews will be conducted to assess the impact and adjust the strategy i
 ---
 
 **Related ADRs:** ADR-002 (Dependency Injection), ADR-003 (Cross-Platform UI)
+

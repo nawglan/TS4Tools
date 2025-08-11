@@ -1,8 +1,8 @@
-# ADR-008: Cross-Platform File Format Compatibility
+﻿# ADR-008: Cross-Platform File Format Compatibility
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
-**Deciders:** Architecture Team, Cross-Platform Team  
+**Status:** Accepted
+**Date:** August 8, 2025
+**Deciders:** Architecture Team, Cross-Platform Team
 
 ## Context
 
@@ -26,11 +26,11 @@ We will implement a **comprehensive cross-platform compatibility layer** that en
 
 | Component | Windows | Linux | macOS | Compatibility Risk |
 |-----------|---------|-------|-------|-------------------|
-| **DBPF Package Format** | ✅ Reference | ❓ Untested | ❓ Untested | **CRITICAL** |
-| **Resource Type Parsing** | ✅ Reference | ❓ Untested | ❓ Untested | **HIGH** |
-| **Compression Algorithms** | ✅ Native DLLs | ⚠️ Managed only | ⚠️ Managed only | **HIGH** |
-| **File I/O Operations** | ✅ Tested | ⚠️ Path differences | ⚠️ Path differences | **MEDIUM** |
-| **Memory Layout** | ✅ x64 tested | ⚠️ Endianness | ⚠️ Endianness | **HIGH** |
+| **DBPF Package Format** | âœ… Reference | â“ Untested | â“ Untested | **CRITICAL** |
+| **Resource Type Parsing** | âœ… Reference | â“ Untested | â“ Untested | **HIGH** |
+| **Compression Algorithms** | âœ… Native DLLs | âš ï¸ Managed only | âš ï¸ Managed only | **HIGH** |
+| **File I/O Operations** | âœ… Tested | âš ï¸ Path differences | âš ï¸ Path differences | **MEDIUM** |
+| **Memory Layout** | âœ… x64 tested | âš ï¸ Endianness | âš ï¸ Endianness | **HIGH** |
 
 ### Critical Success Factors
 
@@ -58,13 +58,13 @@ public class CrossPlatformCompatibilityService : IPlatformCompatibilityService
 {
     private readonly ILogger<CrossPlatformCompatibilityService> _logger;
     private readonly Lazy<PlatformInfo> _platformInfo;
-    
+
     public CrossPlatformCompatibilityService(ILogger<CrossPlatformCompatibilityService> logger)
     {
         _logger = logger;
         _platformInfo = new Lazy<PlatformInfo>(DetectPlatformInfo);
     }
-    
+
     public async Task<byte[]> CompressDataAsync(byte[] data, CompressionType type)
     {
         return type switch
@@ -75,7 +75,7 @@ public class CrossPlatformCompatibilityService : IPlatformCompatibilityService
             _ => throw new NotSupportedException($"Compression type {type} not supported")
         };
     }
-    
+
     public async Task<byte[]> DecompressDataAsync(byte[] data, CompressionType type)
     {
         return type switch
@@ -86,15 +86,15 @@ public class CrossPlatformCompatibilityService : IPlatformCompatibilityService
             _ => throw new NotSupportedException($"Compression type {type} not supported")
         };
     }
-    
+
     public string NormalizePath(string path)
     {
         if (string.IsNullOrEmpty(path)) return path;
-        
+
         // Handle platform-specific path separators
         var normalized = path.Replace('\\', Path.DirectorySeparatorChar)
                              .Replace('/', Path.DirectorySeparatorChar);
-                             
+
         // Handle case sensitivity differences
         if (_platformInfo.Value.FileSystemCaseSensitive)
         {
@@ -105,25 +105,25 @@ public class CrossPlatformCompatibilityService : IPlatformCompatibilityService
             return normalized.ToLowerInvariant(); // Normalize case
         }
     }
-    
+
     public async Task<bool> ValidateByteOrderAsync()
     {
         // Validate that our binary parsing produces identical results across platforms
         var testData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
-        
+
         using var stream = new MemoryStream(testData);
         using var reader = new BinaryReader(stream);
-        
+
         var int32Value = reader.ReadInt32();
         var expected = BitConverter.IsLittleEndian ? 0x04030201 : 0x01020304;
-        
+
         if (int32Value != expected)
         {
             _logger.LogError("Byte order validation failed. Expected {Expected:X8}, got {Actual:X8}",
                 expected, int32Value);
             return false;
         }
-        
+
         return true;
     }
 }
@@ -156,13 +156,13 @@ public class CrossPlatformBinaryService : IBinaryCompatibilityService
         var size = Marshal.SizeOf<T>();
         var buffer = new byte[size];
         await stream.ReadExactlyAsync(buffer, 0, size);
-        
+
         // Ensure consistent byte order across platforms
         if (RequiresByteSwap<T>())
         {
             SwapBytes(buffer);
         }
-        
+
         var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         try
         {
@@ -173,12 +173,12 @@ public class CrossPlatformBinaryService : IBinaryCompatibilityService
             handle.Free();
         }
     }
-    
+
     public async Task WriteStructAsync<T>(Stream stream, T value) where T : struct
     {
         var size = Marshal.SizeOf<T>();
         var buffer = new byte[size];
-        
+
         var handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
         try
         {
@@ -188,22 +188,22 @@ public class CrossPlatformBinaryService : IBinaryCompatibilityService
         {
             handle.Free();
         }
-        
+
         // Ensure consistent byte order across platforms
         if (RequiresByteSwap<T>())
         {
             SwapBytes(buffer);
         }
-        
+
         await stream.WriteAsync(buffer, 0, size);
     }
-    
+
     private bool RequiresByteSwap<T>() where T : struct
     {
         // DBPF format is little-endian, swap if we're on big-endian system
         return !BitConverter.IsLittleEndian && HasIntegerFields<T>();
     }
-    
+
     private void SwapBytes(byte[] buffer)
     {
         // Implement byte swapping for multi-byte integers
@@ -237,11 +237,11 @@ public class CrossPlatformZlibCompression : ICompressionAlgorithm
 {
     private readonly ILogger<CrossPlatformZlibCompression> _logger;
     private readonly IPlatformCompatibilityService _platformService;
-    
+
     public string Name => "ZLIB";
     public CompressionType Type => CompressionType.ZLIB;
     public bool IsNativeAccelerated => _platformService.GetPlatformInfo().HasNativeCompression;
-    
+
     public async Task<byte[]> CompressAsync(byte[] data)
     {
         if (IsNativeAccelerated && OperatingSystem.IsWindows())
@@ -255,19 +255,19 @@ public class CrossPlatformZlibCompression : ICompressionAlgorithm
             return await CompressWithManagedImplementationAsync(data);
         }
     }
-    
+
     private async Task<byte[]> CompressWithManagedImplementationAsync(byte[] data)
     {
         using var inputStream = new MemoryStream(data);
         using var outputStream = new MemoryStream();
         using var zlibStream = new ZLibStream(outputStream, CompressionLevel.Optimal);
-        
+
         await inputStream.CopyToAsync(zlibStream);
         await zlibStream.FlushAsync();
-        
+
         return outputStream.ToArray();
     }
-    
+
     public async Task<bool> ValidateCompatibilityAsync(byte[] testData)
     {
         try
@@ -275,7 +275,7 @@ public class CrossPlatformZlibCompression : ICompressionAlgorithm
             // Test round-trip compression to ensure consistency
             var compressed = await CompressAsync(testData);
             var decompressed = await DecompressAsync(compressed);
-            
+
             return testData.SequenceEqual(decompressed);
         }
         catch (Exception ex)
@@ -292,29 +292,29 @@ public class CrossPlatformRefPackCompression : ICompressionAlgorithm
     public string Name => "RefPack";
     public CompressionType Type => CompressionType.RefPack;
     public bool IsNativeAccelerated => false; // Managed implementation only
-    
+
     public async Task<byte[]> CompressAsync(byte[] data)
     {
         return await Task.Run(() => CompressRefPackData(data));
     }
-    
+
     public async Task<byte[]> DecompressAsync(byte[] data)
     {
         return await Task.Run(() => DecompressRefPackData(data));
     }
-    
+
     private byte[] CompressRefPackData(byte[] input)
     {
         // Port of the original RefPack algorithm - byte-perfect compatibility critical
         var output = new List<byte>();
         var position = 0;
-        
+
         while (position < input.Length)
         {
             // RefPack compression algorithm implementation
             // Must match original behavior exactly
             var match = FindLongestMatch(input, position);
-            
+
             if (match.Length >= 3) // Minimum match length
             {
                 // Encode as back-reference
@@ -328,24 +328,24 @@ public class CrossPlatformRefPackCompression : ICompressionAlgorithm
                 position++;
             }
         }
-        
+
         return output.ToArray();
     }
-    
+
     public async Task<bool> ValidateCompatibilityAsync(byte[] testData)
     {
         // Critical: RefPack must produce identical results to original implementation
         var compressed = await CompressAsync(testData);
         var decompressed = await DecompressAsync(compressed);
-        
+
         var isValid = testData.SequenceEqual(decompressed);
-        
+
         if (!isValid)
         {
             _logger.LogError("RefPack compatibility validation failed - decompressed data differs");
             LogDataDifferences(testData, decompressed);
         }
-        
+
         return isValid;
     }
 }
@@ -369,20 +369,20 @@ public class CrossPlatformFileSystemService : IFileSystemService
 {
     private readonly IPlatformCompatibilityService _platformService;
     private readonly ILogger<CrossPlatformFileSystemService> _logger;
-    
+
     public string CombinePath(params string[] paths)
     {
         if (paths == null || paths.Length == 0) return string.Empty;
-        
+
         var result = paths[0];
         for (int i = 1; i < paths.Length; i++)
         {
             result = Path.Combine(result, paths[i]);
         }
-        
+
         return _platformService.NormalizePath(result);
     }
-    
+
     public async Task<string[]> GetFilesAsync(string directory, string pattern)
     {
         if (!Directory.Exists(directory))
@@ -390,26 +390,26 @@ public class CrossPlatformFileSystemService : IFileSystemService
             _logger.LogWarning("Directory does not exist: {Directory}", directory);
             return Array.Empty<string>();
         }
-        
+
         try
         {
             var files = Directory.GetFiles(directory, pattern, SearchOption.TopDirectoryOnly);
-            
+
             // Normalize paths for cross-platform consistency
             return files.Select(f => _platformService.NormalizePath(f)).ToArray();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get files from {Directory} with pattern {Pattern}", 
+            _logger.LogError(ex, "Failed to get files from {Directory} with pattern {Pattern}",
                 directory, pattern);
             return Array.Empty<string>();
         }
     }
-    
+
     public async Task<bool> ValidatePathCompatibilityAsync(string path)
     {
         if (string.IsNullOrEmpty(path)) return false;
-        
+
         // Check for invalid characters on current platform
         var invalidChars = Path.GetInvalidPathChars();
         if (path.Any(c => invalidChars.Contains(c)))
@@ -417,30 +417,30 @@ public class CrossPlatformFileSystemService : IFileSystemService
             _logger.LogWarning("Path contains invalid characters: {Path}", path);
             return false;
         }
-        
+
         // Check path length limits
         if (path.Length > GetMaxPathLength())
         {
-            _logger.LogWarning("Path exceeds maximum length: {Path} ({Length} characters)", 
+            _logger.LogWarning("Path exceeds maximum length: {Path} ({Length} characters)",
                 path, path.Length);
             return false;
         }
-        
+
         // Check for reserved names (Windows specific, but validate everywhere)
         var fileName = Path.GetFileName(path);
-        var reservedNames = new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", 
-                                   "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", 
+        var reservedNames = new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4",
+                                   "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
                                    "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
-                                   
+
         if (reservedNames.Any(name => string.Equals(fileName, name, StringComparison.OrdinalIgnoreCase)))
         {
             _logger.LogWarning("Path uses reserved filename: {Path}", path);
             return false;
         }
-        
+
         return true;
     }
-    
+
     private int GetMaxPathLength()
     {
         if (OperatingSystem.IsWindows())
@@ -467,7 +467,7 @@ public class CrossPlatformCompatibilityTests
 {
     private IPlatformCompatibilityService _compatibilityService;
     private IBinaryCompatibilityService _binaryService;
-    
+
     [TestInitialize]
     public void Setup()
     {
@@ -475,29 +475,29 @@ public class CrossPlatformCompatibilityTests
             Mock.Of<ILogger<CrossPlatformCompatibilityService>>());
         _binaryService = new CrossPlatformBinaryService();
     }
-    
+
     [TestMethod]
     public async Task ByteOrder_IsConsistentAcrossPlatforms()
     {
         // Arrange
         var testData = new uint[] { 0x12345678, 0xABCDEF00, 0x11223344 };
-        
+
         // Act & Assert
         foreach (var value in testData)
         {
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             writer.Write(value);
-            
+
             stream.Position = 0;
             using var reader = new BinaryReader(stream);
             var readValue = reader.ReadUInt32();
-            
-            Assert.AreEqual(value, readValue, 
+
+            Assert.AreEqual(value, readValue,
                 "Binary read/write should be consistent across platforms");
         }
     }
-    
+
     [TestMethod]
     public async Task CompressionAlgorithms_ProduceIdenticalResults()
     {
@@ -508,40 +508,40 @@ public class CrossPlatformCompatibilityTests
             new CrossPlatformZlibCompression(_compatibilityService, Mock.Of<ILogger<CrossPlatformZlibCompression>>()),
             new CrossPlatformRefPackCompression(Mock.Of<ILogger<CrossPlatformRefPackCompression>>())
         };
-        
+
         // Act & Assert
         foreach (var algorithm in algorithms)
         {
             var compressed = await algorithm.CompressAsync(testData);
             var decompressed = await algorithm.DecompressAsync(compressed);
-            
+
             CollectionAssert.AreEqual(testData, decompressed,
                 $"{algorithm.Name} compression should produce identical round-trip results");
-                
+
             // Validate against known reference outputs (if available)
             await ValidateAgainstReferenceOutput(algorithm, testData, compressed);
         }
     }
-    
+
     [TestMethod]
     [DataRow("simple.package")]
     [DataRow("large_package_with_resources.package")]
-    [DataRow("package_with_special_chars_üñíçødé.package")]
+    [DataRow("package_with_special_chars_Ã¼Ã±Ã­Ã§Ã¸dÃ©.package")]
     public async Task PackageProcessing_ProducesIdenticalResults(string packageFileName)
     {
         // Arrange
         var packagePath = Path.Combine(TestDataDirectory, packageFileName);
         var expectedBytes = await File.ReadAllBytesAsync(packagePath);
-        
+
         // Act - Process package through our cross-platform implementation
         var package = await LoadPackageAsync(packagePath);
         var actualBytes = await package.SerializeAsync();
-        
+
         // Assert - Must be byte-identical
         CollectionAssert.AreEqual(expectedBytes, actualBytes,
             $"Package {packageFileName} should serialize to identical bytes across platforms");
     }
-    
+
     [TestMethod]
     public async Task PathHandling_WorksAcrossPlatforms()
     {
@@ -555,16 +555,16 @@ public class CrossPlatformCompatibilityTests
             "package with spaces.package",                 // Spaces
             "package-with-dashes.package"                 // Special chars
         };
-        
+
         var fileSystemService = new CrossPlatformFileSystemService(
             _compatibilityService, Mock.Of<ILogger<CrossPlatformFileSystemService>>());
-        
+
         // Act & Assert
         foreach (var testPath in testPaths)
         {
             var normalized = _compatibilityService.NormalizePath(testPath);
             var isValid = await fileSystemService.ValidatePathCompatibilityAsync(normalized);
-            
+
             Assert.IsTrue(isValid || IsExpectedToFail(testPath),
                 $"Path should be valid on current platform: {testPath} -> {normalized}");
         }
@@ -581,19 +581,19 @@ public class WindowsSpecificCompatibilityTests
     {
         // Test Windows native DLL compression against managed implementation
         if (!OperatingSystem.IsWindows()) Assert.Inconclusive("Windows-specific test");
-        
+
         var testData = GenerateTestData(50000);
-        
+
         var nativeCompression = new NativeWindowsDdsCompression();
         var managedCompression = new ManagedDdsCompression();
-        
+
         var nativeResult = await nativeCompression.CompressAsync(testData);
         var managedResult = await managedCompression.CompressAsync(testData);
-        
+
         // Results should be functionally equivalent (not necessarily byte-identical)
         var nativeDecompressed = await nativeCompression.DecompressAsync(nativeResult);
         var managedDecompressed = await managedCompression.DecompressAsync(managedResult);
-        
+
         CollectionAssert.AreEqual(testData, nativeDecompressed);
         CollectionAssert.AreEqual(testData, managedDecompressed);
     }
@@ -607,20 +607,20 @@ public class LinuxSpecificCompatibilityTests
     public async Task FilePermissions_HandledCorrectly()
     {
         if (!OperatingSystem.IsLinux()) Assert.Inconclusive("Linux-specific test");
-        
+
         // Test file permission handling on Linux
         var tempFile = Path.GetTempFileName();
         try
         {
             await File.WriteAllTextAsync(tempFile, "test data");
-            
+
             // Test reading file with different permissions
             File.SetUnixFileMode(tempFile, UnixFileMode.UserRead);
-            
+
             var fileSystemService = new CrossPlatformFileSystemService(
                 new CrossPlatformCompatibilityService(Mock.Of<ILogger<CrossPlatformCompatibilityService>>()),
                 Mock.Of<ILogger<CrossPlatformFileSystemService>>());
-                
+
             var canRead = await fileSystemService.FileExistsAsync(tempFile);
             Assert.IsTrue(canRead, "Should be able to detect readable file on Linux");
         }
@@ -638,39 +638,39 @@ public class LinuxSpecificCompatibilityTests
 public class CrossPlatformGoldenMasterValidator
 {
     private readonly Dictionary<string, byte[]> _referenceOutputs;
-    
+
     public CrossPlatformGoldenMasterValidator()
     {
         // Load reference outputs generated on Windows (reference platform)
         _referenceOutputs = LoadReferenceOutputs();
     }
-    
+
     public async Task<CrossPlatformValidationReport> ValidateAllPlatformsAsync(
         IEnumerable<TestPackage> packages)
     {
         var report = new CrossPlatformValidationReport();
-        
+
         foreach (var package in packages)
         {
             var packageResult = await ValidatePackageAcrossPlatformsAsync(package);
             report.PackageResults.Add(packageResult);
         }
-        
+
         return report;
     }
-    
+
     private async Task<PackageValidationResult> ValidatePackageAcrossPlatformsAsync(TestPackage package)
     {
         var result = new PackageValidationResult { Package = package };
-        
+
         // Load and process package on current platform
         var currentPlatformOutput = await ProcessPackageAsync(package.Path);
-        
+
         // Compare with reference output (from Windows)
         if (_referenceOutputs.TryGetValue(package.Name, out var referenceOutput))
         {
             result.BytesMatch = currentPlatformOutput.SequenceEqual(referenceOutput);
-            
+
             if (!result.BytesMatch)
             {
                 result.Differences = AnalyzeDifferences(referenceOutput, currentPlatformOutput);
@@ -681,7 +681,7 @@ public class CrossPlatformGoldenMasterValidator
             result.BytesMatch = false;
             result.MissingReference = true;
         }
-        
+
         return result;
     }
 }
@@ -692,7 +692,9 @@ public class CrossPlatformGoldenMasterValidator
 ### Multi-Platform CI Pipeline
 
 ```yaml
+
 # .github/workflows/cross-platform-compatibility.yml
+
 name: Cross-Platform Compatibility Tests
 
 on:
@@ -707,37 +709,38 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         dotnet-version: ['9.0.x']
-    
+
     runs-on: ${{ matrix.os }}
-    
+
     steps:
+
     - uses: actions/checkout@v3
-    
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
-    
+
     - name: Cache Test Data
       uses: actions/cache@v3
       with:
         path: test-data/compatibility
         key: compatibility-test-data-${{ runner.os }}-${{ hashFiles('test-data/manifest.json') }}
-    
+
     - name: Run Compatibility Tests
       run: |
         dotnet test tests/TS4Tools.Tests.Compatibility/ \
           --configuration Release \
           --logger "trx;LogFileName=compatibility-results-${{ runner.os }}.trx" \
           --filter "Category!=Windows|Category!=${{ runner.os }}"
-    
+
     - name: Generate Cross-Platform Report
       run: |
         dotnet run --project tools/CompatibilityAnalyzer/ \
           -- --platform ${{ runner.os }} \
                 --test-results TestResults/compatibility-results-${{ runner.os }}.trx \
                 --output compatibility-report-${{ runner.os }}.json
-    
+
     - name: Upload Results
       uses: actions/upload-artifact@v3
       with:
@@ -749,16 +752,17 @@ jobs:
   cross-platform-analysis:
     needs: compatibility-tests
     runs-on: ubuntu-latest
-    
+
     steps:
+
     - name: Download All Results
       uses: actions/download-artifact@v3
-    
+
     - name: Analyze Cross-Platform Compatibility
       run: |
         dotnet run --project tools/CrossPlatformAnalyzer/ \
           -- --results-dir . --output cross-platform-analysis.html
-    
+
     - name: Comment PR with Results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
@@ -766,7 +770,7 @@ jobs:
         script: |
           const fs = require('fs');
           const analysis = fs.readFileSync('cross-platform-analysis.html', 'utf8');
-          
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
@@ -786,7 +790,7 @@ public class CrossPlatformPerformanceBenchmarks
 {
     private byte[] _testData;
     private ICompressionAlgorithm[] _algorithms;
-    
+
     [GlobalSetup]
     public void Setup()
     {
@@ -797,7 +801,7 @@ public class CrossPlatformPerformanceBenchmarks
             new CrossPlatformRefPackCompression(/* ... */)
         };
     }
-    
+
     [Benchmark]
     [Arguments("ZLIB")]
     [Arguments("RefPack")]
@@ -806,7 +810,7 @@ public class CrossPlatformPerformanceBenchmarks
         var algorithm = _algorithms.First(a => a.Name == algorithmName);
         return await algorithm.CompressAsync(_testData);
     }
-    
+
     [Benchmark]
     public async Task<IPackage> LoadPackage()
     {
@@ -814,13 +818,13 @@ public class CrossPlatformPerformanceBenchmarks
         var packageService = CreatePackageService();
         return await packageService.LoadPackageAsync(packagePath);
     }
-    
+
     [Benchmark]
     public async Task<byte[]> RoundTripPackage()
     {
         var packagePath = GetTestPackagePath();
         var packageService = CreatePackageService();
-        
+
         var package = await packageService.LoadPackageAsync(packagePath);
         return await package.SerializeAsync();
     }
@@ -833,7 +837,7 @@ public class CrossPlatformPerformanceBenchmarks
 
 - **Universal Compatibility**: TS4Tools works identically on Windows, Linux, and macOS
 - **Byte-Perfect Output**: Package files are identical regardless of platform
-- **Performance Options**: Native acceleration where available, managed fallbacks elsewhere  
+- **Performance Options**: Native acceleration where available, managed fallbacks elsewhere
 - **Path Safety**: Robust file path handling across different filesystems
 - **Format Preservation**: All compression and binary formats work consistently
 - **Future-Proof**: Abstractions make adding new platforms easier
@@ -858,7 +862,7 @@ public class CrossPlatformPerformanceBenchmarks
 | Metric | Target | Windows | Linux | macOS |
 |--------|--------|---------|-------|-------|
 | **Package Compatibility** | 100% | Reference | Target | Target |
-| **Performance Overhead** | ≤ 20% | Baseline | ≤ 20% slower | ≤ 20% slower |
+| **Performance Overhead** | â‰¤ 20% | Baseline | â‰¤ 20% slower | â‰¤ 20% slower |
 | **Test Pass Rate** | 99%+ | Reference | Target | Target |
 | **File Format Accuracy** | Byte-perfect | Reference | Target | Target |
 
@@ -868,3 +872,4 @@ public class CrossPlatformPerformanceBenchmarks
 - ADR-006: Golden Master Testing Strategy (validates cross-platform compatibility)
 - ADR-001: .NET 9 Framework (provides cross-platform runtime)
 - ADR-003: Avalonia Cross-Platform UI (UI framework choice)
+

@@ -1,8 +1,8 @@
-# ADR-004: Greenfield Migration Strategy
+﻿# ADR-004: Greenfield Migration Strategy
 
-**Status:** Accepted  
-**Date:** August 8, 2025  
-**Deciders:** Architecture Team, Project Lead  
+**Status:** Accepted
+**Date:** August 8, 2025
+**Deciders:** Architecture Team, Project Lead
 
 ## Context
 
@@ -74,7 +74,7 @@ public class ModernAssemblyLoadContextManager : IAssemblyLoadContextManager
 }
 ```
 
-### Phase 1: Core Migration (Months 4-7)  
+### Phase 1: Core Migration (Months 4-7)
 
 **Priority**: DBPF package format with byte-perfect compatibility
 
@@ -103,10 +103,10 @@ public class PackageService : IPackageService
 
 ```csharp
 // Legacy compatibility with modern implementation
-public static class WrapperDealer 
+public static class WrapperDealer
 {
     private static IResourceWrapperService _service;
-    
+
     // Preserve exact API for backward compatibility
     public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)
         => _service.GetResource(APIversion, pkg, rie);
@@ -125,11 +125,11 @@ public async Task NewImplementation_ProducesIdenticalOutput(string packagePath)
     // Load with original implementation (reference)
     var originalPackage = Package.OpenPackage(0, packagePath, false);
     var originalBytes = originalPackage.Save();
-    
+
     // Load with new implementation (test)
     var newPackage = await PackageService.LoadPackageAsync(packagePath);
     var newBytes = await newPackage.SerializeAsync();
-    
+
     // MUST be byte-identical
     Assert.Equal(originalBytes, newBytes);
 }
@@ -149,24 +149,24 @@ public async Task NewImplementation_ProducesIdenticalOutput(string packagePath)
 
 ### Compatibility Requirements (BLOCKING)
 
-- ✅ 100% API compatibility with existing interfaces
-- ✅ Byte-perfect package read/write compatibility  
-- ✅ Existing plugin/wrapper compatibility via adapters
-- ✅ Helper tool integration preserved
+- âœ… 100% API compatibility with existing interfaces
+- âœ… Byte-perfect package read/write compatibility
+- âœ… Existing plugin/wrapper compatibility via adapters
+- âœ… Helper tool integration preserved
 
 ### Performance Requirements (HIGH)
 
-- ✅ Startup time ≤ original +10%
-- ✅ Large file handling ≤ original +10%
-- ✅ Memory usage ≤ original or improved
-- ✅ Cross-platform performance parity
+- âœ… Startup time â‰¤ original +10%
+- âœ… Large file handling â‰¤ original +10%
+- âœ… Memory usage â‰¤ original or improved
+- âœ… Cross-platform performance parity
 
 ### User Experience Requirements (HIGH)
 
-- ✅ Drop-in replacement functionality
-- ✅ Settings/preferences migration
-- ✅ Identical workflow preservation
-- ✅ Optional UI improvements
+- âœ… Drop-in replacement functionality
+- âœ… Settings/preferences migration
+- âœ… Identical workflow preservation
+- âœ… Optional UI improvements
 
 ## Alternatives Considered
 
@@ -234,14 +234,15 @@ public async Task NewImplementation_ProducesIdenticalOutput(string packagePath)
 | Metric | Target | Measurement |
 |--------|--------|-------------|
 | **Compatibility Rate** | 99.9%+ | Automated test suite against real packages |
-| **Performance Regression** | ≤ 10% | Benchmark suite vs original |
+| **Performance Regression** | â‰¤ 10% | Benchmark suite vs original |
 | **User Adoption** | 95%+ retention | Download metrics, user feedback |
 | **Plugin Compatibility** | 100% via adapters | Existing plugin test suite |
 
 ## Related Decisions
 
 - ADR-001: .NET 9 Framework Selection
-- ADR-002: Dependency Injection Adoption  
+- ADR-002: Dependency Injection Adoption
 - ADR-003: Avalonia Cross-Platform UI
 - ADR-005: Assembly Loading Modernization
 - ADR-006: Golden Master Testing Strategy
+
