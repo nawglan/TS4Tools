@@ -32,18 +32,18 @@ if (-not $StagedFiles) {
 } else {
     Write-Host "📝 Staged C# files:" -ForegroundColor Gray
     $StagedFiles | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
-    
+
     # Run dotnet format on the solution
     Write-Host "🎨 Running dotnet format..." -ForegroundColor Yellow
-    
+
     # Create a temporary file list for --include parameter
     $FileList = $StagedFiles -join ','
-    
+
     dotnet format TS4Tools.sln --verbosity minimal --include $FileList | Out-Null
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Code formatting completed successfully." -ForegroundColor Green
-        
+
         # Re-stage any files that were formatted
         Write-Host "📋 Re-staging formatted files..." -ForegroundColor Yellow
         $StagedFiles | ForEach-Object { git add $_ }

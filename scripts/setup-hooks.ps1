@@ -27,7 +27,7 @@ if ($LASTEXITCODE -eq 0) {
 if ($IsLinux -or $IsMacOS) {
     Write-Host "Making hooks executable..." -ForegroundColor Yellow
     chmod +x .githooks/pre-commit
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "SUCCESS: Hooks made executable." -ForegroundColor Green
     } else {

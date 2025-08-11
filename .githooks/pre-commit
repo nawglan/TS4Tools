@@ -34,12 +34,12 @@ if [ -z "$STAGED_FILES" ]; then
 else
     echo "📝 Staged C# files:"
     echo "$STAGED_FILES" | sed 's/^/  /'
-    
+
     # Run dotnet format on the solution
     echo "🎨 Running dotnet format..."
     if dotnet format TS4Tools.sln --verbosity minimal --include $(echo "$STAGED_FILES" | tr '\n' ',' | sed 's/,$//'); then
         echo "✅ Code formatting completed successfully."
-        
+
         # Re-stage any files that were formatted
         echo "📋 Re-staging formatted files..."
         echo "$STAGED_FILES" | xargs git add
