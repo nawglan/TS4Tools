@@ -53,7 +53,7 @@ jobs:
         Write-Host "🔍 Checking code formatting with dotnet format..."
         Write-Host "ℹ️ This will verify that all code follows the project's formatting standards."
 
-        dotnet format TS4Tools.sln --verify-no-changes --verbosity diagnostic
+        dotnet format TS4Tools.sln --verify-no-changes --no-restore --verbosity diagnostic
 
         if ($LASTEXITCODE -ne 0) {
           Write-Host ""
