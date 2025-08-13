@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Linq;
 
 namespace TS4Tools.Resources.Images;
@@ -172,6 +173,78 @@ public readonly record struct DdsHeader
 public static class DdsHeaderExtensions
 {
     /// <summary>
+    /// Reads a DDS header from the specified ReadOnlySpan of bytes.
+    /// This method avoids memory allocation by reading directly from the span.
+    /// </summary>
+    /// <param name="data">The span containing DDS data.</param>
+    /// <returns>The parsed DDS header.</returns>
+    /// <exception cref="InvalidDataException">Thrown when the data does not contain a valid DDS header.</exception>
+    public static DdsHeader ReadDdsHeader(this ReadOnlySpan<byte> data)
+    {
+        if (data.Length < 128) // DDS header is 128 bytes (4 magic + 124 header)
+            throw new InvalidDataException($"Data too short for DDS header. Expected at least 128 bytes, got {data.Length}");
+
+        // Read magic number
+        uint magic = BinaryPrimitives.ReadUInt32LittleEndian(data);
+        if (magic != DdsHeader.DdsMagic)
+            throw new InvalidDataException($"Invalid DDS magic number: 0x{magic:X8}. Expected: 0x{DdsHeader.DdsMagic:X8}");
+
+        var headerData = data.Slice(4); // Skip magic number
+
+        // Read header size
+        uint size = BinaryPrimitives.ReadUInt32LittleEndian(headerData);
+        if (size != DdsHeader.HeaderSize)
+            throw new InvalidDataException($"Invalid DDS header size: {size}. Expected: {DdsHeader.HeaderSize}");
+
+        // Read header fields using span slicing
+        var flags = (DdsFlags)BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(4));
+        uint height = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(8));
+        uint width = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(12));
+        uint pitchOrLinearSize = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(16));
+        uint depth = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(20));
+        uint mipMapCount = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(24));
+
+        // Read reserved fields
+        var reserved1 = new uint[11];
+        bool allZero = true;
+        for (int i = 0; i < 11; i++)
+        {
+            reserved1[i] = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(28 + i * 4));
+            if (reserved1[i] != 0) allZero = false;
+        }
+
+        // Use shared default array if all reserved values are zero
+        IReadOnlyList<uint> reservedArray = allZero ? DdsHeader.DefaultReserved1 : reserved1;
+
+        // Read pixel format (starts at offset 72 in header data)
+        var pixelFormat = ReadPixelFormat(headerData.Slice(72));
+
+        uint caps = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(104));
+        uint caps2 = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(108));
+        uint caps3 = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(112));
+        uint caps4 = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(116));
+        uint reserved2 = BinaryPrimitives.ReadUInt32LittleEndian(headerData.Slice(120));
+
+        return new DdsHeader
+        {
+            Size = size,
+            Flags = flags,
+            Height = height,
+            Width = width,
+            PitchOrLinearSize = pitchOrLinearSize,
+            Depth = depth,
+            MipMapCount = mipMapCount,
+            Reserved1 = reservedArray,
+            PixelFormat = pixelFormat,
+            Caps = (DdsCaps)caps,
+            Caps2 = (DdsCaps2)caps2,
+            Caps3 = caps3,
+            Caps4 = caps4,
+            Reserved2 = reserved2
+        };
+    }
+
+    /// <summary>
     /// Reads a DDS header from the specified stream.
     /// </summary>
     /// <param name="stream">The stream to read from.</param>
@@ -292,6 +365,42 @@ public static class DdsHeaderExtensions
         uint greenBitMask = reader.ReadUInt32();
         uint blueBitMask = reader.ReadUInt32();
         uint alphaBitMask = reader.ReadUInt32();
+
+        return new DdsPixelFormat
+        {
+            Size = size,
+            Flags = flags,
+            FourCC = fourCC,
+            RgbBitCount = rgbBitCount,
+            RedBitMask = redBitMask,
+            GreenBitMask = greenBitMask,
+            BlueBitMask = blueBitMask,
+            AlphaBitMask = alphaBitMask
+        };
+    }
+
+    /// <summary>
+    /// Reads a DDS pixel format from the specified span.
+    /// This overload avoids memory allocation by reading directly from the span.
+    /// </summary>
+    /// <param name="data">The span containing pixel format data (must be at least 32 bytes).</param>
+    /// <returns>The parsed DDS pixel format.</returns>
+    private static DdsPixelFormat ReadPixelFormat(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < 32)
+            throw new InvalidDataException($"Data too short for DDS pixel format. Expected at least 32 bytes, got {data.Length}");
+
+        uint size = BinaryPrimitives.ReadUInt32LittleEndian(data);
+        if (size != 32)
+            throw new InvalidDataException($"Invalid pixel format size: {size}. Expected: 32");
+
+        var flags = (DdsPixelFormatFlags)BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(4));
+        var fourCC = (DdsFourCC)BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(8));
+        uint rgbBitCount = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(12));
+        uint redBitMask = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(16));
+        uint greenBitMask = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(20));
+        uint blueBitMask = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(24));
+        uint alphaBitMask = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(28));
 
         return new DdsPixelFormat
         {

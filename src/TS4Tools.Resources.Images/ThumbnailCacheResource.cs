@@ -413,8 +413,12 @@ public sealed class ThumbnailCacheResource : IResource, IDisposable, INotifyProp
     /// <returns>The thumbnail entry, or null if not found.</returns>
     public ThumbnailEntry? GetThumbnail(ulong resourceId)
     {
+        Interlocked.Increment(ref _totalRequests);
+
         if (_thumbnailCache.TryGetValue(resourceId, out var entry))
         {
+            Interlocked.Increment(ref _cacheHitCount);
+
             // Update access statistics
             var updatedEntry = entry with
             {
@@ -426,6 +430,7 @@ public sealed class ThumbnailCacheResource : IResource, IDisposable, INotifyProp
             return updatedEntry;
         }
 
+        Interlocked.Increment(ref _cacheMissCount);
         return null;
     }
 
@@ -465,6 +470,9 @@ public sealed class ThumbnailCacheResource : IResource, IDisposable, INotifyProp
     {
         _thumbnailCache.Clear();
         Interlocked.Exchange(ref _totalCacheSize, 0);
+        Interlocked.Exchange(ref _cacheHitCount, 0);
+        Interlocked.Exchange(ref _cacheMissCount, 0);
+        Interlocked.Exchange(ref _totalRequests, 0);
         IsDirty = true;
         OnPropertyChanged(nameof(CacheCount));
         OnPropertyChanged(nameof(TotalCacheSize));

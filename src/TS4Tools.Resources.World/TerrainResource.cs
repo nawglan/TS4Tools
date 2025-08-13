@@ -1,4 +1,10 @@
+using System;
+using System.Buffers.Binary;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using TS4Tools.Core.Interfaces;
 using TS4Tools.Core.Package;
 
@@ -232,34 +238,52 @@ public sealed class TerrainResource : IResource, IDisposable
     {
         return await Task.Run(() =>
         {
-            return new TerrainHeader
-            {
-                Version = reader.ReadUInt32(),
-                LayerIndexCount = reader.ReadUInt32(),
-                MinX = reader.ReadUInt16(),
-                MinY = reader.ReadUInt16(),
-                MinZ = reader.ReadUInt16(),
-                MaxX = reader.ReadUInt16(),
-                MaxY = reader.ReadUInt16(),
-                MaxZ = reader.ReadUInt16()
-            };
+            // Read terrain header data in a single operation
+            Span<byte> headerData = stackalloc byte[28]; // 7 * sizeof(uint) + 6 * sizeof(ushort)
+            reader.Read(headerData);
+
+            return ReadTerrainHeaderFromSpan(headerData);
         }, cancellationToken);
+    }
+
+    private static TerrainHeader ReadTerrainHeaderFromSpan(ReadOnlySpan<byte> data)
+    {
+        return new TerrainHeader
+        {
+            Version = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(0, 4)),
+            LayerIndexCount = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(4, 4)),
+            MinX = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(8, 2)),
+            MinY = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(10, 2)),
+            MinZ = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(12, 2)),
+            MaxX = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(14, 2)),
+            MaxY = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(16, 2)),
+            MaxZ = BinaryPrimitives.ReadUInt16LittleEndian(data.Slice(18, 2))
+        };
     }
 
     private static async Task<TerrainVertex> ReadTerrainVertexAsync(BinaryReader reader, CancellationToken cancellationToken)
     {
         return await Task.Run(() =>
         {
-            return new TerrainVertex
-            {
-                X = reader.ReadSingle(),
-                Y = reader.ReadSingle(),
-                Z = reader.ReadSingle(),
-                U = reader.ReadSingle(),
-                V = reader.ReadSingle(),
-                LayerIndex = reader.ReadUInt32()
-            };
+            // Read terrain vertex data in a single operation
+            Span<byte> vertexData = stackalloc byte[24]; // 5 * sizeof(float) + sizeof(uint)
+            reader.Read(vertexData);
+
+            return ReadTerrainVertexFromSpan(vertexData);
         }, cancellationToken);
+    }
+
+    private static TerrainVertex ReadTerrainVertexFromSpan(ReadOnlySpan<byte> data)
+    {
+        return new TerrainVertex
+        {
+            X = BinaryPrimitives.ReadSingleLittleEndian(data.Slice(0, 4)),
+            Y = BinaryPrimitives.ReadSingleLittleEndian(data.Slice(4, 4)),
+            Z = BinaryPrimitives.ReadSingleLittleEndian(data.Slice(8, 4)),
+            U = BinaryPrimitives.ReadSingleLittleEndian(data.Slice(12, 4)),
+            V = BinaryPrimitives.ReadSingleLittleEndian(data.Slice(16, 4)),
+            LayerIndex = BinaryPrimitives.ReadUInt32LittleEndian(data.Slice(20, 4))
+        };
     }
 
     private static async Task<TerrainPass> ReadTerrainPassAsync(BinaryReader reader, CancellationToken cancellationToken)

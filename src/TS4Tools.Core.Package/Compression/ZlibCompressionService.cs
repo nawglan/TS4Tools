@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.IO.Compression;
 using Microsoft.Extensions.Logging;
 
@@ -16,7 +17,7 @@ public sealed class ZlibCompressionService : ICompressionService
     /// </summary>
     private static readonly byte[][] ZlibHeaders = [
         [0x78, 0x01], // No compression/low
-        [0x78, 0x5E], // Fast compression  
+        [0x78, 0x5E], // Fast compression
         [0x78, 0x9C], // Default compression
         [0x78, 0xDA]  // Best compression
     ];
@@ -103,18 +104,26 @@ public sealed class ZlibCompressionService : ICompressionService
 
         var decompressed = new byte[originalSize];
         var totalRead = 0;
-        var buffer = new byte[4096];
+        var buffer = ArrayPool<byte>.Shared.Rent(4096);
 
-        while (totalRead < originalSize)
+        try
         {
-            var bytesRead = zlibStream.Read(buffer, 0, Math.Min(buffer.Length, originalSize - totalRead));
-            if (bytesRead == 0)
+            while (totalRead < originalSize)
             {
-                break; // End of stream
-            }
+                var bytesToRead = Math.Min(buffer.Length, originalSize - totalRead);
+                var bytesRead = zlibStream.Read(buffer, 0, bytesToRead);
+                if (bytesRead == 0)
+                {
+                    break; // End of stream
+                }
 
-            Array.Copy(buffer, 0, decompressed, totalRead, bytesRead);
-            totalRead += bytesRead;
+                buffer.AsSpan(0, bytesRead).CopyTo(decompressed.AsSpan(totalRead));
+                totalRead += bytesRead;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         if (totalRead != originalSize)
@@ -151,20 +160,27 @@ public sealed class ZlibCompressionService : ICompressionService
 
         var decompressed = new byte[originalSize];
         var totalRead = 0;
-        var buffer = new byte[4096];
+        var buffer = ArrayPool<byte>.Shared.Rent(4096);
 
-        while (totalRead < originalSize)
+        try
         {
-            var bytesToRead = Math.Min(buffer.Length, originalSize - totalRead);
-            var bytesRead = await zlibStream.ReadAsync(buffer.AsMemory(0, bytesToRead), cancellationToken).ConfigureAwait(false);
-
-            if (bytesRead == 0)
+            while (totalRead < originalSize)
             {
-                break; // End of stream
-            }
+                var bytesToRead = Math.Min(buffer.Length, originalSize - totalRead);
+                var bytesRead = await zlibStream.ReadAsync(buffer.AsMemory(0, bytesToRead), cancellationToken).ConfigureAwait(false);
 
-            Array.Copy(buffer, 0, decompressed, totalRead, bytesRead);
-            totalRead += bytesRead;
+                if (bytesRead == 0)
+                {
+                    break; // End of stream
+                }
+
+                buffer.AsSpan(0, bytesRead).CopyTo(decompressed.AsSpan(totalRead));
+                totalRead += bytesRead;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
         }
 
         if (totalRead != originalSize)

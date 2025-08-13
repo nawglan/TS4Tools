@@ -39,10 +39,12 @@ public static class ServiceCollectionExtensions
         // Register resource factories
         services.AddSingleton<IResourceFactory, ImageResourceFactory>();
         services.AddSingleton<IResourceFactory, ThumbnailCacheResourceFactory>();
+        services.AddSingleton<IResourceFactory, RLEResourceFactory>();
 
         // Register typed factories
         services.AddSingleton<ImageResourceFactory>();
         services.AddSingleton<ThumbnailCacheResourceFactory>();
+        services.AddSingleton<RLEResourceFactory>();
 
         return services;
     }

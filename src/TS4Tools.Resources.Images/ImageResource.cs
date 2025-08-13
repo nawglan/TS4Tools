@@ -503,8 +503,7 @@ public sealed class ImageResource : IResource, IDisposable
     {
         try
         {
-            using var stream = new MemoryStream(data.ToArray());
-            var header = stream.ReadDdsHeader();
+            var header = data.ReadDdsHeader();
 
             return new ImageMetadata
             {

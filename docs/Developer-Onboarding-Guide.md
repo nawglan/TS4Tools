@@ -73,6 +73,17 @@ graph TB
 - **.NET 9 SDK** (latest version)
 - **Git** for version control
 
+### IMPORTANT: Solution File Confusion
+
+**CRITICAL WARNING**: The workspace has multiple solution files that can cause major confusion:
+- `TS4Tools.sln` (USE THIS ONE - the modern .NET 9 implementation)
+- `Sims4Tools/sims4tools.sln` (Legacy .NET Framework - DO NOT USE for new development)
+- `TS4MorphMaker/CmarNYC_TS4MorphMaker.sln` (Separate project)
+
+**Always use `TS4Tools.sln`** - this contains the modern async/await implementations you should study and extend.
+
+The legacy Sims4Tools project uses completely different patterns (AResource base class, EventHandler patterns, etc.) that will mislead you if you study them instead of the TS4Tools implementations.
+
 ### Get the Code Running
 
 ```powershell
@@ -316,19 +327,53 @@ public async Task PackageLoader_WithRealFile_LoadsAllResources()
 }
 ```
 
-### Test Data Management
+### Real Test Data Management
 
-We store test files in `test-data/` directories:
+**CRITICAL**: Study the LRLE test suite for the actual patterns used in this project.
 
+```csharp
+// Real test pattern from LRLEResourceTests.cs:
+[Fact]
+public async Task CreateAsync_WithValidLRLEData_ParsesCorrectly()
+{
+    // Arrange - Create REAL binary data, not fake data
+    var testData = CreateValidLRLEBinaryData(); // Helper method
+    using var stream = new MemoryStream(testData);
+    
+    // Act
+    var resource = await _factory.CreateAsync(stream);
+    
+    // Assert - Verify actual parsed values
+    resource.Should().NotBeNull();
+    resource.Width.Should().Be(64); // Real expected values
+    resource.Height.Should().Be(64);
+    // ... more specific assertions
+}
+
+private byte[] CreateValidLRLEBinaryData()
+{
+    // Create actual LRLE format binary data
+    // This requires understanding the real file format!
+    using var stream = new MemoryStream();
+    using var writer = new BinaryWriter(stream);
+    
+    // LRLE header
+    writer.Write(0x454C524C); // 'LRLE' magic
+    writer.Write(0x32303056); // Version
+    writer.Write((ushort)64); // Width
+    writer.Write((ushort)64); // Height
+    // ... rest of actual format
+    
+    return stream.ToArray();
+}
 ```
-tests/
-├── TS4Tools.Tests/
-│   ├── test-data/
-│   │   ├── valid-package.package
-│   │   ├── corrupted-package.package
-│   │   └── string-table-samples/
-│   └── StringTableResourceTests.cs
-```
+
+**Key Differences from Generic Examples:**
+- Test data must match actual Sims 4 binary formats
+- Use `test-data/` folders for larger binary files
+- Test disposal patterns with `using` statements
+- Test error conditions with invalid/corrupted data
+- Use factory pattern for resource creation in tests
 
 ### Writing Good Test Names
 
@@ -359,6 +404,68 @@ Assert.NotNull(result);
 Assert.True(result.Count > 0);
 Assert.True(result.Any(item => item.Name == "expected-name"));
 ```
+
+---
+
+## [REALITY CHECK] Learning from Actual Implementations
+
+**CRITICAL**: Before following the examples below, study these real implementations:
+
+- `LRLEResource.cs` - Complex image resource with proper disposal patterns
+- `LRLEResourceFactory.cs` - Real factory implementation 
+- `LRLEResourceTests.cs` - Comprehensive test suite with binary test data
+- `StringTableResource.cs` - Text resource implementation patterns
+
+### Key Differences from Generic Examples:
+
+1. **No ResourceBase Class**: Resources implement interfaces directly (like `ILRLEResource`, `IDisposable`)
+2. **ResourceFactoryBase Pattern**: Factories extend `ResourceFactoryBase<T>` not generic patterns
+3. **Complex Error Handling**: Real implementations have comprehensive validation and logging
+4. **Binary Format Research**: You must understand the actual Sims 4 binary format first
+5. **Test Data Creation**: Tests require real binary data, not made-up examples
+
+### Real Constructor Patterns:
+
+```csharp
+// What you'll actually implement (see LRLEResource.cs):
+public sealed class MyResource : IMyResource, IDisposable
+{
+    public MyResource(Stream? stream, ILogger<MyResource> logger)
+    {
+        // Simple constructor, complex parsing method
+    }
+}
+
+// NOT what the example shows:
+public class MyResource : ResourceBase, IMyResource
+{
+    public MyResource(int apiVersion, Stream? stream, ILogger<MyResource> logger) 
+    {
+        // This pattern isn't used in actual code
+    }
+}
+```
+
+### Real Factory Patterns:
+
+```csharp
+// Actual pattern from LRLEResourceFactory.cs:
+protected override async Task<IMyResource> CreateResourceCoreAsync(
+    Stream? stream,
+    CancellationToken cancellationToken)
+{
+    // Notice: no apiVersion parameter
+    return new MyResource(stream, _logger);
+}
+```
+
+### Real Test Patterns:
+
+Study the LRLE tests - they show you need:
+- Binary test data in `test-data/` folders
+- Helper methods to create valid binary streams
+- Comprehensive error testing with invalid data
+- Memory management testing (disposal patterns)
 
 ---
 
@@ -411,19 +518,21 @@ public enum MoodletType
 
 #### Step 2: Create the Implementation
 
+**IMPORTANT**: Look at real implementations first! Study `LRLEResource.cs` or other existing resources to understand the actual patterns used.
+
 ```csharp
 // File: src/TS4Tools.Resources.Gameplay/MoodletResource.cs
-public class MoodletResource : ResourceBase, IMoodletResource
+public sealed class MoodletResource : IMoodletResource, IDisposable
 {
     private readonly ILogger<MoodletResource> _logger;
+    private bool _disposed;
 
     public string MoodletName { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public int Duration { get; private set; }
     public MoodletType Type { get; private set; }
 
-    public MoodletResource(int apiVersion, Stream? stream, ILogger<MoodletResource> logger)
-        : base(apiVersion)
+    public MoodletResource(Stream? stream, ILogger<MoodletResource> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
@@ -437,41 +546,88 @@ public class MoodletResource : ResourceBase, IMoodletResource
     {
         using var reader = new BinaryReader(stream);
         
-        // Read the binary format (you'll need to research the actual format)
-        var nameLength = reader.ReadInt32();
-        MoodletName = Encoding.UTF8.GetString(reader.ReadBytes(nameLength));
-        
-        var descLength = reader.ReadInt32();
-        Description = Encoding.UTF8.GetString(reader.ReadBytes(descLength));
-        
-        Duration = reader.ReadInt32();
-        Type = (MoodletType)reader.ReadByte();
+        try
+        {
+            // Always validate stream length before reading
+            if (stream.Length < 16) // Minimum expected size
+            {
+                throw new InvalidDataException("Stream too short for moodlet data");
+            }
 
-        _logger.LogDebug("Parsed moodlet: {Name} ({Type}), Duration: {Duration}",
-            MoodletName, Type, Duration);
+            // Read the binary format (research actual format first!)
+            var nameLength = reader.ReadInt32();
+            if (nameLength > 1024) // Reasonable limit
+                throw new InvalidDataException($"Name length {nameLength} exceeds maximum");
+
+            MoodletName = Encoding.UTF8.GetString(reader.ReadBytes(nameLength));
+            
+            var descLength = reader.ReadInt32();
+            if (descLength > 4096) // Reasonable limit
+                throw new InvalidDataException($"Description length {descLength} exceeds maximum");
+                
+            Description = Encoding.UTF8.GetString(reader.ReadBytes(descLength));
+            
+            Duration = reader.ReadInt32();
+            Type = (MoodletType)reader.ReadByte();
+
+            _logger.LogDebug("Parsed moodlet: {Name} ({Type}), Duration: {Duration}",
+                MoodletName, Type, Duration);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to parse moodlet data from stream");
+            throw;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            // Cleanup resources if needed
+            _disposed = true;
+        }
     }
 }
 ```
 
 #### Step 3: Create the Factory
 
+**REAL PATTERN**: Study `LRLEResourceFactory.cs` for the actual factory implementation pattern used in this project.
+
 ```csharp
 // File: src/TS4Tools.Resources.Gameplay/MoodletResourceFactory.cs
 public class MoodletResourceFactory : ResourceFactoryBase<IMoodletResource>
 {
     // This tells the system which resource type IDs this factory handles
+    // IMPORTANT: Research actual type IDs from the original Sims4Tools or game files
     public override IReadOnlySet<string> SupportedResourceTypes =>
         new HashSet<string> { "0x12345678" }; // Replace with actual moodlet type ID
 
     protected override async Task<IMoodletResource> CreateResourceCoreAsync(
-        int apiVersion,
         Stream? stream,
         CancellationToken cancellationToken)
     {
-        // We don't actually need async here, but the interface requires it
-        await Task.CompletedTask;
-        
-        return new MoodletResource(apiVersion, stream, _logger);
+        // Validate input
+        if (stream == null)
+        {
+            _logger.LogDebug("Creating empty moodlet resource");
+            return new MoodletResource(null, _logger);
+        }
+
+        // Create resource with proper error handling
+        try
+        {
+            _logger.LogDebug("Creating moodlet resource from stream of length {Length}", stream.Length);
+            await Task.CompletedTask; // Remove if actual async work is needed
+            
+            return new MoodletResource(stream, _logger);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create moodlet resource from stream");
+            throw;
+        }
     }
 }
 ```
@@ -817,14 +973,69 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 
 #### Common Issues and Solutions
 
-**Problem**: Tests fail with NullReferenceException
-**Solution**: Check that all dependencies are properly mocked in test setup
+**Problem**: "ResourceFactoryBase not found" or similar interface errors
+**Solution**: Check that you're inheriting from the correct base classes - study existing implementations first
+
+**Problem**: Tests fail with binary data parsing errors
+**Solution**: Use a hex editor to examine real Sims 4 files and understand the actual binary format
 
 **Problem**: DI container can't resolve service
-**Solution**: Verify service is registered in ServiceCollectionExtensions.cs
+**Solution**: Verify service is registered in ServiceCollectionExtensions.cs AND that you're using the correct factory pattern
 
-**Problem**: File loading fails
-**Solution**: Check file paths are absolute and files exist in test-data directories
+**Problem**: File loading fails with stream errors
+**Solution**: Check file paths are absolute and files exist in test-data directories. Validate stream position and length
+
+**Problem**: Memory leaks or disposal issues
+**Solution**: Implement IDisposable properly - see LRLEResource.cs for the correct disposal pattern
+
+**Problem**: Factory CreateResourceCoreAsync signature doesn't match
+**Solution**: Check the actual ResourceFactoryBase<T> interface - it may have changed from documentation examples
+
+### Real Development Experience Tips
+
+1. **Always Research Binary Format First**: Use `010 Editor` or `HxD` hex editor to understand file structure
+2. **Copy Pattern from Similar Resources**: Find the closest existing resource type and adapt its patterns
+3. **Test with Real Game Files**: Don't rely on made-up test data - use actual .package files from Sims 4
+4. **Implement Disposal Correctly**: Follow the disposal pattern from LRLEResource.cs exactly
+5. **Use Proper Logging**: Include context in log messages - stream length, parsing position, etc.
+6. **Handle Edge Cases**: Empty streams, corrupted data, unexpected EOF - see LRLE tests for examples
+
+## [REALITY] Study These ACTUAL Implementations First
+
+**Before writing any code**, study these real implementations in the TS4Tools project:
+
+### 📁 `src/TS4Tools.Resources.Images/LRLEResource.cs` 
+**Study this for:** Complex resource with binary format parsing, proper disposal patterns, comprehensive error handling
+- Shows proper `IDisposable` implementation
+- Demonstrates binary data validation
+- Uses modern C# patterns (sealed class, proper async/await)
+- Complex state management with caching
+
+### 📁 `src/TS4Tools.Resources.Images/LRLEResourceFactory.cs`
+**Study this for:** Actual factory implementation pattern used throughout the project
+- Shows proper `ResourceFactoryBase<T>` inheritance
+- Demonstrates error handling in factory methods
+- Shows how resource type IDs are handled
+
+### 📁 `tests/TS4Tools.Resources.Images.Tests/LRLEResourceTests.cs`
+**Study this for:** Comprehensive testing patterns, real binary test data creation
+- Shows how to create valid binary test data
+- Demonstrates proper disposal testing
+- Shows error condition testing patterns
+- Uses real factory pattern in tests
+
+### ❌ DON'T Study These (Legacy Patterns):
+- `Sims4Tools/s4pi Wrappers/ImageResource/LRLEResource.cs` - Old .NET Framework patterns
+- Any class inheriting from `AResource` - Legacy pattern not used in TS4Tools
+- Any class using `EventHandler` patterns - Old synchronous patterns
+
+### Key Learning Points from Real Code:
+
+1. **Resource Classes**: Implement interfaces directly (e.g., `ILRLEResource`, `IDisposable`)
+2. **Factories**: Inherit from `ResourceFactoryBase<T>`, not generic examples
+3. **Constructors**: Take `Stream?` and `ILogger<T>`, not `apiVersion` parameters  
+4. **Error Handling**: Extensive validation, proper exception types, comprehensive logging
+5. **Testing**: Real binary data, disposal testing, comprehensive error condition coverage
 
 ---
 
