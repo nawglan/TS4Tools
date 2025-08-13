@@ -32,15 +32,7 @@ namespace TS4Tools.Resources.World;
 public sealed class LotDescriptionResource : IResource, IDisposable, INotifyPropertyChanged
 {
     private readonly ResourceKey _key;
-    private readonly List<string> _contentFields = new()
-    {
-        "LotId",
-        "LotName",
-        "Description",
-        "LotType",
-        "LotTraits",
-        "Metadata"
-    };
+    private readonly List<string> _contentFields = new();
     private bool _isDirty = true;
     private bool _disposed;
     private MemoryStream? _stream;
@@ -69,7 +61,9 @@ public sealed class LotDescriptionResource : IResource, IDisposable, INotifyProp
             "LotType",
             "LotTraits",
             "ThumbnailKey",
-            "LotFlags"
+            "LotFlags",
+            "Metadata",
+            "Description"
         ]);
     }
 
@@ -219,15 +213,18 @@ public sealed class LotDescriptionResource : IResource, IDisposable, INotifyProp
     /// <returns>A task representing the asynchronous operation.</returns>
     public Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        // Handle null or truly empty stream (no content at all)
-        if (stream == null || stream.Length == 0)
+        if (stream == null)
+            throw new ArgumentNullException(nameof(stream));
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        // Handle truly empty stream (no content at all)
+        if (stream.Length == 0)
         {
             // Initialize with default values for empty lot description
             IsDirty = true;
             return Task.CompletedTask;
         }
-
-        ObjectDisposedException.ThrowIf(_disposed, this);
 
         try
         {

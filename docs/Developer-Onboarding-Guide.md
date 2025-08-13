@@ -385,11 +385,11 @@ private byte[] CreateValidLRLEBinaryData()
 Use descriptive names that explain the scenario:
 
 ```csharp
-// ✅ Good - explains what's being tested and expected outcome
+// [GOOD] - explains what's being tested and expected outcome
 [Test]
 public void ParseStringTable_WithMissingHashKey_ThrowsInvalidDataException()
 
-// ❌ Bad - unclear what this tests
+// [BAD] - unclear what this tests
 [Test]
 public void TestStringTable()
 ```
@@ -440,16 +440,18 @@ public ResourceTypeGoldenMasterTests()
 ```
 
 **What This Achieves:**
+
 - Validates your resources work with the main Golden Master framework
 - Catches binary format compatibility issues early
 - Ensures your resource types are discoverable by ResourceManager
 - Provides automated regression testing for your resource formats
 
 **Common Failure Modes:**
-- Missing project reference → compile errors in Golden Master tests
-- Missing DI registration → NullReferenceException when ResourceManager tries to create your resources  
-- Empty ContentFields → test failures, but this might be expected initially
-- Round-trip serialization failures → indicates your resource doesn't handle empty/minimal data correctly
+
+- Missing project reference -> compile errors in Golden Master tests
+- Missing DI registration -> NullReferenceException when ResourceManager tries to create your resources  
+- Empty ContentFields -> test failures, but this might be expected initially
+- Round-trip serialization failures -> indicates your resource doesn't handle empty/minimal data correctly
 
 ### Using FluentAssertions
 
@@ -1070,7 +1072,7 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 
 **Before writing any code**, study these real implementations in the TS4Tools project:
 
-### 📁 `src/TS4Tools.Resources.Images/LRLEResource.cs`
+### [FILE] `src/TS4Tools.Resources.Images/LRLEResource.cs`
 
 **Study this for:** Complex resource with binary format parsing, proper disposal patterns, comprehensive error handling
 
@@ -1079,7 +1081,7 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 - Uses modern C# patterns (sealed class, proper async/await)
 - Complex state management with caching
 
-### 📁 `src/TS4Tools.Resources.Images/LRLEResourceFactory.cs`
+### [FILE] `src/TS4Tools.Resources.Images/LRLEResourceFactory.cs`
 
 **Study this for:** Actual factory implementation pattern used throughout the project
 
@@ -1087,7 +1089,7 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 - Demonstrates error handling in factory methods
 - Shows how resource type IDs are handled
 
-### 📁 `tests/TS4Tools.Resources.Images.Tests/LRLEResourceTests.cs`
+### [FILE] `tests/TS4Tools.Resources.Images.Tests/LRLEResourceTests.cs`
 
 **Study this for:** Comprehensive testing patterns, real binary test data creation
 
@@ -1096,7 +1098,7 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 - Shows error condition testing patterns
 - Uses real factory pattern in tests
 
-### ❌ DON'T Study These (Legacy Patterns)
+### [DON'T] DON'T Study These (Legacy Patterns)
 
 - `Sims4Tools/s4pi Wrappers/ImageResource/LRLEResource.cs` - Old .NET Framework patterns
 - Any class inheriting from `AResource` - Legacy pattern not used in TS4Tools
@@ -1112,7 +1114,7 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 
 ---
 
-## 🎯 What to Focus On
+## [FOCUS] What to Focus On
 
 ### For Your First Week
 
@@ -1141,7 +1143,211 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 
 *Based on real development experience from Phase 4.17 implementation*
 
-### 🚨 Critical Integration Issues
+### [CRITICAL] CRITICAL: ResourceWrapperRegistry Initialization
+
+**THE MOST CRITICAL ISSUE**: The biggest failure I encountered was not understanding
+that ResourceManager depends on ResourceWrapperRegistry initialization.
+
+#### The Problem
+
+**What Happened**: All Golden Master tests failed with "Expected resource.ContentFields
+not to be empty" even though:
+
+- [YES] World resource factories were registered in DI
+- [YES] ContentFields properties worked when testing resources directly  
+- [YES] ResourceManager was properly configured
+
+**Root Cause**: ResourceManager uses a two-phase initialization:
+
+1. **Phase 1**: Factories registered with DI container via `services.AddWorldResources()`
+2. **Phase 2**: ResourceWrapperRegistry discovers these factories and registers them
+   with ResourceManager
+
+**The Missing Step**: ResourceWrapperRegistry.DiscoverAndRegisterFactoriesAsync() was
+never called, so ResourceManager always fell back to DefaultResource (which has empty
+ContentFields).
+
+#### The Solution
+
+**CRITICAL PATTERN**: Always call ResourceWrapperRegistry initialization after building the service provider:
+
+```csharp
+public MyTestClass()
+{
+    var services = new ServiceCollection();
+    services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+    
+    // Step 1: Register all resource services with DI
+    services.AddTS4ToolsResourceServices();  // Core ResourceManager + ResourceWrapperRegistry
+    services.AddWorldResources();            // World resource factories
+
+    var serviceProvider = services.BuildServiceProvider();
+    
+    // Step 2: CRITICAL - Initialize ResourceWrapperRegistry to discover factories
+    var registry = serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
+    var initTask = registry.DiscoverAndRegisterFactoriesAsync();
+    initTask.GetAwaiter().GetResult(); // Synchronous wait in constructor
+    
+    // NOW ResourceManager can create proper resource types instead of DefaultResource
+    _resourceManager = serviceProvider.GetRequiredService<IResourceManager>();
+}
+```
+
+**Shorthand Pattern**: Use the extension method:
+
+```csharp
+var serviceProvider = services.BuildServiceProvider();
+
+// This does the ResourceWrapperRegistry initialization for you
+var registryResult = await serviceProvider.InitializeResourceWrapperRegistryAsync();
+if (!registryResult.IsSuccess)
+{
+    throw new InvalidOperationException("Failed to initialize resource factories");
+}
+```
+
+#### How to Diagnose This Issue
+
+**Symptoms**:
+
+- ResourceManager.CreateResourceAsync() returns resources with empty ContentFields
+- Direct factory instantiation works fine
+- Resource.GetType() shows "DefaultResource" instead of specific types like "WorldResource"
+
+**Debugging**:
+
+```csharp
+var resource = await _resourceManager.CreateResourceAsync("0x810A102D", 1);
+Console.WriteLine($"Resource type: {resource.GetType().FullName}");
+// [BAD]: "TS4Tools.Core.Resources.DefaultResource"
+// [GOOD]: "TS4Tools.Resources.World.WorldResource"
+```
+
+**Prevention**: Always add ResourceWrapperRegistry initialization to any test class that uses ResourceManager.
+
+### [STREAMS] Stream Handling Consistency Issues
+
+#### SaveToStreamAsync vs LoadFromStreamAsync Format Mismatch
+
+**What Happened**: Round-trip serialization tests failed with "Unable to read beyond the end of the stream" errors.
+
+**Problem**: Some resources had inconsistent serialization - `AsBytes` used `WriteToStream()` but `LoadFromStreamAsync()` expected `SaveToStreamAsync()` format.
+
+**The Issue**:
+
+```csharp
+// Resource.AsBytes was using old synchronous method
+public byte[] AsBytes
+{
+    get
+    {
+        using var ms = new MemoryStream();
+        WriteToStream(ms);  // [BAD] Old synchronous format
+        return ms.ToArray();
+    }
+}
+
+// But LoadFromStreamAsync expected modern async format
+public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
+{
+    // This expects data written by SaveToStreamAsync, not WriteToStream!
+}
+```
+
+**Solution**: Ensure serialization format consistency:
+
+```csharp
+public byte[] AsBytes
+{
+    get
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        using var ms = new MemoryStream();
+        SaveToStreamAsync(ms).GetAwaiter().GetResult();  // [GOOD] Use async version
+        return ms.ToArray();
+    }
+}
+```
+
+**Prevention**: When implementing IResource, ensure AsBytes and LoadFromStreamAsync use the same serialization format.
+
+#### Empty Stream Handling Inconsistency  
+
+**What Happened**: Some LoadFromStreamAsync methods crashed on empty streams, others handled them gracefully.
+
+**Problem**: No standard pattern for handling empty or null streams across resource types.
+
+**Standard Pattern**:
+
+```csharp
+public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
+{
+    // Handle null or truly empty stream (no content at all)
+    if (stream == null || stream.Length == 0)
+    {
+        // Initialize with default values for empty resource
+        InitializeDefaults();
+        IsDirty = true;
+        return;
+    }
+
+    // For resources with minimum size requirements
+    if (stream.Length < MINIMUM_VALID_SIZE)
+    {
+        // Handle incomplete/partial data by initializing empty
+        InitializeDefaults();
+        IsDirty = true;
+        return;
+    }
+
+    // Proceed with normal parsing...
+}
+```
+
+**Prevention**: Always handle empty streams gracefully - many tests create resources without initial data.
+
+### [FIELDS] ContentFields Initialization Patterns
+
+#### Mixed Constructor vs Computed Property Patterns
+
+**What Happened**: Some resources had empty ContentFields even with data because of inconsistent initialization patterns.
+
+**Problem**: Mixed patterns across resource types:
+
+- Some used computed properties: `public IReadOnlyList<string> ContentFields => new[] { "Field1", "Field2" };`  
+- Some used constructor initialization: `_contentFields.AddRange(["Field1", "Field2"]);`
+- Some never initialized ContentFields at all
+
+**Recommended Pattern**: Constructor initialization for consistency:
+
+```csharp
+public sealed class MyResource : IResource, IDisposable, INotifyPropertyChanged
+{
+    private readonly List<string> _contentFields = new();
+    
+    public MyResource(ResourceKey key, uint version = 1)
+    {
+        _key = key ?? throw new ArgumentNullException(nameof(key));
+        Version = version;
+        
+        // Initialize ContentFields for new resources
+        _contentFields.AddRange([
+            "Field1",
+            "Field2", 
+            "Field3"
+        ]);
+    }
+    
+    /// <inheritdoc/>
+    public IReadOnlyList<string> ContentFields => _contentFields.AsReadOnly();
+}
+```
+
+**Why Constructor Over Computed**: Constructor initialization allows dynamic ContentFields based on actual data, while computed properties are static.
+
+**Prevention**: Pick one pattern (preferably constructor) and use it consistently across all resources in a module.
+
+### [CRITICAL] Critical Integration Issues
 
 #### Missing Project References in Test Projects
 
@@ -1177,12 +1383,17 @@ public TestConstructor()
     services.AddWorldResources();            // Don't forget new modules!
     
     _serviceProvider = services.BuildServiceProvider();
+    
+    // CRITICAL: Initialize ResourceWrapperRegistry
+    var registry = _serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
+    var initTask = registry.DiscoverAndRegisterFactoriesAsync();
+    initTask.GetAwaiter().GetResult();
 }
 ```
 
-**Prevention**: Create a checklist: Core services + each resource module you're testing.
+**Prevention**: Create a checklist: Core services + each resource module + ResourceWrapperRegistry initialization.
 
-### 🔍 IResource Interface Confusion
+### [INTERFACE] IResource Interface Confusion
 
 #### Accessing Properties That Don't Exist
 
@@ -1191,6 +1402,7 @@ public TestConstructor()
 **Problem**: Confused concrete resource classes with the minimal `IResource` interface.
 
 **The IResource Interface Reality**:
+
 ```csharp
 public interface IResource : IApiVersion, IContentFields, IDisposable
 {
@@ -1215,7 +1427,7 @@ if (resource is WorldResource worldRes)
 
 **Prevention**: Always check the actual interface definition before writing test assertions.
 
-### 🏭 Resource Manager vs Factory Confusion
+### [FACTORY] Resource Manager vs Factory Confusion
 
 #### Mixed Usage Patterns
 
@@ -1224,12 +1436,14 @@ if (resource is WorldResource worldRes)
 **Problem**: Inconsistent patterns make tests confusing and harder to maintain.
 
 **Resource Manager Approach** (for integration tests):
+
 ```csharp
 // Tests the full pipeline: type lookup -> factory selection -> creation
 var resource = await _resourceManager.CreateResourceAsync("0x810A102D", 1);
 ```
 
 **Direct Factory Approach** (for unit tests):
+
 ```csharp
 // Tests specific factory logic
 var factory = _serviceProvider.GetService<WorldResourceFactory>();
@@ -1238,7 +1452,7 @@ var resource = await factory.CreateResourceAsync(1);
 
 **Prevention**: Decide upfront whether you're testing integration (use ResourceManager) or units (use factories directly).
 
-### 🔄 Round-Trip Serialization Testing Issues
+### [ROUNDTRIP] Round-Trip Serialization Testing Issues
 
 #### Empty Stream Deserialization
 
@@ -1247,6 +1461,7 @@ var resource = await factory.CreateResourceAsync(1);
 **Problem**: Resources created without initial data have empty internal streams, but deserialization expects valid binary data.
 
 **Flawed Test Logic**:
+
 ```csharp
 // This creates a resource with empty/default data
 var originalResource = await factory.CreateResourceAsync(1);
@@ -1258,6 +1473,7 @@ var deserializedResource = await factory.CreateResourceAsync(1, stream);
 ```
 
 **Better Test Approach**:
+
 ```csharp
 // Test with actual meaningful data
 var originalResource = CreateResourceWithTestData();  // Populated resource
@@ -1275,7 +1491,7 @@ if (originalBytes.Length == 0)
 
 **Prevention**: Always test with both populated data AND empty/edge cases explicitly.
 
-### 📋 ContentFields Implementation Gotchas
+### [CONTENTFIELDS] ContentFields Implementation Gotchas
 
 #### Assuming ContentFields Are Always Populated
 
@@ -1284,11 +1500,13 @@ if (originalBytes.Length == 0)
 **Problem**: Some resource classes initialize with empty ContentFields until they're populated by actual data.
 
 **Wrong Assumption**:
+
 ```csharp
 resource.ContentFields.Should().NotBeEmpty("Resource should have content fields");
 ```
 
 **Better Test Logic**:
+
 ```csharp
 // For newly created resources, ContentFields might be empty initially
 resource.ContentFields.Should().NotBeNull("ContentFields should be initialized");
@@ -1302,7 +1520,7 @@ if (resource.HasData()) // Some way to check if populated
 
 **Prevention**: Understand the lifecycle of ContentFields - when they get populated and what empty means.
 
-### 🧪 Golden Master Integration Best Practices
+### [TESTING] Golden Master Integration Best Practices
 
 #### Test the Framework First
 
@@ -1311,6 +1529,7 @@ if (resource.HasData()) // Some way to check if populated
 **Problem**: Tried to test everything at once instead of validating the test framework itself first.
 
 **Better Approach**:
+
 ```csharp
 // FIRST: Test that DI registration works
 [Fact]
@@ -1343,6 +1562,7 @@ public async Task WorldResourceFactory_CanCreateResource()
 **Problem**: Performance characteristics of empty vs real data can be drastically different.
 
 **Better Performance Testing**:
+
 ```csharp
 [Fact]
 public async Task WorldResourceCreation_PerformanceBaseline()
@@ -1415,6 +1635,117 @@ By now you should understand:
 1. Set up your development environment
 2. Run the existing tests to make sure everything works
 3. Pick a small task from the issue tracker
+
+## [LESSONS] Phase 4.17 Lessons - Critical Success Checklist
+
+*The absolute essentials learned from real implementation failures*
+
+### Before Starting Any Resource Development
+
+**1. ResourceWrapperRegistry Initialization - THE MOST CRITICAL**
+
+```csharp
+// ALWAYS include this pattern in test setup
+var serviceProvider = services.BuildServiceProvider();
+var registry = serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
+var initTask = registry.DiscoverAndRegisterFactoriesAsync();
+initTask.GetAwaiter().GetResult(); // Critical for ResourceManager to work
+```
+
+**2. Complete DI Registration Checklist**
+
+```csharp
+services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+services.AddTS4ToolsResourceServices();  // Core ResourceManager + ResourceWrapperRegistry
+services.AddWorldResources();            // Your specific resource module
+// Add other resource modules as needed
+```
+
+**3. Project Reference Verification**
+
+- Test projects must reference the resource modules they test
+- Check `.csproj` files for missing `<ProjectReference>` entries
+
+### During Resource Implementation
+
+**4. Stream Handling Consistency**
+
+- Always use `SaveToStreamAsync()` format in `AsBytes` property
+- Handle empty streams gracefully in `LoadFromStreamAsync()`
+- Test both populated data AND empty stream scenarios
+
+**5. ContentFields Implementation**
+
+- Use constructor initialization over computed properties
+- Initialize ContentFields even for empty resources
+- Don't assume ContentFields are always populated
+
+**6. Interface vs Concrete Types**
+
+- `IResource` has minimal interface - cast to specific types for properties
+- Decide upfront: ResourceManager (integration) vs Factory (unit testing)
+
+### During Testing
+
+**7. Test Framework Validation First**
+
+- Test DI registration works before complex logic
+- Build tests incrementally - smoke tests -> unit tests -> integration
+- Use real data for performance tests, not empty resources
+
+**8. Golden Master Integration**
+
+- Validate test framework setup before testing business logic
+- Understand resource lifecycle - when ContentFields get populated
+- Test empty vs populated resources as separate scenarios
+
+### Critical Debugging Patterns
+
+**9. ResourceManager Troubleshooting**
+
+```csharp
+// If getting DefaultResource instead of specific types
+var resource = await _resourceManager.CreateResourceAsync("0x810A102D", 1);
+Console.WriteLine($"Resource type: {resource.GetType().FullName}");
+// [BAD]: "TS4Tools.Core.Resources.DefaultResource"
+// [GOOD]: "TS4Tools.Resources.World.WorldResource"
+```
+
+**10. Serialization Round-Trip Verification**
+
+```csharp
+// Test that AsBytes and LoadFromStreamAsync use same format
+var originalResource = CreateResourceWithTestData();
+var originalBytes = originalResource.AsBytes;
+
+using var stream = new MemoryStream(originalBytes);
+var deserializedResource = await factory.CreateResourceAsync(1, stream);
+// Should not throw EndOfStreamException
+```
+
+### Red Flags - Stop and Fix These Immediately
+
+[!] **ResourceManager returns DefaultResource** -> ResourceWrapperRegistry not initialized  
+[!] **"Expected ContentFields not to be empty" test failures** -> ResourceWrapperRegistry not initialized  
+[!] **Compile errors about missing namespaces** -> Missing project references  
+[!] **EndOfStreamException in round-trip tests** -> Stream format inconsistency  
+[!] **NullReferenceException in tests** -> Missing DI registrations  
+
+### Success Indicators - You're On the Right Track
+
+[OK] Resources have correct concrete types (not DefaultResource)  
+[OK] ContentFields are populated appropriately for resource state  
+[OK] Round-trip serialization works without exceptions  
+[OK] Both empty and populated resources are handled gracefully  
+[OK] Tests build incrementally from simple to complex  
+
+---
+
+*"The best documentation is the mistakes you don't repeat." - Phase 4.17 Experience*
+
+---
+
+*Happy coding, and may your resources always deserialize correctly!*
 4. Start coding!
 
 Welcome to the team!

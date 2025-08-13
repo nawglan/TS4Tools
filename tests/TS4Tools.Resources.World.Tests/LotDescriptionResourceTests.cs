@@ -119,7 +119,7 @@ public sealed class LotDescriptionResourceTests : IDisposable
 
         // Assert
         Assert.NotNull(fields);
-        Assert.Equal(6, fields.Count);
+        Assert.Equal(9, fields.Count);
         Assert.Contains("LotId", fields);
         Assert.Contains("LotName", fields);
         Assert.Contains("Description", fields);
