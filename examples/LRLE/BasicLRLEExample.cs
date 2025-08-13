@@ -49,7 +49,7 @@ public class BasicLRLEExample
         // Verify resource properties
         Console.WriteLine($"Image dimensions: {lrleResource.Width}x{lrleResource.Height}");
         Console.WriteLine($"LRLE version: {lrleResource.Version}");
-        Console.WriteLine($"Mip levels: {lrleResource.MipMapCount}");
+        Console.WriteLine($"Mip levels: {lrleResource.MipCount}");
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public class BasicLRLEExample
         Console.WriteLine($"Saved decompressed PNG: {outputPath}");
 
         // Extract additional mip levels if available
-        for (int mipLevel = 1; mipLevel < lrleResource.MipMapCount; mipLevel++)
+        for (int mipLevel = 1; mipLevel < lrleResource.MipCount; mipLevel++)
         {
             using var mipStream = await lrleResource.ToBitmapAsync(mipLevel);
             using var mipImage = await Image.LoadAsync<Rgba32>(mipStream);
@@ -143,26 +143,5 @@ public class BasicLRLEExample
         }
 
         await image.SaveAsPngAsync(filePath);
-    }
-
-    /// <summary>
-    /// Main entry point for the basic example
-    /// </summary>
-    public static async Task Main(string[] args)
-    {
-        var example = new BasicLRLEExample();
-
-        try
-        {
-            await example.CompressPngToLrleAsync();
-            await example.DecompressLrleToPngAsync();
-
-            Console.WriteLine("\n=== Example completed successfully! ===");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
-        }
     }
 }

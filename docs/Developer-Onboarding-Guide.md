@@ -76,6 +76,7 @@ graph TB
 ### IMPORTANT: Solution File Confusion
 
 **CRITICAL WARNING**: The workspace has multiple solution files that can cause major confusion:
+
 - `TS4Tools.sln` (USE THIS ONE - the modern .NET 9 implementation)
 - `Sims4Tools/sims4tools.sln` (Legacy .NET Framework - DO NOT USE for new development)
 - `TS4MorphMaker/CmarNYC_TS4MorphMaker.sln` (Separate project)
@@ -148,6 +149,7 @@ graph TD
 
 In Sims 4, everything is a **resource** - textures, 3D models, text strings, animations, etc.
 Each resource has:
+
 - A **Type ID** (like 0x220557DA for text strings)
 - **Data** (the actual content)
 - **Metadata** (size, version, etc.)
@@ -273,6 +275,7 @@ graph LR
 ### Types of Tests We Write
 
 #### 1. Unit Tests
+
 Test a single class in isolation:
 
 ```csharp
@@ -303,6 +306,7 @@ public class StringTableResourceTests
 ```
 
 #### 2. Integration Tests
+
 Test multiple components working together:
 
 ```csharp
@@ -369,6 +373,7 @@ private byte[] CreateValidLRLEBinaryData()
 ```
 
 **Key Differences from Generic Examples:**
+
 - Test data must match actual Sims 4 binary formats
 - Use `test-data/` folders for larger binary files
 - Test disposal patterns with `using` statements
@@ -412,11 +417,11 @@ Assert.True(result.Any(item => item.Name == "expected-name"));
 **CRITICAL**: Before following the examples below, study these real implementations:
 
 - `LRLEResource.cs` - Complex image resource with proper disposal patterns
-- `LRLEResourceFactory.cs` - Real factory implementation 
+- `LRLEResourceFactory.cs` - Real factory implementation
 - `LRLEResourceTests.cs` - Comprehensive test suite with binary test data
 - `StringTableResource.cs` - Text resource implementation patterns
 
-### Key Differences from Generic Examples:
+### Key Differences from Generic Examples
 
 1. **No ResourceBase Class**: Resources implement interfaces directly (like `ILRLEResource`, `IDisposable`)
 2. **ResourceFactoryBase Pattern**: Factories extend `ResourceFactoryBase<T>` not generic patterns
@@ -424,7 +429,7 @@ Assert.True(result.Any(item => item.Name == "expected-name"));
 4. **Binary Format Research**: You must understand the actual Sims 4 binary format first
 5. **Test Data Creation**: Tests require real binary data, not made-up examples
 
-### Real Constructor Patterns:
+### Real Constructor Patterns
 
 ```csharp
 // What you'll actually implement (see LRLEResource.cs):
@@ -446,7 +451,7 @@ public class MyResource : ResourceBase, IMyResource
 }
 ```
 
-### Real Factory Patterns:
+### Real Factory Patterns
 
 ```csharp
 // Actual pattern from LRLEResourceFactory.cs:
@@ -459,9 +464,10 @@ protected override async Task<IMyResource> CreateResourceCoreAsync(
 }
 ```
 
-### Real Test Patterns:
+### Real Test Patterns
 
 Study the LRLE tests - they show you need:
+
 - Binary test data in `test-data/` folders
 - Helper methods to create valid binary streams
 - Comprehensive error testing with invalid data
@@ -921,6 +927,7 @@ grep -r "public.*Test" tests/ --include="*.cs"
 ### Adding a New Service to DI
 
 1. Create the interface:
+
 ```csharp
 public interface IMyService
 {
@@ -929,6 +936,7 @@ public interface IMyService
 ```
 
 2. Create the implementation:
+
 ```csharp
 public class MyService : IMyService
 {
@@ -949,6 +957,7 @@ public class MyService : IMyService
 ```
 
 3. Register in DI:
+
 ```csharp
 // In ServiceCollectionExtensions.cs
 services.AddScoped<IMyService, MyService>();
@@ -1004,32 +1013,39 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 
 **Before writing any code**, study these real implementations in the TS4Tools project:
 
-### 📁 `src/TS4Tools.Resources.Images/LRLEResource.cs` 
+### 📁 `src/TS4Tools.Resources.Images/LRLEResource.cs`
+
 **Study this for:** Complex resource with binary format parsing, proper disposal patterns, comprehensive error handling
+
 - Shows proper `IDisposable` implementation
 - Demonstrates binary data validation
 - Uses modern C# patterns (sealed class, proper async/await)
 - Complex state management with caching
 
 ### 📁 `src/TS4Tools.Resources.Images/LRLEResourceFactory.cs`
+
 **Study this for:** Actual factory implementation pattern used throughout the project
+
 - Shows proper `ResourceFactoryBase<T>` inheritance
 - Demonstrates error handling in factory methods
 - Shows how resource type IDs are handled
 
 ### 📁 `tests/TS4Tools.Resources.Images.Tests/LRLEResourceTests.cs`
+
 **Study this for:** Comprehensive testing patterns, real binary test data creation
+
 - Shows how to create valid binary test data
 - Demonstrates proper disposal testing
 - Shows error condition testing patterns
 - Uses real factory pattern in tests
 
-### ❌ DON'T Study These (Legacy Patterns):
+### ❌ DON'T Study These (Legacy Patterns)
+
 - `Sims4Tools/s4pi Wrappers/ImageResource/LRLEResource.cs` - Old .NET Framework patterns
 - Any class inheriting from `AResource` - Legacy pattern not used in TS4Tools
 - Any class using `EventHandler` patterns - Old synchronous patterns
 
-### Key Learning Points from Real Code:
+### Key Learning Points from Real Code
 
 1. **Resource Classes**: Implement interfaces directly (e.g., `ILRLEResource`, `IDisposable`)
 2. **Factories**: Inherit from `ResourceFactoryBase<T>`, not generic examples

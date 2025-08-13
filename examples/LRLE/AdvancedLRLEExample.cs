@@ -119,7 +119,7 @@ public class AdvancedLRLEExample
                 ProcessingTime = stopwatch.Elapsed,
                 Width = lrleResource.Width,
                 Height = lrleResource.Height,
-                MipLevels = lrleResource.MipMapCount,
+                MipLevels = (byte)lrleResource.MipCount,
                 Success = true
             };
         }
@@ -476,21 +476,19 @@ public class AdvancedLRLEExample
     }
 
     /// <summary>
-    /// Main entry point for the advanced examples
+    /// Runs all advanced LRLE examples
     /// </summary>
-    public static async Task Main(string[] args)
+    public async Task RunBatchProcessingAsync()
     {
-        var example = new AdvancedLRLEExample();
-
         try
         {
             // Create directories for examples
             Directory.CreateDirectory("input");
             Directory.CreateDirectory("output");
 
-            await example.BatchProcessImagesAsync("input", "output");
-            await example.QualityComparisonAsync("test_image.png");
-            await example.PerformanceBenchmarkAsync();
+            await BatchProcessImagesAsync("input", "output");
+            await QualityComparisonAsync("test_image.png");
+            await PerformanceBenchmarkAsync();
 
             Console.WriteLine("\n=== Advanced examples completed successfully! ===");
         }
