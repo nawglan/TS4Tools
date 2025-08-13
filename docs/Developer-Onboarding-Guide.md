@@ -394,6 +394,63 @@ public void ParseStringTable_WithMissingHashKey_ThrowsInvalidDataException()
 public void TestStringTable()
 ```
 
+### Golden Master Test Integration
+
+**CRITICAL PATTERN**: When adding new resource modules, you MUST integrate them with the Golden Master test framework.
+
+**Step 1: Add Resource Types to Golden Master Tests**
+
+```csharp
+// In tests/TS4Tools.Tests.GoldenMaster/ResourceTypeGoldenMasterTests.cs
+[Theory]
+[InlineData(0x220557DA, "String Table Resource (STBL)")]
+// ... existing resource types ...
+// ADD YOUR NEW RESOURCE TYPES HERE:
+[InlineData(0x810A102D, "World Resource (WORLD)")]
+[InlineData(0xAE39399F, "Terrain Resource (TERRAIN)")]
+public async Task ResourceType_RoundTripSerialization_ShouldPreserveBinaryEquivalence(
+    uint resourceTypeId, string description)
+```
+
+**Step 2: Add Project Reference to Golden Master Tests**
+
+```xml
+<!-- In tests/TS4Tools.Tests.GoldenMaster/TS4Tools.Tests.GoldenMaster.csproj -->
+<ItemGroup>
+  <!-- ... existing references ... -->
+  <ProjectReference Include="..\..\src\TS4Tools.Resources.YourModule\TS4Tools.Resources.YourModule.csproj" />
+</ItemGroup>
+```
+
+**Step 3: Register DI Services in Golden Master Test Setup**
+
+```csharp
+// In ResourceTypeGoldenMasterTests constructor
+public ResourceTypeGoldenMasterTests()
+{
+    var services = new ServiceCollection();
+    services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
+    services.AddTS4ToolsPackageServices();
+    services.AddTS4ToolsResourceServices();
+    services.AddWorldResources();  // ADD YOUR MODULE HERE
+    
+    _serviceProvider = services.BuildServiceProvider();
+    // ... rest of setup
+}
+```
+
+**What This Achieves:**
+- Validates your resources work with the main Golden Master framework
+- Catches binary format compatibility issues early
+- Ensures your resource types are discoverable by ResourceManager
+- Provides automated regression testing for your resource formats
+
+**Common Failure Modes:**
+- Missing project reference → compile errors in Golden Master tests
+- Missing DI registration → NullReferenceException when ResourceManager tries to create your resources  
+- Empty ContentFields → test failures, but this might be expected initially
+- Round-trip serialization failures → indicates your resource doesn't handle empty/minimal data correctly
+
 ### Using FluentAssertions
 
 We use FluentAssertions for readable test assertions:
@@ -1077,6 +1134,237 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 2. **Review others' code** - Help maintain code quality
 3. **Improve documentation** - Help future developers (like this guide!)
 4. **Optimize performance** - Identify and fix bottlenecks
+
+---
+
+## [PITFALLS] Common Mistakes and How to Avoid Them
+
+*Based on real development experience from Phase 4.17 implementation*
+
+### 🚨 Critical Integration Issues
+
+#### Missing Project References in Test Projects
+
+**What Happened**: Created comprehensive tests but got compile errors: `'World' does not exist in the namespace 'TS4Tools.Resources'`
+
+**Problem**: New resource modules need to be explicitly referenced in test projects that use them.
+
+**Solution**: Always add project references when testing new modules:
+
+```xml
+<!-- In your test .csproj file -->
+<ItemGroup>
+  <ProjectReference Include="..\..\src\TS4Tools.Resources.World\TS4Tools.Resources.World.csproj" />
+</ItemGroup>
+```
+
+**Prevention**: When creating tests for a new resource module, immediately check if the test project references it.
+
+#### Forgetting DI Registration in Test Setup
+
+**What Happened**: Tests failed with `NullReferenceException` even though factories were registered.
+
+**Problem**: Test setup didn't include the new resource module's DI registration.
+
+**Solution**: Remember to add ALL relevant DI registrations in test setup:
+
+```csharp
+public TestConstructor()
+{
+    var services = new ServiceCollection();
+    services.AddLogging();
+    services.AddTS4ToolsResourceServices();  // Core resources
+    services.AddWorldResources();            // Don't forget new modules!
+    
+    _serviceProvider = services.BuildServiceProvider();
+}
+```
+
+**Prevention**: Create a checklist: Core services + each resource module you're testing.
+
+### 🔍 IResource Interface Confusion
+
+#### Accessing Properties That Don't Exist
+
+**What Happened**: Tried to access `resource.Key` and `resource.Version` and got compile errors.
+
+**Problem**: Confused concrete resource classes with the minimal `IResource` interface.
+
+**The IResource Interface Reality**:
+```csharp
+public interface IResource : IApiVersion, IContentFields, IDisposable
+{
+    Stream Stream { get; }
+    byte[] AsBytes { get; }
+    event EventHandler? ResourceChanged;
+}
+```
+
+**Solution**: Cast to specific resource types when you need access to concrete properties:
+
+```csharp
+// WRONG - IResource doesn't have Key property
+resource.Key.ResourceType.Should().Be(expectedType);
+
+// RIGHT - Cast to specific type first
+if (resource is WorldResource worldRes)
+{
+    worldRes.Key.ResourceType.Should().Be(expectedType);
+}
+```
+
+**Prevention**: Always check the actual interface definition before writing test assertions.
+
+### 🏭 Resource Manager vs Factory Confusion
+
+#### Mixed Usage Patterns
+
+**What Happened**: Sometimes used `ResourceManager.CreateResourceAsync()`, other times used factories directly.
+
+**Problem**: Inconsistent patterns make tests confusing and harder to maintain.
+
+**Resource Manager Approach** (for integration tests):
+```csharp
+// Tests the full pipeline: type lookup -> factory selection -> creation
+var resource = await _resourceManager.CreateResourceAsync("0x810A102D", 1);
+```
+
+**Direct Factory Approach** (for unit tests):
+```csharp
+// Tests specific factory logic
+var factory = _serviceProvider.GetService<WorldResourceFactory>();
+var resource = await factory.CreateResourceAsync(1);
+```
+
+**Prevention**: Decide upfront whether you're testing integration (use ResourceManager) or units (use factories directly).
+
+### 🔄 Round-Trip Serialization Testing Issues
+
+#### Empty Stream Deserialization
+
+**What Happened**: Tests failed with `EndOfStreamException` when trying to deserialize empty streams.
+
+**Problem**: Resources created without initial data have empty internal streams, but deserialization expects valid binary data.
+
+**Flawed Test Logic**:
+```csharp
+// This creates a resource with empty/default data
+var originalResource = await factory.CreateResourceAsync(1);
+var originalBytes = originalResource.AsBytes;  // Might be empty!
+
+// This will fail if originalBytes is empty
+using var stream = new MemoryStream(originalBytes);
+var deserializedResource = await factory.CreateResourceAsync(1, stream);
+```
+
+**Better Test Approach**:
+```csharp
+// Test with actual meaningful data
+var originalResource = CreateResourceWithTestData();  // Populated resource
+var originalBytes = originalResource.AsBytes;
+
+// Or test the empty case explicitly
+if (originalBytes.Length == 0)
+{
+    // Test that empty streams are handled gracefully
+    using var emptyStream = new MemoryStream();
+    var action = () => factory.CreateResourceAsync(1, emptyStream);
+    await action.Should().NotThrowAsync();
+}
+```
+
+**Prevention**: Always test with both populated data AND empty/edge cases explicitly.
+
+### 📋 ContentFields Implementation Gotchas
+
+#### Assuming ContentFields Are Always Populated
+
+**What Happened**: Tests failed with `Expected resource.ContentFields not to be empty` even for valid resources.
+
+**Problem**: Some resource classes initialize with empty ContentFields until they're populated by actual data.
+
+**Wrong Assumption**:
+```csharp
+resource.ContentFields.Should().NotBeEmpty("Resource should have content fields");
+```
+
+**Better Test Logic**:
+```csharp
+// For newly created resources, ContentFields might be empty initially
+resource.ContentFields.Should().NotBeNull("ContentFields should be initialized");
+
+// For resources with data, they should have fields
+if (resource.HasData()) // Some way to check if populated
+{
+    resource.ContentFields.Should().NotBeEmpty("Populated resource should have content fields");
+}
+```
+
+**Prevention**: Understand the lifecycle of ContentFields - when they get populated and what empty means.
+
+### 🧪 Golden Master Integration Best Practices
+
+#### Test the Framework First
+
+**What Happened**: Created complex tests that failed, making it hard to diagnose root causes.
+
+**Problem**: Tried to test everything at once instead of validating the test framework itself first.
+
+**Better Approach**:
+```csharp
+// FIRST: Test that DI registration works
+[Fact]
+public void WorldResourceFactories_ShouldBeRegisteredInDI()
+{
+    // Simple smoke test - can I get the factory?
+    var factory = _serviceProvider.GetService<WorldResourceFactory>();
+    factory.Should().NotBeNull();
+}
+
+// SECOND: Test basic resource creation
+[Fact] 
+public async Task WorldResourceFactory_CanCreateResource()
+{
+    // Simple creation test
+    var factory = _serviceProvider.GetService<WorldResourceFactory>();
+    var resource = await factory.CreateResourceAsync(1);
+    resource.Should().NotBeNull();
+}
+
+// THIRD: Test complex scenarios like round-trip serialization
+```
+
+**Prevention**: Build tests incrementally - validate your test framework before testing complex logic.
+
+#### Performance Test Baseline Issues
+
+**What Happened**: Performance tests were unrealistic because they tested resource creation with empty data.
+
+**Problem**: Performance characteristics of empty vs real data can be drastically different.
+
+**Better Performance Testing**:
+```csharp
+[Fact]
+public async Task WorldResourceCreation_PerformanceBaseline()
+{
+    // Test with realistic data sizes, not empty resources
+    var testData = LoadRealWorldPackageData();  // Real binary data
+    
+    var stopwatch = Stopwatch.StartNew();
+    for (int i = 0; i < 100; i++)
+    {
+        using var stream = new MemoryStream(testData);
+        var resource = await _factory.CreateResourceAsync(1, stream);
+        // Use resource to ensure it's not optimized away
+        _ = resource.AsBytes.Length;
+    }
+    stopwatch.Stop();
+    
+    // Performance assertions based on realistic workload
+}
+```
+
+**Prevention**: Use real data for performance tests, not synthetic/empty data.
 
 ---
 

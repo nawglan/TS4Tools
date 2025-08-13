@@ -39,6 +39,7 @@
     <ProjectReference Include="..\..\src\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Settings\TS4Tools.Core.Settings.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.DependencyInjection\TS4Tools.Core.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.World\TS4Tools.Resources.World.csproj" />
     <ProjectReference Include="..\TS4Tools.Tests.Common\TS4Tools.Tests.Common.csproj" />
   </ItemGroup>
 </Project>

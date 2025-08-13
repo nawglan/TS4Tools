@@ -15,6 +15,7 @@ using TS4Tools.Core.Package.DependencyInjection;
 using TS4Tools.Core.Resources;
 using TS4Tools.Core.DependencyInjection;
 using TS4Tools.Core.Settings;
+using TS4Tools.Resources.World.DependencyInjection;
 using Xunit;
 
 namespace TS4Tools.Tests.GoldenMaster;
@@ -38,6 +39,7 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
         services.AddTS4ToolsPackageServices();
         services.AddTS4ToolsResourceServices();
+        services.AddWorldResources();
 
         _serviceProvider = services.BuildServiceProvider();
         _packageFactory = _serviceProvider.GetRequiredService<IPackageFactory>();
@@ -65,6 +67,14 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0x73E93EE5, "Text Resource")]
     [InlineData(0x6B20C4F3, "Effects Resource")]
     [InlineData(0x0166038C, "Utility Resource (Config)")]
+    // Phase 4.17 World and Environment Resources
+    [InlineData(0x810A102D, "World Resource (WORLD)")]
+    [InlineData(0xAE39399F, "Terrain Resource (TERRAIN)")]
+    [InlineData(0x01942E2C, "Lot Resource (LOT)")]
+    [InlineData(0xD65DAFF9, "Neighborhood Resource (NEIGHBORHOOD)")]
+    [InlineData(0xA680EA4B, "Region Description Resource (REGION)")]
+    [InlineData(0xC9C81B9B, "Lot Description Resource (LOTDESC)")]
+    [InlineData(0x39006E00, "Region Description Resource (REGIONDESC)")]
     public async Task ResourceType_RoundTripSerialization_ShouldPreserveBinaryEquivalence(
         uint resourceTypeId, string description)
     {
