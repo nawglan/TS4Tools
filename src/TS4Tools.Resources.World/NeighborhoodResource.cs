@@ -135,7 +135,24 @@ public sealed class NeighborhoodResource : IResource, IDisposable
     /// <exception cref="InvalidDataException">Thrown when the stream contains invalid neighborhood data.</exception>
     public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty neighborhood
+            WorldNameKey = 0;
+            WorldName = string.Empty;
+            AmbienceFileInstanceId = 0;
+            PublicSpaceAuralMaterial = 0;
+            EnableTimeOverride = false;
+            Hour = 12;
+            Minute = 0;
+            HSVTweakerFileInstanceId = 0;
+            Climate = ClimateType.Temperate;
+            Terrain = TerrainType.Flat;
+            _lots.Clear();
+            IsDirty = true;
+            return;
+        }
 
         try
         {

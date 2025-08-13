@@ -54,6 +54,12 @@ public sealed class Phase417WorldResourceGoldenMasterTests : IDisposable
         services.AddWorldResources();
 
         _serviceProvider = services.BuildServiceProvider();
+
+        // Initialize ResourceWrapperRegistry to discover and register factories with ResourceManager
+        var registry = _serviceProvider.GetRequiredService<IResourceWrapperRegistry>();
+        var initTask = registry.DiscoverAndRegisterFactoriesAsync();
+        initTask.GetAwaiter().GetResult(); // Synchronously wait since constructors can't be async
+
         _resourceManager = _serviceProvider.GetRequiredService<IResourceManager>();
         _logger = _serviceProvider.GetRequiredService<ILogger<Phase417WorldResourceGoldenMasterTests>>();
     }

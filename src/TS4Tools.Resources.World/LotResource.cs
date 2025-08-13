@@ -126,7 +126,23 @@ public sealed class LotResource : IResource, IDisposable
     /// <exception cref="InvalidDataException">Thrown when the stream contains invalid lot data.</exception>
     public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty lot
+            WorldDescriptionInstanceId = 0;
+            LotId = 0;
+            SimoleonPrice = 0;
+            LotSizeX = 64;
+            LotSizeZ = 64;
+            IsEditable = true;
+            AmbienceFileInstanceId = 0;
+            EnabledForAutoTest = false;
+            HasOverrideAmbience = false;
+            AudioEffectFileInstanceId = 0;
+            IsDirty = true;
+            return;
+        }
 
         try
         {

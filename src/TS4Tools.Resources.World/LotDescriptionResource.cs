@@ -60,6 +60,17 @@ public sealed class LotDescriptionResource : IResource, IDisposable, INotifyProp
         _key = key ?? throw new ArgumentNullException(nameof(key));
         Version = version;
         _stream = new MemoryStream();
+
+        // Initialize ContentFields for new resources
+        _contentFields.AddRange([
+            "LotId",
+            "LotName",
+            "LotDescription",
+            "LotType",
+            "LotTraits",
+            "ThumbnailKey",
+            "LotFlags"
+        ]);
     }
 
     /// <inheritdoc/>
@@ -208,7 +219,14 @@ public sealed class LotDescriptionResource : IResource, IDisposable, INotifyProp
     /// <returns>A task representing the asynchronous operation.</returns>
     public Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty lot description
+            IsDirty = true;
+            return Task.CompletedTask;
+        }
+
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         try

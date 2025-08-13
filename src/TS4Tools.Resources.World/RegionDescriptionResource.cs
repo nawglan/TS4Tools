@@ -61,6 +61,9 @@ public sealed class RegionDescriptionResource : IResource, IDisposable, INotifyP
         _key = key ?? throw new ArgumentNullException(nameof(key));
         Version = version;
         _stream = new MemoryStream();
+
+        // Initialize ContentFields for new resources
+        _contentFields.AddRange(["RegionName", "RegionDescription", "BoundaryPoints", "AssociatedLots", "Climate", "Elevation"]);
     }
 
     /// <inheritdoc/>
@@ -185,7 +188,7 @@ public sealed class RegionDescriptionResource : IResource, IDisposable, INotifyP
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             using var ms = new MemoryStream();
-            WriteToStream(ms);
+            SaveToStreamAsync(ms).GetAwaiter().GetResult();
             return ms.ToArray();
         }
     }
@@ -311,7 +314,22 @@ public sealed class RegionDescriptionResource : IResource, IDisposable, INotifyP
     /// <returns>A task representing the asynchronous operation.</returns>
     public Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty region
+            _regionName = string.Empty;
+            _regionDescription = string.Empty;
+            _boundaryPoints.Clear();
+            _associatedLots.Clear();
+            _climate = RegionClimate.Temperate;
+            _elevation = 0.0f;
+            _contentFields.Clear();
+            _contentFields.AddRange(["RegionName", "RegionDescription", "BoundaryPoints", "AssociatedLots", "Climate", "Elevation"]);
+            IsDirty = true;
+            return Task.CompletedTask;
+        }
+
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         try

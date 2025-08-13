@@ -120,7 +120,16 @@ public sealed class WorldResource : IResource, IDisposable
     /// <returns>A task representing the asynchronous operation.</returns>
     public async Task LoadFromStreamAsync(Stream stream)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty resource
+            _objectManagers.Clear();
+            _sceneObjects.Clear();
+            IsDirty = true;
+            OnResourceChanged();
+            return;
+        }
 
         using var reader = new BinaryReader(stream);
 

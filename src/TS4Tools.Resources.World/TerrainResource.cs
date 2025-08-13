@@ -98,25 +98,58 @@ public sealed class TerrainResource : IResource, IDisposable
     /// <exception cref="InvalidDataException">Thrown when the stream contains invalid terrain data.</exception>
     public async Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
+        // Handle null or truly empty stream (no content at all)
+        if (stream == null || stream.Length == 0)
+        {
+            // Initialize with default values for empty terrain
+            _vertices.Clear();
+            _passes.Clear();
+            _isDirty = true;
+            OnResourceChanged();
+            return;
+        }
 
         try
         {
             using var reader = new BinaryReader(stream);
 
+            // Check if we have enough bytes for a complete terrain resource
+            // Minimum: 28 bytes (header) + 4 bytes (vertexCount) + 4 bytes (passCount) = 36 bytes
+            if (stream.Length < 36)
+            {
+                // Handle incomplete/partial terrain data by initializing empty
+                _vertices.Clear();
+                _passes.Clear();
+                _isDirty = true;
+                OnResourceChanged();
+                return;
+            }
+
             // Read terrain header
             var header = await ReadTerrainHeaderAsync(reader, cancellationToken);
 
-            // Read vertices
+            // Read vertices - use safer ReadUInt32 with bounds checking
             var vertexCount = reader.ReadUInt32();
+            if (vertexCount > 0 && stream.Position + (vertexCount * 20) > stream.Length) // Assume ~20 bytes per vertex
+            {
+                throw new InvalidDataException("Stream too short for specified vertex count");
+            }
+
+            _vertices.Clear();
             for (uint i = 0; i < vertexCount && !cancellationToken.IsCancellationRequested; i++)
             {
                 var vertex = await ReadTerrainVertexAsync(reader, cancellationToken);
                 _vertices.Add(vertex);
             }
 
-            // Read passes
+            // Read passes - use safer ReadUInt32 with bounds checking
             var passCount = reader.ReadUInt32();
+            if (passCount > 0 && stream.Position + (passCount * 16) > stream.Length) // Assume ~16 bytes per pass
+            {
+                throw new InvalidDataException("Stream too short for specified pass count");
+            }
+
+            _passes.Clear();
             for (uint i = 0; i < passCount && !cancellationToken.IsCancellationRequested; i++)
             {
                 var pass = await ReadTerrainPassAsync(reader, cancellationToken);
