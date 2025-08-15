@@ -43,6 +43,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResourceFactory, NeighborhoodResourceFactory>();
         services.AddSingleton<IResourceFactory, LotDescriptionResourceFactory>();
         services.AddSingleton<IResourceFactory, RegionDescriptionResourceFactory>();
+        services.AddSingleton<IResourceFactory, WorldColorTimelineResourceFactory>();
 
         // Register typed factories
         services.AddSingleton<WorldResourceFactory>();
@@ -51,6 +52,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<NeighborhoodResourceFactory>();
         services.AddSingleton<LotDescriptionResourceFactory>();
         services.AddSingleton<RegionDescriptionResourceFactory>();
+        services.AddSingleton<WorldColorTimelineResourceFactory>();
 
         return services;
     }

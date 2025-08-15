@@ -2,6 +2,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,6 +67,46 @@ public sealed class TerrainResource : IResource, IDisposable
         get => _isDirty;
         set => _isDirty = value;
     }
+
+    /// <summary>
+    /// Gets the number of terrain vertices.
+    /// </summary>
+    public int VertexCount => _vertices.Count;
+
+    /// <summary>
+    /// Gets the number of terrain passes.
+    /// </summary>
+    public int PassCount => _passes.Count;
+
+    /// <summary>
+    /// Gets the width of the terrain bounds.
+    /// </summary>
+    public ushort TerrainBoundsWidth => (ushort)(MaxBounds.X - MinBounds.X);
+
+    /// <summary>
+    /// Gets the height of the terrain bounds.
+    /// </summary>
+    public ushort TerrainBoundsHeight => (ushort)(MaxBounds.Y - MinBounds.Y);
+
+    /// <summary>
+    /// Gets the depth of the terrain bounds.
+    /// </summary>
+    public ushort TerrainBoundsDepth => (ushort)(MaxBounds.Z - MinBounds.Z);
+
+    /// <summary>
+    /// Gets whether the terrain has vertex data.
+    /// </summary>
+    public bool HasVertexData => _vertices.Count > 0;
+
+    /// <summary>
+    /// Gets whether the terrain has pass data.
+    /// </summary>
+    public bool HasPassData => _passes.Count > 0;
+
+    /// <summary>
+    /// Gets the total number of indices across all passes.
+    /// </summary>
+    public int TotalIndicesCount => _passes.Sum(p => p.Indices.Length);
 
     /// <summary>
     /// Initializes a new instance of the TerrainResource class.
@@ -446,7 +487,16 @@ public sealed class TerrainResource : IResource, IDisposable
         nameof(MinBounds),
         nameof(MaxBounds),
         nameof(Vertices),
-        nameof(Passes)
+        nameof(Passes),
+        nameof(VertexCount),
+        nameof(PassCount),
+        nameof(TerrainBoundsWidth),
+        nameof(TerrainBoundsHeight),
+        nameof(TerrainBoundsDepth),
+        nameof(HasVertexData),
+        nameof(HasPassData),
+        nameof(TotalIndicesCount),
+        nameof(IsDirty)
     };
 
     /// <inheritdoc />
@@ -460,6 +510,15 @@ public sealed class TerrainResource : IResource, IDisposable
             nameof(MaxBounds) => new TypedValue(typeof(TerrainBounds), MaxBounds),
             nameof(Vertices) => new TypedValue(typeof(IReadOnlyList<TerrainVertex>), Vertices),
             nameof(Passes) => new TypedValue(typeof(IReadOnlyList<TerrainPass>), Passes),
+            nameof(VertexCount) => new TypedValue(typeof(int), VertexCount),
+            nameof(PassCount) => new TypedValue(typeof(int), PassCount),
+            nameof(TerrainBoundsWidth) => new TypedValue(typeof(ushort), TerrainBoundsWidth),
+            nameof(TerrainBoundsHeight) => new TypedValue(typeof(ushort), TerrainBoundsHeight),
+            nameof(TerrainBoundsDepth) => new TypedValue(typeof(ushort), TerrainBoundsDepth),
+            nameof(HasVertexData) => new TypedValue(typeof(bool), HasVertexData),
+            nameof(HasPassData) => new TypedValue(typeof(bool), HasPassData),
+            nameof(TotalIndicesCount) => new TypedValue(typeof(int), TotalIndicesCount),
+            nameof(IsDirty) => new TypedValue(typeof(bool), IsDirty),
             _ => throw new ArgumentException($"Unknown field: {index}", nameof(index))
         };
         set => throw new NotSupportedException("Terrain resource fields are read-only via string indexer");
@@ -476,7 +535,16 @@ public sealed class TerrainResource : IResource, IDisposable
             3 => this[nameof(MaxBounds)],
             4 => this[nameof(Vertices)],
             5 => this[nameof(Passes)],
-            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-5, got {index}")
+            6 => this[nameof(VertexCount)],
+            7 => this[nameof(PassCount)],
+            8 => this[nameof(TerrainBoundsWidth)],
+            9 => this[nameof(TerrainBoundsHeight)],
+            10 => this[nameof(TerrainBoundsDepth)],
+            11 => this[nameof(HasVertexData)],
+            12 => this[nameof(HasPassData)],
+            13 => this[nameof(TotalIndicesCount)],
+            14 => this[nameof(IsDirty)],
+            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-14, got {index}")
         };
         set => throw new NotSupportedException("Terrain resource fields are read-only via integer indexer");
     }

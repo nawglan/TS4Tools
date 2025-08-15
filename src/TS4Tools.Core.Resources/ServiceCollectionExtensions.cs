@@ -49,6 +49,9 @@ public static class ServiceCollectionExtensions
         // Register resource wrapper registry
         services.AddSingleton<IResourceWrapperRegistry, ResourceWrapperRegistry>();
 
+        // Register resource factories
+        services.AddSingleton<EnvironmentResourceFactory>();
+
         // Register default factory
         services.AddSingleton<DefaultResourceFactory>();
 
@@ -71,6 +74,9 @@ public static class ServiceCollectionExtensions
 
         // Register core services
         services.AddSingleton<IResourceManager, ResourceManager>();
+
+        // Register resource factories
+        services.AddSingleton<EnvironmentResourceFactory>();
 
         // Register default factory
         services.AddSingleton<DefaultResourceFactory>();

@@ -78,6 +78,7 @@ public sealed class Phase417WorldResourceGoldenMasterTests : IDisposable
         var neighborhoodFactory = _serviceProvider.GetService<NeighborhoodResourceFactory>();
         var lotDescFactory = _serviceProvider.GetService<LotDescriptionResourceFactory>();
         var regionDescFactory = _serviceProvider.GetService<RegionDescriptionResourceFactory>();
+        var worldColorTimelineFactory = _serviceProvider.GetService<WorldColorTimelineResourceFactory>();
 
         worldFactory.Should().NotBeNull("WorldResourceFactory should be registered in DI");
         terrainFactory.Should().NotBeNull("TerrainResourceFactory should be registered in DI");
@@ -85,6 +86,7 @@ public sealed class Phase417WorldResourceGoldenMasterTests : IDisposable
         neighborhoodFactory.Should().NotBeNull("NeighborhoodResourceFactory should be registered in DI");
         lotDescFactory.Should().NotBeNull("LotDescriptionResourceFactory should be registered in DI");
         regionDescFactory.Should().NotBeNull("RegionDescriptionResourceFactory should be registered in DI");
+        worldColorTimelineFactory.Should().NotBeNull("WorldColorTimelineResourceFactory should be registered in DI");
     }
 
     /// <summary>
@@ -99,6 +101,7 @@ public sealed class Phase417WorldResourceGoldenMasterTests : IDisposable
     [InlineData("0xA680EA4B", "Region Description Resource")]
     [InlineData("0xC9C81B9B", "Lot Description Resource")]
     [InlineData("0x39006E00", "Region Description Resource")]
+    [InlineData("0x19301120", "World Color Timeline Resource")]
     public async Task ResourceManager_CanCreateWorldResources(string resourceTypeId, string description)
     {
         // Act
@@ -170,6 +173,7 @@ public sealed class Phase417WorldResourceGoldenMasterTests : IDisposable
     [InlineData(typeof(NeighborhoodResourceFactory))]
     [InlineData(typeof(LotDescriptionResourceFactory))]
     [InlineData(typeof(RegionDescriptionResourceFactory))]
+    [InlineData(typeof(WorldColorTimelineResourceFactory))]
     public async Task WorldResourceFactory_RoundTripSerialization_ShouldPreserveData(Type factoryType)
     {
         // Arrange

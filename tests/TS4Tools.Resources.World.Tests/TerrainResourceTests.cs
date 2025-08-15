@@ -399,4 +399,87 @@ public sealed class TerrainPassTests
         pass.Indices.Should().BeEmpty();
         pass.MaterialId.Should().Be(0);
     }
+
+    [Fact]
+    public void ContentFields_ShouldIncludeAllTerrainProperties()
+    {
+        // Arrange
+        var key = new ResourceKey(0xAE39399F, 0x00000000, 0x0000000000000000);
+        var minBounds = new TerrainBounds(10, 20, 30);
+        var maxBounds = new TerrainBounds(100, 200, 300);
+        var resource = new TerrainResource(key, 2, 5, minBounds, maxBounds);
+        _disposables.Add(resource);
+
+        // Add some test data
+        resource.AddVertex(new TerrainVertex { X = 1.0f, Y = 2.0f, Z = 3.0f, U = 0.5f, V = 0.5f, LayerIndex = 0 });
+        resource.AddVertex(new TerrainVertex { X = 4.0f, Y = 5.0f, Z = 6.0f, U = 1.0f, V = 1.0f, LayerIndex = 1 });
+        resource.AddPass(new TerrainPass { Indices = new uint[] { 0, 1, 2 }, MaterialId = 123 });
+
+        // Act & Assert - Test ContentFields collection
+        resource.ContentFields.Should().HaveCount(15);
+        resource.ContentFields.Should().Contain(new[]
+        {
+            nameof(TerrainResource.Version),
+            nameof(TerrainResource.LayerIndexCount),
+            nameof(TerrainResource.MinBounds),
+            nameof(TerrainResource.MaxBounds),
+            nameof(TerrainResource.Vertices),
+            nameof(TerrainResource.Passes),
+            nameof(TerrainResource.VertexCount),
+            nameof(TerrainResource.PassCount),
+            nameof(TerrainResource.TerrainBoundsWidth),
+            nameof(TerrainResource.TerrainBoundsHeight),
+            nameof(TerrainResource.TerrainBoundsDepth),
+            nameof(TerrainResource.HasVertexData),
+            nameof(TerrainResource.HasPassData),
+            nameof(TerrainResource.TotalIndicesCount),
+            nameof(TerrainResource.IsDirty)
+        });
+
+        // Act & Assert - Test string indexer
+        resource[nameof(TerrainResource.Version)].Value.Should().Be(2u);
+        resource[nameof(TerrainResource.LayerIndexCount)].Value.Should().Be(5u);
+        resource[nameof(TerrainResource.MinBounds)].Value.Should().Be(minBounds);
+        resource[nameof(TerrainResource.MaxBounds)].Value.Should().Be(maxBounds);
+        resource[nameof(TerrainResource.VertexCount)].Value.Should().Be(2);
+        resource[nameof(TerrainResource.PassCount)].Value.Should().Be(1);
+        resource[nameof(TerrainResource.TerrainBoundsWidth)].Value.Should().Be((ushort)90); // 100-10
+        resource[nameof(TerrainResource.TerrainBoundsHeight)].Value.Should().Be((ushort)180); // 200-20
+        resource[nameof(TerrainResource.TerrainBoundsDepth)].Value.Should().Be((ushort)270); // 300-30
+        resource[nameof(TerrainResource.HasVertexData)].Value.Should().Be(true);
+        resource[nameof(TerrainResource.HasPassData)].Value.Should().Be(true);
+        resource[nameof(TerrainResource.TotalIndicesCount)].Value.Should().Be(3);
+        resource[nameof(TerrainResource.IsDirty)].Value.Should().Be(true);
+
+        // Act & Assert - Test integer indexer
+        resource[0].Value.Should().Be(2u); // Version
+        resource[1].Value.Should().Be(5u); // LayerIndexCount
+        resource[2].Value.Should().Be(minBounds); // MinBounds
+        resource[3].Value.Should().Be(maxBounds); // MaxBounds
+        resource[6].Value.Should().Be(2); // VertexCount
+        resource[7].Value.Should().Be(1); // PassCount
+        resource[8].Value.Should().Be((ushort)90); // TerrainBoundsWidth
+        resource[9].Value.Should().Be((ushort)180); // TerrainBoundsHeight
+        resource[10].Value.Should().Be((ushort)270); // TerrainBoundsDepth
+        resource[11].Value.Should().Be(true); // HasVertexData
+        resource[12].Value.Should().Be(true); // HasPassData
+        resource[13].Value.Should().Be(3); // TotalIndicesCount
+        resource[14].Value.Should().Be(true); // IsDirty
+    }
+
+    [Fact]
+    public void ContentFields_WithEmptyTerrain_ShouldReturnCorrectValues()
+    {
+        // Arrange
+        var key = new ResourceKey(0xAE39399F, 0x00000000, 0x0000000000000000);
+        var resource = new TerrainResource(key);
+        _disposables.Add(resource);
+
+        // Act & Assert - Test computed properties for empty terrain
+        resource[nameof(TerrainResource.VertexCount)].Value.Should().Be(0);
+        resource[nameof(TerrainResource.PassCount)].Value.Should().Be(0);
+        resource[nameof(TerrainResource.HasVertexData)].Value.Should().Be(false);
+        resource[nameof(TerrainResource.HasPassData)].Value.Should().Be(false);
+        resource[nameof(TerrainResource.TotalIndicesCount)].Value.Should().Be(0);
+    }
 }

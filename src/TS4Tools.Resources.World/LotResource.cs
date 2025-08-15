@@ -86,6 +86,26 @@ public sealed class LotResource : IResource, IDisposable
     public bool HideFromLotPicker { get; set; }
 
     /// <summary>
+    /// Gets or sets the building name key for localized lot names.
+    /// </summary>
+    public uint BuildingNameKey { get; set; }
+
+    /// <summary>
+    /// Gets or sets the camera position for lot view.
+    /// </summary>
+    public LotPosition CameraPosition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the camera target position for lot view.
+    /// </summary>
+    public LotPosition CameraTarget { get; set; }
+
+    /// <summary>
+    /// Gets or sets the lot requirements venue identifier.
+    /// </summary>
+    public ulong LotRequirementsVenue { get; set; }
+
+    /// <summary>
     /// Gets or sets the lot position in world coordinates.
     /// </summary>
     public LotPosition Position { get; set; }
@@ -114,6 +134,14 @@ public sealed class LotResource : IResource, IDisposable
     {
         _key = key ?? throw new ArgumentNullException(nameof(key));
         Version = version;
+
+        // Initialize new fields with default values
+        BuildingNameKey = 0;
+        CameraPosition = LotPosition.Origin;
+        CameraTarget = LotPosition.Origin;
+        LotRequirementsVenue = 0;
+        Position = LotPosition.Origin;
+        Rotation = 0f;
     }
 
     /// <summary>
@@ -140,6 +168,12 @@ public sealed class LotResource : IResource, IDisposable
             EnabledForAutoTest = false;
             HasOverrideAmbience = false;
             AudioEffectFileInstanceId = 0;
+            DisableBuildBuy = false;
+            HideFromLotPicker = false;
+            BuildingNameKey = 0;
+            CameraPosition = LotPosition.Origin;
+            CameraTarget = LotPosition.Origin;
+            LotRequirementsVenue = 0;
             IsDirty = true;
             return;
         }
@@ -171,13 +205,23 @@ public sealed class LotResource : IResource, IDisposable
                 DisableBuildBuy = reader.ReadByte() != 0;
                 HideFromLotPicker = reader.ReadByte() != 0;
 
-                // Read position and rotation
-                var x = reader.ReadSingle();
-                var y = reader.ReadSingle();
-                var z = reader.ReadSingle();
-                Position = new LotPosition(x, y, z);
+                // Read building name key
+                BuildingNameKey = reader.ReadUInt32();
 
-                Rotation = reader.ReadSingle();
+                // Read camera position (3 floats: x, y, z)
+                var camPosX = reader.ReadSingle();
+                var camPosY = reader.ReadSingle();
+                var camPosZ = reader.ReadSingle();
+                CameraPosition = new LotPosition(camPosX, camPosY, camPosZ);
+
+                // Read camera target (3 floats: x, y, z)
+                var camTargetX = reader.ReadSingle();
+                var camTargetY = reader.ReadSingle();
+                var camTargetZ = reader.ReadSingle();
+                CameraTarget = new LotPosition(camTargetX, camTargetY, camTargetZ);
+
+                // Read lot requirements venue
+                LotRequirementsVenue = reader.ReadUInt64();
 
             }, cancellationToken);
 
@@ -221,11 +265,21 @@ public sealed class LotResource : IResource, IDisposable
             writer.Write(DisableBuildBuy ? (byte)1 : (byte)0);
             writer.Write(HideFromLotPicker ? (byte)1 : (byte)0);
 
-            // Write position and rotation
-            writer.Write(Position.X);
-            writer.Write(Position.Y);
-            writer.Write(Position.Z);
-            writer.Write(Rotation);
+            // Write building name key
+            writer.Write(BuildingNameKey);
+
+            // Write camera position (3 floats: x, y, z)
+            writer.Write(CameraPosition.X);
+            writer.Write(CameraPosition.Y);
+            writer.Write(CameraPosition.Z);
+
+            // Write camera target (3 floats: x, y, z)
+            writer.Write(CameraTarget.X);
+            writer.Write(CameraTarget.Y);
+            writer.Write(CameraTarget.Z);
+
+            // Write lot requirements venue
+            writer.Write(LotRequirementsVenue);
 
         }, cancellationToken);
 
@@ -326,9 +380,17 @@ public sealed class LotResource : IResource, IDisposable
         nameof(SimoleonPrice),
         nameof(LotSizeX),
         nameof(LotSizeZ),
-        nameof(Position),
-        nameof(Rotation),
-        nameof(IsEditable)
+        nameof(IsEditable),
+        nameof(AmbienceFileInstanceId),
+        nameof(EnabledForAutoTest),
+        nameof(HasOverrideAmbience),
+        nameof(AudioEffectFileInstanceId),
+        nameof(DisableBuildBuy),
+        nameof(HideFromLotPicker),
+        nameof(BuildingNameKey),
+        nameof(CameraPosition),
+        nameof(CameraTarget),
+        nameof(LotRequirementsVenue)
     };
 
     /// <inheritdoc />
@@ -340,9 +402,17 @@ public sealed class LotResource : IResource, IDisposable
             nameof(SimoleonPrice) => new TypedValue(typeof(uint), SimoleonPrice),
             nameof(LotSizeX) => new TypedValue(typeof(sbyte), LotSizeX),
             nameof(LotSizeZ) => new TypedValue(typeof(sbyte), LotSizeZ),
-            nameof(Position) => new TypedValue(typeof(LotPosition), Position),
-            nameof(Rotation) => new TypedValue(typeof(float), Rotation),
             nameof(IsEditable) => new TypedValue(typeof(bool), IsEditable),
+            nameof(AmbienceFileInstanceId) => new TypedValue(typeof(ulong), AmbienceFileInstanceId),
+            nameof(EnabledForAutoTest) => new TypedValue(typeof(bool), EnabledForAutoTest),
+            nameof(HasOverrideAmbience) => new TypedValue(typeof(bool), HasOverrideAmbience),
+            nameof(AudioEffectFileInstanceId) => new TypedValue(typeof(ulong), AudioEffectFileInstanceId),
+            nameof(DisableBuildBuy) => new TypedValue(typeof(bool), DisableBuildBuy),
+            nameof(HideFromLotPicker) => new TypedValue(typeof(bool), HideFromLotPicker),
+            nameof(BuildingNameKey) => new TypedValue(typeof(uint), BuildingNameKey),
+            nameof(CameraPosition) => new TypedValue(typeof(LotPosition), CameraPosition),
+            nameof(CameraTarget) => new TypedValue(typeof(LotPosition), CameraTarget),
+            nameof(LotRequirementsVenue) => new TypedValue(typeof(ulong), LotRequirementsVenue),
             _ => throw new ArgumentException($"Unknown field: {index}", nameof(index))
         };
         set => throw new NotSupportedException("Lot resource fields are read-only via string indexer");
@@ -357,10 +427,18 @@ public sealed class LotResource : IResource, IDisposable
             1 => this[nameof(SimoleonPrice)],
             2 => this[nameof(LotSizeX)],
             3 => this[nameof(LotSizeZ)],
-            4 => this[nameof(Position)],
-            5 => this[nameof(Rotation)],
-            6 => this[nameof(IsEditable)],
-            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-6, got {index}")
+            4 => this[nameof(IsEditable)],
+            5 => this[nameof(AmbienceFileInstanceId)],
+            6 => this[nameof(EnabledForAutoTest)],
+            7 => this[nameof(HasOverrideAmbience)],
+            8 => this[nameof(AudioEffectFileInstanceId)],
+            9 => this[nameof(DisableBuildBuy)],
+            10 => this[nameof(HideFromLotPicker)],
+            11 => this[nameof(BuildingNameKey)],
+            12 => this[nameof(CameraPosition)],
+            13 => this[nameof(CameraTarget)],
+            14 => this[nameof(LotRequirementsVenue)],
+            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-14, got {index}")
         };
         set => throw new NotSupportedException("Lot resource fields are read-only via integer indexer");
     }

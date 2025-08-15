@@ -35,6 +35,36 @@ public sealed class WorldResourceFactory : ResourceFactoryBase<WorldResource>
 }
 
 /// <summary>
+/// Factory for creating world color timeline resources that handle day/night lighting cycles.
+/// </summary>
+public sealed class WorldColorTimelineResourceFactory : ResourceFactoryBase<WorldColorTimelineResource>
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WorldColorTimelineResourceFactory"/> class.
+    /// </summary>
+    public WorldColorTimelineResourceFactory() : base(new[] { "0x19301120" }, priority: 100)
+    {
+    }
+
+    /// <inheritdoc/>
+    public override async Task<WorldColorTimelineResource> CreateResourceAsync(
+        int apiVersion,
+        Stream? stream = null,
+        CancellationToken cancellationToken = default)
+    {
+        var key = new ResourceKey(0x19301120, 0x00000000, 0x0000000000000000);
+        var resource = new WorldColorTimelineResource(key, 1);
+
+        if (stream != null)
+        {
+            await resource.LoadFromStreamAsync(stream);
+        }
+
+        return resource;
+    }
+}
+
+/// <summary>
 /// Factory for creating terrain resources that handle terrain data and heightmaps.
 /// </summary>
 public sealed class TerrainResourceFactory : ResourceFactoryBase<TerrainResource>
