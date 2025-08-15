@@ -540,7 +540,7 @@ public sealed class WorldResourceTests : IDisposable
         using var resource = new WorldResource(key, 1);
         var manager = new ObjectManager(1UL, "TestManager");
         var sceneObject = new SceneObject(2UL, "TestObject");
-        
+
         resource.AddObjectManager(manager);
         resource.AddSceneObject(sceneObject);
 
@@ -565,13 +565,13 @@ public sealed class WorldResourceTests : IDisposable
         // Arrange
         var key = new ResourceKey(0x810A102D, 0x00000000, 0x0000000000000000);
         using var resource = new WorldResource(key, 1);
-        
+
         // Add managers and objects to reach the desired total
         for (int i = 0; i < totalObjects / 2; i++)
         {
             resource.AddObjectManager(new ObjectManager((ulong)i, $"Manager{i}"));
         }
-        
+
         for (int i = 0; i < (totalObjects + 1) / 2; i++)
         {
             resource.AddSceneObject(new SceneObject((ulong)(i + 1000), $"Object{i}"));
@@ -621,7 +621,7 @@ public sealed class WorldResourceTests : IDisposable
         var key = new ResourceKey(0x810A102D, 0x00000000, 0x0000000000000000);
         using var resource = new WorldResource(key, 1);
         var initialTime = (DateTime)resource[nameof(WorldResource.LastModified)].Value!;
-        
+
         // Wait a moment to ensure time difference
         Thread.Sleep(10);
 

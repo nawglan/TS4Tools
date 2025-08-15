@@ -115,7 +115,7 @@ public sealed class WorldResource : IResource, IDisposable
     /// <summary>
     /// Gets the approximate memory usage in bytes.
     /// </summary>
-    public long MemoryUsage => 
+    public long MemoryUsage =>
         (_objectManagers.Count * 24) + // Rough estimate for ObjectManager
         (_sceneObjects.Count * 32) +   // Rough estimate for SceneObject
         64; // Base object overhead
