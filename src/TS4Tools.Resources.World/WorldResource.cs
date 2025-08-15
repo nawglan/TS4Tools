@@ -58,6 +58,81 @@ public sealed class WorldResource : IResource, IDisposable
     public IReadOnlyList<SceneObject> SceneObjects => _sceneObjects;
 
     /// <summary>
+    /// Gets the number of object managers.
+    /// </summary>
+    public int ObjectManagerCount => _objectManagers.Count;
+
+    /// <summary>
+    /// Gets the number of scene objects.
+    /// </summary>
+    public int SceneObjectCount => _sceneObjects.Count;
+
+    /// <summary>
+    /// Gets a value indicating whether the world has any object managers.
+    /// </summary>
+    public bool HasObjectManagers => _objectManagers.Count > 0;
+
+    /// <summary>
+    /// Gets a value indicating whether the world has any scene objects.
+    /// </summary>
+    public bool HasSceneObjects => _sceneObjects.Count > 0;
+
+    /// <summary>
+    /// Gets the total number of objects in the world.
+    /// </summary>
+    public int TotalObjectCount => _objectManagers.Count + _sceneObjects.Count;
+
+    /// <summary>
+    /// Gets a value indicating whether the world is empty.
+    /// </summary>
+    public bool IsEmpty => _objectManagers.Count == 0 && _sceneObjects.Count == 0;
+
+    /// <summary>
+    /// Gets the approximate resource size in bytes.
+    /// </summary>
+    public long ResourceSize
+    {
+        get
+        {
+            try
+            {
+                using var stream = new MemoryStream();
+                SaveToStreamAsync(stream).GetAwaiter().GetResult();
+                return stream.Length;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the last modified timestamp.
+    /// </summary>
+    public DateTime LastModified { get; private set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Gets the approximate memory usage in bytes.
+    /// </summary>
+    public long MemoryUsage => 
+        (_objectManagers.Count * 24) + // Rough estimate for ObjectManager
+        (_sceneObjects.Count * 32) +   // Rough estimate for SceneObject
+        64; // Base object overhead
+
+    /// <summary>
+    /// Gets the complexity level of the resource based on object count.
+    /// </summary>
+    public string ResourceComplexity => TotalObjectCount switch
+    {
+        0 => "Empty",
+        < 10 => "Simple",
+        < 100 => "Moderate",
+        < 500 => "Complex",
+        _ => "Very Complex"
+    };
+
+    /// <summary>
     /// Adds an object manager to the world.
     /// </summary>
     /// <param name="manager">The object manager to add.</param>
@@ -263,7 +338,18 @@ public sealed class WorldResource : IResource, IDisposable
         nameof(Version),
         nameof(IsEditable),
         nameof(ObjectManagers),
-        nameof(SceneObjects)
+        nameof(SceneObjects),
+        nameof(IsDirty),
+        nameof(ObjectManagerCount),
+        nameof(SceneObjectCount),
+        nameof(HasObjectManagers),
+        nameof(HasSceneObjects),
+        nameof(TotalObjectCount),
+        nameof(IsEmpty),
+        nameof(ResourceSize),
+        nameof(LastModified),
+        nameof(MemoryUsage),
+        nameof(ResourceComplexity)
     };
 
     /// <inheritdoc />
@@ -275,6 +361,17 @@ public sealed class WorldResource : IResource, IDisposable
             nameof(IsEditable) => new TypedValue(typeof(bool), IsEditable),
             nameof(ObjectManagers) => new TypedValue(typeof(IReadOnlyList<ObjectManager>), ObjectManagers),
             nameof(SceneObjects) => new TypedValue(typeof(IReadOnlyList<SceneObject>), SceneObjects),
+            nameof(IsDirty) => new TypedValue(typeof(bool), IsDirty),
+            nameof(ObjectManagerCount) => new TypedValue(typeof(int), ObjectManagerCount),
+            nameof(SceneObjectCount) => new TypedValue(typeof(int), SceneObjectCount),
+            nameof(HasObjectManagers) => new TypedValue(typeof(bool), HasObjectManagers),
+            nameof(HasSceneObjects) => new TypedValue(typeof(bool), HasSceneObjects),
+            nameof(TotalObjectCount) => new TypedValue(typeof(int), TotalObjectCount),
+            nameof(IsEmpty) => new TypedValue(typeof(bool), IsEmpty),
+            nameof(ResourceSize) => new TypedValue(typeof(long), ResourceSize),
+            nameof(LastModified) => new TypedValue(typeof(DateTime), LastModified),
+            nameof(MemoryUsage) => new TypedValue(typeof(long), MemoryUsage),
+            nameof(ResourceComplexity) => new TypedValue(typeof(string), ResourceComplexity),
             _ => throw new ArgumentException($"Unknown field: {index}", nameof(index))
         };
         set => throw new NotSupportedException("World resource fields are read-only via string indexer");
@@ -289,7 +386,18 @@ public sealed class WorldResource : IResource, IDisposable
             1 => this[nameof(IsEditable)],
             2 => this[nameof(ObjectManagers)],
             3 => this[nameof(SceneObjects)],
-            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-3, got {index}")
+            4 => this[nameof(IsDirty)],
+            5 => this[nameof(ObjectManagerCount)],
+            6 => this[nameof(SceneObjectCount)],
+            7 => this[nameof(HasObjectManagers)],
+            8 => this[nameof(HasSceneObjects)],
+            9 => this[nameof(TotalObjectCount)],
+            10 => this[nameof(IsEmpty)],
+            11 => this[nameof(ResourceSize)],
+            12 => this[nameof(LastModified)],
+            13 => this[nameof(MemoryUsage)],
+            14 => this[nameof(ResourceComplexity)],
+            _ => throw new ArgumentOutOfRangeException(nameof(index), $"Index must be 0-14, got {index}")
         };
         set => throw new NotSupportedException("World resource fields are read-only via integer indexer");
     }
@@ -301,6 +409,7 @@ public sealed class WorldResource : IResource, IDisposable
     /// </summary>
     private void OnResourceChanged()
     {
+        LastModified = DateTime.UtcNow;
         ResourceChanged?.Invoke(this, EventArgs.Empty);
     }
 
