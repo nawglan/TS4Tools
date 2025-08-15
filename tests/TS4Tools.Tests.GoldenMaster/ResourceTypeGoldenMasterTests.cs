@@ -16,6 +16,9 @@ using TS4Tools.Core.Resources;
 using TS4Tools.Core.DependencyInjection;
 using TS4Tools.Core.Settings;
 using TS4Tools.Resources.World.DependencyInjection;
+using TS4Tools.Resources.Text.DependencyInjection;
+using TS4Tools.Resources.Images.DependencyInjection;
+using TS4Tools.Resources.Geometry.DependencyInjection;
 using Xunit;
 
 namespace TS4Tools.Tests.GoldenMaster;
@@ -39,7 +42,12 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.Warning));
         services.AddTS4ToolsPackageServices();
         services.AddTS4ToolsResourceServices();
+
+        // Register all resource module services
         services.AddWorldResources();
+        services.AddTextResourceServices();
+        services.AddImageResources();
+        services.AddGeometryResources();
 
         _serviceProvider = services.BuildServiceProvider();
         _packageFactory = _serviceProvider.GetRequiredService<IPackageFactory>();
@@ -67,6 +75,16 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0x73E93EE5, "Text Resource")]
     [InlineData(0x6B20C4F3, "Effects Resource")]
     [InlineData(0x0166038C, "Utility Resource (Config)")]
+    // Missing Resource Types from Implementation Analysis
+    [InlineData(0x00B2D882, "DDS/TXTC Resource (Texture Compositor)")]
+    [InlineData(0x19301120, "World Color Timeline Resource")]
+    [InlineData(0x034AEECB, "CAS Part Resource (Character Assets)")]
+    [InlineData(0x029E333B, "Audio Controller Resource")]
+    [InlineData(0xE55EEACB, "Video Playlist Resource")]
+    [InlineData(0x48C28979, "Catalog Resource Type 1")]
+    [InlineData(0xA8F7B517, "Catalog Resource Type 2")]
+    [InlineData(0x1CC03E4C, "Catalog Resource Type 3")]
+    [InlineData(0x3C1AF1F2, "Thumbnail Cache Resource")]
     // Phase 4.17 World and Environment Resources
     [InlineData(0x810A102D, "World Resource (WORLD)")]
     [InlineData(0xAE39399F, "Terrain Resource (TERRAIN)")]
@@ -75,6 +93,12 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0xA680EA4B, "Region Description Resource (REGION)")]
     [InlineData(0xC9C81B9B, "Lot Description Resource (LOTDESC)")]
     [InlineData(0x39006E00, "Region Description Resource (REGIONDESC)")]
+    // Additional Visual and Specialized Resources
+    [InlineData(0x3453CF95, "Thumbnail Resource (THUM/THUMB)")]
+    [InlineData(0xCF9A4ACE, "Modular Resource (MODULAR)")]
+    [InlineData(0x0000038C, "Config Resource (Utility)")]
+    [InlineData(0x0166044C, "Metadata Resource (Utility)")]
+    [InlineData(0x9D1FFBCD, "Lot Catalog Resource (Catalog)")]
     public async Task ResourceType_RoundTripSerialization_ShouldPreserveBinaryEquivalence(
         uint resourceTypeId, string description)
     {

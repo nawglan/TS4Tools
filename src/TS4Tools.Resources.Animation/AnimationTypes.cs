@@ -422,3 +422,323 @@ public class BoneNode
         return false;
     }
 }
+
+/// <summary>
+/// Types of facial animation resources supported in The Sims 4.
+/// </summary>
+public enum FacialAnimationType
+{
+    /// <summary>
+    /// No facial animation specified.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// Basic facial expression.
+    /// </summary>
+    Expression = 0x00000001,
+
+    /// <summary>
+    /// Emotional state animation.
+    /// </summary>
+    Emotion = 0x00000002,
+
+    /// <summary>
+    /// Speech lip sync animation.
+    /// </summary>
+    LipSync = 0x00000003,
+
+    /// <summary>
+    /// Eye movement and blinking.
+    /// </summary>
+    EyeMovement = 0x00000004,
+
+    /// <summary>
+    /// Complex morph-based expression.
+    /// </summary>
+    MorphExpression = 0x00000005,
+
+    /// <summary>
+    /// Age transition facial changes.
+    /// </summary>
+    AgeTransition = 0x00000006,
+
+    /// <summary>
+    /// Reaction-based facial animation.
+    /// </summary>
+    Reaction = 0x00000007
+}
+
+/// <summary>
+/// Emotion types for facial animations.
+/// </summary>
+public enum EmotionType
+{
+    /// <summary>
+    /// Neutral expression.
+    /// </summary>
+    Neutral = 0,
+
+    /// <summary>
+    /// Happy expression.
+    /// </summary>
+    Happy = 1,
+
+    /// <summary>
+    /// Sad expression.
+    /// </summary>
+    Sad = 2,
+
+    /// <summary>
+    /// Angry expression.
+    /// </summary>
+    Angry = 3,
+
+    /// <summary>
+    /// Surprised expression.
+    /// </summary>
+    Surprised = 4,
+
+    /// <summary>
+    /// Disgusted expression.
+    /// </summary>
+    Disgusted = 5,
+
+    /// <summary>
+    /// Fearful expression.
+    /// </summary>
+    Fearful = 6,
+
+    /// <summary>
+    /// Contemptuous expression.
+    /// </summary>
+    Contemptuous = 7,
+
+    /// <summary>
+    /// Excited expression.
+    /// </summary>
+    Excited = 8,
+
+    /// <summary>
+    /// Confused expression.
+    /// </summary>
+    Confused = 9,
+
+    /// <summary>
+    /// Embarrassed expression.
+    /// </summary>
+    Embarrassed = 10,
+
+    /// <summary>
+    /// Flirty expression.
+    /// </summary>
+    Flirty = 11,
+
+    /// <summary>
+    /// Focused expression.
+    /// </summary>
+    Focused = 12,
+
+    /// <summary>
+    /// Playful expression.
+    /// </summary>
+    Playful = 13
+}
+
+/// <summary>
+/// Age group compatibility flags.
+/// </summary>
+[Flags]
+public enum AgeGroupFlags
+{
+    /// <summary>
+    /// No age group specified.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// Baby age group.
+    /// </summary>
+    Baby = 1 << 0,
+
+    /// <summary>
+    /// Toddler age group.
+    /// </summary>
+    Toddler = 1 << 1,
+
+    /// <summary>
+    /// Child age group.
+    /// </summary>
+    Child = 1 << 2,
+
+    /// <summary>
+    /// Teen age group.
+    /// </summary>
+    Teen = 1 << 3,
+
+    /// <summary>
+    /// Young adult age group.
+    /// </summary>
+    YoungAdult = 1 << 4,
+
+    /// <summary>
+    /// Adult age group.
+    /// </summary>
+    Adult = 1 << 5,
+
+    /// <summary>
+    /// Elder age group.
+    /// </summary>
+    Elder = 1 << 6,
+
+    /// <summary>
+    /// All age groups.
+    /// </summary>
+    All = Baby | Toddler | Child | Teen | YoungAdult | Adult | Elder
+}
+
+/// <summary>
+/// Gender compatibility flags.
+/// </summary>
+[Flags]
+public enum GenderFlags
+{
+    /// <summary>
+    /// No gender specified.
+    /// </summary>
+    None = 0,
+
+    /// <summary>
+    /// Male gender.
+    /// </summary>
+    Male = 1 << 0,
+
+    /// <summary>
+    /// Female gender.
+    /// </summary>
+    Female = 1 << 1,
+
+    /// <summary>
+    /// All genders.
+    /// </summary>
+    All = Male | Female
+}
+
+/// <summary>
+/// Facial bone transform data for rigging.
+/// </summary>
+public struct FacialBoneTransform
+{
+    /// <summary>
+    /// Gets or sets the bone name.
+    /// </summary>
+    public string BoneName { get; set; }
+
+    /// <summary>
+    /// Gets or sets the translation vector.
+    /// </summary>
+    public Vector3 Translation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the rotation quaternion.
+    /// </summary>
+    public Quaternion Rotation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the scale vector.
+    /// </summary>
+    public Vector3 Scale { get; set; }
+
+    /// <summary>
+    /// Gets or sets the blend weight (0.0 to 1.0).
+    /// </summary>
+    public float Weight { get; set; }
+}
+
+/// <summary>
+/// Eye control data for facial animations.
+/// </summary>
+public class FacialEyeControl
+{
+    /// <summary>
+    /// Gets or sets the gaze direction.
+    /// </summary>
+    public Vector3 GazeDirection { get; set; }
+
+    /// <summary>
+    /// Gets or sets the blink state (0.0 = open, 1.0 = closed).
+    /// </summary>
+    public float BlinkState { get; set; }
+
+    /// <summary>
+    /// Gets or sets the left eye rotation.
+    /// </summary>
+    public Quaternion LeftEyeRotation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the right eye rotation.
+    /// </summary>
+    public Quaternion RightEyeRotation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the pupil dilation (0.0 to 1.0).
+    /// </summary>
+    public float PupilDilation { get; set; }
+}
+
+/// <summary>
+/// Mouth shape data for facial animations.
+/// </summary>
+public class FacialMouthShape
+{
+    /// <summary>
+    /// Gets or sets the mouth openness (0.0 = closed, 1.0 = fully open).
+    /// </summary>
+    public float Openness { get; set; }
+
+    /// <summary>
+    /// Gets or sets the lip stretch (-1.0 = frown, 1.0 = smile).
+    /// </summary>
+    public float LipStretch { get; set; }
+
+    /// <summary>
+    /// Gets or sets the jaw rotation.
+    /// </summary>
+    public float JawRotation { get; set; }
+
+    /// <summary>
+    /// Gets or sets the tongue position.
+    /// </summary>
+    public Vector3 TonguePosition { get; set; }
+
+    /// <summary>
+    /// Gets or sets the lip sync phoneme.
+    /// </summary>
+    public string? Phoneme { get; set; }
+}
+
+/// <summary>
+/// Facial morph target for advanced deformation.
+/// </summary>
+public class FacialMorphTarget
+{
+    /// <summary>
+    /// Gets or sets the morph target name.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the morph weight (0.0 to 1.0).
+    /// </summary>
+    public float Weight { get; set; }
+
+    /// <summary>
+    /// Gets or sets the affected vertices.
+    /// </summary>
+    public IReadOnlyList<int> AffectedVertices { get; set; } = Array.Empty<int>();
+
+    /// <summary>
+    /// Gets or sets the vertex deltas.
+    /// </summary>
+    public IReadOnlyList<Vector3> VertexDeltas { get; set; } = Array.Empty<Vector3>();
+}

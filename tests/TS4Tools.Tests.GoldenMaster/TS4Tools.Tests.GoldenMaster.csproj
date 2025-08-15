@@ -39,6 +39,20 @@
     <ProjectReference Include="..\..\src\TS4Tools.Core.Resources\TS4Tools.Core.Resources.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.Settings\TS4Tools.Core.Settings.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Core.DependencyInjection\TS4Tools.Core.DependencyInjection.csproj" />
+    <!-- Resource Project References -->
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Animation\TS4Tools.Resources.Animation.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Audio\TS4Tools.Resources.Audio.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Catalog\TS4Tools.Resources.Catalog.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Characters\TS4Tools.Resources.Characters.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Effects\TS4Tools.Resources.Effects.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Geometry\TS4Tools.Resources.Geometry.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Images\TS4Tools.Resources.Images.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Scripts\TS4Tools.Resources.Scripts.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Strings\TS4Tools.Resources.Strings.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Text\TS4Tools.Resources.Text.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Textures\TS4Tools.Resources.Textures.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Utility\TS4Tools.Resources.Utility.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Visual\TS4Tools.Resources.Visual.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.World\TS4Tools.Resources.World.csproj" />
     <ProjectReference Include="..\TS4Tools.Tests.Common\TS4Tools.Tests.Common.csproj" />
   </ItemGroup>

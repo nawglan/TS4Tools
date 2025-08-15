@@ -53,6 +53,7 @@ public sealed class CatalogResourceFactoryTests
         // Arrange
         var expectedTypes = new uint[]
         {
+            0x049CA4CD, // CatalogResource (Phase 4.18 - Visual Enhancement)
             0x48C28979, // Standard catalog resource
             0xA8F7B517, // Alternative catalog resource format
             0x319E4F1D, // Object catalog resource (common)

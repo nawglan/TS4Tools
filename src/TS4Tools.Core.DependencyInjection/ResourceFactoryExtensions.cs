@@ -23,6 +23,7 @@ using TS4Tools.Resources.Catalog;
 using TS4Tools.Resources.Images;
 using TS4Tools.Resources.Strings;
 using TS4Tools.Resources.Text;
+using TS4Tools.Resources.Visual;
 
 namespace TS4Tools.Core.DependencyInjection;
 
@@ -50,8 +51,17 @@ public static class ResourceFactoryExtensions
         // Register Catalog Resource Factory
         services.AddResourceFactory<CatalogResource, CatalogResourceFactory>();
 
+        // Register Object Catalog Resource Factory (Phase 4.18.1 - Object Catalog System)
+        services.AddResourceFactory<ObjectCatalogResource, ObjectCatalogResourceFactory>();
+
+        // Register Catalog Tag Resource Factory (Phase 4.18.2 - Catalog Tagging System)
+        services.AddResourceFactory<CatalogTagResource, CatalogTagResourceFactory>();
+
         // Register Text Resource Factory
         services.AddResourceFactory<ITextResource, TextResourceFactory>();
+
+        // Register Icon Resource Factory (Phase 4.18 - Visual Enhancement)
+        services.AddResourceFactory<IconResource, IconResourceFactory>();
 
         return services;
     }

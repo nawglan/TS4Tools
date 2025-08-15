@@ -36,8 +36,9 @@ public sealed class CatalogResourceFactory : ResourceFactoryBase<CatalogResource
         // Return hex strings that will be parsed properly
         return new[]
         {
+            "0x049CA4CD", // Standard catalog resource (CFRZ/CFND format) - PRIMARY TYPE
             "0x48C28979", // Standard catalog resource
-            "0xA8F7B517", // Alternative catalog resource format  
+            "0xA8F7B517", // Alternative catalog resource format
             "0x319E4F1D", // Object catalog resource (common)
             "0x9D1FFBCD", // Lot catalog resource
             "0x1CC03E4C"  // Room catalog resource
@@ -92,7 +93,7 @@ public sealed class CatalogResourceFactory : ResourceFactoryBase<CatalogResource
         id = resourceType.ToUpperInvariant() switch
         {
             "CTLG" => 0x48C28979,   // Standard catalog resource
-            "CTLG2" => 0xA8F7B517,  // Alternative catalog resource format  
+            "CTLG2" => 0xA8F7B517,  // Alternative catalog resource format
             "CTLG3" => 0x319E4F1D,  // Object catalog resource (common)
             "CTLG4" => 0x9D1FFBCD,  // Lot catalog resource
             "CTLG5" => 0x1CC03E4C,  // Room catalog resource

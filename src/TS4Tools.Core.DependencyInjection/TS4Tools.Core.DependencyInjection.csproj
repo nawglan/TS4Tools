@@ -27,6 +27,7 @@
     <ProjectReference Include="..\TS4Tools.Resources.Images\TS4Tools.Resources.Images.csproj" />
     <ProjectReference Include="..\TS4Tools.Resources.Catalog\TS4Tools.Resources.Catalog.csproj" />
     <ProjectReference Include="..\TS4Tools.Resources.Text\TS4Tools.Resources.Text.csproj" />
+    <ProjectReference Include="..\TS4Tools.Resources.Visual\TS4Tools.Resources.Visual.csproj" />
   </ItemGroup>
 
 </Project>
