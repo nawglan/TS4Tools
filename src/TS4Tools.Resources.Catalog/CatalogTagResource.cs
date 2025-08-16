@@ -10,6 +10,7 @@ namespace TS4Tools.Resources.Catalog;
 /// Implementation of catalog tag resources for hierarchical tagging and categorization of catalog items.
 /// Provides comprehensive support for organizing Buy/Build mode content with advanced filtering capabilities.
 /// </summary>
+[CatalogResource([0xCAAAD4B0], CatalogType.Custom, 200, "Catalog Tag Resource for hierarchical tagging")]
 public sealed class CatalogTagResource : ICatalogTagResource
 {
     private uint _tagId;

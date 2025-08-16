@@ -10,6 +10,7 @@ namespace TS4Tools.Resources.Catalog;
 /// Implementation of object catalog resources for Buy/Build mode objects.
 /// Handles object pricing, categorization, placement rules, and environmental impact.
 /// </summary>
+[CatalogResource([0x319E4F1D], CatalogType.Object, 300, "Object Catalog Resource for Buy/Build mode objects")]
 public sealed class ObjectCatalogResource : IObjectCatalogResource
 {
     private readonly ILogger<ObjectCatalogResource> _logger;

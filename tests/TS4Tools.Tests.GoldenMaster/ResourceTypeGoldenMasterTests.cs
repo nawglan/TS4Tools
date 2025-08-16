@@ -19,6 +19,7 @@ using TS4Tools.Resources.World.DependencyInjection;
 using TS4Tools.Resources.Text.DependencyInjection;
 using TS4Tools.Resources.Images.DependencyInjection;
 using TS4Tools.Resources.Geometry.DependencyInjection;
+using TS4Tools.Resources.Catalog;
 using Xunit;
 
 namespace TS4Tools.Tests.GoldenMaster;
@@ -48,6 +49,7 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
         services.AddTextResourceServices();
         services.AddImageResources();
         services.AddGeometryResources();
+        services.AddCatalogResources();
 
         _serviceProvider = services.BuildServiceProvider();
         _packageFactory = _serviceProvider.GetRequiredService<IPackageFactory>();
@@ -93,6 +95,10 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0xA680EA4B, "Region Description Resource (REGION)")]
     [InlineData(0xC9C81B9B, "Lot Description Resource (LOTDESC)")]
     [InlineData(0x39006E00, "Region Description Resource (REGIONDESC)")]
+    // Phase 4.18 Visual Enhancement and Specialized Content Resources
+    [InlineData(0x73E93EEC, "Icon Resource (UI Icons and Sprite Atlas)")]
+    [InlineData(0xCAAAD4B0, "Catalog Tag Resource (Hierarchical Tagging)")]
+    [InlineData(0x0C772E27, "Facial Animation Resource")]
     // Additional Visual and Specialized Resources
     [InlineData(0x3453CF95, "Thumbnail Resource (THUM/THUMB)")]
     [InlineData(0xCF9A4ACE, "Modular Resource (MODULAR)")]

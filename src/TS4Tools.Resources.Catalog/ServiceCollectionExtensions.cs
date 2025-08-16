@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TS4Tools.Resources.Catalog.Services;
 
 namespace TS4Tools.Resources.Catalog;
 
@@ -18,10 +19,16 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        // Register catalog type registry
+        services.AddSingleton<CatalogTypeRegistry>();
+
         // Register catalog resource factories
         services.AddSingleton<CatalogResourceFactory>();
         services.AddSingleton<ObjectCatalogResourceFactory>();
         services.AddSingleton<CatalogTagResourceFactory>();
+
+        // Register catalog management services
+        services.AddSingleton<ICatalogTagManagementService, CatalogTagManagementService>();
 
         return services;
     }

@@ -32,13 +32,15 @@ public sealed class ObjectCatalogResourceFactory : ResourceFactoryBase<ObjectCat
 
     /// <summary>
     /// Gets the resource type mappings supported by this factory.
+    /// ObjectCatalogResourceFactory handles specialized object types,
+    /// while CatalogResourceFactory handles the standard catalog types (0x319E4F1D, etc.)
     /// </summary>
     private static IEnumerable<string> GetResourceTypes()
     {
         // Return hex strings that will be parsed properly
+        // Note: 0x319E4F1D is handled by CatalogResourceFactory (COBJResource from original)
         return new[]
         {
-            "0x319E4F1D", // Object catalog resource (primary type for Buy/Build objects)
             "0x0355E0A6", // Object definition resource (alternative format)
             "0x2E75C764", // Object tuning resource (tuning-specific objects)
             "0x8BC04EDB"  // Object instance resource (placed object instances)

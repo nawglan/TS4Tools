@@ -30,18 +30,17 @@ public sealed class CatalogResourceFactory : ResourceFactoryBase<CatalogResource
 
     /// <summary>
     /// Gets the resource type mappings supported by this factory.
+    /// Matches the original Sims4Tools catalog resource types.
     /// </summary>
     private static IEnumerable<string> GetResourceTypes()
     {
-        // Return hex strings that will be parsed properly
+        // Resource types from original Sims4Tools catalog handlers:
+        // COBJResource, _48C28979CatalogResource, A8F7B517CatalogResource
         return new[]
         {
-            "0x049CA4CD", // Standard catalog resource (CFRZ/CFND format) - PRIMARY TYPE
-            "0x48C28979", // Standard catalog resource
-            "0xA8F7B517", // Alternative catalog resource format
-            "0x319E4F1D", // Object catalog resource (common)
-            "0x9D1FFBCD", // Lot catalog resource
-            "0x1CC03E4C"  // Room catalog resource
+            "0x319E4F1D", // COBJResource (Object catalog) - PRIMARY TYPE from original
+            "0x48C28979", // _48C28979CatalogResource (Standard catalog resource)
+            "0xA8F7B517"  // A8F7B517CatalogResource (Alternative catalog format)
         };
     }
 
@@ -94,8 +93,6 @@ public sealed class CatalogResourceFactory : ResourceFactoryBase<CatalogResource
         {
             "CTLG" => 0x48C28979,   // Standard catalog resource
             "CTLG2" => 0xA8F7B517,  // Alternative catalog resource format
-            "CTLG3" => 0x319E4F1D,  // Object catalog resource (common)
-            "CTLG4" => 0x9D1FFBCD,  // Lot catalog resource
             "CTLG5" => 0x1CC03E4C,  // Room catalog resource
             _ => 0
         };

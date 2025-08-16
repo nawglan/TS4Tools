@@ -53,12 +53,9 @@ public sealed class CatalogResourceFactoryTests
         // Arrange
         var expectedTypes = new uint[]
         {
-            0x049CA4CD, // CatalogResource (Phase 4.18 - Visual Enhancement)
-            0x48C28979, // Standard catalog resource
-            0xA8F7B517, // Alternative catalog resource format
-            0x319E4F1D, // Object catalog resource (common)
-            0x9D1FFBCD, // Lot catalog resource
-            0x1CC03E4C  // Room catalog resource
+            0x319E4F1D, // COBJResource (Object catalog) - Original Sims4Tools primary type
+            0x48C28979, // _48C28979CatalogResource - Original Sims4Tools catalog type
+            0xA8F7B517  // A8F7B517CatalogResource - Original Sims4Tools alternative format
         };
 
         // Act & Assert
@@ -80,9 +77,9 @@ public sealed class CatalogResourceFactoryTests
     }
 
     [Theory]
-    [InlineData(0x48C28979u)]
-    [InlineData(0xA8F7B517u)]
-    [InlineData(0x319E4F1Du)]
+    [InlineData(0x319E4F1Du)] // COBJResource
+    [InlineData(0x48C28979u)] // _48C28979CatalogResource
+    [InlineData(0xA8F7B517u)] // A8F7B517CatalogResource
     public void CreateResource_WithSupportedType_ShouldCreateResource(uint resourceType)
     {
         // Arrange
@@ -228,7 +225,7 @@ public sealed class CatalogResourceFactoryTests
     public void CanHandle_WithSupportedTypes_ShouldReturnTrue()
     {
         // Arrange
-        var supportedTypes = new uint[] { 0x48C28979, 0xA8F7B517, 0x319E4F1D, 0x9D1FFBCD, 0x1CC03E4C };
+        var supportedTypes = new uint[] { 0x319E4F1D, 0x48C28979, 0xA8F7B517 };
 
         // Act & Assert
         foreach (var type in supportedTypes)
@@ -241,7 +238,7 @@ public sealed class CatalogResourceFactoryTests
     public void CanHandle_WithUnsupportedTypes_ShouldReturnFalse()
     {
         // Arrange
-        var unsupportedTypes = new uint[] { 0x12345678, 0xFFFFFFFF, 0x00000000, 0x11111111 };
+        var unsupportedTypes = new uint[] { 0x12345678, 0xFFFFFFFF, 0x00000000, 0x11111111, 0x9D1FFBCD, 0x1CC03E4C };
 
         // Act & Assert
         foreach (var type in unsupportedTypes)

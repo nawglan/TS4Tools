@@ -2,10 +2,14 @@
  *  Copyright (C        var resourceTypes = new[]
         {
             "0x220557DA", // StringTable
-            "0x00B2D882", // DDS Image  
+            "0x00B2D882", // DDS Image
             "PNG",        // PNG Image
             "0x2F7D0004", // TGA Image
-            "0x319E4F1D", // Catalog
+            // 6. Cross-wrapper compatibility verified by creating each resource type
+        var stringResource = await _resourceManager.CreateResourceAsync("0x220557DA", 1);
+        var imageResource = await _resourceManager.CreateResourceAsync("0x00B2D882", 1);
+        var catalogResource = await _resourceManager.CreateResourceAsync("0x319E4F1D", 1);
+        var textResource = await _resourceManager.CreateResourceAsync("0x03B33DDF", 1);   "0x319E4F1D", // Catalog
             "0x03B33DDF"  // Text (valid TextResource type)
         };4Tools Project                                    *
  *                                                                         *
@@ -103,7 +107,7 @@ public sealed class Phase41IntegrationTests : IDisposable
         var resourceTypes = new[]
         {
             "0x220557DA", // StringTable
-            "0x00B2D882", // DDS Image  
+            "0x00B2D882", // DDS Image
             "PNG",        // PNG Image
             "0x2F7D0004", // TGA Image
             "0x319E4F1D", // Catalog
