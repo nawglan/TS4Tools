@@ -144,7 +144,6 @@ public async Task MigratedComponent_ProducesIdenticalOutput(string packagePath)
 - [ ] All tests passing (100%)
 - [ ] Static analysis clean
 - [ ] Documentation updated
-- [ ] Commit follows project format (see [Developer Onboarding Guide](developer-onboarding-guide.md#git-commit-message-format))
 
 ### Standard Command Patterns
 

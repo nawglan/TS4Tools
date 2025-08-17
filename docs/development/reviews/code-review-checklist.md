@@ -4,7 +4,15 @@
 
 ---
 
-## ðŸŽ¯ **TS4Tools-Specific Requirements (ADR Compliance)**
+## ðŸŽ¯ **TS4Tools-Specific Requirements (ADR ## 🏷️ **Git & CI/CD**
+
+### Commit Quality
+
+- [ ] **Conventional Commits**: Follows project commit format (see [Developer Onboarding Guide](../guidelines/developer-onboarding-guide.md#git-commit-message-format))
+- [ ] **Atomic Commits**: Each commit represents a single logical change
+- [ ] **Descriptive Messages**: Commit messages clearly describe what and why
+- [ ] **No Merge Commits**: Uses rebase workflow to maintain clean history
+- [ ] **Signed Commits**: Commits are signed for security (if required)e)**
 
 ### Greenfield Migration Strategy (ADR-004)
 

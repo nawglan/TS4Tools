@@ -34,6 +34,8 @@ become productive contributors to this Sims 4 modding tools project.
 
 **Time Investment**: Following these patterns will save you 2-3 days of debugging common issues.
 
+> **For AI Assistants**: This guide covers human-focused development workflows. AI assistants should also read the [AI Assistant Guidelines](ai-assistant-guidelines-condensed.md) for AI-specific directives and migration patterns.
+
 ## What You'll Learn
 
 1. **Codebase Architecture** - How the project is organized and key patterns
@@ -41,7 +43,8 @@ become productive contributors to this Sims 4 modding tools project.
 3. **Creating Tests** - Our testing patterns and how to write effective tests
 4. **Adding Features** - Step-by-step guide to implementing new functionality
 5. **Code Standards** - Conventions and best practices we follow
-6. **Common Tasks** - Practical examples of typical development work
+6. **Development Workflow** - Pre-commit checklist and quality standards
+7. **Common Tasks** - Practical examples of typical development work
 
 > **IMPORTANT NOTE**: This project has multiple .sln files! Always use `TS4Tools.sln` for all dotnet commands.
 
@@ -1280,6 +1283,115 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 4. **Implement Disposal Correctly**: Follow the disposal pattern from LRLEResource.cs exactly
 5. **Use Proper Logging**: Include context in log messages - stream length, parsing position, etc.
 6. **Handle Edge Cases**: Empty streams, corrupted data, unexpected EOF - see LRLE tests for examples
+
+### Development Workflow
+
+#### Pre-Commit Checklist (All Must Be ✅)
+
+Before committing any changes, ensure you complete this checklist:
+
+- [ ] **Code Quality Check**: Run `./scripts/check-quality.ps1` (or `./scripts/check-quality.ps1 -Fix` to auto-fix)
+- [ ] **Build Clean**: Zero build errors and warnings
+- [ ] **All Tests Pass**: 100% test success rate
+- [ ] **Static Analysis Clean**: No new analyzer warnings
+- [ ] **Code Follows Patterns**: Modern .NET patterns with dependency injection
+- [ ] **Documentation Updated**: README, code comments, or ADRs updated as needed
+
+#### Standard Development Commands
+
+```bash
+# Always start in the project root
+cd /home/dez/code/TS4Tools
+
+# Full validation sequence (use before/after major changes)
+dotnet clean && dotnet restore && dotnet build TS4Tools.sln --verbosity minimal && dotnet test TS4Tools.sln --verbosity minimal
+
+# Quick development cycle
+dotnet build TS4Tools.sln [specific-project]
+dotnet test TS4Tools.sln [test-project] --verbosity minimal
+
+# Code quality check (recommended before commits)
+./scripts/check-quality.ps1                    # Check formatting and analyzers
+./scripts/check-quality.ps1 -Fix              # Auto-fix formatting issues
+./scripts/check-quality.ps1 -Verbose          # Detailed output
+```
+
+#### Quality Standards
+
+We maintain high code quality through:
+
+1. **Dependency Injection**: Constructor injection only, no static dependencies
+2. **Interface Segregation**: Every service behind focused interface
+3. **Pure Functions**: Stateless, deterministic methods where possible
+4. **Async/Await**: All I/O operations must be async
+5. **Cancellation**: CancellationToken support throughout
+6. **Testing**: xUnit with FluentAssertions, NSubstitute, and AutoFixture
+
+#### Warning Resolution Strategy
+
+When you encounter analyzer warnings:
+
+1. **First**: Fix by improving code design
+2. **Last Resort**: Suppress with documented justification
+3. **Never**: Ignore or suppress without reason
+
+Example of justified suppression:
+
+```csharp
+#pragma warning disable CA1051 // Do not declare visible instance fields
+// JUSTIFICATION: Performance-critical handler pattern requires public fields for hot path access
+public readonly struct HandlerData { public int Value; }
+#pragma warning restore CA1051
+```
+
+#### Git Commit Message Format
+
+We follow a structured commit message format to maintain clear project history:
+
+```
+feat(component): brief description
+
+- Specific technical change 1
+- Specific technical change 2
+- Test coverage improvements
+
+WHY: [Business/technical justification]
+TECHNICAL IMPACT: [Performance, maintainability, or compatibility improvements]
+```
+
+**Commit Types:**
+- `feat:` - New features or functionality
+- `fix:` - Bug fixes
+- `refactor:` - Code restructuring without behavior changes
+- `test:` - Adding or updating tests
+- `docs:` - Documentation changes
+- `perf:` - Performance improvements
+- `chore:` - Maintenance tasks, dependency updates
+
+**Examples:**
+
+```bash
+feat(resources): implement StringTable resource wrapper
+
+- Add StringTableResource class with parsing logic
+- Implement StringTableResourceFactory with DI registration
+- Add comprehensive unit tests with edge cases
+- Add integration tests with real .package files
+
+WHY: Enable reading/writing of localized strings in Sims 4 packages
+TECHNICAL IMPACT: Adds support for 0x220557DA resource type, improves modding capabilities
+```
+
+```bash
+fix(package): resolve memory leak in stream disposal
+
+- Add proper using statements for BinaryReader
+- Implement IDisposable pattern in PackageReader
+- Add finalizer for unmanaged resource cleanup
+
+WHY: Large .package files were causing memory growth over time
+TECHNICAL IMPACT: Reduces memory usage by ~40% for multi-GB packages
+```
 
 ### What to Focus On
 
