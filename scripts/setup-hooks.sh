@@ -55,8 +55,11 @@ else
     echo -e "${YELLOW}WARNING: .githooks/pre-commit file not found. Hook will be created when needed.${NC}"
 fi
 
-# Also make this script executable
-chmod +x "$0"
+# Also make this script executable (if we can find it)
+SCRIPT_PATH=$(realpath "$0" 2>/dev/null || echo "$0")
+if [ -f "$SCRIPT_PATH" ]; then
+    chmod +x "$SCRIPT_PATH" 2>/dev/null || true
+fi
 
 echo ""
 echo -e "${GREEN}SUCCESS: Pre-commit hooks setup complete!${NC}"
