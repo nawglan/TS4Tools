@@ -177,7 +177,7 @@ public sealed class RLEResource : IRLEResource, IDisposable
     public async Task<Stream> ToDDSAsync(CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        return await Task.Run(ToDDS, cancellationToken);
+        return await Task.Run(ToDDS, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -219,7 +219,7 @@ public sealed class RLEResource : IRLEResource, IDisposable
         {
             // Read data asynchronously into memory
             using var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream, cancellationToken);
+            await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
 
             ParseRLEData(memoryStream);
 

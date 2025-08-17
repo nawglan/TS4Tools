@@ -96,7 +96,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         }
 
         // Read data from stream
-        using var memoryStream = await CreateMemoryStreamAsync(stream, cancellationToken);
+        using var memoryStream = await CreateMemoryStreamAsync(stream, cancellationToken).ConfigureAwait(false);
         if (memoryStream == null)
         {
             return new ImageResource(apiVersion, null);

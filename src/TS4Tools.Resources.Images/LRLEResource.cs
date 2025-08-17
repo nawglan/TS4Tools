@@ -222,7 +222,7 @@ public sealed class LRLEResource : CoreLRLE.ILRLEResource, IDisposable
                     throw new InvalidDataException($"Failed to parse LRLE data: {ex.Message}", ex);
                 }
             }
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -258,7 +258,7 @@ public sealed class LRLEResource : CoreLRLE.ILRLEResource, IDisposable
                 _cachedBitmap = bitmap.Clone();
                 return bitmap;
             }
-        });
+        }).ConfigureAwait(false);
     }
 
     /// <summary>

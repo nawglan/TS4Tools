@@ -318,7 +318,7 @@ public sealed class ImageResource : IResource, IDisposable
         ThrowIfDisposed();
 
         using var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream, cancellationToken);
+        await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
 
         LoadFromData(memoryStream.ToArray());
     }
@@ -342,28 +342,28 @@ public sealed class ImageResource : IResource, IDisposable
             return _imageData.ToArray();
 
         // Use ImageSharp for conversion
-        using var image = await Image.LoadAsync(new MemoryStream(_imageData));
+        using var image = await Image.LoadAsync(new MemoryStream(_imageData)).ConfigureAwait(false);
         using var outputStream = new MemoryStream();
 
         switch (targetFormat)
         {
             case ImageFormat.PNG:
-                await image.SaveAsPngAsync(outputStream);
+                await image.SaveAsPngAsync(outputStream).ConfigureAwait(false);
                 break;
 
             case ImageFormat.JPEG:
-                await image.SaveAsJpegAsync(outputStream);
+                await image.SaveAsJpegAsync(outputStream).ConfigureAwait(false);
                 break;
 
             case ImageFormat.BMP:
-                await image.SaveAsBmpAsync(outputStream);
+                await image.SaveAsBmpAsync(outputStream).ConfigureAwait(false);
                 break;
 
             case ImageFormat.DDS:
                 {
                     // Cast to the specific pixel type - using Rgba32 as default
                     using var rgba32Image = image.CloneAs<Rgba32>();
-                    return await ConvertToDdsAsync(rgba32Image);
+                    return await ConvertToDdsAsync(rgba32Image).ConfigureAwait(false);
                 }
 
             default:
@@ -387,11 +387,11 @@ public sealed class ImageResource : IResource, IDisposable
         if (_metadata.Format == ImageFormat.DDS)
         {
             // Decompress DDS data first
-            var decompressedData = await DecompressDdsAsync();
+            var decompressedData = await DecompressDdsAsync().ConfigureAwait(false);
             return Image.LoadPixelData<TPixel>(decompressedData, (int)_metadata.Width, (int)_metadata.Height);
         }
 
-        return await Image.LoadAsync<TPixel>(new MemoryStream(_imageData));
+        return await Image.LoadAsync<TPixel>(new MemoryStream(_imageData)).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -415,16 +415,16 @@ public sealed class ImageResource : IResource, IDisposable
         switch (format)
         {
             case ImageFormat.PNG:
-                await image.SaveAsPngAsync(stream);
+                await image.SaveAsPngAsync(stream).ConfigureAwait(false);
                 break;
             case ImageFormat.JPEG:
-                await image.SaveAsJpegAsync(stream);
+                await image.SaveAsJpegAsync(stream).ConfigureAwait(false);
                 break;
             case ImageFormat.BMP:
-                await image.SaveAsBmpAsync(stream);
+                await image.SaveAsBmpAsync(stream).ConfigureAwait(false);
                 break;
             case ImageFormat.DDS:
-                var ddsData = await ConvertToDdsAsync(image);
+                var ddsData = await ConvertToDdsAsync(image).ConfigureAwait(false);
                 LoadFromData(ddsData);
                 return;
             default:
@@ -642,7 +642,7 @@ public sealed class ImageResource : IResource, IDisposable
             var height = (int)_metadata.Height;
 
             // Use DecodeRaw method with correct parameters
-            var decodedData = await Task.Run(() => decoder.DecodeRaw(inputStream, width, height, format));
+            var decodedData = await Task.Run(() => decoder.DecodeRaw(inputStream, width, height, format)).ConfigureAwait(false);
 
             // Convert ColorRgba32 array to byte array
             var result = new byte[decodedData.Length * 4];
@@ -697,7 +697,7 @@ public sealed class ImageResource : IResource, IDisposable
             var memory2D = pixelData.AsMemory().AsMemory2D(height, width);
 
             // Encode to DDS
-            await Task.Run(() => encoder.EncodeToStream(memory2D, outputStream));
+            await Task.Run(() => encoder.EncodeToStream(memory2D, outputStream)).ConfigureAwait(false);
 
             return outputStream.ToArray();
         }
