@@ -71,7 +71,7 @@ public sealed class ObjectCatalogResourceFactory : ResourceFactoryBase<ObjectCat
             if (stream is not null)
             {
                 stream.Position = 0; // Ensure we start from the beginning
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation("Successfully created object catalog resource from {StreamLength} byte stream",
                     stream.Length);

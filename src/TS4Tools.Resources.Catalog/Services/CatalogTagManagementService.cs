@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using TS4Tools.Resources.Common.CatalogTags;
 
@@ -10,8 +11,7 @@ namespace TS4Tools.Resources.Catalog.Services;
 public sealed class CatalogTagManagementService : ICatalogTagManagementService
 {
     private readonly ILogger<CatalogTagManagementService> _logger;
-    private readonly Dictionary<uint, ICatalogTagResource> _tagCache;
-    private readonly object _cacheLock = new();
+    private readonly ConcurrentDictionary<uint, ICatalogTagResource> _tagCache;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CatalogTagManagementService"/> class.
@@ -21,7 +21,7 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
     public CatalogTagManagementService(ILogger<CatalogTagManagementService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _tagCache = new Dictionary<uint, ICatalogTagResource>();
+        _tagCache = new ConcurrentDictionary<uint, ICatalogTagResource>();
     }
 
     /// <inheritdoc />
@@ -38,27 +38,25 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
 
         var results = new List<ICatalogTagResource>();
 
-        lock (_cacheLock)
+        // ConcurrentDictionary allows safe enumeration without locks
+        foreach (var tag in _tagCache.Values)
         {
-            foreach (var tag in _tagCache.Values)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Text search
+            var matchesText = string.IsNullOrWhiteSpace(searchTerm) ||
+                             tag.TagName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                             tag.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase);
+
+            // Category filter
+            var matchesCategory = category == null || tag.Category == category.Value;
+
+            // Flags filter
+            var matchesFlags = requiredFlags == null || tag.Flags.HasFlag(requiredFlags.Value);
+
+            if (matchesText && matchesCategory && matchesFlags)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                // Text search
-                var matchesText = string.IsNullOrWhiteSpace(searchTerm) ||
-                                 tag.TagName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                 tag.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase);
-
-                // Category filter
-                var matchesCategory = category == null || tag.Category == category.Value;
-
-                // Flags filter
-                var matchesFlags = requiredFlags == null || tag.Flags.HasFlag(requiredFlags.Value);
-
-                if (matchesText && matchesCategory && matchesFlags)
-                {
-                    results.Add(tag);
-                }
+                results.Add(tag);
             }
         }
 
@@ -80,13 +78,8 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
 
         var results = new List<ICatalogTagResource>();
 
-        ICatalogTagResource? rootTag = null;
-        lock (_cacheLock)
-        {
-            _tagCache.TryGetValue(rootTagId, out rootTag);
-        }
-
-        if (rootTag != null)
+        // ConcurrentDictionary TryGetValue is thread-safe
+        if (_tagCache.TryGetValue(rootTagId, out var rootTag))
         {
             if (includeRoot)
             {
@@ -112,33 +105,31 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
 
         var ancestors = new List<ICatalogTagResource>();
 
-        lock (_cacheLock)
+        // ConcurrentDictionary allows safe access without locks
+        if (_tagCache.TryGetValue(tagId, out var currentTag))
         {
-            if (_tagCache.TryGetValue(tagId, out var currentTag))
+            if (includeTag)
             {
-                if (includeTag)
+                ancestors.Add(currentTag);
+            }
+
+            // Walk up the parent chain
+            var visited = new HashSet<uint> { tagId }; // Prevent circular references
+            while (currentTag.ParentTagId != 0 && !visited.Contains(currentTag.ParentTagId))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (_tagCache.TryGetValue(currentTag.ParentTagId, out var parentTag))
                 {
-                    ancestors.Add(currentTag);
+                    ancestors.Insert(0, parentTag); // Insert at beginning for root-to-leaf order
+                    visited.Add(parentTag.TagId);
+                    currentTag = parentTag;
                 }
-
-                // Walk up the parent chain
-                var visited = new HashSet<uint> { tagId }; // Prevent circular references
-                while (currentTag.ParentTagId != 0 && !visited.Contains(currentTag.ParentTagId))
+                else
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    if (_tagCache.TryGetValue(currentTag.ParentTagId, out var parentTag))
-                    {
-                        ancestors.Insert(0, parentTag); // Insert at beginning for root-to-leaf order
-                        visited.Add(parentTag.TagId);
-                        currentTag = parentTag;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Parent tag {ParentTagId} not found in cache for tag {TagId}",
-                            currentTag.ParentTagId, currentTag.TagId);
-                        break;
-                    }
+                    _logger.LogWarning("Parent tag {ParentTagId} not found in cache for tag {TagId}",
+                        currentTag.ParentTagId, currentTag.TagId);
+                    break;
                 }
             }
         }
@@ -225,17 +216,15 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
 
             visited.Add(currentParentId);
 
-            lock (_cacheLock)
+            // ConcurrentDictionary allows safe access without locks
+            if (_tagCache.TryGetValue(currentParentId, out var parentTag))
             {
-                if (_tagCache.TryGetValue(currentParentId, out var parentTag))
-                {
-                    currentParentId = parentTag.ParentTagId;
-                }
-                else
-                {
-                    _logger.LogWarning("Parent tag {ParentTagId} not found for tag {TagId}", currentParentId, tag.TagId);
-                    return false;
-                }
+                currentParentId = parentTag.ParentTagId;
+            }
+            else
+            {
+                _logger.LogWarning("Parent tag {ParentTagId} not found for tag {TagId}", currentParentId, tag.TagId);
+                return false;
             }
         }
 
@@ -258,47 +247,45 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
 
         var tagsToExport = tagIds?.ToHashSet();
 
-        lock (_cacheLock)
+        // ConcurrentDictionary allows safe enumeration without locks
+        var tags = tagsToExport == null
+            ? _tagCache.Values
+            : _tagCache.Values.Where(t => tagsToExport.Contains(t.TagId));
+
+        foreach (var tag in tags.OrderBy(t => t.SortOrder).ThenBy(t => t.TagName))
         {
-            var tags = tagsToExport == null
-                ? _tagCache.Values
-                : _tagCache.Values.Where(t => tagsToExport.Contains(t.TagId));
+            cancellationToken.ThrowIfCancellationRequested();
 
-            foreach (var tag in tags.OrderBy(t => t.SortOrder).ThenBy(t => t.TagName))
+            var tagDef = new TagDefinition
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                TagId = tag.TagId,
+                TagName = tag.TagName,
+                Description = tag.Description,
+                ParentTagId = tag.ParentTagId,
+                SortOrder = tag.SortOrder,
+                Category = tag.Category,
+                Flags = tag.Flags
+            };
 
-                var tagDef = new TagDefinition
-                {
-                    TagId = tag.TagId,
-                    TagName = tag.TagName,
-                    Description = tag.Description,
-                    ParentTagId = tag.ParentTagId,
-                    SortOrder = tag.SortOrder,
-                    Category = tag.Category,
-                    Flags = tag.Flags
-                };
-
-                // Add child tag IDs
-                foreach (var childId in tag.ChildTagIds)
-                {
-                    tagDef.ChildTagIds.Add(childId);
-                }
-
-                // Add filter criteria
-                foreach (var fc in tag.FilterCriteria)
-                {
-                    tagDef.FilterCriteria.Add(new TagFilterDefinition
-                    {
-                        PropertyName = fc.PropertyName,
-                        Operator = fc.Operator,
-                        Value = fc.Value?.ToString(),
-                        IsRequired = fc.IsRequired
-                    });
-                }
-
-                exportData.Tags.Add(tagDef);
+            // Add child tag IDs
+            foreach (var childId in tag.ChildTagIds)
+            {
+                tagDef.ChildTagIds.Add(childId);
             }
+
+            // Add filter criteria
+            foreach (var fc in tag.FilterCriteria)
+            {
+                tagDef.FilterCriteria.Add(new TagFilterDefinition
+                {
+                    PropertyName = fc.PropertyName,
+                    Operator = fc.Operator,
+                    Value = fc.Value?.ToString(),
+                    IsRequired = fc.IsRequired
+                });
+            }
+
+            exportData.Tags.Add(tagDef);
         }
 
         _logger.LogInformation("Exported {Count} tag definitions", exportData.Tags.Count);
@@ -320,61 +307,59 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
             FailedImports = 0
         };
 
-        lock (_cacheLock)
+        // ConcurrentDictionary allows safe concurrent access without locks
+        foreach (var tagDef in importData.Tags)
         {
-            foreach (var tagDef in importData.Tags)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                var existingTag = _tagCache.ContainsKey(tagDef.TagId);
 
-                try
+                if (existingTag && !replaceExisting)
                 {
-                    var existingTag = _tagCache.ContainsKey(tagDef.TagId);
-
-                    if (existingTag && !replaceExisting)
-                    {
-                        result.Errors.Add($"Tag {tagDef.TagId} already exists and replaceExisting is false");
-                        result.FailedImports++;
-                        continue;
-                    }
-
-                    // Create or update tag
-                    var tag = new CatalogTagResource(tagDef.TagId, tagDef.TagName, tagDef.Category)
-                    {
-                        Description = tagDef.Description,
-                        ParentTagId = tagDef.ParentTagId,
-                        SortOrder = tagDef.SortOrder,
-                        Flags = tagDef.Flags
-                    };
-
-                    // Add child tags
-                    foreach (var childId in tagDef.ChildTagIds)
-                    {
-                        tag.AddChildTag(childId);
-                    }
-
-                    // Add filter criteria
-                    foreach (var fcDef in tagDef.FilterCriteria)
-                    {
-                        var filterCriterion = new TagFilterCriterion
-                        {
-                            PropertyName = fcDef.PropertyName,
-                            Operator = fcDef.Operator,
-                            Value = fcDef.Value,
-                            IsRequired = fcDef.IsRequired
-                        };
-                        tag.AddFilterCriterion(filterCriterion);
-                    }
-
-                    _tagCache[tagDef.TagId] = tag;
-                    result.SuccessfulImports++;
-                }
-                catch (Exception ex)
-                {
-                    var error = $"Failed to import tag {tagDef.TagId}: {ex.Message}";
-                    result.Errors.Add(error);
+                    result.Errors.Add($"Tag {tagDef.TagId} already exists and replaceExisting is false");
                     result.FailedImports++;
-                    _logger.LogError(ex, "Failed to import tag {TagId}", tagDef.TagId);
+                    continue;
                 }
+
+                // Create or update tag
+                var tag = new CatalogTagResource(tagDef.TagId, tagDef.TagName, tagDef.Category)
+                {
+                    Description = tagDef.Description,
+                    ParentTagId = tagDef.ParentTagId,
+                    SortOrder = tagDef.SortOrder,
+                    Flags = tagDef.Flags
+                };
+
+                // Add child tags
+                foreach (var childId in tagDef.ChildTagIds)
+                {
+                    tag.AddChildTag(childId);
+                }
+
+                // Add filter criteria
+                foreach (var fcDef in tagDef.FilterCriteria)
+                {
+                    var filterCriterion = new TagFilterCriterion
+                    {
+                        PropertyName = fcDef.PropertyName,
+                        Operator = fcDef.Operator,
+                        Value = fcDef.Value,
+                        IsRequired = fcDef.IsRequired
+                    };
+                    tag.AddFilterCriterion(filterCriterion);
+                }
+
+                _tagCache[tagDef.TagId] = tag;
+                result.SuccessfulImports++;
+            }
+            catch (Exception ex)
+            {
+                var error = $"Failed to import tag {tagDef.TagId}: {ex.Message}";
+                result.Errors.Add(error);
+                result.FailedImports++;
+                _logger.LogError(ex, "Failed to import tag {TagId}", tagDef.TagId);
             }
         }
 
@@ -390,10 +375,8 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
         ArgumentNullException.ThrowIfNull(tag);
         cancellationToken.ThrowIfCancellationRequested();
 
-        lock (_cacheLock)
-        {
-            _tagCache[tag.TagId] = tag;
-        }
+        // ConcurrentDictionary thread-safe assignment
+        _tagCache[tag.TagId] = tag;
 
         _logger.LogDebug("Registered tag {TagId} '{TagName}' in cache", tag.TagId, tag.TagName);
         return Task.CompletedTask;
@@ -404,10 +387,8 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        lock (_cacheLock)
-        {
-            _tagCache.Remove(tagId);
-        }
+        // ConcurrentDictionary thread-safe removal
+        _tagCache.TryRemove(tagId, out _);
 
         _logger.LogDebug("Unregistered tag {TagId} from cache", tagId);
         return Task.CompletedTask;
@@ -418,11 +399,9 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        lock (_cacheLock)
-        {
-            _tagCache.TryGetValue(tagId, out var tag);
-            return Task.FromResult(tag);
-        }
+        // ConcurrentDictionary thread-safe access
+        _tagCache.TryGetValue(tagId, out var tag);
+        return Task.FromResult(tag);
     }
 
     /// <inheritdoc />
@@ -430,12 +409,10 @@ public sealed class CatalogTagManagementService : ICatalogTagManagementService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        lock (_cacheLock)
-        {
-            var count = _tagCache.Count;
-            _tagCache.Clear();
-            _logger.LogInformation("Cleared {Count} tags from cache", count);
-        }
+        // ConcurrentDictionary thread-safe clear operation
+        var count = _tagCache.Count;
+        _tagCache.Clear();
+        _logger.LogInformation("Cleared {Count} tags from cache", count);
 
         return Task.CompletedTask;
     }

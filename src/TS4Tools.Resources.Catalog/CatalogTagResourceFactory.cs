@@ -70,7 +70,7 @@ public sealed class CatalogTagResourceFactory : ResourceFactoryBase<CatalogTagRe
             if (stream is not null)
             {
                 stream.Position = 0;
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "Successfully created catalog tag resource from {StreamLength} byte stream: TagId={TagId}, Name='{TagName}', Category={Category}",
