@@ -8,8 +8,6 @@ become productive contributors to this Sims 4 modding tools project.
 
 ## [CRITICAL SUCCESS FACTORS] (Read This First!)
 
-**Based on hard-learned lessons from Phase 4.17.2 WorldColorTimelineResource implementation**
-
 ### The 4 Most Expensive Mistakes to Avoid
 
 1. **[WRONG CODEBASE]**: Don't study `Sims4Tools/s4pi Wrappers/` - it uses completely different patterns (AResource, EventHandler, sync methods). Always use `TS4Tools/src/TS4Tools.Resources.*/` for reference.
@@ -38,13 +36,14 @@ become productive contributors to this Sims 4 modding tools project.
 
 ## What You'll Learn
 
-1. **Codebase Architecture** - How the project is organized and key patterns
-2. **Development Setup** - Getting your environment ready for coding
-3. **Creating Tests** - Our testing patterns and how to write effective tests
-4. **Adding Features** - Step-by-step guide to implementing new functionality
-5. **Code Standards** - Conventions and best practices we follow
-6. **Development Workflow** - Pre-commit checklist and quality standards
-7. **Common Tasks** - Practical examples of typical development work
+1. **Architectural Decisions (ADRs)** - Essential reading: why we make the technical choices we do
+2. **Codebase Architecture** - How the project is organized and key patterns
+3. **Development Setup** - Getting your environment ready for coding
+4. **Creating Tests** - Our testing patterns and how to write effective tests
+5. **Adding Features** - Step-by-step guide to implementing new functionality
+6. **Code Standards** - Conventions and best practices we follow
+7. **Development Workflow** - Pre-commit checklist and quality standards
+8. **Common Tasks** - Practical examples of typical development work
 
 > **IMPORTANT NOTE**: This project has multiple .sln files! Always use `TS4Tools.sln` for all dotnet commands.
 
@@ -99,7 +98,7 @@ graph TB
 
 ### Prerequisites
 
-- **Windows 10/11** (primary development platform)
+- **Windows 10/11 or Linux or MacOS** (development platform)
 - **Visual Studio 2022** (v17.9+) or **VS Code** with C# extension
 - **.NET 9 SDK** (latest version)
 - **Git** for version control
@@ -175,6 +174,44 @@ graph TD
 ```
 
 ### Key Concepts You Need to Know
+
+#### 0. Architectural Decision Records (ADRs) - READ THESE FIRST
+
+**CRITICAL**: Before writing any code, you must understand the architectural decisions that guide this project. We document all major technical decisions in ADRs (Architectural Decision Records).
+
+**Location**: All ADRs are in [`docs/architecture/adr/`](../../architecture/adr/)
+
+**Why ADRs Matter**:
+
+- **Consistency**: Everyone follows the same architectural patterns
+- **Context**: Understand WHY decisions were made, not just what they are
+- **Quality**: Prevents architectural drift and conflicting implementations
+- **Efficiency**: Saves time by avoiding re-debating settled decisions
+
+**Essential ADRs to Read Before Starting**:
+
+1. **[ADR-001: .NET 9 Framework](../../architecture/adr/ADR-001-DotNet9-Framework.md)** - Why we chose .NET 9 and what it means for development
+2. **[ADR-002: Dependency Injection](../../architecture/adr/ADR-002-Dependency-Injection.md)** - How we structure services and dependencies
+3. **[ADR-004: Greenfield Migration Strategy](../../architecture/adr/ADR-004-Greenfield-Migration-Strategy.md)** - Our approach to modernizing legacy code
+4. **[ADR-006: Golden Master Testing](../../architecture/adr/ADR-006-Golden-Master-Testing-Strategy.md)** - How we ensure compatibility with existing files
+5. **[ADR-009: Testing Framework](../../architecture/adr/ADR-009-Testing-Framework-Standardization.md)** - xUnit patterns and standards
+
+**Quick ADR Summary**:
+
+- **Use dependency injection** for all services (constructor injection only)
+- **Write tests first** using xUnit, FluentAssertions, NSubstitute
+- **Extract business logic** from legacy code, don't copy it
+- **Maintain 100% API compatibility** with existing tools
+- **Follow modern async/await patterns** throughout
+
+**When to Check ADRs**:
+
+- Before starting any new feature
+- When you encounter unfamiliar patterns in the codebase
+- When considering architectural changes
+- When you have questions about "why we do it this way"
+
+> **Pro Tip**: If you find yourself asking "Why don't we just...?" - check the ADRs first! The answer is probably documented there.
 
 #### 1. What are "Resources"?
 
@@ -1360,6 +1397,7 @@ TECHNICAL IMPACT: [Performance, maintainability, or compatibility improvements]
 ```
 
 **Commit Types:**
+
 - `feat:` - New features or functionality
 - `fix:` - Bug fixes
 - `refactor:` - Code restructuring without behavior changes
