@@ -111,6 +111,55 @@ Install the C# Dev Kit extension which includes:
 
 Analyzers run automatically and show warnings/errors in the Error List.
 
+## Emoji Fix Script
+
+### Purpose
+
+The `fix-emojis.pl` script converts Unicode emojis to ASCII equivalents in markdown files to
+prevent encoding corruption issues. This is particularly useful for maintaining clean
+documentation that renders consistently across all systems.
+
+### Usage
+
+```bash
+perl scripts/fix-emojis.pl [-y] <markdown_file>
+```
+
+**Options:**
+
+- `-y` : Automatically replace original file without prompting (optional)
+
+### Features
+
+- Converts common emojis to meaningful ASCII text:
+  - 📊 → [CHART]
+  - ✅ → [COMPLETE]
+  - ❌ → [MISSING]
+  - 🚀 → [ACCELERATION]
+  - 🎯 → [TARGET]
+  - ⚠️ → [WARNING]
+  - And many more...
+- Removes any remaining non-ASCII characters
+- Provides detailed statistics on changes made
+- Interactive mode prompts before replacing files (default)
+- Automatic mode with `-y` flag for scripted usage
+
+### Example
+
+```bash
+# Interactive mode - prompts before replacing file
+perl scripts/fix-emojis.pl MIGRATION_ROADMAP.md
+
+# Automatic mode - replaces file without prompting
+perl scripts/fix-emojis.pl -y MIGRATION_ROADMAP.md
+
+# Fix emojis in any markdown file
+perl scripts/fix-emojis.pl docs/README.md
+
+# Batch processing with automatic replacement
+perl scripts/fix-emojis.pl -y docs/README.md
+```
+
 ## Troubleshooting
 
 ### Common Issues

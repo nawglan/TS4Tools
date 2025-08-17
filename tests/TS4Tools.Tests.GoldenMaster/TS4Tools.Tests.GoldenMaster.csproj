@@ -48,6 +48,7 @@
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Geometry\TS4Tools.Resources.Geometry.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Images\TS4Tools.Resources.Images.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Scripts\TS4Tools.Resources.Scripts.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Resources.Specialized\TS4Tools.Resources.Specialized.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Strings\TS4Tools.Resources.Strings.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Text\TS4Tools.Resources.Text.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Resources.Textures\TS4Tools.Resources.Textures.csproj" />
