@@ -141,19 +141,19 @@ public class WrapperDealerTests
         public int RequestedApiVersion => 1;
         public int RecommendedApiVersion => 1;
         public IReadOnlyList<string> ContentFields => Array.Empty<string>();
-        
-        public TypedValue this[int index] 
-        { 
-            get => new TypedValue(); 
-            set { } 
+
+        public TypedValue this[int index]
+        {
+            get => new TypedValue();
+            set { }
         }
-        
-        public TypedValue this[string name] 
-        { 
-            get => new TypedValue(); 
-            set { } 
+
+        public TypedValue this[string name]
+        {
+            get => new TypedValue();
+            set { }
         }
-        
+
         public void Dispose() { }
     }
 }

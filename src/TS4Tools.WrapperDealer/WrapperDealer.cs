@@ -39,16 +39,16 @@ namespace TS4Tools.WrapperDealer;
 public static class WrapperDealer
 {
     #region Private Fields - Modern Implementation
-    
+
     private static readonly object _lockObject = new object();
     private static readonly ConcurrentDictionary<string, Type> _typeMap = new();
     private static readonly List<KeyValuePair<string, Type>> _disabled = new();
     private static volatile bool _initialized = false;
-    
+
     // Modern dependency injection bridge
     private static IServiceProvider? _serviceProvider;
     private static IResourceManager? _resourceManager;
-    
+
     #endregion
 
     #region Legacy API Properties - EXACT COMPATIBILITY REQUIRED
@@ -57,16 +57,16 @@ public static class WrapperDealer
     /// Retrieve the resource wrappers known to WrapperDealer.
     /// LEGACY API: Returns ICollection&lt;KeyValuePair&lt;string, Type&gt;&gt; for exact compatibility.
     /// </summary>
-    public static ICollection<KeyValuePair<string, Type>> TypeMap 
-    { 
-        get 
-        { 
+    public static ICollection<KeyValuePair<string, Type>> TypeMap
+    {
+        get
+        {
             EnsureInitialized();
             lock (_lockObject)
             {
                 return new List<KeyValuePair<string, Type>>(_typeMap);
             }
-        } 
+        }
     }
 
     /// <summary>
@@ -77,15 +77,15 @@ public static class WrapperDealer
     /// Existing instances of a disabled wrapper will not be invalidated and it will remain possible to
     /// bypass WrapperDealer and instantiate instances of the wrapper class directly.
     /// </remarks>
-    public static ICollection<KeyValuePair<string, Type>> Disabled 
-    { 
-        get 
-        { 
+    public static ICollection<KeyValuePair<string, Type>> Disabled
+    {
+        get
+        {
             lock (_lockObject)
             {
-                return _disabled; 
+                return _disabled;
             }
-        } 
+        }
     }
 
     #endregion
@@ -144,7 +144,7 @@ public static class WrapperDealer
         {
             throw new InvalidOperationException("WrapperDealer not initialized. Call WrapperDealer.Initialize(serviceProvider) first.");
         }
-        
+
         // BUSINESS LOGIC: Use modern async resource manager for loading from packages
         try
         {
@@ -189,7 +189,7 @@ public static class WrapperDealer
     {
         // Try to initialize, but don't fail if not available
         try { EnsureInitialized(); } catch { }
-        
+
         lock (_lockObject)
         {
             return _typeMap.ContainsKey(resourceType) || _typeMap.ContainsKey("*");
@@ -206,7 +206,7 @@ public static class WrapperDealer
     {
         // Try to initialize, but don't fail if not available
         try { EnsureInitialized(); } catch { }
-        
+
         lock (_lockObject)
         {
             return _typeMap.TryGetValue(resourceType, out Type? type) ? type : _typeMap.GetValueOrDefault("*");
@@ -222,7 +222,7 @@ public static class WrapperDealer
     {
         // Try to initialize, but don't fail if not available
         try { EnsureInitialized(); } catch { }
-        
+
         lock (_lockObject)
         {
             return _typeMap.Keys.ToArray();
@@ -245,9 +245,9 @@ public static class WrapperDealer
                 type = _typeMap.GetValueOrDefault("*");
                 resourceType = "*";
             }
-            
+
             if (type == null) return false;
-            
+
             var kvp = new KeyValuePair<string, Type>(resourceType, type);
             return !_disabled.Contains(kvp);
         }
@@ -263,7 +263,7 @@ public static class WrapperDealer
     {
         if (wrapperType == null) throw new ArgumentNullException(nameof(wrapperType));
         if (resourceTypes == null) throw new ArgumentNullException(nameof(resourceTypes));
-        
+
         lock (_lockObject)
         {
             foreach (string resourceType in resourceTypes)
@@ -281,7 +281,7 @@ public static class WrapperDealer
     public static void UnregisterWrapper(string resourceType)
     {
         if (resourceType == null) throw new ArgumentNullException(nameof(resourceType));
-        
+
         lock (_lockObject)
         {
             _typeMap.TryRemove(resourceType, out _);
@@ -325,26 +325,26 @@ public static class WrapperDealer
     private static void EnsureInitialized()
     {
         if (_initialized) return;
-        
+
         lock (_lockObject)
         {
             if (_initialized) return;
-            
+
             if (_resourceManager == null)
             {
                 throw new InvalidOperationException(
                     "WrapperDealer not initialized. Call WrapperDealer.Initialize(serviceProvider) first.");
             }
-            
+
             // BUSINESS LOGIC: Populate type map from modern resource manager
             var typeMap = _resourceManager.GetResourceTypeMap();
             _typeMap.Clear();
-            
+
             foreach (var kvp in typeMap)
             {
                 _typeMap.TryAdd(kvp.Key, kvp.Value);
             }
-            
+
             _initialized = true;
         }
     }
@@ -360,12 +360,12 @@ public static class WrapperDealer
     private static IResource WrapperForType(string type, int APIversion, Stream? stream)
     {
         EnsureInitialized();
-        
+
         if (_resourceManager == null)
         {
             throw new InvalidOperationException("WrapperDealer not initialized.");
         }
-        
+
         // BUSINESS LOGIC: Use modern async resource manager, but provide sync API for compatibility
         // Note: This is a blocking call for legacy compatibility - not ideal but necessary
         try
@@ -394,7 +394,7 @@ public static class WrapperDealer
                     throw ex.InnerException;
                 }
             }
-            
+
             // BUSINESS LOGIC: Throw exception if no wrapper found (legacy behavior)
             throw new InvalidOperationException("Could not find a resource handler");
         }

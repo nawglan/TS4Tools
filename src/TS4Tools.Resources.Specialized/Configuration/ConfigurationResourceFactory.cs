@@ -134,7 +134,7 @@ public sealed class ConfigurationResourceFactory : ResourceFactoryBase<IConfigur
             var resource = new ConfigurationResource(apiVersion);
 
             // Parse the stream data
-            await resource.ParseFromStreamAsync(stream, cancellationToken);            _logger?.LogDebug("Successfully created ConfigurationResource from stream with {SectionCount} sections",
+            await resource.ParseFromStreamAsync(stream, cancellationToken); _logger?.LogDebug("Successfully created ConfigurationResource from stream with {SectionCount} sections",
                 resource.Sections.Count);
 
             return resource;
