@@ -490,3 +490,6 @@ appsettings.json
 appsettings.*.json
 !appsettings.template.json
 !appsettings.template.jsonc
+
+# Git hooks - local setup files should not be tracked
+.githooks/
