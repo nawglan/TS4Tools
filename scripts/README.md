@@ -1,6 +1,38 @@
 ﻿# Development Scripts
 
-This directory contains utility scripts to help with development and code quality checks.
+This directory contains utilityThe code quality checker performs the same checks as the CI/CD pipeline:
+
+1. **📦 Dependency Restoration**: Restores NuGet packages
+2. **🎨 Code Formatting**: Checks/fixes code formatting using `dotnet format`
+3. **🔍 Analyzer Checks**: Runs .NET analyzers (Microsoft.CodeAnalysis.NetAnalyzers, SonarAnalyzer.CSharp)
+4. **🧪 Unit Tests**: Runs unit tests to ensure functionality isn't broken
+
+## Git Hooks Setup
+
+We provide automated setup scripts for pre-commit hooks that will run code quality checks before each commit.
+
+### Automated Setup (Recommended)
+
+**Windows (PowerShell):**
+```powershell
+./scripts/setup-hooks.ps1
+```
+
+**Linux/macOS (Bash):**
+```bash
+./scripts/setup-hooks.sh
+```
+
+These scripts will:
+- Configure Git to use custom hooks from `.githooks/` directory
+- Make hook scripts executable
+- Display helpful information about what will happen
+
+### Manual Integration with Git Hooks
+
+If you prefer manual setup, you can create your own hooks:
+
+### Option 1: Simple pre-commit hookhelp with development and code quality checks.
 
 ## Code Quality Checker
 
