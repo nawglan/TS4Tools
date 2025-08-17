@@ -321,7 +321,7 @@ public sealed class TextResource : ITextResource, IApiVersion, IContentFields, I
         ThrowIfDisposed();
 
         using var reader = new StreamReader(stream, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
-        _content = await reader.ReadToEndAsync(cancellationToken);
+        _content = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         _encoding = reader.CurrentEncoding;
 
         InvalidateCache();

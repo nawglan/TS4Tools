@@ -39,8 +39,8 @@ public class FacialAnimationResourceFactory : ResourceFactoryBase<IFacialAnimati
             try
             {
                 var data = new byte[stream.Length];
-                await stream.ReadExactlyAsync(data, cancellationToken);
-                await resource.DeserializeAsync(data, cancellationToken);
+                await stream.ReadExactlyAsync(data, cancellationToken).ConfigureAwait(false);
+                await resource.DeserializeAsync(data, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogDebug("Successfully deserialized facial animation resource from stream ({Length} bytes)", data.Length);
             }

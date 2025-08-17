@@ -267,7 +267,7 @@ public class AnimationResource : IAnimationResource
 
         // Copy stream to memory stream for processing
         using var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream, cancellationToken);
+        await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
         memoryStream.Position = 0;
 
         ReadFromStream(memoryStream);

@@ -45,7 +45,7 @@ public sealed class ModularResourceFactory : ResourceFactoryBase<ModularResource
 
         if (stream != null)
         {
-            await resource.LoadFromStreamAsync(stream, cancellationToken);
+            await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
         }
 
         return resource;

@@ -37,7 +37,7 @@ public class CharacterResourceFactory : ResourceFactoryBase<ICharacterResource>
 
             if (stream != null)
             {
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("Successfully created character resource with type {CharacterType}",

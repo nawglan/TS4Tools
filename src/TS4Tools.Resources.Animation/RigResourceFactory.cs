@@ -37,7 +37,7 @@ public class RigResourceFactory : ResourceFactoryBase<IRigResource>
 
             if (stream != null)
             {
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("Successfully created rig resource '{RigName}' with {BoneCount} bones",

@@ -37,7 +37,7 @@ public class EffectResourceFactory : ResourceFactoryBase<IEffectResource>
 
             if (stream != null)
             {
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("Successfully created effect resource with type {EffectType}",

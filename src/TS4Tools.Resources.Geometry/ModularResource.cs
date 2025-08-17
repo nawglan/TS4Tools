@@ -476,7 +476,7 @@ public sealed class ModularResource : IResource, IDisposable, INotifyPropertyCha
                 writer.Write(kvp.Value.MaxValue);
             }
 
-            await writer.BaseStream.FlushAsync(cancellationToken);
+            await writer.BaseStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             IsDirty = false;
         }
         catch (Exception ex)

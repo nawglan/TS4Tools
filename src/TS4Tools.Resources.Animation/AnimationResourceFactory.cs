@@ -37,7 +37,7 @@ public class AnimationResourceFactory : ResourceFactoryBase<IAnimationResource>
 
             if (stream != null)
             {
-                await resource.LoadFromStreamAsync(stream, cancellationToken);
+                await resource.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogInformation("Successfully created animation resource with type {AnimationType}",
