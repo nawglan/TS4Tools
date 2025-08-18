@@ -407,7 +407,7 @@ public sealed class NeighborhoodResource : IResource, IDisposable
         get
         {
             var stream = new MemoryStream();
-            SaveToStreamAsync(stream).GetAwaiter().GetResult();
+            SaveToStreamAsync(stream).ConfigureAwait(false).GetAwaiter().GetResult();
             stream.Position = 0;
             return stream;
         }
@@ -419,7 +419,7 @@ public sealed class NeighborhoodResource : IResource, IDisposable
         get
         {
             using var stream = new MemoryStream();
-            SaveToStreamAsync(stream).GetAwaiter().GetResult();
+            SaveToStreamAsync(stream).ConfigureAwait(false).GetAwaiter().GetResult();
             return stream.ToArray();
         }
     }

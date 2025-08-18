@@ -187,7 +187,7 @@ public abstract class AbstractCatalogResource : IAbstractCatalogResource
     {
         // Use Task.Run to avoid deadlocks in synchronization contexts
         var validationTask = Task.Run(async () => await ValidateAsync().ConfigureAwait(false));
-        var result = validationTask.GetAwaiter().GetResult();
+        var result = validationTask.ConfigureAwait(false).GetAwaiter().GetResult();
 
         return result.Errors.Select(e => e.Message);
     }
@@ -285,7 +285,7 @@ public abstract class AbstractCatalogResource : IAbstractCatalogResource
             {
                 // Dispose managed resources - use Task.Run to avoid deadlocks
                 Task.Run(async () => await DisposeAsyncCore().ConfigureAwait(false))
-                    .GetAwaiter().GetResult();
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             _disposed = true;

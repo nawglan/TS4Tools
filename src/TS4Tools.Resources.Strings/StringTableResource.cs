@@ -276,7 +276,7 @@ public sealed class StringTableResource : IResource, IDisposable
         get
         {
             ThrowIfDisposed();
-            var data = Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false)).GetAwaiter().GetResult();
+            var data = Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
             return new MemoryStream(data);
         }
     }
@@ -290,7 +290,7 @@ public sealed class StringTableResource : IResource, IDisposable
         get
         {
             ThrowIfDisposed();
-            return Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false)).GetAwaiter().GetResult();
+            return Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 

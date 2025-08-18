@@ -152,7 +152,7 @@ public class FacialAnimationResource : IFacialAnimationResource
             if (_disposed)
                 throw new ObjectDisposedException(nameof(FacialAnimationResource));
 
-            return Task.Run(async () => await SerializeAsync().ConfigureAwait(false)).GetAwaiter().GetResult();
+            return Task.Run(async () => await SerializeAsync().ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 

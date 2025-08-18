@@ -40,7 +40,7 @@ public sealed class CatalogTagResource : ICatalogTagResource
             using var stream = new MemoryStream();
             // Use Task.Run to avoid deadlocks in synchronization contexts
             Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false))
-                .GetAwaiter().GetResult();
+                .ConfigureAwait(false).GetAwaiter().GetResult();
             return stream.ToArray();
         }
     }

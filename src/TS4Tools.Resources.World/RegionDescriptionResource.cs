@@ -188,7 +188,7 @@ public sealed class RegionDescriptionResource : IResource, IDisposable, INotifyP
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             using var ms = new MemoryStream();
-            SaveToStreamAsync(ms).GetAwaiter().GetResult();
+            SaveToStreamAsync(ms).ConfigureAwait(false).GetAwaiter().GetResult();
             return ms.ToArray();
         }
     }

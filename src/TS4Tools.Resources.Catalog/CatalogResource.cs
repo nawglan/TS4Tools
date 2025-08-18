@@ -76,7 +76,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
         ArgumentNullException.ThrowIfNull(stream);
         // Use Task.Run to avoid deadlocks in synchronization contexts
         Task.Run(async () => await LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false), cancellationToken)
-            .GetAwaiter().GetResult();
+            .ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     #endregion
@@ -267,7 +267,7 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
             using var ms = new MemoryStream();
             // Use Task.Run to avoid deadlocks in synchronization contexts
             Task.Run(async () => await SaveToStreamAsync(ms).ConfigureAwait(false))
-                .GetAwaiter().GetResult();
+                .ConfigureAwait(false).GetAwaiter().GetResult();
             return ms.ToArray();
         }
     }

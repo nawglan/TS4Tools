@@ -235,7 +235,7 @@ public sealed class UserCAStPresetResource : IUserCAStPresetResource, IDisposabl
             ThrowIfDisposed();
             // Use Task.Run to avoid deadlocks in synchronization contexts
             var data = Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false))
-                .GetAwaiter().GetResult();
+                .ConfigureAwait(false).GetAwaiter().GetResult();
             return new MemoryStream(data);
         }
     }
@@ -248,7 +248,7 @@ public sealed class UserCAStPresetResource : IUserCAStPresetResource, IDisposabl
             ThrowIfDisposed();
             // Use Task.Run to avoid deadlocks in synchronization contexts
             return Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false))
-                .GetAwaiter().GetResult();
+                .ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 

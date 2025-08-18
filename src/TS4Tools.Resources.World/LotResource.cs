@@ -347,7 +347,7 @@ public sealed class LotResource : IResource, IDisposable
         get
         {
             var stream = new MemoryStream();
-            Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).GetAwaiter().GetResult();
+            Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
             stream.Position = 0;
             return stream;
         }
@@ -359,7 +359,7 @@ public sealed class LotResource : IResource, IDisposable
         get
         {
             using var stream = new MemoryStream();
-            Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).GetAwaiter().GetResult();
+            Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
             return stream.ToArray();
         }
     }

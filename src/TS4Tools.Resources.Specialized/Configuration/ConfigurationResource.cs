@@ -724,7 +724,7 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     private byte[] SaveToByteArray()
     {
         using var stream = new MemoryStream();
-        SaveToStreamAsync(stream).GetAwaiter().GetResult();
+        SaveToStreamAsync(stream).ConfigureAwait(false).GetAwaiter().GetResult();
         return stream.ToArray();
     }
 

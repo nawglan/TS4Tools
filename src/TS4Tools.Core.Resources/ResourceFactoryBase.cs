@@ -76,7 +76,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
         }
 
         // Use async method synchronously for compatibility - deadlock-safe pattern
-        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).GetAwaiter().GetResult();
+        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
@@ -88,7 +88,7 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
         }
 
         // Use async method synchronously for compatibility - deadlock-safe pattern
-        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).GetAwaiter().GetResult();
+        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />

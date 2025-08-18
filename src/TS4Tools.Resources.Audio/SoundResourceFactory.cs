@@ -82,7 +82,7 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
         }
 
         // Use async method synchronously for compatibility - deadlock-safe pattern
-        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).GetAwaiter().GetResult();
+        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <summary>
