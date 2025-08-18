@@ -301,6 +301,6 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         }
 
         // Use async method synchronously for compatibility - deadlock-safe pattern
-        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).GetAwaiter().GetResult();
+        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 }

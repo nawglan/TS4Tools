@@ -705,7 +705,7 @@ public sealed class LRLEResource : CoreLRLE.ILRLEResource, IDisposable
     /// </summary>
     public Stream ToBitmap(int mipLevel = 0)
     {
-        return Task.Run(async () => await ToBitmapAsync(mipLevel).ConfigureAwait(false)).GetAwaiter().GetResult();
+        return Task.Run(async () => await ToBitmapAsync(mipLevel).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <summary>

@@ -156,7 +156,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
     public EnvironmentResource(Stream stream) : this()
     {
         ArgumentNullException.ThrowIfNull(stream);
-        LoadFromStreamAsync(stream).GetAwaiter().GetResult();
+        LoadFromStreamAsync(stream).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     public Task LoadFromStreamAsync(Stream stream, CancellationToken cancellationToken = default)
@@ -181,7 +181,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
             for (int i = 0; i < regionalWeatherCount; i++)
             {
                 var regionalWeather = new RegionalWeather();
-                regionalWeather.LoadFromStreamAsync(stream, cancellationToken).GetAwaiter().GetResult();
+                regionalWeather.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
                 _regionalWeathers.Add(regionalWeather);
             }
 
@@ -191,7 +191,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
             for (int i = 0; i < interpolationCount; i++)
             {
                 var interpolation = new WeatherInterpolation();
-                interpolation.LoadFromStreamAsync(stream, cancellationToken).GetAwaiter().GetResult();
+                interpolation.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
                 _weatherInterpolations.Add(interpolation);
             }
 
@@ -250,14 +250,14 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
             writer.Write(_regionalWeathers.Count);
             foreach (var regionalWeather in _regionalWeathers)
             {
-                ((RegionalWeather)regionalWeather).SaveToStreamAsync(output, cancellationToken).GetAwaiter().GetResult();
+                ((RegionalWeather)regionalWeather).SaveToStreamAsync(output, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             // Write weather interpolations
             writer.Write(_weatherInterpolations.Count);
             foreach (var interpolation in _weatherInterpolations)
             {
-                ((WeatherInterpolation)interpolation).SaveToStreamAsync(output, cancellationToken).GetAwaiter().GetResult();
+                ((WeatherInterpolation)interpolation).SaveToStreamAsync(output, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             }
 
             // Write weather forecast IDs
@@ -401,7 +401,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
 
     public void Save(Stream stream)
     {
-        SaveToStreamAsync(stream).GetAwaiter().GetResult();
+        SaveToStreamAsync(stream).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     public Task SaveAsync()
@@ -418,7 +418,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
     {
         _stream?.Dispose();
         _stream = new MemoryStream();
-        SaveToStreamAsync(_stream).GetAwaiter().GetResult();
+        SaveToStreamAsync(_stream).ConfigureAwait(false).GetAwaiter().GetResult();
         _stream.Position = 0;
         return Task.CompletedTask;
     }
@@ -489,7 +489,7 @@ internal class RegionalWeather : IRegionalWeather
         for (int i = 0; i < interpolationCount; i++)
         {
             var interpolation = new WeatherInterpolation();
-            interpolation.LoadFromStreamAsync(stream, cancellationToken).GetAwaiter().GetResult();
+            interpolation.LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
             _weatherInterpolations.Add(interpolation);
         }
 
@@ -536,7 +536,7 @@ internal class RegionalWeather : IRegionalWeather
         writer.Write(_weatherInterpolations.Count);
         foreach (var interpolation in _weatherInterpolations)
         {
-            ((WeatherInterpolation)interpolation).SaveToStreamAsync(output, cancellationToken).GetAwaiter().GetResult();
+            ((WeatherInterpolation)interpolation).SaveToStreamAsync(output, cancellationToken).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
         // Write forecasts

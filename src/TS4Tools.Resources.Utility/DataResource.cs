@@ -483,7 +483,7 @@ public sealed class DataResource : IResource, IDisposable
     /// </summary>
     public IResource Clone()
     {
-        using var stream = SerializeAsync().GetAwaiter().GetResult();
+        using var stream = SerializeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         return new DataResource(_logger, ResourceKey, stream);
     }
 
