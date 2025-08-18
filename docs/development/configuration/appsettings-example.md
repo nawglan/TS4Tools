@@ -5,8 +5,8 @@ This is an example configuration file that demonstrates how to set up TS4Tools w
 ## Setup Instructions
 
 1. **Copy this file** to `appsettings.json` in the same directory
-2. **Update the InstallationDirectory** path to match your Sims 4 installation
-3. **Customize other settings** as needed
+1. **Update the InstallationDirectory** path to match your Sims 4 installation
+1. **Customize other settings** as needed
 
 ## Common Installation Paths
 
@@ -47,4 +47,3 @@ This is an example configuration file that demonstrates how to set up TS4Tools w
 ## Security Warning
 
 âš ï¸ **Never commit this file to version control** - it contains local system paths and should remain private.
-

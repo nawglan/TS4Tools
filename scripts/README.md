@@ -1,5 +1,20 @@
 ﻿# Development Scripts
 
+## Emoji Legend
+
+**Process Icons:**
+
+- 📦 Package/Dependency Management
+- 🎨 Code Formatting/Style
+- 🔍 Analysis/Investigation
+- 🧪 Testing/Validation
+- ✅ Complete/Success/Passed
+- ❌ Missing/Failed/Error
+- 🚀 Acceleration/Performance/Launch
+- 🎯 Target/Goal/Focus
+- ⚠️ Warning/Caution
+- 📊 Charts/Data/Metrics
+
 This directory contains utilityThe code quality checker performs the same checks as the CI/CD pipeline:
 
 1. **📦 Dependency Restoration**: Restores NuGet packages
@@ -14,16 +29,19 @@ We provide automated setup scripts for pre-commit hooks that will run code quali
 ### Automated Setup (Recommended)
 
 **Windows (PowerShell):**
+
 ```powershell
 ./scripts/setup-hooks.ps1
 ```
 
 **Linux/macOS (Bash):**
+
 ```bash
 ./scripts/setup-hooks.sh
 ```
 
 These scripts will:
+
 - Configure Git to use custom hooks from `.githooks/` directory
 - Make hook scripts executable
 - Display helpful information about what will happen
@@ -147,9 +165,8 @@ Analyzers run automatically and show warnings/errors in the Error List.
 
 ### Purpose
 
-The `fix-emojis.pl` script converts Unicode emojis to ASCII equivalents in markdown files to
-prevent encoding corruption issues. This is particularly useful for maintaining clean
-documentation that renders consistently across all systems.
+The `fix-emojis.pl` script converts Unicode emojis to ASCII equivalents in markdown files to prevent encoding corruption
+issues. This is particularly useful for maintaining clean documentation that renders consistently across all systems.
 
 ### Usage
 
@@ -215,7 +232,7 @@ perl scripts/fix-emojis.pl -y docs/README.md
 
 ### Getting Help
 
-- Check [.NET Code Analysis Rules](https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-quality-rules/)
+- Check
+  [.NET Code Analysis Rules](https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/code-quality-rules/)
 - Review [EditorConfig documentation](https://editorconfig.org/)
 - See [dotnet format documentation](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-format)
-

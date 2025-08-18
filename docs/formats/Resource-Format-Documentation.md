@@ -443,12 +443,12 @@ public class FormatCompatibilityTests
 Each resource type should include:
 
 1. **Overview**: Purpose and usage in game
-2. **Binary Layout**: Detailed byte-level format
-3. **Field Descriptions**: Each field with data type and purpose
-4. **Version History**: Changes across game versions
-5. **Implementation Example**: Working parser code
-6. **Test Cases**: Validation and edge case tests
-7. **Known Issues**: Limitations and workarounds
+1. **Binary Layout**: Detailed byte-level format
+1. **Field Descriptions**: Each field with data type and purpose
+1. **Version History**: Changes across game versions
+1. **Implementation Example**: Working parser code
+1. **Test Cases**: Validation and edge case tests
+1. **Known Issues**: Limitations and workarounds
 
 ### Maintenance Guidelines
 
@@ -462,9 +462,9 @@ Each resource type should include:
 ### Planned Improvements
 
 1. **Format Discovery**: Automatic format detection from magic bytes
-2. **Schema Validation**: JSON Schema for format specifications
-3. **Visual Format Editor**: GUI tool for format exploration
-4. **Performance Profiling**: Detailed parsing performance metrics
+1. **Schema Validation**: JSON Schema for format specifications
+1. **Visual Format Editor**: GUI tool for format exploration
+1. **Performance Profiling**: Detailed parsing performance metrics
 
 ### Research Areas
 
@@ -473,8 +473,7 @@ Each resource type should include:
 - **Format Prediction**: Machine learning for format recognition
 - **Cross-Game Compatibility**: Support for other EA game formats
 
----
+______________________________________________________________________
 
 *Last Updated: August 8, 2025*
 *For complete format specifications, see individual resource type documentation*
-

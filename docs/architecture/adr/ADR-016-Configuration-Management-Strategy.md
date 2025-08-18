@@ -9,10 +9,10 @@
 The TS4Tools application requires secure, flexible configuration management for:
 
 1. **Security Credentials**: API keys, connection strings, and authentication tokens
-2. **Environment Variations**: Different settings for development, testing, and production
-3. **User Preferences**: Application settings and customization options
-4. **Feature Toggles**: Enabling/disabling features for testing and rollout
-5. **Performance Tuning**: Adjustable parameters for optimization
+1. **Environment Variations**: Different settings for development, testing, and production
+1. **User Preferences**: Application settings and customization options
+1. **Feature Toggles**: Enabling/disabling features for testing and rollout
+1. **Performance Tuning**: Adjustable parameters for optimization
 
 Current configuration management has security vulnerabilities with sensitive data in source control and lacks proper environment separation.
 
@@ -21,22 +21,24 @@ Current configuration management has security vulnerabilities with sensitive dat
 We will implement a **hierarchical configuration management strategy** with the following components:
 
 1. **Configuration Hierarchy**: Environment variables > User secrets > Configuration files > Defaults
-2. **Security-First Design**: No sensitive data in source control or configuration files
-3. **Environment Separation**: Clear separation between development, testing, and production
-4. **Validation and Defaults**: Comprehensive validation with sensible defaults
-5. **Hot Reload Support**: Dynamic configuration updates without application restart
+1. **Security-First Design**: No sensitive data in source control or configuration files
+1. **Environment Separation**: Clear separation between development, testing, and production
+1. **Validation and Defaults**: Comprehensive validation with sensible defaults
+1. **Hot Reload Support**: Dynamic configuration updates without application restart
 
 ## Rationale
 
 ### Current Security Issues
 
 #### Sensitive Data Exposure
+
 - Configuration files contain placeholder sensitive data
 - No clear separation between public and private configuration
 - Risk of accidental commit of production credentials
 - No encryption for sensitive configuration values
 
 #### Environment Management
+
 - No standardized environment-specific configuration
 - Manual configuration management across environments
 - Inconsistent settings between development and production
@@ -45,18 +47,21 @@ We will implement a **hierarchical configuration management strategy** with the 
 ### Benefits of Structured Approach
 
 #### Security
+
 - Zero sensitive data in source control
 - Encrypted storage for production secrets
 - Audit trail for configuration changes
 - Role-based access to configuration data
 
 #### Maintainability
+
 - Clear configuration schema and validation
 - Consistent configuration patterns across components
 - Automatic detection of configuration issues
 - Self-documenting configuration structure
 
 #### Operational Excellence
+
 - Environment-specific configuration automation
 - Configuration drift detection
 - Centralized configuration management
@@ -728,44 +733,51 @@ public class ConfigurationValidationService : IHostedService
 ## Migration Strategy
 
 ### Phase 1: Security Foundation (Week 1)
+
 1. Implement secure configuration manager with encryption
-2. Remove all sensitive data from configuration files
-3. Set up environment variable and user secrets infrastructure
-4. Create configuration validation framework
+1. Remove all sensitive data from configuration files
+1. Set up environment variable and user secrets infrastructure
+1. Create configuration validation framework
 
 ### Phase 2: Configuration Structure (Week 2)
+
 1. Implement typed configuration classes with validation
-2. Create environment-specific configuration files
-3. Add configuration change monitoring
-4. Update service registration patterns
+1. Create environment-specific configuration files
+1. Add configuration change monitoring
+1. Update service registration patterns
 
 ### Phase 3: Integration and Testing (Week 3)
+
 1. Update all components to use new configuration patterns
-2. Implement configuration hot reload where appropriate
-3. Add comprehensive configuration testing
-4. Create configuration management documentation
+1. Implement configuration hot reload where appropriate
+1. Add comprehensive configuration testing
+1. Create configuration management documentation
 
 ### Phase 4: Production Readiness (Week 4)
+
 1. Set up production configuration management
-2. Implement configuration backup and restore
-3. Add configuration drift monitoring
-4. Create operational runbooks for configuration management
+1. Implement configuration backup and restore
+1. Add configuration drift monitoring
+1. Create operational runbooks for configuration management
 
 ## Success Criteria
 
 ### Security Metrics
+
 - [ ] Zero sensitive data in source control
 - [ ] All production secrets encrypted at rest
 - [ ] Configuration access properly audited
 - [ ] Secure configuration deployment process
 
 ### Operational Metrics
+
 - [ ] Configuration validation catches 100% of invalid configurations
 - [ ] Hot reload works for all non-critical configuration changes
 - [ ] Configuration drift detection and alerting
 - [ ] Automated configuration backup and restore
 
 ### Developer Experience
+
 - [ ] Clear configuration documentation and examples
 - [ ] Easy local development setup with user secrets
 - [ ] Configuration IntelliSense and validation in IDE
@@ -774,6 +786,7 @@ public class ConfigurationValidationService : IHostedService
 ## Consequences
 
 ### Positive
+
 - **Security**: No sensitive data exposure in source control
 - **Flexibility**: Easy environment-specific configuration
 - **Reliability**: Configuration validation prevents runtime errors
@@ -781,18 +794,21 @@ public class ConfigurationValidationService : IHostedService
 - **Operational Excellence**: Configuration monitoring and management
 
 ### Negative
+
 - **Complexity**: Additional infrastructure for configuration management
 - **Learning Curve**: Team must learn new configuration patterns
 - **Initial Setup**: More complex initial environment setup
 - **Dependency**: Additional dependency on data protection services
 
 ### Mitigation Strategies
+
 - Provide comprehensive documentation and examples
 - Create configuration setup scripts and tools
 - Implement gradual migration from existing configuration
 - Provide training on new configuration patterns
 
 ## Related ADRs
+
 - ADR-002: Dependency Injection (service registration patterns)
 - ADR-014: Error Handling and Exception Strategy (configuration error handling)
 - ADR-015: Logging and Observability Framework (configuration logging)

@@ -370,7 +370,7 @@ class ResourceExtractor
 
 When working with Sims 4 packages, you'll encounter these resource types frequently:
 
-| Resource Type | Hex Value    | Description | Common Use Cases |
+| Resource Type | Hex Value | Description | Common Use Cases |
 |---------------|--------------|-------------|------------------|
 | String Tables | `0x220557DA` | Localized text strings | UI text, names, descriptions |
 | Catalog Objects | `0x48C28979` | Object definitions | Furniture, decorations |
@@ -518,9 +518,9 @@ class Program
 ### Building Your Application
 
 1. **Start Simple**: Begin with basic package reading and resource enumeration
-2. **Add Features**: Gradually add resource extraction, analysis, or creation features
-3. **Optimize**: Use the performance guide to optimize for your specific use case
-4. **Test Thoroughly**: Test with various package types and sizes from the community
+1. **Add Features**: Gradually add resource extraction, analysis, or creation features
+1. **Optimize**: Use the performance guide to optimize for your specific use case
+1. **Test Thoroughly**: Test with various package types and sizes from the community
 
 ### Community and Support
 
@@ -537,9 +537,8 @@ If you'd like to contribute to TS4Tools development:
 - Check the **[Migration Roadmap](../MIGRATION_ROADMAP.md)** for current priorities
 - Browse **[Architecture Decision Records](architecture/adr/README.md)** to understand design decisions
 
----
+______________________________________________________________________
 
 **Happy coding!** ðŸŽ®âœ¨
 
 Last updated: August 10, 2025
-

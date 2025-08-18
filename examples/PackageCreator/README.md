@@ -51,11 +51,11 @@ Verification successful!
 ## Key Concepts Demonstrated
 
 1. **Package Creation**: Using `IPackageFactory.CreateEmptyPackageAsync()`
-2. **Resource Addition**: Adding resources with custom resource keys
-3. **Custom Resource Types**: Creating resources with arbitrary type IDs
-4. **Resource Implementation**: Custom `IResource` implementation
-5. **Package Persistence**: Saving packages to disk
-6. **Package Verification**: Loading created packages to verify integrity
+1. **Resource Addition**: Adding resources with custom resource keys
+1. **Custom Resource Types**: Creating resources with arbitrary type IDs
+1. **Resource Implementation**: Custom `IResource` implementation
+1. **Package Persistence**: Saving packages to disk
+1. **Package Verification**: Loading created packages to verify integrity
 
 ## Code Highlights
 
@@ -112,8 +112,8 @@ await package.SaveAsAsync(outputPath);
 This example creates three types of resources:
 
 1. **Text Resource (0x12345678)**: UTF-8 encoded text content
-2. **Binary Resource (0x87654321)**: Sample binary data (simulated PNG header)
-3. **Metadata Resource (0xABCDEF00)**: JSON metadata about the package
+1. **Binary Resource (0x87654321)**: Sample binary data (simulated PNG header)
+1. **Metadata Resource (0xABCDEF00)**: JSON metadata about the package
 
 ## File Structure
 
@@ -140,4 +140,3 @@ This example is useful for:
 - TS4Tools.Extensions
 - Microsoft.Extensions.Hosting
 - Microsoft.Extensions.Logging.Console
-

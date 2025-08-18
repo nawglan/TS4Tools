@@ -2,9 +2,9 @@
 
 **Use this checklist for all pull requests to ensure consistent code quality and architecture adherence.**
 
----
+______________________________________________________________________
 
-## ðŸŽ¯ **TS4Tools-Specific Requirements (ADR ## 🏷️ **Git & CI/CD**
+## ðŸŽ¯ \*\*TS4Tools-Specific Requirements (ADR ## 🏷️ **Git & CI/CD**
 
 ### Commit Quality
 
@@ -12,7 +12,7 @@
 - [ ] **Atomic Commits**: Each commit represents a single logical change
 - [ ] **Descriptive Messages**: Commit messages clearly describe what and why
 - [ ] **No Merge Commits**: Uses rebase workflow to maintain clean history
-- [ ] **Signed Commits**: Commits are signed for security (if required)e)**
+- [ ] **Signed Commits**: Commits are signed for security (if required)e)\*\*
 
 ### Greenfield Migration Strategy (ADR-004)
 
@@ -49,7 +49,7 @@
 - [ ] **File I/O Operations**: File operations work correctly on all target filesystems
 - [ ] **Memory Layout**: Struct packing and endianness handled correctly
 
----
+______________________________________________________________________
 
 ## ðŸ—ï¸ **Architecture & Design**
 
@@ -77,7 +77,7 @@
 - [ ] **Path Separators**: No hardcoded `\` or `/` in paths
 - [ ] **Platform-Specific Code**: Properly conditionally compiled (`#if WINDOWS`)
 
----
+______________________________________________________________________
 
 ## ðŸš€ **Performance & Memory**
 
@@ -105,7 +105,7 @@
 - [ ] **Early Returns**: Uses early returns to avoid unnecessary processing
 - [ ] **Caching Strategy**: Implements appropriate caching where beneficial
 
----
+______________________________________________________________________
 
 ## ðŸ§ª **Testing & Quality**
 
@@ -132,7 +132,7 @@
 - [ ] **Error Handling**: Tests verify error scenarios and edge cases
 - [ ] **Cleanup**: Tests properly clean up resources and state
 
----
+______________________________________________________________________
 
 ## ðŸ“ **Code Style & Documentation**
 
@@ -160,7 +160,7 @@
 - [ ] **Cognitive Complexity**: Code is easy to understand and reason about
 - [ ] **Error Messages**: Meaningful error messages with context
 
----
+______________________________________________________________________
 
 ## ðŸ”’ **Security & Reliability**
 
@@ -188,7 +188,7 @@
 - [ ] **Async Safety**: Async operations don't create race conditions
 - [ ] **Static State**: Minimizes or eliminates mutable static state
 
----
+______________________________________________________________________
 
 ## ðŸ·ï¸ **Git & CI/CD**
 
@@ -216,7 +216,7 @@
 - [ ] **Security Scan**: Security analysis passes without critical issues
 - [ ] **Cross-Platform**: Builds and tests pass on all supported platforms
 
----
+______________________________________________________________________
 
 ## ðŸ“‹ **Reviewer Checklist**
 
@@ -244,7 +244,7 @@
 - [ ] **Code Examples**: Provides code examples for suggested improvements
 - [ ] **Positive Recognition**: Acknowledges good patterns and solutions
 
----
+______________________________________________________________________
 
 ## ðŸŽ¯ **Definition of Done**
 
@@ -261,7 +261,7 @@ A pull request is ready to merge when:
 - [ ] **Performance impact assessed** and within acceptable limits
 - [ ] **Breaking changes documented** with migration guide if applicable
 
----
+______________________________________________________________________
 
 ## ðŸš¨ **Red Flags - Block the PR**
 
@@ -276,7 +276,7 @@ A pull request is ready to merge when:
 - âŒ **Platform Compatibility**: Breaks cross-platform compatibility
 - âŒ **Architecture Violations**: Violates established architecture principles
 
----
+______________________________________________________________________
 
 ## ðŸ’¡ **Review Tips**
 
@@ -297,12 +297,11 @@ A pull request is ready to merge when:
 - **Suggest Alternatives**: Provide alternative solutions, not just criticism
 - **Test the Code**: Pull and test complex changes locally
 
----
+______________________________________________________________________
 
 **Remember**: Code reviews are about **learning**, **knowledge sharing**, and **maintaining high quality**. Be respectful, constructive, and focus on the code, not the person.
 
----
+______________________________________________________________________
 
 **Last Updated**: August 9, 2025
 **Related Documents**: [Developer Onboarding Guide](Developer-Onboarding-Guide.md), [Architecture ADRs](architecture/adr/)
-

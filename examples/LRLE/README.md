@@ -1,12 +1,21 @@
 # LRLE Resource Examples
 
-This directory contains comprehensive examples demonstrating how to use the TS4Tools LRLE (Lossless Run-Length Encoded) image resource system.
+## Emoji Legend
+
+**Status Icons:**
+
+- ✅ Best Practice/Recommended Approach
+- ❌ Common Mistake/Avoid This
+- ⚠️ Important Warning/Caution
+
+This directory contains comprehensive examples demonstrating how to use the TS4Tools LRLE (Lossless Run-Length Encoded)
+image resource system.
 
 ## Examples Overview
 
 ### 1. BasicLRLEExample.cs
 
-**Purpose**: Demonstrates fundamental LRLE operations  
+**Purpose**: Demonstrates fundamental LRLE operations\
 **What you'll learn**:
 
 - How to compress PNG images to LRLE format
@@ -16,9 +25,9 @@ This directory contains comprehensive examples demonstrating how to use the TS4T
 
 **Run**: `dotnet run --project BasicLRLEExample`
 
-### 2. AdvancedLRLEExample.cs  
+### 2. AdvancedLRLEExample.cs
 
-**Purpose**: Shows advanced usage patterns and optimization techniques  
+**Purpose**: Shows advanced usage patterns and optimization techniques\
 **What you'll learn**:
 
 - Batch processing multiple images in parallel
@@ -31,7 +40,7 @@ This directory contains comprehensive examples demonstrating how to use the TS4T
 
 ### 3. WebApiExample.cs
 
-**Purpose**: Integration with ASP.NET Core web applications  
+**Purpose**: Integration with ASP.NET Core web applications\
 **What you'll learn**:
 
 - RESTful API endpoints for LRLE processing
@@ -104,18 +113,15 @@ Mip level 2: 32x32 -> decompressed_texture_mip2.png
 LRLE compression is most effective with images that have:
 
 - **Limited color palettes** (< 256 unique colors)
-- **Solid color regions** or simple gradients  
+- **Solid color regions** or simple gradients
 - **Repeating patterns** or textures
 - **UI elements** like buttons, icons, interface graphics
 
 ### Compression Ratios by Image Type
 
 | Image Type | Typical Compression | Best Case | Worst Case |
-|------------|-------------------|-----------|------------|
-| Solid colors | 10-50x | 100x+ | 3x |
-| Simple gradients | 3-8x | 15x | 2x |
-| Complex photos | 1.2-2x | 3x | 0.8x |
-| UI graphics | 5-15x | 30x | 2x |
+|------------|-------------------|-----------|------------| | Solid colors | 10-50x | 100x+ | 3x | | Simple gradients |
+3-8x | 15x | 2x | | Complex photos | 1.2-2x | 3x | 0.8x | | UI graphics | 5-15x | 30x | 2x |
 
 ### Version Differences
 
@@ -358,16 +364,16 @@ public async Task Should_Round_Trip_Successfully()
 
 ### Common Issues
 
-**Problem**: "Invalid LRLE magic number"  
+**Problem**: "Invalid LRLE magic number"\
 **Solution**: Ensure the input file is actually LRLE format. Use `ValidateData()` to check.
 
-**Problem**: Out of memory with large images  
+**Problem**: Out of memory with large images\
 **Solution**: Implement size limits and consider resizing before compression.
 
-**Problem**: Poor compression ratios  
+**Problem**: Poor compression ratios\
 **Solution**: LRLE works best with images that have limited colors. Consider color quantization.
 
-**Problem**: Slow processing  
+**Problem**: Slow processing\
 **Solution**: Use parallel processing with `SemaphoreSlim` and async patterns.
 
 ### Debug Information

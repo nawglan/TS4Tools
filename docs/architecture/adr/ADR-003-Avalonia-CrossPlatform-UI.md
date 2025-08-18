@@ -17,11 +17,11 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 ### Requirements Analysis
 
 1. **Cross-Platform**: Must run natively on Windows, macOS, and Linux
-2. **Performance**: Must handle large datasets (10k+ resources) efficiently
-3. **Native Feel**: Should integrate well with each platform's conventions
-4. **MVVM Support**: Must support modern MVVM patterns with data binding
-5. **Extensibility**: Plugin architecture for custom resource editors
-6. **Accessibility**: Comply with accessibility standards on all platforms
+1. **Performance**: Must handle large datasets (10k+ resources) efficiently
+1. **Native Feel**: Should integrate well with each platform's conventions
+1. **MVVM Support**: Must support modern MVVM patterns with data binding
+1. **Extensibility**: Plugin architecture for custom resource editors
+1. **Accessibility**: Comply with accessibility standards on all platforms
 
 ### Framework Comparison
 
@@ -36,11 +36,11 @@ We will adopt Avalonia UI 11.3+ as the primary UI framework for the cross-platfo
 ### Avalonia Advantages
 
 1. **XAML Familiarity**: WPF developers can leverage existing knowledge
-2. **Performance**: Native rendering with hardware acceleration
-3. **Theming**: Fluent UI themes available for modern appearance
-4. **Data Binding**: Full MVVM support with reactive extensions
-5. **Controls**: Rich control library with virtualization support
-6. **Community**: Active development and growing ecosystem
+1. **Performance**: Native rendering with hardware acceleration
+1. **Theming**: Fluent UI themes available for modern appearance
+1. **Data Binding**: Full MVVM support with reactive extensions
+1. **Controls**: Rich control library with virtualization support
+1. **Community**: Active development and growing ecosystem
 
 ## Architecture Design
 
@@ -160,40 +160,40 @@ src/TS4Tools.Desktop/
 ### Performance Optimizations
 
 1. **Virtualization**: Use `VirtualizingStackPanel` for large lists
-2. **Async Operations**: All file I/O operations are async
-3. **Progressive Loading**: Load resources on-demand
-4. **Memory Management**: Dispose of large objects properly
-5. **UI Threading**: Keep UI thread responsive with proper async/await
+1. **Async Operations**: All file I/O operations are async
+1. **Progressive Loading**: Load resources on-demand
+1. **Memory Management**: Dispose of large objects properly
+1. **UI Threading**: Keep UI thread responsive with proper async/await
 
 ## Migration Strategy
 
 ### Phase 1: Core UI Migration (Week 1-2)
 
 1. Create Avalonia project structure
-2. Implement main window and basic navigation
-3. Convert core Windows Forms dialogs
-4. Establish MVVM patterns
+1. Implement main window and basic navigation
+1. Convert core Windows Forms dialogs
+1. Establish MVVM patterns
 
 ### Phase 2: Feature Migration (Week 3-4)
 
 1. Package explorer with tree view
-2. Resource editing capabilities
-3. Search and filter functionality
-4. Settings and preferences
+1. Resource editing capabilities
+1. Search and filter functionality
+1. Settings and preferences
 
 ### Phase 3: Platform-Specific Features (Week 5-6)
 
 1. Native file dialogs for each platform
-2. Platform-specific theming
-3. Menu and toolbar integration
-4. Accessibility compliance
+1. Platform-specific theming
+1. Menu and toolbar integration
+1. Accessibility compliance
 
 ### Phase 4: Advanced Features (Week 7-8)
 
 1. Plugin architecture for custom editors
-2. Advanced resource preview capabilities
-3. Drag-and-drop support
-4. Performance optimization and profiling
+1. Advanced resource preview capabilities
+1. Drag-and-drop support
+1. Performance optimization and profiling
 
 ## Platform-Specific Considerations
 
@@ -341,9 +341,9 @@ public void ConfigureMacOSMenu()
 ### Optimization Techniques
 
 1. **UI Virtualization**: Only render visible items
-2. **Background Loading**: Load data on background threads
-3. **Caching**: Cache rendered UI elements
-4. **Progressive Updates**: Update UI incrementally
+1. **Background Loading**: Load data on background threads
+1. **Caching**: Cache rendered UI elements
+1. **Progressive Updates**: Update UI incrementally
 
 ## Testing Strategy
 
@@ -434,9 +434,8 @@ public void SearchFilter_WithValidTerm_FiltersResults()
 - Scripting integration
 - Workflow automation
 
----
+______________________________________________________________________
 
 **Status**: Accepted and In Progress
 **Related ADRs**: ADR-001 (.NET 9), ADR-002 (Dependency Injection)
 **Next Review**: After Phase 1.6 completion
-

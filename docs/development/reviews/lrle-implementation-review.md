@@ -14,7 +14,7 @@ This document provides a comprehensive comparison between the original Sims4Tool
 - **Image Processing**: System.Drawing.Bitmap
 - **Async Support**: None (synchronous only)
 
-### New TS4Tools Implementation  
+### New TS4Tools Implementation
 
 - **Framework**: .NET 9 with SixLabors.ImageSharp
 - **Pattern**: Modern interface-based design with ILRLEResource
@@ -77,14 +77,14 @@ private readonly struct LRLEHeader
 **Original Run-Length Encoding:**
 
 - Variable-length integer encoding for run lengths
-- Color index encoding with palette support  
+- Color index encoding with palette support
 - Pixel run vs repeat run differentiation
 - Multi-level mipmap generation
 
 **New Implementation:**
 
 - Same variable-length integer encoding algorithms
-- Compatible color palette structure  
+- Compatible color palette structure
 - Identical run-length encoding logic
 - Same mipmap generation strategy
 
@@ -95,9 +95,9 @@ private readonly struct LRLEHeader
 Both implementations follow the same decompression state machine:
 
 1. Read command byte to determine operation type
-2. Decode run length using variable-length encoding
-3. Process pixel runs or repeat runs accordingly
-4. Handle color palette lookups for Version 2 format
+1. Decode run length using variable-length encoding
+1. Process pixel runs or repeat runs accordingly
+1. Handle color palette lookups for Version 2 format
 
 **Status**: ✅ **COMPATIBLE** - Files compressed by either implementation can be read by both.
 
@@ -146,7 +146,7 @@ public sealed class LRLEResource : ILRLEResource, IDisposable
 - ✅ Factory pattern with dependency injection support
 - ✅ Nullable reference types for better null safety
 
-### 2. **Performance Enhancements**  
+### 2. **Performance Enhancements**
 
 - ✅ ArrayPool usage for large temporary allocations
 - ✅ Span<T> and Memory<T> for efficient memory operations
@@ -176,18 +176,18 @@ public sealed class LRLEResource : ILRLEResource, IDisposable
 | Mipmap Generation | ✅ | ✅ | ✅ |
 | Color Palette | ✅ | ✅ | ✅ |
 | Compression Ratio | Baseline | Same | ✅ |
-| Decompression Speed | Baseline | Faster* | ✅ |
+| Decompression Speed | Baseline | Faster\* | ✅ |
 
-*Faster due to SixLabors.ImageSharp optimizations and modern .NET runtime improvements.
+\*Faster due to SixLabors.ImageSharp optimizations and modern .NET runtime improvements.
 
 ## Migration Path
 
 For users migrating from original Sims4Tools to TS4Tools:
 
 1. **File Compatibility**: All existing .lrle files work without conversion
-2. **API Changes**: Async methods require `await` keywords  
-3. **Image Types**: Change from `System.Drawing.Bitmap` to `SixLabors.ImageSharp.Image<Rgba32>`
-4. **Disposal**: Remember to dispose resources or use `using` statements
+1. **API Changes**: Async methods require `await` keywords
+1. **Image Types**: Change from `System.Drawing.Bitmap` to `SixLabors.ImageSharp.Image<Rgba32>`
+1. **Disposal**: Remember to dispose resources or use `using` statements
 
 ## Validation Results
 

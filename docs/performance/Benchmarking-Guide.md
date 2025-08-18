@@ -171,8 +171,8 @@ dotnet run --project benchmarks\TS4Tools.Performance.Benchmarks --configuration 
 Visual Studio and Rider support:
 
 1. Set `TS4Tools.Performance.Benchmarks` as startup project
-2. Build in **Release** configuration
-3. Run with profiling enabled for detailed analysis
+1. Build in **Release** configuration
+1. Run with profiling enabled for detailed analysis
 
 ### Automated Execution
 
@@ -288,9 +288,9 @@ public void ParseResourceHeader()
 ### Integration with Development Workflow
 
 1. **Pre-commit Hooks**: Run critical benchmarks before commits
-2. **PR Validation**: Automated performance regression testing
-3. **Release Benchmarking**: Comprehensive performance validation
-4. **Production Monitoring**: Real-world performance tracking
+1. **PR Validation**: Automated performance regression testing
+1. **Release Benchmarking**: Comprehensive performance validation
+1. **Production Monitoring**: Real-world performance tracking
 
 ### Performance Dashboard
 
@@ -361,16 +361,16 @@ public void MemoryIntensiveOperation()
 ### Benchmark Design
 
 1. **Isolated Environment**: Run benchmarks in clean, dedicated environments
-2. **Realistic Data**: Use actual Sims 4 package files for testing
-3. **Baseline Comparison**: Always include legacy system comparisons
-4. **Statistical Significance**: Run sufficient iterations for reliable results
+1. **Realistic Data**: Use actual Sims 4 package files for testing
+1. **Baseline Comparison**: Always include legacy system comparisons
+1. **Statistical Significance**: Run sufficient iterations for reliable results
 
 ### Performance Culture
 
 1. **Regular Monitoring**: Integrate benchmarks into development workflow
-2. **Performance Reviews**: Include performance analysis in code reviews
-3. **Optimization Priority**: Focus on hot paths identified by profiling
-4. **Documentation**: Document performance expectations and trade-offs
+1. **Performance Reviews**: Include performance analysis in code reviews
+1. **Optimization Priority**: Focus on hot paths identified by profiling
+1. **Documentation**: Document performance expectations and trade-offs
 
 ### Troubleshooting
 
@@ -386,9 +386,9 @@ Common benchmark issues:
 ### Planned Improvements
 
 1. **Real-time Profiling**: Live performance monitoring dashboard
-2. **A/B Testing**: Performance comparison frameworks
-3. **Machine Learning**: Predictive performance modeling
-4. **Cloud Integration**: Distributed benchmarking infrastructure
+1. **A/B Testing**: Performance comparison frameworks
+1. **Machine Learning**: Predictive performance modeling
+1. **Cloud Integration**: Distributed benchmarking infrastructure
 
 ### Research Areas
 
@@ -403,8 +403,7 @@ Common benchmark issues:
 - [.NET Performance Best Practices](https://docs.microsoft.com/en-us/dotnet/framework/performance/)
 - [High Performance .NET](https://docs.microsoft.com/en-us/dotnet/core/deploying/ready-to-run)
 
----
+______________________________________________________________________
 
 *Last Updated: August 8, 2025*
 *For benchmark implementations, see benchmarks/ directory*
-

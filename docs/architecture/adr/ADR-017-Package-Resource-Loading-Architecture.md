@@ -9,10 +9,10 @@
 The TS4Tools application's core functionality revolves around loading, parsing, and manipulating Sims 4 package files containing various resources. These operations must handle:
 
 1. **Large Package Files**: Packages can range from MB to GB in size
-2. **Memory Constraints**: Loading entire packages into memory may cause issues
-3. **Concurrent Access**: Multiple operations may need to access the same package
-4. **Performance Requirements**: Fast loading and resource extraction
-5. **Resource Diversity**: Different resource types with varying loading requirements
+1. **Memory Constraints**: Loading entire packages into memory may cause issues
+1. **Concurrent Access**: Multiple operations may need to access the same package
+1. **Performance Requirements**: Fast loading and resource extraction
+1. **Resource Diversity**: Different resource types with varying loading requirements
 
 The current implementation lacks a coherent strategy for package loading, leading to inconsistent performance and potential memory issues.
 
@@ -21,28 +21,31 @@ The current implementation lacks a coherent strategy for package loading, leadin
 We will implement a **hybrid package resource loading architecture** with the following components:
 
 1. **Streaming-First Approach**: Default to streaming for large files with selective caching
-2. **Intelligent Caching**: Cache frequently accessed resources and metadata
-3. **Lazy Loading**: Load resources on-demand rather than upfront
-4. **Concurrent Access Management**: Thread-safe access with resource pooling
-5. **Extensible Resource Factories**: Plugin-based architecture for resource types
+1. **Intelligent Caching**: Cache frequently accessed resources and metadata
+1. **Lazy Loading**: Load resources on-demand rather than upfront
+1. **Concurrent Access Management**: Thread-safe access with resource pooling
+1. **Extensible Resource Factories**: Plugin-based architecture for resource types
 
 ## Rationale
 
 ### Current Problems
 
 #### Memory Management Issues
+
 - Loading entire packages into memory causes OutOfMemory exceptions
 - No consideration for package size when choosing loading strategy
 - Memory usage grows unbounded with multiple open packages
 - No memory pressure handling or cleanup
 
 #### Performance Inconsistencies
+
 - Some operations are fast, others unexpectedly slow
 - No caching of frequently accessed data
 - Redundant parsing of resource headers
 - No optimization for common access patterns
 
 #### Concurrency Challenges
+
 - No thread-safe access to package resources
 - Race conditions in resource loading
 - No coordination between multiple readers
@@ -51,18 +54,21 @@ We will implement a **hybrid package resource loading architecture** with the fo
 ### Benefits of Hybrid Approach
 
 #### Optimal Memory Usage
+
 - Streaming prevents memory exhaustion
 - Selective caching improves performance
 - Memory pressure monitoring and cleanup
 - Configurable memory limits and thresholds
 
 #### Predictable Performance
+
 - Consistent loading patterns across resource types
 - Caching of expensive operations
 - Performance monitoring and optimization
 - Scalable for packages of any size
 
 #### Safe Concurrency
+
 - Thread-safe resource access
 - Resource pooling and lifecycle management
 - Coordinated access to shared resources
@@ -692,44 +698,51 @@ public static class PackageLoadingServiceExtensions
 ## Migration Strategy
 
 ### Phase 1: Foundation (Week 1)
+
 1. Implement loading strategy selection framework
-2. Create streaming and in-memory loading strategies
-3. Add basic caching infrastructure
-4. Update package interfaces for async loading
+1. Create streaming and in-memory loading strategies
+1. Add basic caching infrastructure
+1. Update package interfaces for async loading
 
 ### Phase 2: Lazy Loading (Week 2)
+
 1. Implement lazy resource loading
-2. Convert existing package implementations
-3. Add resource pooling and lifecycle management
-4. Implement memory pressure monitoring
+1. Convert existing package implementations
+1. Add resource pooling and lifecycle management
+1. Implement memory pressure monitoring
 
 ### Phase 3: Optimization (Week 3)
+
 1. Add intelligent caching with eviction policies
-2. Implement concurrent access optimization
-3. Add performance monitoring and metrics
-4. Tune caching and pooling parameters
+1. Implement concurrent access optimization
+1. Add performance monitoring and metrics
+1. Tune caching and pooling parameters
 
 ### Phase 4: Production Readiness (Week 4)
+
 1. Add comprehensive error handling and recovery
-2. Implement configuration and monitoring
-3. Add operational tooling and diagnostics
-4. Performance testing and optimization
+1. Implement configuration and monitoring
+1. Add operational tooling and diagnostics
+1. Performance testing and optimization
 
 ## Success Criteria
 
 ### Performance Metrics
+
 - [ ] Package loading time scales linearly with package size
 - [ ] Memory usage remains bounded regardless of package size
 - [ ] Concurrent access performance scales with available cores
 - [ ] Cache hit rates > 80% for frequently accessed resources
 
 ### Reliability Metrics
+
 - [ ] Zero OutOfMemory exceptions during normal operation
 - [ ] Graceful degradation under memory pressure
 - [ ] Thread-safe access with no race conditions
 - [ ] Automatic recovery from transient failures
 
 ### Operational Metrics
+
 - [ ] Memory pressure detection and handling
 - [ ] Performance monitoring and alerting
 - [ ] Resource lifecycle tracking and cleanup
@@ -738,6 +751,7 @@ public static class PackageLoadingServiceExtensions
 ## Consequences
 
 ### Positive
+
 - **Scalability**: Handles packages of any size efficiently
 - **Performance**: Intelligent caching and lazy loading
 - **Reliability**: Memory pressure handling and thread safety
@@ -745,18 +759,21 @@ public static class PackageLoadingServiceExtensions
 - **Observability**: Comprehensive monitoring and diagnostics
 
 ### Negative
+
 - **Complexity**: Additional infrastructure and coordination overhead
 - **Memory Usage**: Caching requires additional memory allocation
 - **Latency**: Lazy loading may introduce delays for first access
 - **Dependencies**: Additional dependencies on caching infrastructure
 
 ### Mitigation Strategies
+
 - Provide configuration options for different usage patterns
 - Implement adaptive caching based on available memory
 - Add warm-up procedures for critical resources
 - Create fallback mechanisms for cache failures
 
 ## Related ADRs
+
 - ADR-002: Dependency Injection (service registration patterns)
 - ADR-014: Error Handling and Exception Strategy (error handling in loading)
 - ADR-015: Logging and Observability Framework (performance monitoring)

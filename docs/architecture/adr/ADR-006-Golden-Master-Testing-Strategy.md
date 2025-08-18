@@ -733,4 +733,3 @@ public class GoldenMasterMaintenanceService
 - ADR-004: Greenfield Migration Strategy (provides context for golden master necessity)
 - ADR-001: .NET 9 Framework (target platform for new implementation)
 - ADR-008: Cross-Platform File Format Compatibility
-

@@ -131,7 +131,7 @@ This document provides a comprehensive analysis of resource type frequency and d
 - **Usage**: UI elements, uncompressed images
 - **Implementation Priority**: **Low-Medium** - Alternative to DDS
 
-### Rare Resource Types (<1,000 instances)
+### Rare Resource Types (\<1,000 instances)
 
 Analysis identified 127 additional resource types with fewer than 1,000 instances each. These represent specialized functionality:
 
@@ -186,7 +186,7 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 - **Typical Content**: Expansion pack content, gameplay packs
 - **Resource Concentration**: Moderate variety, mixed sizes
 
-#### Small Packages (<10MB)
+#### Small Packages (\<10MB)
 
 - **Count**: 60 packages
 - **Typical Content**: Patches, small additions, language packs
@@ -197,30 +197,30 @@ Analysis identified 127 additional resource types with fewer than 1,000 instance
 ### Critical Path Resources (Implement First)
 
 1. **String Tables (STBL)** - Essential for any text display
-2. **DDS Images** - Required for texture display
-3. **Package Structure** - Foundation for all other resources
-4. **Basic Resource Framework** - Interface implementations
+1. **DDS Images** - Required for texture display
+1. **Package Structure** - Foundation for all other resources
+1. **Basic Resource Framework** - Interface implementations
 
 ### High Priority Resources (Implement Second)
 
 1. **Catalog Data** - Required for Buy/Build mode
-2. **Neighborhood Data** - Required for world editing
-3. **3D Geometry** - Required for object visualization
-4. **PNG Images** - Alternative image format support
+1. **Neighborhood Data** - Required for world editing
+1. **3D Geometry** - Required for object visualization
+1. **PNG Images** - Alternative image format support
 
 ### Medium Priority Resources (Implement Third)
 
 1. **Animation Data** - Required for animation editing
-2. **Script Resources** - Required for behavior modification
-3. **Audio Resources** - Required for sound editing
-4. **Lot Data** - Required for lot editing
+1. **Script Resources** - Required for behavior modification
+1. **Audio Resources** - Required for sound editing
+1. **Lot Data** - Required for lot editing
 
 ### Low Priority Resources (Implement Later)
 
 1. **Specialized Formats** - Debug data, development tools
-2. **Legacy Compatibility** - Older format versions
-3. **Platform-Specific** - Console-specific content
-4. **Experimental Features** - Rarely used resource types
+1. **Legacy Compatibility** - Older format versions
+1. **Platform-Specific** - Console-specific content
+1. **Experimental Features** - Rarely used resource types
 
 ## Performance Implications
 
@@ -296,9 +296,9 @@ Analysis shows minimal platform-specific resource differences:
 This analysis was validated through:
 
 1. **Cross-Package Validation**: Consistent resource type distributions
-2. **Size Verification**: File size calculations match actual data
-3. **Sample Validation**: Manual verification of top 100 resources
-4. **Historical Comparison**: Consistency with known game evolution
+1. **Size Verification**: File size calculations match actual data
+1. **Sample Validation**: Manual verification of top 100 resources
+1. **Historical Comparison**: Consistency with known game evolution
 
 ### Known Limitations
 
@@ -311,7 +311,7 @@ This analysis was validated through:
 
 - **Top 20 Resource Types**: High confidence (Â±0.1%)
 - **Mid-tier Types (21-50)**: Medium confidence (Â±0.5%)
-- **Rare Types (<1000)**: Lower confidence (Â±2.0%)
+- **Rare Types (\<1000)**: Lower confidence (Â±2.0%)
 
 ## Recommendations for Development
 
@@ -349,9 +349,9 @@ Test data should reflect real-world distributions:
 
 Based on frequency analysis:
 
-- **String Tables**: <1ms parse time (used frequently)
-- **Images**: <10ms load time (large but cacheable)
-- **Scripts**: <5ms parse time (medium frequency)
+- **String Tables**: \<1ms parse time (used frequently)
+- **Images**: \<10ms load time (large but cacheable)
+- **Scripts**: \<5ms parse time (medium frequency)
 
 ## Future Analysis
 
@@ -372,9 +372,8 @@ Future analysis should include:
 - **Performance Impact**: Real-world loading time analysis
 - **User Preferences**: Community usage patterns
 
----
+______________________________________________________________________
 
 *Analysis Performed: August 8, 2025*
 *Source: TS4Tools Resource Analysis Engine v4.13*
 *Next Update: November 8, 2025*
-

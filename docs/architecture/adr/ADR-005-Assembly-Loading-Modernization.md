@@ -489,7 +489,7 @@ public class AssemblyValidationResult
 | **Plugin Compatibility** | 100% | Automated test suite with existing plugins |
 | **Load Performance** | â‰¤ +5% vs original | Assembly load time benchmarks |
 | **Memory Usage** | â‰¤ original | Memory profiling during plugin loading |
-| **Error Rate** | <1% | Production telemetry |
+| **Error Rate** | \<1% | Production telemetry |
 
 ## Related Decisions
 
@@ -497,4 +497,3 @@ public class AssemblyValidationResult
 - ADR-002: Dependency Injection (provides service abstraction)
 - ADR-004: Greenfield Migration Strategy (context for this modernization)
 - ADR-007: Plugin Architecture Modernization
-

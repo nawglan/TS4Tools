@@ -10,7 +10,7 @@
 **Files Affected:**
 
 - AbstractCatalogResource.cs
-- CatalogTypeRegistry.cs  
+- CatalogTypeRegistry.cs
 - CatalogTagManagementService.cs
 
 **Fix Required:**
@@ -93,7 +93,7 @@ Tests: All 958 tests passing including 64/64 Golden Master tests"
 After fixes:
 
 - [ ] dotnet build (no warnings)
-- [ ] .\scripts\check-quality.ps1 (passes)
+- [ ] .\\scripts\\check-quality.ps1 (passes)
 - [ ] dotnet test (all pass)
 - [ ] git status (clean)
 - [ ] No await without ConfigureAwait(false) in library code

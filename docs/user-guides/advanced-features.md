@@ -575,4 +575,3 @@ public class PluginManager
 ```
 
 This advanced features guide provides comprehensive examples of how to extend and optimize TS4Tools for production use cases.
-

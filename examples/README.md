@@ -135,7 +135,7 @@ To create a new example project:
    cd examples/YourExample
    ```
 
-2. **Create project file**:
+1. **Create project file**:
 
    ```xml
    <Project Sdk="Microsoft.NET.Sdk">
@@ -157,7 +157,7 @@ To create a new example project:
    </Project>
    ```
 
-3. **Create Program.cs**:
+1. **Create Program.cs**:
 
    ```csharp
    using Microsoft.Extensions.DependencyInjection;
@@ -173,7 +173,7 @@ To create a new example project:
    // Your example code here
    ```
 
-4. **Add README.md** with usage instructions and explanation.
+1. **Add README.md** with usage instructions and explanation.
 
 ## Testing Examples
 
@@ -210,11 +210,11 @@ These examples are referenced in the main documentation:
 When contributing new examples:
 
 1. **Follow naming conventions**: Use descriptive, PascalCase names
-2. **Include comprehensive README**: Explain purpose, usage, and key concepts
-3. **Add error handling**: Show proper exception handling patterns
-4. **Document dependencies**: List all required packages and references
-5. **Test thoroughly**: Ensure examples work with various inputs
-6. **Update this README**: Add your example to the list above
+1. **Include comprehensive README**: Explain purpose, usage, and key concepts
+1. **Add error handling**: Show proper exception handling patterns
+1. **Document dependencies**: List all required packages and references
+1. **Test thoroughly**: Ensure examples work with various inputs
+1. **Update this README**: Add your example to the list above
 
 ## Support
 
@@ -223,4 +223,3 @@ If you have questions about the examples:
 - Check the individual README files in each example directory
 - Review the main [Getting Started Guide](../docs/getting-started.md)
 - See the [API Reference](../docs/api-reference.md) for detailed documentation
-

@@ -9,10 +9,10 @@
 The TS4Tools application handles complex file operations, package parsing, and resource management that can fail in numerous ways. The current codebase lacks a consistent error handling strategy, leading to:
 
 1. **Inconsistent Error Responses**: Different modules handle errors differently
-2. **Poor User Experience**: Generic error messages that don't help users
-3. **Debugging Difficulties**: Insufficient error context for troubleshooting
-4. **Recovery Challenges**: No clear recovery mechanisms for transient failures
-5. **Security Risks**: Error messages potentially exposing sensitive information
+1. **Poor User Experience**: Generic error messages that don't help users
+1. **Debugging Difficulties**: Insufficient error context for troubleshooting
+1. **Recovery Challenges**: No clear recovery mechanisms for transient failures
+1. **Security Risks**: Error messages potentially exposing sensitive information
 
 A consistent error handling strategy is critical for application reliability, user experience, and maintainability.
 
@@ -21,26 +21,29 @@ A consistent error handling strategy is critical for application reliability, us
 We will implement a **comprehensive error handling and exception strategy** with the following components:
 
 1. **Hierarchical Exception Design**: Domain-specific exceptions with consistent base classes
-2. **Error Context Preservation**: Rich error information without security exposure
-3. **Recovery Mechanisms**: Automatic retry and fallback strategies where appropriate
-4. **User-Friendly Messaging**: Separate technical and user-facing error information
-5. **Centralized Error Handling**: Consistent error processing across all application layers
+1. **Error Context Preservation**: Rich error information without security exposure
+1. **Recovery Mechanisms**: Automatic retry and fallback strategies where appropriate
+1. **User-Friendly Messaging**: Separate technical and user-facing error information
+1. **Centralized Error Handling**: Consistent error processing across all application layers
 
 ## Rationale
 
 ### Current Problems
 
 #### Inconsistent Error Handling
+
 - Some methods throw exceptions, others return null/false
 - No standard pattern for error information
 - Mixed use of generic vs specific exceptions
 
 #### Poor Error Context
+
 - Stack traces without business context
 - No correlation IDs for tracking errors across operations
 - Missing information about operation state when errors occur
 
 #### User Experience Issues
+
 - Technical exceptions shown to users
 - No actionable guidance for error resolution
 - Errors not localized or user-friendly
@@ -48,16 +51,19 @@ We will implement a **comprehensive error handling and exception strategy** with
 ### Benefits of Structured Approach
 
 #### Consistency
+
 - Predictable error handling patterns across all modules
 - Standard error information structure
 - Consistent logging and reporting
 
 #### Maintainability
+
 - Clear error handling responsibilities
 - Easier debugging with rich context
 - Standardized error testing patterns
 
 #### User Experience
+
 - User-friendly error messages
 - Actionable error guidance
 - Graceful degradation for non-critical failures
@@ -420,10 +426,10 @@ public class RetryPolicyOptions
 ### Exception Throwing Rules
 
 1. **Use specific exceptions** for known error conditions
-2. **Include context** relevant to troubleshooting
-3. **Don't expose sensitive information** in exception messages
-4. **Use Result pattern** for expected failure cases
-5. **Log before throwing** critical exceptions
+1. **Include context** relevant to troubleshooting
+1. **Don't expose sensitive information** in exception messages
+1. **Use Result pattern** for expected failure cases
+1. **Log before throwing** critical exceptions
 
 ### Error Handling Patterns
 
@@ -486,44 +492,51 @@ public static class ErrorHandlingServiceExtensions
 ## Migration Strategy
 
 ### Phase 1: Foundation (Week 1)
+
 1. Implement base exception hierarchy
-2. Create error handling service interfaces
-3. Add Result pattern infrastructure
-4. Update DI registration
+1. Create error handling service interfaces
+1. Add Result pattern infrastructure
+1. Update DI registration
 
 ### Phase 2: Core Integration (Week 2-3)
+
 1. Convert Package operations to use new error handling
-2. Update Resource operations
-3. Implement retry policies for appropriate operations
-4. Add comprehensive error logging
+1. Update Resource operations
+1. Implement retry policies for appropriate operations
+1. Add comprehensive error logging
 
 ### Phase 3: Application Integration (Week 4)
+
 1. Update UI layers to handle Result patterns
-2. Implement user-friendly error display
-3. Add error reporting and telemetry
-4. Update all unit tests
+1. Implement user-friendly error display
+1. Add error reporting and telemetry
+1. Update all unit tests
 
 ### Phase 4: Legacy Cleanup (Week 5)
+
 1. Remove old error handling patterns
-2. Ensure all public APIs use consistent error handling
-3. Update documentation and examples
-4. Performance optimization and monitoring
+1. Ensure all public APIs use consistent error handling
+1. Update documentation and examples
+1. Performance optimization and monitoring
 
 ## Success Criteria
 
 ### Technical Metrics
+
 - [ ] All public APIs use consistent error handling patterns
 - [ ] Error handling unit test coverage > 90%
 - [ ] All exceptions include relevant context information
 - [ ] Error logging follows structured format
 
 ### User Experience Metrics
+
 - [ ] User-friendly error messages for all error conditions
 - [ ] Error recovery succeeds for transient failures
 - [ ] Error reporting provides actionable guidance
 - [ ] Application gracefully handles all error scenarios
 
 ### Operational Metrics
+
 - [ ] Error correlation and tracking across operations
 - [ ] Comprehensive error monitoring and alerting
 - [ ] Error trend analysis and reporting
@@ -532,6 +545,7 @@ public static class ErrorHandlingServiceExtensions
 ## Consequences
 
 ### Positive
+
 - **Consistency**: Uniform error handling across application
 - **Debuggability**: Rich error context for troubleshooting
 - **User Experience**: Clear, actionable error messages
@@ -539,18 +553,21 @@ public static class ErrorHandlingServiceExtensions
 - **Maintainability**: Standardized error testing patterns
 
 ### Negative
+
 - **Initial Complexity**: More code required for error handling
 - **Performance Overhead**: Additional logging and context creation
 - **Learning Curve**: Team needs to adopt new patterns
 - **Migration Effort**: Significant refactoring of existing code
 
 ### Mitigation Strategies
+
 - Provide comprehensive documentation and examples
 - Implement error handling utilities to reduce boilerplate
 - Use code analyzers to enforce error handling patterns
 - Create training materials for development team
 
 ## Related ADRs
+
 - ADR-002: Dependency Injection (service registration)
 - ADR-009: Testing Framework Standardization (error testing patterns)
 - ADR-013: Static Analysis and Code Quality (error handling rules)

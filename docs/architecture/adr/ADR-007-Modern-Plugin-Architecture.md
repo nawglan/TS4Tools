@@ -827,7 +827,7 @@ public class PluginPerformanceTests
 
 ### Plugin Developer Guide
 
-```markdown
+````markdown
 
 # TS4Tools Plugin Development Guide
 
@@ -843,7 +843,7 @@ public class MyResourcePlugin : IResourcePlugin
 
     // Implement required methods...
 }
-```
+````
 
 ### Dependency Injection Support
 
@@ -880,8 +880,8 @@ public class MyLegacyHandler : AResourceHandler
 ## Migration Path
 
 1. **Phase 1**: Continue using legacy plugins as-is
-2. **Phase 2**: Gradually migrate to modern plugin interfaces
-3. **Phase 3**: Take advantage of new features (async, DI, validation)
+1. **Phase 2**: Gradually migrate to modern plugin interfaces
+1. **Phase 3**: Take advantage of new features (async, DI, validation)
 
 ```
 
@@ -928,3 +928,4 @@ public class MyLegacyHandler : AResourceHandler
 - ADR-004: Greenfield Migration Strategy (provides context)
 - ADR-006: Golden Master Testing Strategy (validates plugin compatibility)
 
+```

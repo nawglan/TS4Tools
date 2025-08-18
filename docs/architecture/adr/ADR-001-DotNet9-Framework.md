@@ -17,11 +17,11 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 ### Benefits of .NET 9
 
 1. **Performance**: Native AOT, improved GC, SIMD optimizations
-2. **Cross-Platform**: Windows, macOS, and Linux support
-3. **Modern Language Features**: C# 12, nullable reference types, pattern matching
-4. **Package Management**: Central package management, improved dependency resolution
-5. **Tooling**: Enhanced debugging, profiling, and diagnostic capabilities
-6. **Long-Term Support**: Microsoft's commitment to .NET ecosystem
+1. **Cross-Platform**: Windows, macOS, and Linux support
+1. **Modern Language Features**: C# 12, nullable reference types, pattern matching
+1. **Package Management**: Central package management, improved dependency resolution
+1. **Tooling**: Enhanced debugging, profiling, and diagnostic capabilities
+1. **Long-Term Support**: Microsoft's commitment to .NET ecosystem
 
 ### Comparison Matrix
 
@@ -30,9 +30,9 @@ We will target .NET 9 as the primary framework for the modernized TS4Tools appli
 | .NET Framework 4.0 | âŒ Windows Only | Baseline | Limited | Maintenance Mode |
 | .NET 6 (LTS) | âœ… | +40% | Full | Until Nov 2024 |
 | .NET 8 (LTS) | âœ… | +60% | Full | Until Nov 2026 |
-| **âœ… .NET 9** | âœ… | +80% | Latest | Until May 2025* |
+| **âœ… .NET 9** | âœ… | +80% | Latest | Until May 2025\* |
 
-*Note: .NET 9 is STS (Standard Term Support), but provides latest features for forward compatibility to .NET 10 LTS.
+\*Note: .NET 9 is STS (Standard Term Support), but provides latest features for forward compatibility to .NET 10 LTS.
 
 ### Performance Benchmarks
 
@@ -81,23 +81,23 @@ Based on preliminary testing:
 ### Phase 1: Core Migration
 
 1. Update all `.csproj` files to target `net9.0`
-2. Replace Windows-specific APIs with cross-platform alternatives
-3. Update package references to .NET 9 compatible versions
-4. Implement modern patterns (dependency injection, options pattern)
+1. Replace Windows-specific APIs with cross-platform alternatives
+1. Update package references to .NET 9 compatible versions
+1. Implement modern patterns (dependency injection, options pattern)
 
 ### Phase 2: Optimization
 
 1. Leverage .NET 9 performance features (NativeAOT, SIMD)
-2. Implement modern async patterns
-3. Utilize improved memory management features
-4. Add cross-platform deployment configurations
+1. Implement modern async patterns
+1. Utilize improved memory management features
+1. Add cross-platform deployment configurations
 
 ### Phase 3: Advanced Features
 
 1. Implement Native AOT for improved startup performance
-2. Add platform-specific optimizations
-3. Leverage new language features for better code quality
-4. Implement comprehensive telemetry and diagnostics
+1. Add platform-specific optimizations
+1. Leverage new language features for better code quality
+1. Implement comprehensive telemetry and diagnostics
 
 ## Consequences
 
@@ -169,7 +169,6 @@ This decision aligns with Microsoft's strategic direction and provides the best 
 
 Regular reviews will be conducted to assess the impact and adjust the strategy if needed.
 
----
+______________________________________________________________________
 
 **Related ADRs:** ADR-002 (Dependency Injection), ADR-003 (Cross-Platform UI)
-

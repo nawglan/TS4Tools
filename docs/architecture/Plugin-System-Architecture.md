@@ -89,13 +89,13 @@ New plugins can leverage modern .NET features:
    var plugins = await pluginDiscovery.DiscoverPluginsAsync(pluginDirectory);
    ```
 
-2. **Validation Phase**
+1. **Validation Phase**
 
    ```csharp
    var validPlugins = plugins.Where(p => pluginDiscovery.ValidatePluginCompatibility(p));
    ```
 
-3. **Loading Phase**
+1. **Loading Phase**
 
    ```csharp
    foreach (var plugin in validPlugins)
@@ -129,9 +129,9 @@ New plugins can leverage modern .NET features:
 ### Security Considerations
 
 1. **Sandboxing**: Plugins run with limited permissions
-2. **API Surface**: Only approved APIs are exposed to plugins
-3. **Validation**: All plugin assemblies are validated before loading
-4. **Resource Limits**: Memory and CPU usage monitoring
+1. **API Surface**: Only approved APIs are exposed to plugins
+1. **Validation**: All plugin assemblies are validated before loading
+1. **Resource Limits**: Memory and CPU usage monitoring
 
 ## Usage Examples
 
@@ -202,9 +202,9 @@ The original system used `Assembly.LoadFile()` which caused:
 ### Best Practices
 
 1. **Lazy Loading**: Load plugins only when needed
-2. **Caching**: Cache plugin metadata for faster startup
-3. **Batch Operations**: Load multiple plugins concurrently
-4. **Resource Management**: Proper disposal of plugin contexts
+1. **Caching**: Cache plugin metadata for faster startup
+1. **Batch Operations**: Load multiple plugins concurrently
+1. **Resource Management**: Proper disposal of plugin contexts
 
 ## Testing Strategy
 
@@ -231,9 +231,9 @@ The original system used `Assembly.LoadFile()` which caused:
 ### Planned Features
 
 1. **Hot Reloading**: Dynamic plugin updates without restart
-2. **Plugin Marketplace**: Centralized plugin distribution
-3. **Advanced Sandboxing**: More granular security controls
-4. **Plugin Analytics**: Usage tracking and performance monitoring
+1. **Plugin Marketplace**: Centralized plugin distribution
+1. **Advanced Sandboxing**: More granular security controls
+1. **Plugin Analytics**: Usage tracking and performance monitoring
 
 ### API Evolution
 
@@ -248,9 +248,9 @@ The plugin system is designed for backward compatibility while allowing gradual 
 ### Common Issues
 
 1. **Plugin Not Loading**: Check plugin descriptor validity
-2. **Dependency Conflicts**: Verify plugin dependencies
-3. **Performance Issues**: Monitor plugin resource usage
-4. **Legacy Compatibility**: Use adapter pattern for old plugins
+1. **Dependency Conflicts**: Verify plugin dependencies
+1. **Performance Issues**: Monitor plugin resource usage
+1. **Legacy Compatibility**: Use adapter pattern for old plugins
 
 ### Debugging
 
@@ -272,8 +272,7 @@ Enable detailed plugin logging:
 - [.NET Plugin Architecture Best Practices](https://docs.microsoft.com/en-us/dotnet/core/tutorials/creating-app-with-plugin-support)
 - [Legacy Sims4Tools Plugin System](../legacy/plugin-system-analysis.md)
 
----
+______________________________________________________________________
 
 *Last Updated: August 8, 2025*
 *For implementation details, see TS4Tools.Core.Plugins source code*
-

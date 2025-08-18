@@ -185,9 +185,8 @@ public async Task [ResourceTypeName]_RoundTripSerialization_ShouldPreserveBinary
 | 1.0.0 | [Date] | Initial implementation |
 | [Version] | [Date] | [Change description] |
 
----
+______________________________________________________________________
 
 **Last Updated:** [Date]
 **Author:** [Author Name]
 **Review Status:** [Review Status]
-

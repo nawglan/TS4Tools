@@ -17,20 +17,24 @@ dotnet test TS4Tools.sln --verbosity minimal  # Must be 100% pass rate
 ### Critical Success Factors (MANDATORY)
 
 1. **ASSEMBLY LOADING CRISIS RESOLUTION (P0)**
+
    - Replace `Assembly.LoadFile()` with `AssemblyLoadContext.LoadFromAssemblyPath()`
    - See ADR-005: Assembly Loading Modernization
 
-2. **GOLDEN MASTER TESTING MANDATORY**
+1. **GOLDEN MASTER TESTING MANDATORY**
+
    - Every migrated component must pass byte-perfect compatibility tests
    - Use real Sims 4 .package files for validation
    - See ADR-006: Golden Master Testing Strategy
 
-3. **API COMPATIBILITY PRESERVATION**
+1. **API COMPATIBILITY PRESERVATION**
+
    - ALL public method signatures must remain identical
    - Existing third-party tools must work without changes
    - See ADR-007: Modern Plugin Architecture
 
-4. **BUSINESS LOGIC MIGRATION RULES**
+1. **BUSINESS LOGIC MIGRATION RULES**
+
    - Extract domain knowledge from legacy projects
    - Never copy-paste old code structures
    - Modern async/DI implementation with identical behavior
@@ -131,7 +135,7 @@ public async Task MigratedComponent_ProducesIdenticalOutput(string packagePath)
 ### Required Testing Tools
 
 - **xUnit** - Primary testing framework (established project standard)
-- **FluentAssertions** - Readable assertions  
+- **FluentAssertions** - Readable assertions
 - **NSubstitute** - Mocking framework
 - **AutoFixture** - Test data generation
 
@@ -170,12 +174,12 @@ dotnet test TS4Tools.sln [test-project] --verbosity minimal
 ### Self-Validation Questions
 
 1. "Does my code follow the required patterns shown above?"
-2. "Are all dependencies injected through interfaces?"
-3. "Do I have comprehensive tests for the behavior?"
-4. "Will this code build without warnings?"
-5. "Have I updated relevant documentation?"
-6. "Does this maintain 100% API compatibility?"
-7. "Have I validated with golden master tests using real Sims 4 packages?"
+1. "Are all dependencies injected through interfaces?"
+1. "Do I have comprehensive tests for the behavior?"
+1. "Will this code build without warnings?"
+1. "Have I updated relevant documentation?"
+1. "Does this maintain 100% API compatibility?"
+1. "Have I validated with golden master tests using real Sims 4 packages?"
 
 ## 📋 QUICK REFERENCE COMMANDS
 
@@ -204,6 +208,6 @@ For complete development guidelines, architectural decisions, and detailed migra
 - **[Migration Roadmap](../../migration/migration-roadmap.md)** - Phase planning and current status
 - **[Code Review Guidelines](../reviews/)** - Quality standards and review process
 
----
+______________________________________________________________________
 
 **⚡ This condensed guide focuses on AI-specific directives. Human developers should start with the [Developer Onboarding Guide](developer-onboarding-guide.md) for complete context.**

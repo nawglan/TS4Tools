@@ -50,11 +50,11 @@ Resource Key: T=0x220557DA, G=0x00000000, I=0x1234567890ABCDEF
 ## Key Concepts Demonstrated
 
 1. **Dependency Injection Setup**: How to configure TS4Tools services
-2. **Package Loading**: Using `IPackageFactory` to load packages
-3. **Resource Enumeration**: Iterating through all resources in a package
-4. **Resource Type Registry**: Getting friendly names for resource types
-5. **Resource Data Access**: Loading and examining resource content
-6. **Error Handling**: Proper exception handling for file operations
+1. **Package Loading**: Using `IPackageFactory` to load packages
+1. **Resource Enumeration**: Iterating through all resources in a package
+1. **Resource Type Registry**: Getting friendly names for resource types
+1. **Resource Data Access**: Loading and examining resource content
+1. **Error Handling**: Proper exception handling for file operations
 
 ## Code Highlights
 
@@ -100,4 +100,3 @@ if (resource != null)
 - TS4Tools.Extensions
 - Microsoft.Extensions.Hosting
 - Microsoft.Extensions.Logging.Console
-

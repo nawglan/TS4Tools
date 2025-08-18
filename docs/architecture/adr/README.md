@@ -1,87 +1,111 @@
 ﻿# Architecture Decision Records (ADRs)
 
-This directory contains Architecture Decision Records (ADRs) documenting key architectural decisions made during the TS4Tools greenfield migration from the legacy Sims4Tools codebase.
+## Emoji Legend
+
+**Status Icons:**
+
+- ✅ Accepted/Approved Decision
+- ❌ Rejected/Declined Decision
+- ⚠️ Superseded/Deprecated Decision
+- 🔄 Under Review/Consideration
+- ⏳ Proposed/Pending Review
+
+This directory contains Architecture Decision Records (ADRs) documenting key architectural decisions made during the
+TS4Tools greenfield migration from the legacy Sims4Tools codebase.
 
 ## ADR Index
 
 ### Core Platform and Architecture
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-001](ADR-001-DotNet9-Framework.md) | Adopt .NET 9 as Target Framework | ✅ Accepted | 2025-08-03 | Migration to .NET 9 for performance and cross-platform support |
-| [ADR-002](ADR-002-Dependency-Injection.md) | Adopt Dependency Injection Container | ✅ Accepted | 2025-08-03 | Modern IoC container for testability and maintainability |
-| [ADR-003](ADR-003-Avalonia-CrossPlatform-UI.md) | Cross-Platform UI with Avalonia | ✅ Accepted | 2025-08-03 | Avalonia UI framework for cross-platform desktop support |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-001](ADR-001-DotNet9-Framework.md) | Adopt .NET 9 as Target Framework | ✅ Accepted | 2025-08-03 | Migration to .NET
+9 for performance and cross-platform support | | [ADR-002](ADR-002-Dependency-Injection.md) | Adopt Dependency Injection
+Container | ✅ Accepted | 2025-08-03 | Modern IoC container for testability and maintainability | |
+[ADR-003](ADR-003-Avalonia-CrossPlatform-UI.md) | Cross-Platform UI with Avalonia | ✅ Accepted | 2025-08-03 | Avalonia
+UI framework for cross-platform desktop support |
 
 ### Migration Strategy and Compatibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-004](ADR-004-Greenfield-Migration-Strategy.md) | Greenfield Migration Strategy | ✅ Accepted | 2025-08-08 | Complete rewrite approach with business logic preservation |
-| [ADR-005](ADR-005-Assembly-Loading-Modernization.md) | Assembly Loading Modernization | ✅ Accepted | 2025-08-08 | Modern AssemblyLoadContext for plugin loading |
-| [ADR-006](ADR-006-Golden-Master-Testing-Strategy.md) | Golden Master Testing Strategy | ✅ Accepted | 2025-08-08 | Byte-perfect compatibility validation approach |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-004](ADR-004-Greenfield-Migration-Strategy.md) | Greenfield Migration Strategy | ✅ Accepted | 2025-08-08 | Complete
+rewrite approach with business logic preservation | | [ADR-005](ADR-005-Assembly-Loading-Modernization.md) | Assembly
+Loading Modernization | ✅ Accepted | 2025-08-08 | Modern AssemblyLoadContext for plugin loading | |
+[ADR-006](ADR-006-Golden-Master-Testing-Strategy.md) | Golden Master Testing Strategy | ✅ Accepted | 2025-08-08 |
+Byte-perfect compatibility validation approach |
 
 ### Plugin Architecture and Extensibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-007](ADR-007-Modern-Plugin-Architecture.md) | Modern Plugin Architecture with Legacy Compatibility | ✅ Accepted | 2025-08-08 | Hybrid plugin system supporting both legacy and modern plugins |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-007](ADR-007-Modern-Plugin-Architecture.md) | Modern Plugin Architecture with Legacy Compatibility | ✅ Accepted |
+2025-08-08 | Hybrid plugin system supporting both legacy and modern plugins |
 
 ### Cross-Platform and Compatibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-008](ADR-008-Cross-Platform-File-Format-Compatibility.md) | Cross-Platform File Format Compatibility | ✅ Accepted | 2025-08-08 | Platform-agnostic binary format handling with byte-perfect compatibility |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-008](ADR-008-Cross-Platform-File-Format-Compatibility.md) | Cross-Platform File Format Compatibility | ✅ Accepted |
+2025-08-08 | Platform-agnostic binary format handling with byte-perfect compatibility |
 
 ### Quality and Development Standards
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-009](ADR-009-Testing-Framework-Standardization.md) | Testing Framework Standardization | ✅ Accepted | 2025-08-08 | Standardization on xUnit testing framework across all components |
-| [ADR-010](ADR-010-Feature-Flag-Architecture.md) | Feature Flag Architecture Strategy | ✅ Accepted | 2025-08-08 | Comprehensive feature flag system for safe rollout and user control |
-| [ADR-011](ADR-011-Native-Dependency-Strategy.md) | Native Dependency Strategy (Hybrid Approach) | ✅ Accepted | 2025-08-08 | Hybrid approach for native dependencies with managed fallbacks |
-| [ADR-012](ADR-012-Rollback-Migration-Architecture.md) | Rollback and Migration Architecture | ✅ Accepted | 2025-08-08 | Safe migration and rollback system for user data and settings |
-| [ADR-013](ADR-013-Static-Analysis-Code-Quality.md) | Static Analysis and Code Quality Standards | ✅ Accepted | 2025-08-08 | Comprehensive code quality enforcement and static analysis standards |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-009](ADR-009-Testing-Framework-Standardization.md) | Testing Framework Standardization | ✅ Accepted | 2025-08-08 |
+Standardization on xUnit testing framework across all components | | [ADR-010](ADR-010-Feature-Flag-Architecture.md) |
+Feature Flag Architecture Strategy | ✅ Accepted | 2025-08-08 | Comprehensive feature flag system for safe rollout and
+user control | | [ADR-011](ADR-011-Native-Dependency-Strategy.md) | Native Dependency Strategy (Hybrid Approach) | ✅
+Accepted | 2025-08-08 | Hybrid approach for native dependencies with managed fallbacks | |
+[ADR-012](ADR-012-Rollback-Migration-Architecture.md) | Rollback and Migration Architecture | ✅ Accepted | 2025-08-08 |
+Safe migration and rollback system for user data and settings | | [ADR-013](ADR-013-Static-Analysis-Code-Quality.md) |
+Static Analysis and Code Quality Standards | ✅ Accepted | 2025-08-08 | Comprehensive code quality enforcement and static
+analysis standards |
 
 ### Implementation Quality and Remediation
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-014](ADR-014-Error-Handling-Exception-Strategy.md) | Error Handling and Exception Strategy | ⏳ Proposed | 2025-08-17 | Comprehensive error handling with hierarchical exceptions and Result patterns |
-| [ADR-015](ADR-015-Logging-Observability-Framework.md) | Logging and Observability Framework | ⏳ Proposed | 2025-08-17 | Structured logging, performance monitoring, and privacy-first observability |
-| [ADR-016](ADR-016-Configuration-Management-Strategy.md) | Configuration Management Strategy | ⏳ Proposed | 2025-08-17 | Secure, hierarchical configuration with environment separation and validation |
-| [ADR-017](ADR-017-Package-Resource-Loading-Architecture.md) | Package Resource Loading Architecture | ⏳ Proposed | 2025-08-17 | Hybrid streaming/caching architecture for efficient package resource loading |
-| [ADR-002](ADR-002-Dependency-Injection.md) | Adopt Dependency Injection Container | âœ… Accepted | 2025-08-03 | Modern IoC container for testability and maintainability |
-| [ADR-003](ADR-003-Avalonia-CrossPlatform-UI.md) | Cross-Platform UI with Avalonia | âœ… Accepted | 2025-08-03 | Avalonia UI framework for cross-platform desktop support |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-014](ADR-014-Error-Handling-Exception-Strategy.md) | Error Handling and Exception Strategy | ⏳ Proposed |
+2025-08-17 | Comprehensive error handling with hierarchical exceptions and Result patterns | |
+[ADR-015](ADR-015-Logging-Observability-Framework.md) | Logging and Observability Framework | ⏳ Proposed | 2025-08-17 |
+Structured logging, performance monitoring, and privacy-first observability | |
+[ADR-016](ADR-016-Configuration-Management-Strategy.md) | Configuration Management Strategy | ⏳ Proposed | 2025-08-17 |
+Secure, hierarchical configuration with environment separation and validation | |
+[ADR-017](ADR-017-Package-Resource-Loading-Architecture.md) | Package Resource Loading Architecture | ⏳ Proposed |
+2025-08-17 | Hybrid streaming/caching architecture for efficient package resource loading | |
+[ADR-002](ADR-002-Dependency-Injection.md) | Adopt Dependency Injection Container | âœ… Accepted | 2025-08-03 | Modern
+IoC container for testability and maintainability | | [ADR-003](ADR-003-Avalonia-CrossPlatform-UI.md) | Cross-Platform
+UI with Avalonia | âœ… Accepted | 2025-08-03 | Avalonia UI framework for cross-platform desktop support |
 
 ### Migration Strategy and Compatibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-004](ADR-004-Greenfield-Migration-Strategy.md) | Greenfield Migration Strategy | âœ… Accepted | 2025-08-08 | Complete rewrite approach with business logic preservation |
-| [ADR-005](ADR-005-Assembly-Loading-Modernization.md) | Assembly Loading Modernization | âœ… Accepted | 2025-08-08 | Modern AssemblyLoadContext for plugin loading |
-| [ADR-006](ADR-006-Golden-Master-Testing-Strategy.md) | Golden Master Testing Strategy | âœ… Accepted | 2025-08-08 | Byte-perfect compatibility validation approach |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-004](ADR-004-Greenfield-Migration-Strategy.md) | Greenfield Migration Strategy | âœ… Accepted | 2025-08-08 |
+Complete rewrite approach with business logic preservation | | [ADR-005](ADR-005-Assembly-Loading-Modernization.md) |
+Assembly Loading Modernization | âœ… Accepted | 2025-08-08 | Modern AssemblyLoadContext for plugin loading | |
+[ADR-006](ADR-006-Golden-Master-Testing-Strategy.md) | Golden Master Testing Strategy | âœ… Accepted | 2025-08-08 |
+Byte-perfect compatibility validation approach |
 
 ### Plugin Architecture and Extensibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-007](ADR-007-Modern-Plugin-Architecture.md) | Modern Plugin Architecture with Legacy Compatibility | âœ… Accepted | 2025-08-08 | Hybrid plugin system supporting both legacy and modern plugins |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-007](ADR-007-Modern-Plugin-Architecture.md) | Modern Plugin Architecture with Legacy Compatibility | âœ… Accepted |
+2025-08-08 | Hybrid plugin system supporting both legacy and modern plugins |
 
 ### Cross-Platform and Compatibility
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-008](ADR-008-Cross-Platform-File-Format-Compatibility.md) | Cross-Platform File Format Compatibility | âœ… Accepted | 2025-08-08 | Platform-agnostic binary format handling with byte-perfect compatibility |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-008](ADR-008-Cross-Platform-File-Format-Compatibility.md) | Cross-Platform File Format Compatibility | âœ… Accepted
+| 2025-08-08 | Platform-agnostic binary format handling with byte-perfect compatibility |
 
 ### Quality and Development Standards
 
-| ADR | Title | Status | Date | Summary |
-|-----|-------|--------|------|---------|
-| [ADR-009](ADR-009-Testing-Framework-Standardization.md) | Testing Framework Standardization | âœ… Accepted | 2025-08-08 | Standardization on xUnit testing framework across all components |
-| [ADR-010](ADR-010-Feature-Flag-Architecture.md) | Feature Flag Architecture Strategy | âœ… Accepted | 2025-08-08 | Comprehensive feature flag system for safe rollout and user control |
-| [ADR-011](ADR-011-Native-Dependency-Strategy.md) | Native Dependency Strategy (Hybrid Approach) | âœ… Accepted | 2025-08-08 | Hybrid approach for native dependencies with managed fallbacks |
-| [ADR-012](ADR-012-Rollback-Migration-Architecture.md) | Rollback and Migration Architecture | âœ… Accepted | 2025-08-08 | Safe migration and rollback system for user data and settings |
-| [ADR-013](ADR-013-Static-Analysis-Code-Quality.md) | Static Analysis and Code Quality Standards | âœ… Accepted | 2025-08-08 | Comprehensive code quality enforcement and static analysis standards |
+| ADR | Title | Status | Date | Summary | |-----|-------|--------|------|---------| |
+[ADR-009](ADR-009-Testing-Framework-Standardization.md) | Testing Framework Standardization | âœ… Accepted | 2025-08-08
+| Standardization on xUnit testing framework across all components | | [ADR-010](ADR-010-Feature-Flag-Architecture.md) |
+Feature Flag Architecture Strategy | âœ… Accepted | 2025-08-08 | Comprehensive feature flag system for safe rollout and
+user control | | [ADR-011](ADR-011-Native-Dependency-Strategy.md) | Native Dependency Strategy (Hybrid Approach) | âœ…
+Accepted | 2025-08-08 | Hybrid approach for native dependencies with managed fallbacks | |
+[ADR-012](ADR-012-Rollback-Migration-Architecture.md) | Rollback and Migration Architecture | âœ… Accepted | 2025-08-08
+| Safe migration and rollback system for user data and settings | | [ADR-013](ADR-013-Static-Analysis-Code-Quality.md) |
+Static Analysis and Code Quality Standards | âœ… Accepted | 2025-08-08 | Comprehensive code quality enforcement and
+static analysis standards |
 
 ## ADR Status Legend
 
@@ -227,7 +251,8 @@ The ADRs support the following implementation timeline (updated with AI accelera
 - **Phase 3** â³ **PLANNED** (September-October 2025): UI and Integration - ADR-003, ADR-007
 - **Phase 4** â³ **PLANNED** (October 2025): Polish and Release - All ADRs
 
-> **Note:** Original 15-month timeline accelerated to ~3 months with AI assistance. Phases 0-1 completed 24x faster than originally planned.
+> **Note:** Original 15-month timeline accelerated to ~3 months with AI assistance. Phases 0-1 completed 24x faster than
+> originally planned.
 
 ## Related Documentation
 
@@ -248,9 +273,7 @@ For questions about architectural decisions or to propose new ADRs:
 2. **Discussions**: Use GitHub Discussions for design conversations
 3. **Pull Requests**: Submit PRs for new or updated ADRs
 
----
+______________________________________________________________________
 
-**Last Updated:** August 8, 2025
-**Document Owner:** Architecture Team
-**Review Cycle:** Monthly review of all Accepted ADRs
-
+**Last Updated:** August 8, 2025 **Document Owner:** Architecture Team **Review Cycle:** Monthly review of all Accepted
+ADRs

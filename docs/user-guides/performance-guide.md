@@ -573,13 +573,12 @@ public class PerformanceCounters
 ## Best Practices Summary
 
 1. **Use async/await**: All I/O operations should be async
-2. **Leverage `Span<T>`**: Use for string and binary operations to avoid allocations
-3. **Stream for large data**: Use streams instead of byte arrays for large resources
-4. **Parallel processing**: Process multiple packages concurrently with proper throttling
-5. **Monitor memory**: Track allocations and detect leaks early
-6. **Cache intelligently**: Cache frequently accessed resources with appropriate TTL
-7. **Measure performance**: Use benchmarks to validate optimizations
-8. **Profile regularly**: Use tools like PerfView or Application Insights to identify bottlenecks
+1. **Leverage `Span<T>`**: Use for string and binary operations to avoid allocations
+1. **Stream for large data**: Use streams instead of byte arrays for large resources
+1. **Parallel processing**: Process multiple packages concurrently with proper throttling
+1. **Monitor memory**: Track allocations and detect leaks early
+1. **Cache intelligently**: Cache frequently accessed resources with appropriate TTL
+1. **Measure performance**: Use benchmarks to validate optimizations
+1. **Profile regularly**: Use tools like PerfView or Application Insights to identify bottlenecks
 
 Following these guidelines will ensure optimal performance when working with TS4Tools in production scenarios.
-

@@ -17,18 +17,18 @@ We will adopt Microsoft's built-in dependency injection container (`Microsoft.Ex
 ### Problems with Current Architecture
 
 1. **Static Dependencies**: Hard to test and mock
-2. **Tight Coupling**: Direct instantiation creates rigid dependencies
-3. **Configuration**: Scattered throughout codebase
-4. **Testing**: Difficult to unit test due to static dependencies
-5. **Lifecycle Management**: Manual resource management prone to leaks
+1. **Tight Coupling**: Direct instantiation creates rigid dependencies
+1. **Configuration**: Scattered throughout codebase
+1. **Testing**: Difficult to unit test due to static dependencies
+1. **Lifecycle Management**: Manual resource management prone to leaks
 
 ### Benefits of Dependency Injection
 
 1. **Testability**: Easy mocking and unit testing
-2. **Maintainability**: Loose coupling and clear dependencies
-3. **Configuration**: Centralized configuration management
-4. **Lifetime Management**: Automatic disposal and lifecycle management
-5. **Cross-Platform**: Works consistently across all supported platforms
+1. **Maintainability**: Loose coupling and clear dependencies
+1. **Configuration**: Centralized configuration management
+1. **Lifetime Management**: Automatic disposal and lifecycle management
+1. **Cross-Platform**: Works consistently across all supported platforms
 
 ## Implementation Design
 
@@ -138,23 +138,23 @@ services.AddScoped<IDialogService, LinuxDialogService>();
 ### Phase 1: Infrastructure Setup (Week 1)
 
 1. Add `Microsoft.Extensions.DependencyInjection` package
-2. Create service registration extensions
-3. Implement basic container initialization
-4. Add legacy compatibility layer
+1. Create service registration extensions
+1. Implement basic container initialization
+1. Add legacy compatibility layer
 
 ### Phase 2: Core Services Migration (Week 2-3)
 
 1. Convert static classes to injectable services
-2. Update constructors to accept dependencies
-3. Register services with appropriate lifetimes
-4. Update unit tests to use dependency injection
+1. Update constructors to accept dependencies
+1. Register services with appropriate lifetimes
+1. Update unit tests to use dependency injection
 
 ### Phase 3: Legacy Cleanup (Week 4)
 
 1. Remove static dependencies
-2. Eliminate service locator pattern usage
-3. Complete constructor injection adoption
-4. Remove compatibility layer
+1. Eliminate service locator pattern usage
+1. Complete constructor injection adoption
+1. Remove compatibility layer
 
 ## Alternative Containers Considered
 
@@ -287,9 +287,9 @@ public async Task ReadPackageAsync_WithValidPath_ReturnsPackage()
 ### Optimization Strategies
 
 1. **Singleton Services**: Cache expensive-to-create services
-2. **Factory Patterns**: For services with dynamic parameters
-3. **Lazy Initialization**: For rarely-used services
-4. **Scoped Services**: For per-operation caching
+1. **Factory Patterns**: For services with dynamic parameters
+1. **Lazy Initialization**: For rarely-used services
+1. **Scoped Services**: For per-operation caching
 
 ## Consequences
 
@@ -379,9 +379,8 @@ services.AddOptions<ResourceManagerOptions>()
 - **ADR-003**: Cross-platform services need DI for platform abstraction
 - **ADR-004**: Configuration system integrates with DI container
 
----
+______________________________________________________________________
 
 **Status**: Accepted and Implemented
 **Next Review**: After Phase 1.6 completion
 **Impact**: High - Fundamental architectural change affecting all services
-

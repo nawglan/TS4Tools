@@ -35,9 +35,9 @@ We will implement a **comprehensive cross-platform compatibility layer** that en
 ### Critical Success Factors
 
 1. **Byte-Perfect Compatibility**: Package files must be identical regardless of platform
-2. **Performance Parity**: Cross-platform version must not significantly regress performance
-3. **Format Preservation**: All compression and serialization must maintain exact formatting
-4. **Path Handling**: File paths must work correctly on all target filesystems
+1. **Performance Parity**: Cross-platform version must not significantly regress performance
+1. **Format Preservation**: All compression and serialization must maintain exact formatting
+1. **Path Handling**: File paths must work correctly on all target filesystems
 
 ## Implementation Strategy
 
@@ -872,4 +872,3 @@ public class CrossPlatformPerformanceBenchmarks
 - ADR-006: Golden Master Testing Strategy (validates cross-platform compatibility)
 - ADR-001: .NET 9 Framework (provides cross-platform runtime)
 - ADR-003: Avalonia Cross-Platform UI (UI framework choice)
-

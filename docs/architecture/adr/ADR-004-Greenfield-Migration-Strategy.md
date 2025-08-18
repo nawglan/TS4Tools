@@ -9,7 +9,7 @@
 The TS4Tools project is migrating from the legacy Sims4Tools codebase built on .NET Framework 4.0. Two primary approaches were considered:
 
 1. **In-place migration**: Gradually updating the existing 114+ project codebase
-2. **Greenfield approach**: Complete rewrite extracting business logic while using modern architecture
+1. **Greenfield approach**: Complete rewrite extracting business logic while using modern architecture
 
 The legacy codebase has significant technical debt including assembly loading issues that break in .NET 8+, Windows-only dependencies, and outdated architectural patterns that would be extremely difficult to modernize incrementally.
 
@@ -245,4 +245,3 @@ public async Task NewImplementation_ProducesIdenticalOutput(string packagePath)
 - ADR-003: Avalonia Cross-Platform UI
 - ADR-005: Assembly Loading Modernization
 - ADR-006: Golden Master Testing Strategy
-

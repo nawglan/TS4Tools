@@ -12,11 +12,11 @@ become productive contributors to this Sims 4 modding tools project.
 
 1. **[WRONG CODEBASE]**: Don't study `Sims4Tools/s4pi Wrappers/` - it uses completely different patterns (AResource, EventHandler, sync methods). Always use `TS4Tools/src/TS4Tools.Resources.*/` for reference.
 
-2. **[ResourceWrapperRegistry]**: If ResourceManager returns DefaultResource instead of your specific type, you forgot `ResourceWrapperRegistry.DiscoverAndRegisterFactoriesAsync()` in integration test setup. Most unit tests work directly with factories and don't need this.
+1. **[ResourceWrapperRegistry]**: If ResourceManager returns DefaultResource instead of your specific type, you forgot `ResourceWrapperRegistry.DiscoverAndRegisterFactoriesAsync()` in integration test setup. Most unit tests work directly with factories and don't need this.
 
-3. **[Factory Pattern]**: Use `ResourceFactoryBase<T>`, not generic `IResourceFactory<T>`. The generic approach compiles but doesn't integrate with the system.
+1. **[Factory Pattern]**: Use `ResourceFactoryBase<T>`, not generic `IResourceFactory<T>`. The generic approach compiles but doesn't integrate with the system.
 
-4. **[SOLUTION FILE CONFUSION]**: Always use `TS4Tools.sln` for ALL dotnet commands.
+1. **[SOLUTION FILE CONFUSION]**: Always use `TS4Tools.sln` for ALL dotnet commands.
    The workspace has multiple .sln files that will build completely different projects with different patterns.
 
 ### Quick Success Checklist
@@ -37,13 +37,13 @@ become productive contributors to this Sims 4 modding tools project.
 ## What You'll Learn
 
 1. **Architectural Decisions (ADRs)** - Essential reading: why we make the technical choices we do
-2. **Codebase Architecture** - How the project is organized and key patterns
-3. **Development Setup** - Getting your environment ready for coding
-4. **Creating Tests** - Our testing patterns and how to write effective tests
-5. **Adding Features** - Step-by-step guide to implementing new functionality
-6. **Code Standards** - Conventions and best practices we follow
-7. **Development Workflow** - Pre-commit checklist and quality standards
-8. **Common Tasks** - Practical examples of typical development work
+1. **Codebase Architecture** - How the project is organized and key patterns
+1. **Development Setup** - Getting your environment ready for coding
+1. **Creating Tests** - Our testing patterns and how to write effective tests
+1. **Adding Features** - Step-by-step guide to implementing new functionality
+1. **Code Standards** - Conventions and best practices we follow
+1. **Development Workflow** - Pre-commit checklist and quality standards
+1. **Common Tasks** - Practical examples of typical development work
 
 > **IMPORTANT NOTE**: This project has multiple .sln files! Always use `TS4Tools.sln` for all dotnet commands.
 
@@ -92,7 +92,7 @@ graph TB
     PKG --> STEAM
 ```
 
----
+______________________________________________________________________
 
 ## [QUICK START] Get Running in 10 minutes
 
@@ -137,7 +137,7 @@ dotnet run --project TS4Tools.Desktop/TS4Tools.Desktop.csproj
 - [X] Tests passing (95%+ success rate is normal)
 - [X] Desktop application opens
 
----
+______________________________________________________________________
 
 ## [CODEBASE] Understanding the Structure
 
@@ -191,10 +191,10 @@ graph TD
 **Essential ADRs to Read Before Starting**:
 
 1. **[ADR-001: .NET 9 Framework](../../architecture/adr/ADR-001-DotNet9-Framework.md)** - Why we chose .NET 9 and what it means for development
-2. **[ADR-002: Dependency Injection](../../architecture/adr/ADR-002-Dependency-Injection.md)** - How we structure services and dependencies
-3. **[ADR-004: Greenfield Migration Strategy](../../architecture/adr/ADR-004-Greenfield-Migration-Strategy.md)** - Our approach to modernizing legacy code
-4. **[ADR-006: Golden Master Testing](../../architecture/adr/ADR-006-Golden-Master-Testing-Strategy.md)** - How we ensure compatibility with existing files
-5. **[ADR-009: Testing Framework](../../architecture/adr/ADR-009-Testing-Framework-Standardization.md)** - xUnit patterns and standards
+1. **[ADR-002: Dependency Injection](../../architecture/adr/ADR-002-Dependency-Injection.md)** - How we structure services and dependencies
+1. **[ADR-004: Greenfield Migration Strategy](../../architecture/adr/ADR-004-Greenfield-Migration-Strategy.md)** - Our approach to modernizing legacy code
+1. **[ADR-006: Golden Master Testing](../../architecture/adr/ADR-006-Golden-Master-Testing-Strategy.md)** - How we ensure compatibility with existing files
+1. **[ADR-009: Testing Framework](../../architecture/adr/ADR-009-Testing-Framework-Standardization.md)** - xUnit patterns and standards
 
 **Quick ADR Summary**:
 
@@ -398,7 +398,7 @@ finally
 }
 ```
 
----
+______________________________________________________________________
 
 ## [TESTING] Creating Tests
 
@@ -407,9 +407,9 @@ finally
 ### Test Strategy Overview
 
 1. **Golden Master Tests FIRST** - Verify your resource works with real Sims 4 data
-2. **Real Binary Data** - Use actual .package file content, not mock data
-3. **Two-Phase DI Setup** - ResourceWrapperRegistry initialization is ESSENTIAL
-4. **Round-trip Testing** - Save/load cycles catch serialization bugs
+1. **Real Binary Data** - Use actual .package file content, not mock data
+1. **Two-Phase DI Setup** - ResourceWrapperRegistry initialization is ESSENTIAL
+1. **Round-trip Testing** - Save/load cycles catch serialization bugs
 
 ### Critical Test Setup Pattern
 
@@ -672,7 +672,7 @@ Assert.True(result.Count > 0);
 Assert.True(result.Any(item => item.Name == "expected-name"));
 ```
 
----
+______________________________________________________________________
 
 ## [REALITY CHECK] Learning from Actual Implementations
 
@@ -694,10 +694,10 @@ Assert.True(result.Any(item => item.Name == "expected-name"));
 ### Key Implementation Patterns
 
 1. **Resource Classes**: Implement interfaces directly (e.g., `ILRLEResource`, `IDisposable`)
-2. **Factories**: Inherit from `ResourceFactoryBase<T>`, not generic examples
-3. **Constructors**: Take `Stream?` and `ILogger<T>`, not `apiVersion` parameters
-4. **Error Handling**: Extensive validation, proper exception types, comprehensive logging
-5. **Testing**: Real binary data, disposal testing, comprehensive error condition coverage
+1. **Factories**: Inherit from `ResourceFactoryBase<T>`, not generic examples
+1. **Constructors**: Take `Stream?` and `ILogger<T>`, not `apiVersion` parameters
+1. **Error Handling**: Extensive validation, proper exception types, comprehensive logging
+1. **Testing**: Real binary data, disposal testing, comprehensive error condition coverage
 
 ### Real Constructor Pattern
 
@@ -746,7 +746,7 @@ public override async Task<TResource> CreateResourceAsync(
 }
 ```
 
----
+______________________________________________________________________
 
 ## [FEATURES] Adding New Features
 
@@ -1038,16 +1038,19 @@ public class MoodletResourceTests
 #### Before Starting Development
 
 1. **Research the Format**: Understand the binary structure of the resource
+
    - Use hex editors to examine real game files
    - Document the byte structure in comments
    - Check existing similar resources for patterns
 
-2. **Create Test Data**: Build sample files that represent typical usage
+1. **Create Test Data**: Build sample files that represent typical usage
+
    - Valid data for happy path testing
    - Edge cases (empty strings, maximum values)
    - Invalid data for error handling testing
 
-3. **Check Dependencies**: Identify what services your feature needs
+1. **Check Dependencies**: Identify what services your feature needs
+
    - Logging (always include)
    - Configuration settings
    - Other resource types it might reference
@@ -1055,16 +1058,19 @@ public class MoodletResourceTests
 #### During Development
 
 1. **Write Tests First**: Follow TDD principles
+
    - Start with simple constructor tests
    - Add parsing tests with real data
    - Test error conditions
 
-2. **Use Dependency Injection**: Never create dependencies directly
+1. **Use Dependency Injection**: Never create dependencies directly
+
    - Inject through constructor
    - Use interfaces, not concrete types
    - Register in ServiceCollectionExtensions
 
-3. **Follow Coding Standards**: Maintain consistency
+1. **Follow Coding Standards**: Maintain consistency
+
    - Use async for file operations
    - Add XML documentation to public members
    - Follow naming conventions
@@ -1073,11 +1079,11 @@ public class MoodletResourceTests
 #### After Implementation
 
 1. **Integration Testing**: Test with real game files
-2. **Performance Testing**: Ensure acceptable performance
-3. **Documentation**: Update API docs and examples
-4. **Code Review**: Have another developer review your changes
+1. **Performance Testing**: Ensure acceptable performance
+1. **Documentation**: Update API docs and examples
+1. **Code Review**: Have another developer review your changes
 
----
+______________________________________________________________________
 
 ## [DEVELOPMENT GUIDELINES] Standards, Tasks, and Focus Areas
 
@@ -1280,8 +1286,8 @@ services.AddScoped<IMyService, MyService>();
 ##### Use the Debugger Effectively
 
 1. Set breakpoints on exception catches to see what's failing
-2. Use conditional breakpoints for loops: `item.Name == "specific-name"`
-3. Use the "Locals" window to inspect object state
+1. Use conditional breakpoints for loops: `item.Name == "specific-name"`
+1. Use the "Locals" window to inspect object state
 
 ##### Logging for Development
 
@@ -1315,11 +1321,11 @@ _logger.LogError(ex, "Failed to process resource {Type}", resourceType);
 #### Real Development Experience Tips
 
 1. **Always Research Binary Format First**: Use `010 Editor` or `HxD` hex editor to understand file structure
-2. **Copy Pattern from Similar Resources**: Find the closest existing resource type and adapt its patterns
-3. **Test with Real Game Files**: Don't rely on made-up test data - use actual .package files from Sims 4
-4. **Implement Disposal Correctly**: Follow the disposal pattern from LRLEResource.cs exactly
-5. **Use Proper Logging**: Include context in log messages - stream length, parsing position, etc.
-6. **Handle Edge Cases**: Empty streams, corrupted data, unexpected EOF - see LRLE tests for examples
+1. **Copy Pattern from Similar Resources**: Find the closest existing resource type and adapt its patterns
+1. **Test with Real Game Files**: Don't rely on made-up test data - use actual .package files from Sims 4
+1. **Implement Disposal Correctly**: Follow the disposal pattern from LRLEResource.cs exactly
+1. **Use Proper Logging**: Include context in log messages - stream length, parsing position, etc.
+1. **Handle Edge Cases**: Empty streams, corrupted data, unexpected EOF - see LRLE tests for examples
 
 ### Development Workflow
 
@@ -1358,19 +1364,19 @@ dotnet test TS4Tools.sln [test-project] --verbosity minimal
 We maintain high code quality through:
 
 1. **Dependency Injection**: Constructor injection only, no static dependencies
-2. **Interface Segregation**: Every service behind focused interface
-3. **Pure Functions**: Stateless, deterministic methods where possible
-4. **Async/Await**: All I/O operations must be async
-5. **Cancellation**: CancellationToken support throughout
-6. **Testing**: xUnit with FluentAssertions, NSubstitute, and AutoFixture
+1. **Interface Segregation**: Every service behind focused interface
+1. **Pure Functions**: Stateless, deterministic methods where possible
+1. **Async/Await**: All I/O operations must be async
+1. **Cancellation**: CancellationToken support throughout
+1. **Testing**: xUnit with FluentAssertions, NSubstitute, and AutoFixture
 
 #### Warning Resolution Strategy
 
 When you encounter analyzer warnings:
 
 1. **First**: Fix by improving code design
-2. **Last Resort**: Suppress with documented justification
-3. **Never**: Ignore or suppress without reason
+1. **Last Resort**: Suppress with documented justification
+1. **Never**: Ignore or suppress without reason
 
 Example of justified suppression:
 
@@ -1436,25 +1442,25 @@ TECHNICAL IMPACT: Reduces memory usage by ~40% for multi-GB packages
 #### For Your First Week
 
 1. **Explore the codebase** - Open files, read code, understand the structure
-2. **Run existing tests** - See how tests are written and what they verify
-3. **Make a small change** - Fix a typo, add a log message, improve a comment
-4. **Write a simple test** - Pick an existing class and add a new test case
+1. **Run existing tests** - See how tests are written and what they verify
+1. **Make a small change** - Fix a typo, add a log message, improve a comment
+1. **Write a simple test** - Pick an existing class and add a new test case
 
 #### For Your First Month
 
 1. **Implement a simple resource type** - Start with something straightforward
-2. **Add comprehensive tests** - Practice the testing patterns we use
-3. **Understand the factory pattern** - This is central to how resources work
-4. **Get comfortable with async/await** - Most operations are asynchronous
+1. **Add comprehensive tests** - Practice the testing patterns we use
+1. **Understand the factory pattern** - This is central to how resources work
+1. **Get comfortable with async/await** - Most operations are asynchronous
 
 #### For Your First Three Months
 
 1. **Contribute to complex features** - Take on larger implementation tasks
-2. **Review others' code** - Help maintain code quality
-3. **Improve documentation** - Help future developers (like this guide!)
-4. **Optimize performance** - Identify and fix bottlenecks
+1. **Review others' code** - Help maintain code quality
+1. **Improve documentation** - Help future developers (like this guide!)
+1. **Optimize performance** - Identify and fix bottlenecks
 
----
+______________________________________________________________________
 
 ## [CRITICAL LESSONS] Common Mistakes and Essential Success Patterns
 
@@ -1463,9 +1469,9 @@ TECHNICAL IMPACT: Reduces memory usage by ~40% for multi-GB packages
 ### The 4 Most Critical Success Factors
 
 1. **ResourceWrapperRegistry Initialization** - Always call `registry.DiscoverAndRegisterFactoriesAsync()` in test setup or ResourceManager returns DefaultResource
-2. **Study Right Codebase** - Use `TS4Tools/src/TS4Tools.Resources.*/` not legacy `Sims4Tools/s4pi Wrappers/`
-3. **Use ResourceFactoryBase<T>** - Not generic `IResourceFactory<T>` patterns
-4. **Always Use TS4Tools.sln** - Workspace has multiple solution files that build different projects
+1. **Study Right Codebase** - Use `TS4Tools/src/TS4Tools.Resources.*/` not legacy `Sims4Tools/s4pi Wrappers/`
+1. **Use ResourceFactoryBase<T>** - Not generic `IResourceFactory<T>` patterns
+1. **Always Use TS4Tools.sln** - Workspace has multiple solution files that build different projects
 
 ### Essential Patterns
 
@@ -1503,43 +1509,43 @@ if (resource is ISpecificResource specificRes)
 ### Real Development Tips
 
 1. Research binary format with hex editors first
-2. Copy patterns from similar existing resources
-3. Test with real .package files, not mock data
-4. Follow LRLEResource.cs disposal patterns exactly
-5. Include context in log messages (stream length, position, etc.)
+1. Copy patterns from similar existing resources
+1. Test with real .package files, not mock data
+1. Follow LRLEResource.cs disposal patterns exactly
+1. Include context in log messages (stream length, position, etc.)
 
----
+______________________________________________________________________
 
 ## [HELP] Getting Help
 
 ### Where to Look First
 
 1. **This documentation** - Start with the docs in the `docs/` folder
-2. **Existing code** - Look for similar implementations
-3. **Tests** - They show how code is supposed to be used
-4. **Git history** - See how features were implemented previously
+1. **Existing code** - Look for similar implementations
+1. **Tests** - They show how code is supposed to be used
+1. **Git history** - See how features were implemented previously
 
 ### How to Ask for Help
 
 When you're stuck, provide context:
 
 1. **What you're trying to do** - "I'm implementing a new resource type"
-2. **What you've tried** - "I followed the pattern from StringTableResource"
-3. **What's happening** - "Tests pass but the resource doesn't load correctly"
-4. **Error messages** - Include full stack traces
-5. **Code samples** - Show the specific code that's not working
+1. **What you've tried** - "I followed the pattern from StringTableResource"
+1. **What's happening** - "Tests pass but the resource doesn't load correctly"
+1. **Error messages** - Include full stack traces
+1. **Code samples** - Show the specific code that's not working
 
 ### Code Review Guidelines
 
 When your code is ready for review:
 
 1. **Self-review first** - Read through your own changes
-2. **Write clear commit messages** - Explain what and why
-3. **Include tests** - Don't submit code without tests
-4. **Update documentation** - If you changed public APIs
-5. **Keep changes focused** - One feature per pull request
+1. **Write clear commit messages** - Explain what and why
+1. **Include tests** - Don't submit code without tests
+1. **Update documentation** - If you changed public APIs
+1. **Keep changes focused** - One feature per pull request
 
----
+______________________________________________________________________
 
 ## [READY] You're Ready to Start
 
@@ -1555,12 +1561,12 @@ By now you should understand:
 **Next Steps:**
 
 1. Set up your development environment
-2. Run the existing tests to make sure everything works
-3. Pick a small task from the issue tracker
-4. Start coding!
+1. Run the existing tests to make sure everything works
+1. Pick a small task from the issue tracker
+1. Start coding!
 
 Welcome to the team!
 
----
+______________________________________________________________________
 
 *"Happy coding, and may your resources always deserialize correctly!"*

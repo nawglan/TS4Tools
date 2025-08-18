@@ -30,21 +30,21 @@
 
 ### Header (Offset 0x00)
 
-| Offset | Size | Type   | Name | Description |
+| Offset | Size | Type | Name | Description |
 |--------|------|--------|------|-------------|
-| 0x00   | 4    | uint32 | Magic | Magic number: `0x[MagicValue]` |
-| 0x04   | 2    | uint16 | Version | Format version number |
-| 0x06   | 2    | uint16 | Flags | Bit flags for format options |
-| 0x08   | 4    | uint32 | DataSize | Size of data section in bytes |
-| 0x0C   | 4    | uint32 | Count | Number of entries/records |
-| 0x10   | ... | ... | ... | [Additional header fields] |
+| 0x00 | 4 | uint32 | Magic | Magic number: `0x[MagicValue]` |
+| 0x04 | 2 | uint16 | Version | Format version number |
+| 0x06 | 2 | uint16 | Flags | Bit flags for format options |
+| 0x08 | 4 | uint32 | DataSize | Size of data section in bytes |
+| 0x0C | 4 | uint32 | Count | Number of entries/records |
+| 0x10 | ... | ... | ... | [Additional header fields] |
 
 #### Flag Definitions
 
 | Bit | Name | Description |
 |-----|------|-------------|
-| 0   | [FlagName] | [Flag description] |
-| 1   | [FlagName] | [Flag description] |
+| 0 | [FlagName] | [Flag description] |
+| 1 | [FlagName] | [Flag description] |
 | ... | ... | ... |
 
 ### Data Section Format
@@ -55,8 +55,8 @@
 
 | Offset | Size | Type | Name | Description |
 |--------|------|------|------|-------------|
-| 0x00   | [Size] | [Type] | [Name] | [Description] |
-| ...    | ...    | ...    | ...    | ... |
+| 0x00 | [Size] | [Type] | [Name] | [Description] |
+| ... | ... | ... | ... | ... |
 
 ### String Storage (if applicable)
 
@@ -92,9 +92,9 @@
 ### Parsing Guidelines
 
 1. **Magic Number Validation:** Always verify magic number first
-2. **Version Handling:** Check version and handle appropriately
-3. **Bounds Checking:** Validate all size fields before reading
-4. **Error Handling:** [Specific error conditions to check]
+1. **Version Handling:** Check version and handle appropriately
+1. **Bounds Checking:** Validate all size fields before reading
+1. **Error Handling:** [Specific error conditions to check]
 
 ### Common Pitfalls
 
@@ -193,9 +193,8 @@ function serializeResource(resource):
 | 1.0 | [Date] | [Author] | Initial documentation |
 | [Version] | [Date] | [Author] | [Changes] |
 
----
+______________________________________________________________________
 
 **Documentation Status:** [Draft/Review/Final]
 **Last Updated:** [Date]
 **Validated Against:** [Game version/sample files]
-

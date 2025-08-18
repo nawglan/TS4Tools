@@ -19,13 +19,13 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 ### **Current Implementation Status - STRONG FOUNDATION**
 
 1. **`ThumbnailCacheResource`** - **COMPLETE**: 688 lines, thread-safe, production-ready
-2. **`ImageResource`** - **COMPLETE**: Multi-format support (DDS, PNG, TGA, JPEG, BMP)
-3. **`TxtcResource`** - **COMPLETE**: 601 lines, texture compositor implementation
-4. **`ThumbnailResource`** - **COMPLETE**: 467 lines, full thumbnail management
-5. **`MaterialResource`** - **COMPLETE**: 929 lines, shader parameter support
-6. **`RLEResource`** - **NEEDS MODERNIZATION**: Legacy exists, needs TS4Tools implementation
-7. **`LRLEResource`** - **NEEDS IMPLEMENTATION**: Found in legacy projects, needs TS4Tools version
-8. **`DSTResource`** - **MISSING**: DST texture resource needs full implementation
+1. **`ImageResource`** - **COMPLETE**: Multi-format support (DDS, PNG, TGA, JPEG, BMP)
+1. **`TxtcResource`** - **COMPLETE**: 601 lines, texture compositor implementation
+1. **`ThumbnailResource`** - **COMPLETE**: 467 lines, full thumbnail management
+1. **`MaterialResource`** - **COMPLETE**: 929 lines, shader parameter support
+1. **`RLEResource`** - **NEEDS MODERNIZATION**: Legacy exists, needs TS4Tools implementation
+1. **`LRLEResource`** - **NEEDS IMPLEMENTATION**: Found in legacy projects, needs TS4Tools version
+1. **`DSTResource`** - **MISSING**: DST texture resource needs full implementation
 
 **ACTUAL EFFORT: 3 new implementations needed (RLE, LRLE, DST) + modernization**
 
@@ -39,7 +39,7 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 - Performance benchmarks meet or exceed legacy implementation
 - Complete API documentation and usage examples
 
----
+______________________________________________________________________
 
 ## **CRITICAL PREREQUISITES - VERIFY FIRST**
 
@@ -116,42 +116,48 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 - [ ] **ThumbnailCacheResource**: Ensure new formats integrate with thumbnail generation
 - [ ] **Cross-Resource Validation**: Test texture format conversion between RLE ↔ DDS ↔ PNG
 
----
+______________________________________________________________________
 
 ## **PHASE 4.16 IMPLEMENTATION ROADMAP**
 
 ### **Sequential Implementation Strategy**
 
 - [ ] **Pre-Implementation Investigation** (Day 0 - 4 hours MANDATORY)
+
   - [ ] Complete existing implementation audit and legacy code mining
   - [ ] Real package resource discovery and priority matrix generation
   - [ ] Dependency validation and integration point verification
   - [ ] Risk assessment and mitigation strategy finalization
 
 - [ ] **Pre-Implementation Research** (Day 1 Morning)
+
   - [ ] Deep analysis of legacy RLE/LRLE implementations
   - [ ] Binary format documentation for RLE, LRLE, DST
   - [ ] Resource type ID validation with real package files
   - [ ] Performance baseline establishment for legacy implementations
 
 - [ ] **RLE Resource Implementation** (Day 1-2)
+
   - [ ] **RLEResource (P1)**: Modernize legacy RLE format support
   - [ ] Multiple RLE version support (RLE2, RLES)
   - [ ] DXT5 compression/decompression pipeline
   - [ ] Mipmap handling and block-based processing
 
 - [ ] **LRLE Resource Implementation** (Day 3-4)
+
   - [ ] **LRLEResource (P1)**: Implement LRLE compressed format
   - [ ] Color palette management and compression
   - [ ] Command-based encoding/decoding system
   - [ ] Multi-resolution mipmap generation
 
 - [ ] **DST Resource Implementation** (Day 5)
+
   - [ ] **DSTResource (P2)**: DST texture format implementation
   - [ ] Format specification research and documentation
   - [ ] Binary parsing and generation logic
 
 - [ ] **Integration and Testing** (Day 6-7)
+
   - [ ] Factory registration and DI integration
   - [ ] Golden Master validation with real packages
   - [ ] Performance benchmarking and optimization
@@ -166,7 +172,7 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 | DSTResource | Medium (P2) | Medium | Medium (300+ lines) | 3 |
 | Advanced Format Support | Medium (P2) | Low | Low (enhancements) | 4 |
 
----
+______________________________________________________________________
 
 ## **DETAILED IMPLEMENTATION SPECIFICATIONS**
 
@@ -177,12 +183,14 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 **Technical Requirements:**
 
 - [ ] **RLE Format Support**
+
   - [ ] RLE2 format implementation (standard RLE)
   - [ ] RLES format implementation (RLE with specular)
   - [ ] Multi-version format detection and handling
   - [ ] Legacy compatibility with existing RLE files
 
 - [ ] **Compression Pipeline**
+
   - [ ] DXT5 block-based compression/decompression
   - [ ] Alpha channel transparency handling
   - [ ] Translucent pixel block processing
@@ -190,12 +198,14 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
   - [ ] Command-based encoding system
 
 - [ ] **Performance Optimizations**
+
   - [ ] Span<T> usage for zero-copy operations
   - [ ] ArrayPool<T> for temporary buffer management
   - [ ] BinaryPrimitives for cross-platform consistency
   - [ ] Streaming I/O for large texture processing
 
 - [ ] **API Design**
+
   - [ ] `RLEResource : IResource, IDisposable`
   - [ ] `RLEResourceFactory : ResourceFactoryBase<RLEResource>`
   - [ ] Resource types: RLE, RLE2, RLES
@@ -214,7 +224,7 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 - [ ] Loads all RLE variants from real Sims 4 packages
 - [ ] Byte-perfect round-trip compatibility
 - [ ] Performance within 10% of legacy implementation
-- [ ] Memory usage <50MB for large RLE textures
+- [ ] Memory usage \<50MB for large RLE textures
 
 ### **LRLEResource Implementation (Priority 1)**
 
@@ -223,24 +233,28 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 **Technical Requirements:**
 
 - [ ] **LRLE Format Support**
+
   - [ ] Magic number validation (0x454C524C)
   - [ ] Version handling (0x32303056 and variants)
   - [ ] Color palette management with indexing
   - [ ] Command-based encoding/decoding system
 
 - [ ] **Color Management**
+
   - [ ] ColorTable implementation for palette optimization
   - [ ] Color quantization and sorting algorithms
   - [ ] 4-component RGBA color handling
   - [ ] Efficient color matching and lookup
 
 - [ ] **Compression Logic**
+
   - [ ] Run-length encoding for pixel sequences
   - [ ] Command state machine (StartNew, Unknown, Run, Mixed)
   - [ ] Multi-resolution mipmap generation (9 levels)
   - [ ] Block-based pixel processing (4x4 blocks)
 
 - [ ] **API Design**
+
   - [ ] `LRLEResource : IResource, IDisposable`
   - [ ] `LRLEResourceFactory : ResourceFactoryBase<LRLEResource>`
   - [ ] Support for bitmap import/export
@@ -266,18 +280,20 @@ Based on comprehensive codebase analysis showing **excellent readiness** (750 te
 
 **Objective:** Implementation of DST texture format for specialized texture types - REQUIRED for 100% Sims4Tools compatibility
 
-**🚨 COMPATIBILITY REQUIREMENT**: DST resources exist in original Sims4Tools codebase, therefore MUST be  
+**🚨 COMPATIBILITY REQUIREMENT**: DST resources exist in original Sims4Tools codebase, therefore MUST be\
 implemented for backward compatibility
 
 **Research Requirements:**
 
 - [ ] **Format Discovery (MANDATORY)**
+
   - [ ] Analyze DST format structure from `Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs`
   - [ ] Extract proven parsing logic from legacy implementation
   - [ ] Document all DST format variants and version handling
   - [ ] Map binary layout and data organization patterns
 
 - [ ] **Implementation Planning**
+
   - [ ] Design resource class structure based on legacy findings
   - [ ] Plan factory integration and type registration patterns
   - [ ] Identify testing scenarios with real DST package files
@@ -306,24 +322,27 @@ implemented for backward compatibility
 **Enhancement Areas:**
 
 - [ ] **Multi-format Export**
+
   - [ ] ImageResource export to multiple formats
   - [ ] Format conversion utilities
   - [ ] Quality settings and compression options
   - [ ] Batch processing capabilities
 
 - [ ] **Performance Optimizations**
+
   - [ ] SIMD optimizations where applicable
   - [ ] Parallel processing for large images
   - [ ] Lazy loading for image preview scenarios
   - [ ] Memory-mapped file support for huge textures
 
 - [ ] **Metadata Enhancement**
+
   - [ ] Extended metadata preservation
   - [ ] EXIF data handling for supported formats
   - [ ] Custom metadata embedding
   - [ ] Version tracking and format migration
 
----
+______________________________________________________________________
 
 ## **DETAILED IMPLEMENTATION TIMELINE & MILESTONES**
 
@@ -355,7 +374,7 @@ implemented for backward compatibility
 - **48-HOUR**: Golden Master tests failing with real visual content packages
 - **72-HOUR**: Memory usage exceeds 100MB for standard image processing
 
----
+______________________________________________________________________
 
 ## **TECHNICAL IMPLEMENTATION GUIDELINES**
 
@@ -439,7 +458,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 }
 ```
 
----
+______________________________________________________________________
 
 ## **RISK ASSESSMENT & MITIGATION STRATEGIES**
 
@@ -452,14 +471,14 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
    - **Mitigation**: Implement RLE2 format first, add RLES later; extensive unit testing
    - **Escalation Trigger**: If RLE implementation exceeds 1000 lines or takes >3 days
 
-2. **HIGH RISK: LRLE Color Palette Management**
+1. **HIGH RISK: LRLE Color Palette Management**
 
    - **Risk**: Color quantization and palette optimization is computationally complex
    - **Impact**: Performance degradation and memory usage issues
    - **Mitigation**: Use proven algorithms from legacy code, optimize incrementally
    - **Success Metric**: Process 1024x1024 images within 5 seconds
 
-3. **MEDIUM RISK: DST Format Unknown Structure**
+1. **MEDIUM RISK: DST Format Unknown Structure**
 
    - **Risk**: DST format may be poorly documented or extremely complex
    - **Impact**: Cannot implement DST support within phase timeline
@@ -481,7 +500,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 - [ ] **Helper Tool Compatibility**: DDSHelper, LRLEPNGHelper work with new RLE/LRLE resources
 - [ ] **Cross-Resource Integration**: RLE/LRLE textures work seamlessly with MaterialResource
 - [ ] **Format Conversion**: Bidirectional conversion RLE ↔ DDS ↔ PNG produces identical results
-- [ ] **Memory Efficiency**: <50MB peak memory for 2048x2048 texture processing operations
+- [ ] **Memory Efficiency**: \<50MB peak memory for 2048x2048 texture processing operations
 - [ ] **Legacy API Compatibility**: All public methods match original Sims4Tools behavior exactly
 
 **Business Criteria:**
@@ -499,7 +518,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 - [ ] Comprehensive XML documentation
 - [ ] Cross-platform binary format consistency
 
----
+______________________________________________________________________
 
 ## **BUSINESS CONTINUITY ASSESSMENT**
 
@@ -519,25 +538,28 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 - **Factory registrations** can be disabled without system impact
 - **Legacy RLE/LRLE implementations** can be used as fallback during transition
 
----
+______________________________________________________________________
 
 ## **ENHANCED DOCUMENTATION REQUIREMENTS**
 
 ### **Format Specification Documentation**
 
 - [ ] **RLE Format Specification**
+
   - [ ] Complete binary format documentation with byte layouts
   - [ ] Version differences (RLE2 vs RLES) clearly explained
   - [ ] Compression algorithm documentation with examples
   - [ ] Performance characteristics and memory requirements
 
 - [ ] **LRLE Format Specification**
+
   - [ ] Color palette structure and indexing system
   - [ ] Command encoding format and state machine
   - [ ] Mipmap generation process and quality settings
   - [ ] Optimization techniques and best practices
 
 - [ ] **DST Format Research Results**
+
   - [ ] Complete analysis of DST format structure
   - [ ] Implementation feasibility assessment
   - [ ] Comparison with other texture formats
@@ -546,18 +568,20 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 ### **API Documentation**
 
 - [ ] **Resource Usage Examples**
+
   - [ ] Loading and processing RLE textures
   - [ ] LRLE compression with quality settings
   - [ ] Format conversion between image types
   - [ ] Performance optimization guidelines
 
 - [ ] **Migration Guide**
+
   - [ ] Upgrading from legacy RLE implementations
   - [ ] API changes and compatibility considerations
   - [ ] Performance tuning recommendations
   - [ ] Troubleshooting common issues
 
----
+______________________________________________________________________
 
 ## **QUALITY ASSURANCE CHECKPOINTS**
 
@@ -571,7 +595,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
    - [ ] Memory usage within acceptable limits
    - [ ] Documentation updated for new APIs
 
-2. **Integration Testing Checkpoints**
+1. **Integration Testing Checkpoints**
 
    - [ ] New resources load from real package files
    - [ ] Factory registration working correctly
@@ -579,7 +603,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
    - [ ] Performance benchmarks within targets
    - [ ] Cross-platform compatibility verified
 
-3. **Pre-Commit Validation**
+1. **Pre-Commit Validation**
 
    ```powershell
    cd "c:\Users\nawgl\code\TS4Tools"; dotnet build TS4Tools.sln
@@ -587,7 +611,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
    # Verify >95% test pass rate before committing
    ```
 
-4. **Memory Profiling (MANDATORY)**
+1. **Memory Profiling (MANDATORY)**
 
    - [ ] **Profile memory usage** with 1024x1024 and 2048x2048 test images
    - [ ] **Validate ArrayPool<T> usage** reduces GC pressure in compression operations
@@ -602,10 +626,10 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 | Test Pass Rate | >95% | TBD | ðŸ”„ |
 | Code Coverage | >95% | TBD | ðŸ”„ |
 | Build Warnings | 0 | TBD | ðŸ”„ |
-| Memory Usage (Large Images) | <100MB | TBD | ðŸ”„ |
+| Memory Usage (Large Images) | \<100MB | TBD | ðŸ”„ |
 | Performance vs Legacy | Within 15% | TBD | ðŸ”„ |
 
----
+______________________________________________________________________
 
 ## **PHASE COMPLETION CRITERIA**
 
@@ -616,7 +640,7 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 - [ ] **All 3 target resources implemented**: RLE, LRLE, DST (or documented deferral)
 - [ ] **95%+ test coverage achieved** with comprehensive unit and integration tests
 - [ ] **Golden Master validation passes** with real Sims 4 visual content packages
-- [ ] **Performance benchmarks met** (within 15% of legacy, <100MB memory usage)
+- [ ] **Performance benchmarks met** (within 15% of legacy, \<100MB memory usage)
 - [ ] **All factories registered** and discoverable through DI system
 - [ ] **Documentation complete** including format specs and API guides
 - [ ] **Phase 4.17 planning complete** with handoff documentation
@@ -624,30 +648,34 @@ public async Task RoundTripRLEResource_WithRealFile_ProducesByteIdenticalOutput(
 ### **Final Deliverables Checklist**
 
 - [ ] **Source Code**
+
   - [ ] `RLEResource` implementation with factory and tests
   - [ ] `LRLEResource` implementation with factory and tests
   - [ ] `DSTResource` implementation (or deferral documentation)
   - [ ] All code follows established patterns and quality standards
 
 - [ ] **Documentation**
+
   - [ ] Format specification documents for each resource type
   - [ ] API documentation with usage examples
   - [ ] Performance optimization guidelines
   - [ ] Migration guide for community developers
 
 - [ ] **Testing**
+
   - [ ] Comprehensive unit test suites (60+ new tests)
   - [ ] Golden Master tests with real package validation
   - [ ] Performance benchmark test results
   - [ ] Cross-platform compatibility verification
 
 - [ ] **Integration**
+
   - [ ] All resource factories registered in ServiceCollectionExtensions
   - [ ] ResourceManager properly discovers and loads new resource types
   - [ ] Package loading supports all new visual resource formats
   - [ ] Error handling and logging throughout
 
----
+______________________________________________________________________
 
 **Document Status:** READY FOR IMPLEMENTATION
 **Next Review:** End of Day 1 (Implementation Progress Check)

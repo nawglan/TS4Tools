@@ -25,9 +25,9 @@ git config core.hooksPath .githooks
 ## What the Pre-Commit Hook Does
 
 1. **ðŸ” Checks for staged C# files** - Only processes files you're actually committing
-2. **ðŸŽ¨ Runs dotnet format** - Automatically formats staged files according to project standards
-3. **ðŸ“‹ Re-stages formatted files** - Ensures formatted changes are included in your commit
-4. **ðŸ”¨ Quick build check** - Catches compilation errors before commit (non-blocking)
+1. **ðŸŽ¨ Runs dotnet format** - Automatically formats staged files according to project standards
+1. **ðŸ“‹ Re-stages formatted files** - Ensures formatted changes are included in your commit
+1. **ðŸ”¨ Quick build check** - Catches compilation errors before commit (non-blocking)
 
 ## Usage
 
@@ -110,8 +110,7 @@ reducing CI failures and maintaining code quality standards.
 To modify the formatting rules:
 
 1. Edit `.editorconfig` in the repository root
-2. Modify `Directory.Packages.props` analyzer settings
-3. Update project-specific `.csproj` analyzer configurations
+1. Modify `Directory.Packages.props` analyzer settings
+1. Update project-specific `.csproj` analyzer configurations
 
 The hooks will automatically use your updated formatting rules.
-

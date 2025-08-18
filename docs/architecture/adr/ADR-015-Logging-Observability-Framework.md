@@ -9,10 +9,10 @@
 The TS4Tools application processes large Sims 4 package files and performs complex resource operations that require comprehensive observability for:
 
 1. **Debugging Production Issues**: Understanding failures in user environments
-2. **Performance Monitoring**: Tracking operation performance and bottlenecks
-3. **Usage Analytics**: Understanding how users interact with the application
-4. **Security Monitoring**: Detecting potential security issues or misuse
-5. **Operational Health**: Monitoring application health and resource usage
+1. **Performance Monitoring**: Tracking operation performance and bottlenecks
+1. **Usage Analytics**: Understanding how users interact with the application
+1. **Security Monitoring**: Detecting potential security issues or misuse
+1. **Operational Health**: Monitoring application health and resource usage
 
 The current logging implementation is minimal and inconsistent, making production troubleshooting difficult and providing no insight into application performance or usage patterns.
 
@@ -21,28 +21,31 @@ The current logging implementation is minimal and inconsistent, making productio
 We will implement a **comprehensive logging and observability framework** with the following components:
 
 1. **Structured Logging**: JSON-based structured logging with consistent schema
-2. **Performance Monitoring**: Automatic tracking of operation durations and resource usage
-3. **Correlation Tracking**: Request/operation correlation across the entire application
-4. **Configurable Outputs**: File, console, and remote logging sinks
-5. **Privacy-First Design**: No sensitive data logging with configurable data sanitization
+1. **Performance Monitoring**: Automatic tracking of operation durations and resource usage
+1. **Correlation Tracking**: Request/operation correlation across the entire application
+1. **Configurable Outputs**: File, console, and remote logging sinks
+1. **Privacy-First Design**: No sensitive data logging with configurable data sanitization
 
 ## Rationale
 
 ### Current Problems
 
 #### Insufficient Logging
+
 - Minimal logging throughout the application
 - No structured data for analysis
 - No performance metrics collection
 - No correlation between related operations
 
 #### Poor Troubleshooting
+
 - Generic error messages without context
 - No visibility into operation performance
 - Difficult to trace issues across components
 - No proactive monitoring or alerting
 
 #### No Operational Insight
+
 - No understanding of feature usage
 - No performance baselines or trends
 - No capacity planning data
@@ -51,18 +54,21 @@ We will implement a **comprehensive logging and observability framework** with t
 ### Benefits of Comprehensive Observability
 
 #### Improved Reliability
+
 - Proactive issue detection and alerting
 - Faster mean time to resolution (MTTR)
 - Better understanding of failure patterns
 - Performance regression detection
 
 #### Better User Experience
+
 - Performance optimization based on real usage
 - Feature usage insights for prioritization
 - Proactive issue communication
 - Data-driven UX improvements
 
 #### Operational Excellence
+
 - Capacity planning and resource optimization
 - SLA monitoring and reporting
 - Incident response and post-mortem analysis
@@ -536,44 +542,51 @@ public static class ObservabilityServiceExtensions
 ## Migration Strategy
 
 ### Phase 1: Foundation Setup (Week 1)
+
 1. Install and configure Serilog with structured logging
-2. Implement basic performance monitoring infrastructure
-3. Create correlation context and sanitization services
-4. Update service registration and configuration
+1. Implement basic performance monitoring infrastructure
+1. Create correlation context and sanitization services
+1. Update service registration and configuration
 
 ### Phase 2: Core Integration (Week 2)
+
 1. Add logging to package operations
-2. Implement performance tracking for resource operations
-3. Add correlation tracking across operation boundaries
-4. Create basic monitoring dashboard
+1. Implement performance tracking for resource operations
+1. Add correlation tracking across operation boundaries
+1. Create basic monitoring dashboard
 
 ### Phase 3: Advanced Features (Week 3)
+
 1. Implement remote logging capabilities
-2. Add comprehensive performance metrics
-3. Create alerting and monitoring rules
-4. Add user behavior analytics (privacy-safe)
+1. Add comprehensive performance metrics
+1. Create alerting and monitoring rules
+1. Add user behavior analytics (privacy-safe)
 
 ### Phase 4: Optimization and Monitoring (Week 4)
+
 1. Performance optimization based on metrics
-2. Fine-tune logging levels and sampling
-3. Implement log analysis and trending
-4. Create operational runbooks and alerts
+1. Fine-tune logging levels and sampling
+1. Implement log analysis and trending
+1. Create operational runbooks and alerts
 
 ## Success Criteria
 
 ### Technical Metrics
+
 - [ ] All critical operations have performance tracking
 - [ ] Structured logging implemented across all components
 - [ ] Log correlation works across operation boundaries
 - [ ] Privacy-safe data sanitization in place
 
 ### Operational Metrics
+
 - [ ] Mean time to detect (MTTD) issues < 5 minutes
 - [ ] Mean time to resolution (MTTR) reduced by 50%
 - [ ] Performance regression detection automated
 - [ ] Proactive alerting for critical issues
 
 ### Privacy and Compliance
+
 - [ ] No sensitive user data in logs
 - [ ] Configurable data retention policies
 - [ ] Audit trail for log access and modification
@@ -582,6 +595,7 @@ public static class ObservabilityServiceExtensions
 ## Consequences
 
 ### Positive
+
 - **Improved Debugging**: Rich context for production issue resolution
 - **Performance Optimization**: Data-driven performance improvements
 - **Proactive Monitoring**: Early detection of issues and regressions
@@ -589,18 +603,21 @@ public static class ObservabilityServiceExtensions
 - **Operational Excellence**: Better capacity planning and resource utilization
 
 ### Negative
+
 - **Performance Overhead**: Additional CPU and memory usage for logging
 - **Storage Requirements**: Increased disk space for log files
 - **Complexity**: Additional configuration and maintenance overhead
 - **Privacy Concerns**: Need for careful data handling and sanitization
 
 ### Mitigation Strategies
+
 - Implement configurable log levels and sampling
 - Use asynchronous logging to minimize performance impact
 - Implement log rotation and cleanup policies
 - Provide comprehensive privacy controls and data sanitization
 
 ## Related ADRs
+
 - ADR-002: Dependency Injection (service registration patterns)
 - ADR-014: Error Handling and Exception Strategy (error logging integration)
 - ADR-013: Static Analysis and Code Quality (logging standards enforcement)
