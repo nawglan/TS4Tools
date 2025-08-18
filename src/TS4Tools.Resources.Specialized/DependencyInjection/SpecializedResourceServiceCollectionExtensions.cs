@@ -29,7 +29,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<INGMPHashMapResource>(provider =>
         {
             var factory = provider.GetRequiredService<NGMPHashMapResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register ObjKeyResource factory (Phase 4.19 P1 CRITICAL)
@@ -37,7 +37,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IObjKeyResource>(provider =>
         {
             var factory = provider.GetRequiredService<ObjKeyResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register HashMapResource factory (Phase 4.19 P1 CRITICAL)
@@ -45,7 +45,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IHashMapResource>(provider =>
         {
             var factory = provider.GetRequiredService<HashMapResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register UserCAStPresetResource factory (Phase 4.19 P2 HIGH)
@@ -53,7 +53,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IUserCAStPresetResource>(provider =>
         {
             var factory = provider.GetRequiredService<UserCAStPresetResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register PresetResource factory (Phase 4.19 P2 HIGH)
@@ -61,7 +61,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IPresetResource>(provider =>
         {
             var factory = provider.GetRequiredService<PresetResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register SwatchResource factory (Phase 4.19 P2 HIGH)
@@ -69,7 +69,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<ISwatchResource>(provider =>
         {
             var factory = provider.GetRequiredService<SwatchResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register ComplateResource factory (Phase 4.19 P3 MEDIUM)
@@ -77,7 +77,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IComplateResource>(provider =>
         {
             var factory = provider.GetRequiredService<ComplateResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register TuningResource factory (Phase 4.19 P3 MEDIUM)
@@ -85,7 +85,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<ITuningResource>(provider =>
         {
             var factory = provider.GetRequiredService<TuningResourceFactory>();
-            return factory.CreateTuningAsync("default", "configuration", 0, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateTuningAsync("default", "configuration", 0, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register NameMapResource factory (Phase 4.19 P3 MEDIUM)
@@ -93,7 +93,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<INameMapResource>(provider =>
         {
             var factory = provider.GetRequiredService<NameMapResourceFactory>();
-            return factory.CreateNameMapAsync("default", "1.0", "general", false, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateNameMapAsync("default", "1.0", "general", false, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register BlendGeometryResource factory (Phase 4.19 P4 LOW)
@@ -101,7 +101,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IBlendGeometryResource>(provider =>
         {
             var factory = provider.GetRequiredService<BlendGeometryResourceFactory>();
-            return factory.CreateAsync("default_mesh", "1.0", default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateAsync("default_mesh", "1.0", default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register TerrainGeometryResource factory (Phase 4.19 P4 LOW)
@@ -109,7 +109,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<ITerrainGeometryResource>(provider =>
         {
             var factory = provider.GetRequiredService<TerrainGeometryResourceFactory>();
-            return factory.CreateAsync(256, 256, 1.0f, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateAsync(256, 256, 1.0f, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         // Register ConfigurationResource factory (Phase 4.19 P3 MEDIUM)
@@ -117,7 +117,7 @@ public static class SpecializedResourceServiceCollectionExtensions
         services.AddTransient<IConfigurationResource>(provider =>
         {
             var factory = provider.GetRequiredService<ConfigurationResourceFactory>();
-            return factory.CreateResourceAsync(1, null, default).GetAwaiter().GetResult();
+            return Task.Run(async () => await factory.CreateResourceAsync(1, null, default).ConfigureAwait(false)).GetAwaiter().GetResult();
         });
 
         return services;

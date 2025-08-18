@@ -484,14 +484,14 @@ public static class LegacyBridge
 {
     public static IPackage LoadPackage(string filename)
     {
-        // Modern async implementation wrapped in sync interface
-        return LoadPackageAsync(filename).GetAwaiter().GetResult();
+        // Use Task.Run to avoid deadlocks in sync-over-async scenarios
+        return Task.Run(async () => await LoadPackageAsync(filename).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     public static void SavePackage(IPackage package, string filename)
     {
-        // Modern async implementation wrapped in sync interface
-        package.SaveAsAsync(filename).GetAwaiter().GetResult();
+        // Use Task.Run to avoid deadlocks in sync-over-async scenarios
+        Task.Run(async () => await package.SaveAsAsync(filename).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 }
 ```

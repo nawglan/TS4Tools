@@ -185,7 +185,8 @@ public abstract class AbstractCatalogResource : IAbstractCatalogResource
     /// <inheritdoc />
     public virtual IEnumerable<string> Validate()
     {
-        var validationTask = ValidateAsync();
+        // Use Task.Run to avoid deadlocks in synchronization contexts
+        var validationTask = Task.Run(async () => await ValidateAsync().ConfigureAwait(false));
         var result = validationTask.GetAwaiter().GetResult();
 
         return result.Errors.Select(e => e.Message);
@@ -282,8 +283,9 @@ public abstract class AbstractCatalogResource : IAbstractCatalogResource
         {
             if (disposing)
             {
-                // Dispose managed resources
-                DisposeAsyncCore().AsTask().GetAwaiter().GetResult();
+                // Dispose managed resources - use Task.Run to avoid deadlocks
+                Task.Run(async () => await DisposeAsyncCore().ConfigureAwait(false))
+                    .GetAwaiter().GetResult();
             }
 
             _disposed = true;

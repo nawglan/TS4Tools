@@ -300,7 +300,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by ImageResourceFactory", nameof(resourceType));
         }
 
-        // Use async method synchronously for compatibility
-        return CreateResourceAsync(1, null).GetAwaiter().GetResult();
+        // Use async method synchronously for compatibility - deadlock-safe pattern
+        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 }

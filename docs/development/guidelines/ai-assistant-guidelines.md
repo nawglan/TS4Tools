@@ -82,9 +82,9 @@ public class ResourceWrapperService : IResourceWrapperService
             : await CreateTypedResourceAsync(wrapperType, apiVersion, package, entry);
     }
 
-    // Compatibility wrapper - MANDATORY for existing consumers
+    // Compatibility wrapper - MANDATORY for existing consumers, but deadlock-safe
     public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry)
-        => GetResourceAsync(apiVersion, package, entry).GetAwaiter().GetResult();
+        => Task.Run(async () => await GetResourceAsync(apiVersion, package, entry).ConfigureAwait(false)).GetAwaiter().GetResult();
 }
 ```
 

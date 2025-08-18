@@ -161,7 +161,9 @@ public sealed class ObjKeyResource : IObjKeyResource, IDisposable
         get
         {
             ThrowIfDisposed();
-            var data = ToBinaryAsync().GetAwaiter().GetResult();
+            // Use Task.Run to avoid deadlocks in synchronization contexts
+            var data = Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false))
+                .GetAwaiter().GetResult();
             return new MemoryStream(data);
         }
     }
@@ -172,7 +174,9 @@ public sealed class ObjKeyResource : IObjKeyResource, IDisposable
         get
         {
             ThrowIfDisposed();
-            return ToBinaryAsync().GetAwaiter().GetResult();
+            // Use Task.Run to avoid deadlocks in synchronization contexts
+            return Task.Run(async () => await ToBinaryAsync().ConfigureAwait(false))
+                .GetAwaiter().GetResult();
         }
     }
 

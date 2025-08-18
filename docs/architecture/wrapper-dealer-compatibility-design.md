@@ -270,20 +270,22 @@ public class ResourceWrapperService : IResourceWrapperService
         return await CreateResourceFromTypeAsync(resourceType, apiVersion, stream, cancellationToken);
     }
 
-    // Sync compatibility methods
+    // Sync compatibility methods - DEADLOCK WARNING
+    // These methods use Task.Run() to avoid deadlocks in synchronization contexts
+    // Legacy code requires sync methods, but modern callers should use async versions
     public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry)
     {
-        return GetResourceAsync(apiVersion, package, entry).GetAwaiter().GetResult();
+        return Task.Run(async () => await GetResourceAsync(apiVersion, package, entry).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     public IResource GetResource(int apiVersion, IPackage package, IResourceIndexEntry entry, bool alwaysDefault)
     {
-        return GetResourceAsync(apiVersion, package, entry, alwaysDefault).GetAwaiter().GetResult();
+        return Task.Run(async () => await GetResourceAsync(apiVersion, package, entry, alwaysDefault).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     public IResource CreateNewResource(int apiVersion, string resourceType)
     {
-        return CreateNewResourceAsync(apiVersion, resourceType).GetAwaiter().GetResult();
+        return Task.Run(async () => await CreateNewResourceAsync(apiVersion, resourceType).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     // Collection properties for compatibility

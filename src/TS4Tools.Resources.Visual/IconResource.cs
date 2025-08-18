@@ -87,7 +87,7 @@ public sealed class IconResource : IIconResource, IResource, INotifyPropertyChan
         : this(logger, resourceKey)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        LoadFromStreamAsync(stream, cancellationToken).GetAwaiter().GetResult();
+        Task.Run(async () => await LoadFromStreamAsync(stream, cancellationToken).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     #endregion
@@ -500,7 +500,7 @@ public sealed class IconResource : IIconResource, IResource, INotifyPropertyChan
         get
         {
             using var memoryStream = new MemoryStream();
-            SaveToStreamAsync(memoryStream).GetAwaiter().GetResult();
+            Task.Run(async () => await SaveToStreamAsync(memoryStream).ConfigureAwait(false)).GetAwaiter().GetResult();
             return memoryStream.ToArray();
         }
     }

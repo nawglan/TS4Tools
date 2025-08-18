@@ -97,7 +97,7 @@ public sealed class WorldResource : IResource, IDisposable
             try
             {
                 using var stream = new MemoryStream();
-                SaveToStreamAsync(stream).GetAwaiter().GetResult();
+                Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).GetAwaiter().GetResult();
                 return stream.Length;
             }
             catch
@@ -305,7 +305,7 @@ public sealed class WorldResource : IResource, IDisposable
             if (_stream == null)
             {
                 _stream = new MemoryStream();
-                SaveToStreamAsync(_stream).GetAwaiter().GetResult();
+                Task.Run(async () => await SaveToStreamAsync(_stream).ConfigureAwait(false)).GetAwaiter().GetResult();
                 _stream.Position = 0;
             }
             return _stream;
@@ -318,7 +318,7 @@ public sealed class WorldResource : IResource, IDisposable
         get
         {
             using var stream = new MemoryStream();
-            SaveToStreamAsync(stream).GetAwaiter().GetResult();
+            Task.Run(async () => await SaveToStreamAsync(stream).ConfigureAwait(false)).GetAwaiter().GetResult();
             return stream.ToArray();
         }
     }

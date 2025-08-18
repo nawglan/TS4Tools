@@ -75,8 +75,8 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
 
-        // Use async method synchronously for compatibility
-        return CreateResourceAsync(1, stream).GetAwaiter().GetResult();
+        // Use async method synchronously for compatibility - deadlock-safe pattern
+        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
@@ -87,8 +87,8 @@ public abstract class ResourceFactoryBase<TResource> : IResourceFactory<TResourc
             throw new ArgumentException($"Resource type 0x{resourceType:X8} is not supported by this factory", nameof(resourceType));
         }
 
-        // Use async method synchronously for compatibility
-        return CreateResourceAsync(1, null).GetAwaiter().GetResult();
+        // Use async method synchronously for compatibility - deadlock-safe pattern
+        return Task.Run(async () => await CreateResourceAsync(1, null).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />

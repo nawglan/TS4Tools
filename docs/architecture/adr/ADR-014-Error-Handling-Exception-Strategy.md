@@ -307,7 +307,8 @@ public class ErrorHandler : IErrorHandler
         }
         catch (Exception ex)
         {
-            var handleResult = HandleAsync(ex, operationName).GetAwaiter().GetResult();
+            // Use Task.Run to avoid deadlocks when calling async from sync context
+            var handleResult = Task.Run(async () => await HandleAsync(ex, operationName).ConfigureAwait(false)).GetAwaiter().GetResult();
             return Result<T>.Failure(handleResult.Error!, handleResult.Severity);
         }
     }

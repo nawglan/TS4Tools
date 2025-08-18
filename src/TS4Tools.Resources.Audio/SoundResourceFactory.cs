@@ -81,8 +81,8 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
             throw new ArgumentException($"Unsupported resource type: 0x{resourceType:X8}", nameof(resourceType));
         }
 
-        // Use async method synchronously for compatibility
-        return CreateResourceAsync(1, stream).GetAwaiter().GetResult();
+        // Use async method synchronously for compatibility - deadlock-safe pattern
+        return Task.Run(async () => await CreateResourceAsync(1, stream).ConfigureAwait(false)).GetAwaiter().GetResult();
     }
 
     /// <summary>
