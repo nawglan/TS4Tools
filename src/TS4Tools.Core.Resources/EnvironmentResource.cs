@@ -219,7 +219,7 @@ internal class EnvironmentResource : IEnvironmentResource, IDisposable
             IsSnowing = reader.ReadBoolean();
             ThunderActive = reader.ReadBoolean();
 
-            UpdateStream().GetAwaiter().GetResult();
+            UpdateStream().ConfigureAwait(false).GetAwaiter().GetResult();
             ResourceChanged?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
