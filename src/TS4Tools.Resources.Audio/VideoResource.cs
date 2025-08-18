@@ -66,11 +66,13 @@ public sealed class VideoResource : IVideoResource, IDisposable
     /// <param name="logger">Optional logger for diagnostics</param>
     public VideoResource(Stream stream, int requestedApiVersion = 1, ILogger<VideoResource>? logger = null)
     {
+        ArgumentNullException.ThrowIfNull(stream);
+
         _requestedApiVersion = requestedApiVersion;
         _logger = logger;
         _contentFields = new ObservableList<TypedValue>();
 
-        if (stream != null && stream.Length > 0)
+        if (stream.Length > 0)
         {
             ParseVideoData(stream);
         }

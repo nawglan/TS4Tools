@@ -59,7 +59,8 @@ public sealed class CatalogResource : IResource, IApiVersion, IContentFields, IE
     /// <exception cref="ArgumentNullException">Thrown when logger is null.</exception>
     public CatalogResource(ILogger<CatalogResource> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
     }
 
     /// <summary>

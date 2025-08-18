@@ -27,7 +27,8 @@ public class HelperToolService : IHelperToolService
     /// <param name="logger">Logger instance</param>
     public HelperToolService(ILogger<HelperToolService> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
     }
 
     /// <inheritdoc />

@@ -29,10 +29,12 @@ public sealed partial class FileNameService : IFileNameService
     /// <param name="platformService">The platform service for platform-specific operations.</param>
     public FileNameService(IResourceTypeRegistry typeRegistry, ILogger<FileNameService> logger, IPlatformService? platformService = null)
     {
-        _typeRegistry = typeRegistry ?? throw new ArgumentNullException(nameof(typeRegistry));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(typeRegistry);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        _typeRegistry = typeRegistry;
+        _logger = logger;
         _platformService = platformService ?? PlatformService.Instance;
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <inheritdoc />

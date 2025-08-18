@@ -88,7 +88,8 @@ public class TxtcResource : IResource, IDisposable
     /// <exception cref="ArgumentNullException">Thrown when logger is null.</exception>
     public TxtcResource(ILogger<TxtcResource> logger, int apiVersion = 1, Stream? data = null)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         _apiVersion = apiVersion;
         _stream = new MemoryStream();
 

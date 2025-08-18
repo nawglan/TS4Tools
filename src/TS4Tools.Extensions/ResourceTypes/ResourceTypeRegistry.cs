@@ -17,7 +17,8 @@ public sealed partial class ResourceTypeRegistry : IResourceTypeRegistry
     /// <param name="logger">The logger instance.</param>
     public ResourceTypeRegistry(ILogger<ResourceTypeRegistry> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
         InitializeDefaultTypes();
     }
 

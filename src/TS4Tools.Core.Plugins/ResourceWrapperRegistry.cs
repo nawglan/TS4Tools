@@ -20,7 +20,8 @@ public class ResourceWrapperRegistry : IResourceWrapperRegistry
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="logger"/> is null.</exception>
     public ResourceWrapperRegistry(ILogger<ResourceWrapperRegistry> logger)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        ArgumentNullException.ThrowIfNull(logger);
+        _logger = logger;
     }
 
     /// <summary>
@@ -28,11 +29,8 @@ public class ResourceWrapperRegistry : IResourceWrapperRegistry
     /// </summary>
     public void RegisterHandler(Type handlerType, IEnumerable<string> resourceTypes)
     {
-        if (handlerType == null)
-            throw new ArgumentNullException(nameof(handlerType));
-
-        if (resourceTypes == null)
-            throw new ArgumentNullException(nameof(resourceTypes));
+        ArgumentNullException.ThrowIfNull(handlerType);
+        ArgumentNullException.ThrowIfNull(resourceTypes);
 
         var resourceTypeList = resourceTypes.ToList();
         if (!resourceTypeList.Any())
