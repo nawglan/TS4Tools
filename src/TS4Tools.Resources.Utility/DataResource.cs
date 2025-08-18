@@ -623,13 +623,13 @@ public sealed class DataResource : IResource, IDisposable
         {
             // Dispose managed resources
             _stream?.Dispose();
-            
+
             // Clear collections
             _entries.Clear();
             _structures.Clear();
             _dataEntries.Clear();
             _structureDefinitions.Clear();
-            
+
             // Clear potentially large objects
             _rawData = null;
             _xmlDocument = null;

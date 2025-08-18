@@ -137,7 +137,9 @@ public class WrapperDealerTests
     {
         public Stream Stream => new MemoryStream();
         public byte[] AsBytes => Array.Empty<byte>();
+#pragma warning disable CS0067 // Event is never used - this is expected for a test stub
         public event EventHandler? ResourceChanged;
+#pragma warning restore CS0067
         public int RequestedApiVersion => 1;
         public int RecommendedApiVersion => 1;
         public IReadOnlyList<string> ContentFields => Array.Empty<string>();

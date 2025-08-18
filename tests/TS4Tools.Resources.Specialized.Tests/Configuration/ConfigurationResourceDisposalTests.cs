@@ -58,7 +58,7 @@ public sealed class ConfigurationResourceDisposalTests : IDisposable
         resource.Dispose();
         Action act = () => resource.Dispose();
         act.Should().NotThrow();
-        
+
         // Additional dispose calls should still not throw
         resource.Dispose();
         resource.Dispose();
@@ -70,10 +70,10 @@ public sealed class ConfigurationResourceDisposalTests : IDisposable
         // Arrange
         var memoryStream = new MemoryStream(new byte[] { 0x01, 0x02, 0x03 });
         var resource = TrackResource(new ConfigurationResource());
-        
+
         // Access the Stream property to initialize it with the memory stream
         // Note: This test simulates the resource having an internal stream
-        
+
         // Act
         resource.Dispose();
 
