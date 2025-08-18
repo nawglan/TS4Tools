@@ -6,7 +6,7 @@ namespace TS4Tools.Resources.Animation;
 /// <summary>
 /// Implementation of ICharacterResource for handling character resources.
 /// </summary>
-public class CharacterResource : ICharacterResource
+public class CharacterResource : ICharacterResource, IDisposable
 {
     private static readonly byte[] MagicBytes = [0x43, 0x48, 0x41, 0x52]; // "CHAR"
 

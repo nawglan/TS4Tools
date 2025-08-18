@@ -6,7 +6,7 @@ namespace TS4Tools.Resources.Animation;
 /// <summary>
 /// Implementation of IRigResource for handling rig (skeleton) resources.
 /// </summary>
-public class RigResource : IRigResource
+public class RigResource : IRigResource, IDisposable
 {
     private static readonly byte[] MagicBytes = [0x52, 0x49, 0x47, 0x53]; // "RIGS"
 
