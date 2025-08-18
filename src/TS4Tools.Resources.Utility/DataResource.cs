@@ -91,6 +91,7 @@ public sealed class DataResource : IResource, IDisposable
     {
         get
         {
+            ThrowIfDisposed();
             if (_stream == null)
                 _stream = new MemoryStream();
             return _stream;
@@ -101,6 +102,7 @@ public sealed class DataResource : IResource, IDisposable
     {
         get
         {
+            ThrowIfDisposed();
             Stream.Position = 0;
             var buffer = new byte[Stream.Length];
             Stream.ReadExactly(buffer);
@@ -124,6 +126,7 @@ public sealed class DataResource : IResource, IDisposable
 
     private TypedValue GetFieldByName(string name)
     {
+        ThrowIfDisposed();
         return name switch
         {
             nameof(Version) => new TypedValue(typeof(uint), Version),
@@ -138,6 +141,7 @@ public sealed class DataResource : IResource, IDisposable
 
     private void SetFieldByName(string name, TypedValue value)
     {
+        ThrowIfDisposed();
         switch (name)
         {
             case nameof(Version):
@@ -157,7 +161,13 @@ public sealed class DataResource : IResource, IDisposable
 
     private void OnResourceChanged()
     {
+        ThrowIfDisposed();
         ResourceChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
     }
 
     #region Properties
@@ -600,10 +610,31 @@ public sealed class DataResource : IResource, IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
         if (_disposed)
             return;
 
-        _stream?.Dispose();
+        if (disposing)
+        {
+            // Dispose managed resources
+            _stream?.Dispose();
+            
+            // Clear collections
+            _entries.Clear();
+            _structures.Clear();
+            _dataEntries.Clear();
+            _structureDefinitions.Clear();
+            
+            // Clear potentially large objects
+            _rawData = null;
+            _xmlDocument = null;
+        }
+
         _disposed = true;
     }
 }

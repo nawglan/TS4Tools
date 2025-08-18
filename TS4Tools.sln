@@ -122,6 +122,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.Resources.Textures
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.Resources.Specialized", "src\TS4Tools.Resources.Specialized\TS4Tools.Resources.Specialized.csproj", "{3A2A0DA0-AADF-4464-AF7F-EEB2B80C21D5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.Resources.Specialized.Tests", "tests\TS4Tools.Resources.Specialized.Tests\TS4Tools.Resources.Specialized.Tests.csproj", "{3B2A0DB0-AADF-4464-AF7F-EEB2B80C21D6}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.WrapperDealer", "src\TS4Tools.WrapperDealer\TS4Tools.WrapperDealer.csproj", "{8C7BE488-6CA7-4FA9-9664-09F50A906244}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.WrapperDealer.Tests", "tests\TS4Tools.WrapperDealer.Tests\TS4Tools.WrapperDealer.Tests.csproj", "{7DB9DB82-71ED-41EC-9C47-2D86EF2E6E30}"

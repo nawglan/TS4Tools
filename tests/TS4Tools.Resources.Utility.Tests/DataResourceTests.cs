@@ -39,6 +39,43 @@ public class DataResourceTests
     }
 
     [Fact]
+    public void Dispose_ShouldProperlyCleanupResources()
+    {
+        // Arrange
+        var resource = new DataResource(_logger, _testKey);
+        
+        // Act
+        resource.Dispose();
+
+        // Assert - Should not throw on multiple dispose calls
+        resource.Dispose();
+    }
+
+    [Fact]
+    public void AccessAfterDispose_ShouldThrowObjectDisposedException()
+    {
+        // Arrange
+        var resource = new DataResource(_logger, _testKey);
+        resource.Dispose();
+
+        // Act & Assert
+        var act1 = () => resource.Stream.ToString();
+        act1.Should().Throw<ObjectDisposedException>();
+
+        var act2 = () => resource.AsBytes;
+        act2.Should().Throw<ObjectDisposedException>();
+
+        var act3 = () => resource.Version = 100;
+        act3.Should().Throw<ObjectDisposedException>();
+
+        var act4 = () => resource["Version"];
+        act4.Should().Throw<ObjectDisposedException>();
+
+        var act5 = () => resource["Version"] = new TypedValue(typeof(uint), 100u);
+        act5.Should().Throw<ObjectDisposedException>();
+    }
+
+    [Fact]
     public void ContentFields_ShouldReturnExpectedFields()
     {
         // Arrange

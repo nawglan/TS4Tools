@@ -60,7 +60,11 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public string ConfigurationName
     {
-        get => _configurationName;
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _configurationName;
+        }
         private set => _configurationName = value ?? string.Empty;
     }
 
@@ -69,7 +73,11 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public string ConfigurationVersion
     {
-        get => _configurationVersion;
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _configurationVersion;
+        }
         private set => _configurationVersion = value ?? "1.0";
     }
 
@@ -78,7 +86,11 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public string ConfigurationCategory
     {
-        get => _configurationCategory;
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _configurationCategory;
+        }
         private set => _configurationCategory = value ?? "general";
     }
 
@@ -87,7 +99,11 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public uint? ParentConfigurationId
     {
-        get => _parentConfigurationId;
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _parentConfigurationId;
+        }
         private set => _parentConfigurationId = value;
     }
 
@@ -96,7 +112,11 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public bool IsValidated
     {
-        get => _isValidated;
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _isValidated;
+        }
         private set => _isValidated = value;
     }
 
@@ -458,17 +478,24 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// <summary>
     /// Gets the content fields for debugging and introspection.
     /// </summary>
-    public IReadOnlyList<string> ContentFields => new[]
+    public IReadOnlyList<string> ContentFields
     {
-        nameof(ConfigurationName),
-        nameof(ConfigurationVersion),
-        nameof(ConfigurationCategory),
-        nameof(ParentConfigurationId),
-        nameof(IsValidated),
-        nameof(IsInheritanceResolved),
-        nameof(Sections),
-        nameof(ConfigurationValues)
-    };
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return new[]
+            {
+                nameof(ConfigurationName),
+                nameof(ConfigurationVersion),
+                nameof(ConfigurationCategory),
+                nameof(ParentConfigurationId),
+                nameof(IsValidated),
+                nameof(IsInheritanceResolved),
+                nameof(Sections),
+                nameof(ConfigurationValues)
+            };
+        }
+    }
 
     /// <inheritdoc />
     public TypedValue this[string index]
@@ -511,14 +538,25 @@ public sealed class ConfigurationResource : IConfigurationResource, IDisposable
     /// </summary>
     public Stream Stream
     {
-        get => _stream ?? new MemoryStream();
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _stream ?? new MemoryStream();
+        }
         set => _stream = value;
     }
 
     /// <summary>
     /// Gets the resource as a byte array.
     /// </summary>
-    public byte[] AsBytes => SaveToByteArray();
+    public byte[] AsBytes
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return SaveToByteArray();
+        }
+    }
 
     #endregion
 
