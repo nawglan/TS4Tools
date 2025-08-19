@@ -32,7 +32,7 @@ application using .NET 9 and Avalonia UI. > ** Attribution:** This project is a 
 - **New Project Estimate:** 12-16 weeks total (updated for Phase 4.13-4.20 expansion vs. original 54 weeks) - **Target Completion:** October-December 2025 ### ** STRATEGIC OPTIMIZATION** - **Phase 4 (Basic GUI):**ELIMINATED** - Redundant with s4pe migration
 - **Direct s4pe Migration:** More efficient than building throwaway components
 - **s4pe Integration Added:** Comprehensive package editor GUI migration planned
-- **Phase 4.13 Expansion:** Expanded from single phase to 8 phases (4.13-4.20) for complete resource wrapper implementation For detailed progress tracking, see: -  [Migration Roadmap](MIGRATION_ROADMAP.md) - Comprehensive migration plan with AI acceleration metrics ##  **Architecture Overview** ### **Core Libraries** ```text
+- **Phase 4.13 Expansion:** Expanded from single phase to 8 phases (4.13-4.20) for complete resource wrapper implementation For detailed progress tracking, see: -  [Migration Roadmap](docs/migration/migration-roadmap.md) - Comprehensive migration plan with AI acceleration metrics ##  **Architecture Overview** ### **Core Libraries** ```text
 TS4Tools.Core.System/ # System utilities and extensions
 TS4Tools.Core.Interfaces/ # Core interfaces and contracts
 TS4Tools.Core.Settings/ # Configuration management
@@ -69,7 +69,7 @@ TS4Tools/
  examples/ # Usage examples
  docs/ # Documentation
  scripts/ # Build and utility scripts
- MIGRATION_ROADMAP.md # Comprehensive migration plan
+ docs/migration/migration-roadmap.md # Comprehensive migration plan
  README.md # This file
 ``` ##  **Testing Strategy** ### **Test Coverage Goals** - **Unit Tests:** 92%+ coverage
 - **Integration Tests:** 80%+ coverage
@@ -90,8 +90,8 @@ foundation is stable, we'll welcome community contributions. ### **Development G
 2. Maintain comprehensive test coverage
 3. Use modern C# patterns and nullable reference types
 4. Ensure cross-platform compatibility
-5. Update documentation and tracking files ##  **Documentation** - [Migration Roadmap](MIGRATION_ROADMAP.md) - Complete migration strategy
+5. Update documentation and tracking files ##  **Documentation** - [Migration Roadmap](docs/migration/migration-roadmap.md) - Complete migration strategy
 - [Architecture Decision Records (ADRs)](docs/architecture/adr/README.md) - Technical decision records
-- [API Documentation](docs/api-reference.md) - API documentation ##  **Related Projects** - [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Original .NET Framework version by s4ptacle - [s4pe Package Editor](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe) \- Original package editor component - [Avalonia UI](https://github.com/AvaloniaUI/Avalonia) - Cross-platform UI framework ##  **License** This project is licensed under the GNU General Public License v3.0 - see the
+- [API Documentation](docs/api/api-reference.md) - API documentation ##  **Related Projects** - [Original Sims4Tools](https://github.com/s4ptacle/Sims4Tools) - Original .NET Framework version by s4ptacle - [s4pe Package Editor](https://github.com/s4ptacle/Sims4Tools/tree/develop/s4pe) \- Original package editor component - [Avalonia UI](https://github.com/AvaloniaUI/Avalonia) - Cross-platform UI framework ##  **License** This project is licensed under the GNU General Public License v3.0 - see the
 [LICENSE](LICENSE) file for details. ##  **Acknowledgments** - **[s4ptacle](https://github.com/s4ptacle)** - Original author and creator of [Sims4Tools](https://github.com/s4ptacle/Sims4Tools), without whom this modernization project would not exist - **Original Sims4Tools Contributors** - Peter L Jones, Keyi Zhang, and all other contributors to the original project - **The Sims 4 Modding Community** - For continuous support and feedback
 - **Avalonia UI Team** - For the excellent cross-platform UI framework --- ** Status:** Active Development | ** Last Updated:** August 3, 2025 

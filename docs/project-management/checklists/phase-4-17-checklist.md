@@ -656,7 +656,7 @@ Before Phase 4.17 can be marked complete, ALL of the following criteria must be 
   - [ ] Include test coverage statistics and quality metrics
   - [ ] Note any discovered legacy resources or format extensions
 
-- [ ] **Update MIGRATION_ROADMAP.md**: Mark Phase 4.17 as complete
+- [ ] **Update docs/migration/migration-roadmap.md**: Mark Phase 4.17 as complete
 
   - [ ] Update overall completion percentage (Phase 4.17 completion brings project to ~65% complete)
   - [ ] Update "Current Status" section with Phase 4.17 completion date

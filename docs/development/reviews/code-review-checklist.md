@@ -304,4 +304,4 @@ ______________________________________________________________________
 ______________________________________________________________________
 
 **Last Updated**: August 9, 2025
-**Related Documents**: [Developer Onboarding Guide](Developer-Onboarding-Guide.md), [Architecture ADRs](architecture/adr/)
+**Related Documents**: [Developer Onboarding Guide](../guidelines/developer-onboarding-guide.md), [Architecture ADRs](../../architecture/adr/)

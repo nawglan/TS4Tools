@@ -1,5 +1,4 @@
-﻿# TS4Tools Development Checklist - Phase 4.13 Resource Type Audit and Foundation
-
+﻿# TS4Tools Development Checklist - Phase 4.13 Resource Type Audit and Foundation- [ ] **Read Current Status**: Review docs/migration/migration-roadmap.md Phase 4.13 scope expansion (single phase → 8 phases 4.13-4.20)
 ## ðŸ“‹ **COMPREHENSIVE DEVELOPER CHECKLIST FOR NEXT PHASE**
 
 **Date Created:** August 8, 2025
@@ -400,7 +399,7 @@ ______________________________________________________________________
 ### **Phase Completion Workflow**
 
 1. **Daily Progress**: Run full test suite after each significant change
-1. **Weekly Review**: Update MIGRATION_ROADMAP.md with progress status
+1. **Weekly Review**: Update docs/migration/migration-roadmap.md with progress status
 1. **Pre-Completion**: Execute full validation sequence (build + test + static analysis)
 1. **Phase End**: Update CHANGELOG.md with detailed accomplishments
 1. **Commit Format**: Use established format with detailed technical achievements
@@ -425,7 +424,7 @@ ______________________________________________________________________
 ### **Key Documents to Reference**
 
 - `AI_ASSISTANT_GUIDELINES.md` - Development patterns and requirements
-- `MIGRATION_ROADMAP.md` - Overall project status and phase details
+- `docs/migration/migration-roadmap.md` - Overall project status and phase details
 - `docs/architecture/adr/ADR-004-Greenfield-Migration-Strategy.md` - Strategic approach
 - `SIMS4TOOLS_MIGRATION_DOCUMENTATION.md` - Compatibility requirements (in Sims4Tools folder)
 - `BUSINESS_LOGIC_REVIEW.md` - Business logic preservation requirements

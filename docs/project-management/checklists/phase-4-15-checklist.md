@@ -244,7 +244,7 @@ Based on analysis of existing implementations and legacy system requirements:
 - [ ] **Review Current State Documentation**
 
   - [ ] Read `PHASE_4_14_COMPLETION_STATUS.md` for context
-  - [ ] Review `MIGRATION_ROADMAP.md` Phase 4.15 requirements
+  - [ ] Review `docs/migration/migration-roadmap.md` Phase 4.15 requirements
   - [ ] Check `AI_ASSISTANT_GUIDELINES.md` for development protocols
 
 - [ ] **Validate Sims4Tools Alignment**
@@ -545,7 +545,7 @@ public async Task DWorldResource_Should_LoadRealWorldFile_Successfully()
 - [ ] **Documentation Updates**
 
   - `CHANGELOG.md` updated with achievements âœ…
-  - `MIGRATION_ROADMAP.md` Phase 4.15 marked complete âœ…
+  - `docs/migration/migration-roadmap.md` Phase 4.15 marked complete âœ…
   - Implementation notes documented âœ…
 
 ## âš¡ **CRITICAL DEVELOPMENT GUIDELINES**
@@ -658,7 +658,7 @@ public async Task DWorldResource_Should_LoadRealWorldFile_Successfully()
 
 - [ ] Update `PHASE_4_14_COMPLETION_STATUS.md` â†’ `PHASE_4_15_COMPLETION_STATUS.md`
 - [ ] Document implementation patterns in `CHANGELOG.md`
-- [ ] Update resource count in `MIGRATION_ROADMAP.md`
+- [ ] Update resource count in `docs/migration/migration-roadmap.md`
 
 ### **Prepare for Phase 4.16**
 

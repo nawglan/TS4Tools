@@ -202,7 +202,7 @@ dotnet run -- "test-data/sample.package"
 These examples are referenced in the main documentation:
 
 - [Getting Started Guide](../docs/getting-started.md) - Basic usage patterns
-- [API Reference](../docs/api-reference.md) - Detailed API examples
+- [API Reference](../docs/api/api-reference.md) - Detailed API examples
 - [Advanced Features](../docs/advanced-features.md) - Complex scenarios
 
 ## Contributing Examples
@@ -222,4 +222,4 @@ If you have questions about the examples:
 
 - Check the individual README files in each example directory
 - Review the main [Getting Started Guide](../docs/getting-started.md)
-- See the [API Reference](../docs/api-reference.md) for detailed documentation
+- See the [API Reference](../docs/api/api-reference.md) for detailed documentation

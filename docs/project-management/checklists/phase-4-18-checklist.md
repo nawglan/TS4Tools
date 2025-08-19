@@ -673,7 +673,7 @@ This step is integrated into each implementation day but is **MANDATORY** and ca
 #### **Phase 4.18 Completion Documentation**
 
 - [ ] **Update CHANGELOG.md**: Document all Phase 4.18 accomplishments and new features
-- [ ] **Update MIGRATION_ROADMAP.md**: Mark Phase 4.18 complete, update progress tracking
+- [ ] **Update docs/migration/migration-roadmap.md**: Mark Phase 4.18 complete, update progress tracking
 - [ ] **Create Phase 4.18 Completion Report**: Comprehensive summary of work accomplished
 - [ ] **Performance Benchmark Report**: Document performance improvements and optimizations
 - [ ] **Update API Reference Documentation**: Ensure all new APIs documented in main docs

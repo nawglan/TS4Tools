@@ -197,10 +197,10 @@ perl scripts/fix-emojis.pl [-y] <markdown_file>
 
 ```bash
 # Interactive mode - prompts before replacing file
-perl scripts/fix-emojis.pl MIGRATION_ROADMAP.md
+perl scripts/fix-emojis.pl docs/migration/migration-roadmap.md
 
 # Automatic mode - replaces file without prompting
-perl scripts/fix-emojis.pl -y MIGRATION_ROADMAP.md
+perl scripts/fix-emojis.pl -y docs/migration/migration-roadmap.md
 
 # Fix emojis in any markdown file
 perl scripts/fix-emojis.pl docs/README.md

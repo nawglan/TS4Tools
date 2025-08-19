@@ -300,7 +300,7 @@ jobs:
         # Check for required documentation files
         required_docs=(
           "README.md"
-          "docs/Developer-Onboarding-Guide.md"
+          "docs/development/guidelines/developer-onboarding-guide.md"
           "docs/architecture/Migration-Strategy-ImmutableKeys.md"
           "docs/Performance-Analysis-Report.md"
         )

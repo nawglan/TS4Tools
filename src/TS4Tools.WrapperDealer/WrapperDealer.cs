@@ -25,6 +25,8 @@ using System.Linq;
 using TS4Tools.Core.Interfaces;
 using TS4Tools.Core.Package;
 using TS4Tools.Core.Resources;
+using TS4Tools.Core.Plugins;
+using TS4Tools.WrapperDealer.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TS4Tools.WrapperDealer;
@@ -48,6 +50,7 @@ public static class WrapperDealer
     // Modern dependency injection bridge
     private static IServiceProvider? _serviceProvider;
     private static IResourceManager? _resourceManager;
+    private static PluginRegistrationManager? _pluginManager;
 
     #endregion
 
@@ -310,6 +313,7 @@ public static class WrapperDealer
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _resourceManager = serviceProvider.GetRequiredService<IResourceManager>();
+        _pluginManager = serviceProvider.GetService<PluginRegistrationManager>();
         _initialized = false; // Force re-initialization with new services
         EnsureInitialized();
     }
@@ -345,7 +349,55 @@ public static class WrapperDealer
                 _typeMap.TryAdd(kvp.Key, kvp.Value);
             }
 
+            // PHASE 4.20.3: Initialize plugin system for legacy compatibility
+            if (_pluginManager != null)
+            {
+                InitializePluginSystem();
+            }
+
             _initialized = true;
+        }
+    }
+
+    /// <summary>
+    /// Initializes the plugin system for legacy compatibility.
+    /// PHASE 4.20.4: Enhanced with auto-discovery capabilities.
+    /// </summary>
+    private static void InitializePluginSystem()
+    {
+        if (_pluginManager == null) return;
+
+        // BUSINESS LOGIC: Scan for legacy plugins and register them
+        // This enables community plugins that use the legacy AResourceHandler.Add() pattern
+        try
+        {
+            // Initialize the AResourceHandler bridge for legacy plugins
+            AResourceHandlerBridge.Initialize(_pluginManager);
+            
+            // PHASE 4.20.4: Auto-discovery of plugins from standard locations
+            if (_serviceProvider != null)
+            {
+                var logger = _serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PluginDiscoveryService>>();
+                if (logger != null)
+                {
+                    using var discoveryService = new PluginDiscoveryService(logger, _pluginManager);
+                    var discoveredCount = discoveryService.DiscoverPlugins();
+                    
+                    if (discoveredCount > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Auto-discovered {discoveredCount} plugins from standard locations");
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Plugin auto-discovery skipped: Logger not available");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail - plugin system is optional for basic functionality
+            System.Diagnostics.Debug.WriteLine($"Plugin system initialization warning: {ex.Message}");
         }
     }
 

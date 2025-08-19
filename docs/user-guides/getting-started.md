@@ -510,7 +510,7 @@ class Program
 
 ### Learning More
 
-- **[API Reference](api-reference.md)** - Comprehensive API documentation
+- **[API Reference](../api/api-reference.md)** - Comprehensive API documentation
 - **[Advanced Features](advanced-features.md)** - Complex scenarios and advanced usage
 - **[Performance Guide](performance-guide.md)** - Optimization tips and best practices
 - **[Examples Repository](../examples/)** - Complete working code samples
@@ -533,9 +533,9 @@ class Program
 
 If you'd like to contribute to TS4Tools development:
 
-- Review the **[Developer Onboarding Guide](Developer-Onboarding-Guide.md)**
-- Check the **[Migration Roadmap](../MIGRATION_ROADMAP.md)** for current priorities
-- Browse **[Architecture Decision Records](architecture/adr/README.md)** to understand design decisions
+- Review the **[Developer Onboarding Guide](../development/guidelines/developer-onboarding-guide.md)**
+- Check the **[Migration Roadmap](../migration/migration-roadmap.md)** for current priorities
+- Browse **[Architecture Decision Records](../architecture/adr/README.md)** to understand design decisions
 
 ______________________________________________________________________
 

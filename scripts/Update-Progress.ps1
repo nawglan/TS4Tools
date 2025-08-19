@@ -27,7 +27,7 @@ param(
 )
 
 $TaskTrackerFile = "TASK_TRACKER.md"
-$RoadmapFile = "MIGRATION_ROADMAP.md"
+$RoadmapFile = "docs/migration/migration-roadmap.md"
 
 function Update-TaskStatus {
     param($FilePath, $TaskId, $Status, $Notes)

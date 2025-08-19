@@ -611,7 +611,7 @@ integration.
 **Project:** TS4Tools - Modern Sims 4 Package Editor **Created:** August 5, 2025 **Updated:** January 13, 2025
 **Purpose:** Comprehensive status tracking for migration from Sims4Tools to TS4Tools
 
-> **For phase completion status, see [MIGRATION_ROADMAP.md](MIGRATION_ROADMAP.md)** **This changelog tracks detailed
+> **For phase completion status, see [Migration Roadmap](docs/migration/migration-roadmap.md)** **This changelog tracks detailed
 > implementation status and accomplishments**
 
 ______________________________________________________________________
@@ -806,11 +806,11 @@ This changelog consolidates information from the following documents that have b
 - `PHASE_0_IMPLEMENTATION_GUIDE.md`
 - Various other phase completion and summary documents
 
-For detailed phase progression status and upcoming work, see [MIGRATION_ROADMAP.md](MIGRATION_ROADMAP.md).
+For detailed phase progression status and upcoming work, see [Migration Roadmap](docs/migration/migration-roadmap.md).
 
 ______________________________________________________________________
 
 *Last Updated: January 13, 2025* *For current implementation status, see this changelog* *For phase completion status,
-see MIGRATION_ROADMAP.md*
+see [Migration Roadmap](docs/migration/migration-roadmap.md)*
 
 **Review Scope:**

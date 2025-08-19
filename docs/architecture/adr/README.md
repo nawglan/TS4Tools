@@ -256,14 +256,14 @@ The ADRs support the following implementation timeline (updated with AI accelera
 
 ## Related Documentation
 
-- [Migration Roadmap](../MIGRATION_ROADMAP.md) - Detailed implementation timeline
+- [Migration Roadmap](../../migration/migration-roadmap.md) - Detailed implementation timeline
 
 ### Related Documentation References
 
 - [IImmutableResourceKey Design](../IImmutableResourceKey-Design.md) - Interface specifications
-- [Migration Strategy Document](../Migration-Strategy-Document.md) - Implementation approach
-- [Developer Onboarding Guide](../Developer-Onboarding-Guide.md) - Getting started with ADRs
-- [API Reference](../api-reference.md) - Public API documentation
+- [Migration Strategy Document](../Migration-Strategy-ImmutableKeys.md) - Implementation approach
+- [Developer Onboarding Guide](../../development/guidelines/developer-onboarding-guide.md) - Getting started with ADRs
+- [API Reference](../../api/api-reference.md) - Public API documentation
 
 ## Questions or Feedback?
 
