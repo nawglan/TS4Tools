@@ -8,7 +8,7 @@ become productive contributors to this Sims 4 modding tools project.
 
 ## [CRITICAL SUCCESS FACTORS] (Read This First!)
 
-### The 4 Most Expensive Mistakes to Avoid
+### The 5 Most Expensive Mistakes to Avoid
 
 1. **[WRONG CODEBASE]**: Don't study `Sims4Tools/s4pi Wrappers/` - it uses completely different patterns (AResource, EventHandler, sync methods). Always use `TS4Tools/src/TS4Tools.Resources.*/` for reference.
 
@@ -18,6 +18,8 @@ become productive contributors to this Sims 4 modding tools project.
 
 1. **[SOLUTION FILE CONFUSION]**: Always use `TS4Tools.sln` for ALL dotnet commands.
    The workspace has multiple .sln files that will build completely different projects with different patterns.
+
+1. **[STATIC STATE TEST FAILURES]**: WrapperDealer and legacy compatibility tests fail with `ObjectDisposedException` or inconsistent results due to static state contamination. Always use `[Collection("AResourceHandlerBridge")]` attributes and proper disposal order (Reset static state BEFORE disposing managers).
 
 ### Quick Success Checklist
 
@@ -29,6 +31,8 @@ become productive contributors to this Sims 4 modding tools project.
 - [ ] Add comprehensive DI registration in test setup
 - [ ] Understand the difference between `IResource` (minimal interface) and concrete resource types
 - [ ] Remember that ResourceManager uses a two-phase initialization pattern
+- [ ] Use `[Collection("AResourceHandlerBridge")]` for WrapperDealer/legacy compatibility tests
+- [ ] Always call static Reset() methods BEFORE disposing managers in test cleanup
 
 **Time Investment**: Following these patterns will save you 2-3 days of debugging common issues.
 
@@ -439,6 +443,94 @@ public async Task SetUp()
 ```
 
 **For simple unit tests**: Just create factory instances directly, as shown in existing tests.
+
+### Static State and Test Isolation
+
+**CRITICAL**: When working with legacy compatibility components (like `AResourceHandlerBridge` in WrapperDealer), you may encounter static state contamination between parallel tests.
+
+#### Symptoms of Static State Issues
+
+- Tests pass individually but fail when run together
+- `ObjectDisposedException` errors when accessing disposed managers
+- "AResourceHandlerBridge must be initialized before use" exceptions
+- Inconsistent test results between runs
+
+#### Solution: xUnit Collection Attributes
+
+For tests that share static state, prevent parallel execution using Collection attributes:
+
+```csharp
+// Apply this attribute to ALL test classes that interact with the same static state
+[Collection("AResourceHandlerBridge")]
+public class LegacyPluginCompatibilityTests : IDisposable
+{
+    private PluginRegistrationManager? _manager;
+
+    public void Dispose()
+    {
+        // CRITICAL: Reset static state BEFORE disposing manager
+        AResourceHandlerBridge.Reset();
+        _manager?.Dispose();
+    }
+}
+
+[Collection("AResourceHandlerBridge")]  // Same collection name = sequential execution
+public class PluginAutoDiscoveryIntegrationTests : IDisposable
+{
+    // ... same disposal pattern
+}
+```
+
+#### Required Disposal Order
+
+When tests use static bridges, disposal order matters:
+
+```csharp
+public void Dispose()
+{
+    // Step 1: Reset static state first
+    AResourceHandlerBridge.Reset();
+    
+    // Step 2: Then dispose the manager
+    _manager?.Dispose();
+    
+    // WRONG ORDER: This causes ObjectDisposedException in other tests
+    // _manager?.Dispose();
+    // AResourceHandlerBridge.Reset();
+}
+```
+
+#### Explicit Initialization Pattern
+
+For tests that register resources with static bridges, always initialize explicitly:
+
+```csharp
+[Fact]
+public void TestResourceRegistration()
+{
+    // Arrange
+    WrapperDealer.Initialize(serviceProvider, _manager);
+    
+    // CRITICAL: Initialize bridge after WrapperDealer
+    AResourceHandlerBridge.Initialize(_manager);
+    
+    // Now safe to add resources
+    AResourceHandlerBridge.Add("0x12345678", typeof(TestResourceHandler));
+    
+    // Act & Assert
+    var types = AResourceHandlerBridge.GetSupportedTypes();
+    types.Should().Contain("0x12345678");
+}
+```
+
+#### When to Use Collection Attributes
+
+- **WrapperDealer tests**: Always use `[Collection("AResourceHandlerBridge")]`
+- **Legacy plugin compatibility**: Use matching collection names
+- **Any static state**: ServiceProvider singletons, static caches, global registries
+- **File system tests**: Shared temp directories or configuration files
+
+This pattern prevents the expensive debugging cycle of static state contamination issues.
 
 ### Test Structure (AAA Pattern)
 
