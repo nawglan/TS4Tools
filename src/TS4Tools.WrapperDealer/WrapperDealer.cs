@@ -375,22 +375,44 @@ public static class WrapperDealer
             AResourceHandlerBridge.Initialize(_pluginManager);
             
             // PHASE 4.20.4: Auto-discovery of plugins from standard locations
+            // PHASE 4.20.5: Enhanced with dependency resolution
             if (_serviceProvider != null)
             {
-                var logger = _serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PluginDiscoveryService>>();
-                if (logger != null)
+                var discoveryLogger = _serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PluginDiscoveryService>>();
+                var resolverLogger = _serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PluginDependencyResolver>>();
+                
+                if (discoveryLogger != null)
                 {
-                    using var discoveryService = new PluginDiscoveryService(logger, _pluginManager);
-                    var discoveredCount = discoveryService.DiscoverPlugins();
+                    using var discoveryService = new PluginDiscoveryService(discoveryLogger, _pluginManager);
                     
-                    if (discoveredCount > 0)
+                    // Use enhanced discovery with dependency resolution if resolver logger is available
+                    if (resolverLogger != null)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Auto-discovered {discoveredCount} plugins from standard locations");
+                        var dependencyResolver = new PluginDependencyResolver(resolverLogger);
+                        var result = discoveryService.DiscoverPluginsWithDependencies(dependencyResolver);
+                        
+                        System.Diagnostics.Debug.WriteLine($"Enhanced plugin discovery: {result.RegisteredCount} registered, {result.AllIssues.Count} issues");
+                        
+                        // Log any dependency issues for debugging
+                        foreach (var issue in result.AllIssues.Take(5)) // Limit to first 5 issues
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Plugin issue: {issue}");
+                        }
+                    }
+                    else
+                    {
+                        // Fallback to basic discovery
+                        var discoveredCount = discoveryService.DiscoverPlugins();
+                        
+                        if (discoveredCount > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Auto-discovered {discoveredCount} plugins from standard locations");
+                        }
                     }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Plugin auto-discovery skipped: Logger not available");
+                    System.Diagnostics.Debug.WriteLine("Plugin auto-discovery skipped: Discovery logger not available");
                 }
             }
         }

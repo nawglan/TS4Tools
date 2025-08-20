@@ -22,6 +22,7 @@ public sealed class PluginSystemIntegrationTests : IDisposable
     public void Dispose()
     {
         _manager?.Dispose();
+        AResourceHandlerBridge.Reset();
     }
 
     [Fact]

@@ -19,6 +19,7 @@ public sealed class AResourceHandlerBridgeTests : IDisposable
     public void Dispose()
     {
         _manager?.Dispose();
+        AResourceHandlerBridge.Reset();
     }
 
     [Fact]
@@ -223,6 +224,7 @@ public sealed class AResourceHandlerBridgeTests : IDisposable
 
     private void InitializeBridge()
     {
+        AResourceHandlerBridge.Reset();
         _manager = new PluginRegistrationManager(_logger);
         AResourceHandlerBridge.Initialize(_manager);
     }

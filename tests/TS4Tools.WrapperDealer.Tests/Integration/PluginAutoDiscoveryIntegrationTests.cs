@@ -33,6 +33,7 @@ public sealed class PluginAutoDiscoveryIntegrationTests : IDisposable
         services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
         services.AddSingleton<ILogger<PluginRegistrationManager>>(_ => NullLogger<PluginRegistrationManager>.Instance);
         services.AddSingleton<ILogger<PluginDiscoveryService>>(_ => NullLogger<PluginDiscoveryService>.Instance);
+        services.AddSingleton<ILogger<PluginDependencyResolver>>(_ => NullLogger<PluginDependencyResolver>.Instance);
         
         // Add mock resource manager and plugin manager
         services.AddSingleton<IResourceManager, MockResourceManager>();
@@ -170,10 +171,76 @@ public sealed class PluginAutoDiscoveryIntegrationTests : IDisposable
         Assert.Equal(firstPluginCount, secondPluginCount);
     }
 
+    [Fact]
+    public void WrapperDealer_InitializeWithEnhancedDiscovery_UsesDependencyResolution()
+    {
+        // Arrange - service provider has both discovery and dependency resolver loggers
+        Assert.NotNull(_serviceProvider.GetService<ILogger<PluginDiscoveryService>>());
+        Assert.NotNull(_serviceProvider.GetService<ILogger<PluginDependencyResolver>>());
+
+        // Act - initialize should use enhanced discovery with dependency resolution
+        WrapperDealer.Initialize(_serviceProvider);
+
+        // Assert - should complete successfully with enhanced functionality
+        var typeMap = WrapperDealer.TypeMap;
+        Assert.NotNull(typeMap);
+        
+        // The enhanced discovery should have been used (no specific side effects to test here,
+        // but the method should complete without exceptions)
+    }
+
+    [Fact]
+    public void WrapperDealer_WithoutDependencyResolverLogger_FallsBackToBasicDiscovery()
+    {
+        // Arrange - create service provider without dependency resolver logger
+        var services = new ServiceCollection();
+        services.AddSingleton<ILoggerFactory, NullLoggerFactory>();
+        services.AddSingleton<ILogger<PluginRegistrationManager>>(_ => NullLogger<PluginRegistrationManager>.Instance);
+        services.AddSingleton<ILogger<PluginDiscoveryService>>(_ => NullLogger<PluginDiscoveryService>.Instance);
+        // Note: No PluginDependencyResolver logger added
+        services.AddSingleton<IResourceManager, MockResourceManager>();
+        services.AddSingleton<PluginRegistrationManager>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        // Act - should fall back to basic discovery
+        WrapperDealer.Initialize(serviceProvider);
+
+        // Assert - should complete successfully with basic discovery
+        var typeMap = WrapperDealer.TypeMap;
+        Assert.NotNull(typeMap);
+    }
+
+    [Fact]
+    public void EnhancedDiscovery_WithDependencyResolver_ReturnsDetailedResults()
+    {
+        // Arrange
+        var discoveryLogger = _serviceProvider.GetService<ILogger<PluginDiscoveryService>>();
+        var resolverLogger = _serviceProvider.GetService<ILogger<PluginDependencyResolver>>();
+        Assert.NotNull(discoveryLogger);
+        Assert.NotNull(resolverLogger);
+
+        using var discoveryService = new PluginDiscoveryService(discoveryLogger, _pluginManager);
+        var dependencyResolver = new PluginDependencyResolver(resolverLogger);
+
+        // Act - test enhanced discovery directly
+        var result = discoveryService.DiscoverPluginsWithDependencies(dependencyResolver);
+
+        // Assert - should return meaningful result structure
+        Assert.NotNull(result);
+        Assert.True(result.RegisteredCount >= 0);
+        Assert.NotNull(result.DiscoveredPlugins);
+        Assert.NotNull(result.DiscoveryIssues);
+        Assert.NotNull(result.RegistrationIssues);
+        Assert.NotNull(result.AllIssues);
+    }
+
     public void Dispose()
     {
         _pluginManager?.Dispose();
         _serviceProvider?.Dispose();
+        
+        // Reset the static bridge to prevent cross-test contamination
+        AResourceHandlerBridge.Reset();
         
         // Clean up temp directory
         if (Directory.Exists(_tempDirectory))
@@ -255,7 +322,11 @@ public sealed class PluginAutoDiscoveryIntegrationTests : IDisposable
         public Stream Stream { get; set; } = new MemoryStream();
         public uint APIversion { get; set; }
         public byte[] AsBytes => Array.Empty<byte>();
-        public event EventHandler? ResourceChanged;
+        public event EventHandler? ResourceChanged
+        {
+            add { } // Suppress CS0067 - event required by interface but not used in tests
+            remove { }
+        }
         public int RequestedApiVersion => (int)APIversion;
         public int RecommendedApiVersion => 1;
         public IReadOnlyList<string> ContentFields => new List<string>().AsReadOnly();

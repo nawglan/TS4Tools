@@ -213,7 +213,11 @@ public sealed class WrapperDealerPluginIntegrationTests : IDisposable
         public Stream Stream { get; set; } = new MemoryStream();
         public uint APIversion { get; set; }
         public byte[] AsBytes => Array.Empty<byte>();
-        public event EventHandler? ResourceChanged;
+        public event EventHandler? ResourceChanged
+        {
+            add { } // Suppress CS0067 - event required by interface but not used in tests
+            remove { }
+        }
         public int RequestedApiVersion => (int)APIversion;
         public int RecommendedApiVersion => 1;
         public IReadOnlyList<string> ContentFields => new List<string>().AsReadOnly();
