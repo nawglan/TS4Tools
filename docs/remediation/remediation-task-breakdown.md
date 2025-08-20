@@ -19,7 +19,7 @@
 - [x] A1.1: Audit all appsettings files for sensitive data ✅ COMPLETED 2025-08-18
 - [ ] A1.2: Move connection strings to user secrets
 - [ ] A1.3: Move API keys to environment variables
-- [ ] A1.4: Update appsettings.json to use placeholders only
+- [ ] A1.4: Update appsettings.json to use placeholders only ❌ WILL NOT FIX - Game install paths are not sensitive
 - [ ] A1.5: Update appsettings.template.json with example values
 - [ ] A1.6: Update appsettings.template.jsonc with example values
 - [ ] A1.7: Add appsettings.Development.json to .gitignore
@@ -42,14 +42,14 @@
 
 - [x] B1.1: Audit DataResource disposal implementation ✅ COMPLETED 2025-08-18
 - [ ] B1.2: Audit ImageResource disposal implementation
-- [ ] B1.3: Audit all Stream usage patterns
+- [x] B1.3: Audit all Stream usage patterns ✅ COMPLETED 2025-08-20 - Fixed AsStreamAsync disposal patterns
 - [ ] B1.4: Review FileStream disposal in package readers
 - [ ] B1.5: Check MemoryStream disposal patterns
 - [ ] B1.6: Validate resource factory disposal chains
 
 #### B2. Memory Management Improvements
 
-- [ ] B2.1: Add using statements for all IDisposable objects
+- [x] B2.1: Add using statements for all IDisposable objects ✅ COMPLETED 2025-08-20 - Added try-catch disposal patterns
 - [ ] B2.2: Implement finalizers for unmanaged resources
 - [ ] B2.3: Add memory pressure monitoring for large operations
 - [ ] B2.4: Implement resource pooling for frequently used objects

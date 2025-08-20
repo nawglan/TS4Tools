@@ -488,15 +488,29 @@ public sealed class ModularResource : IResource, IDisposable, INotifyPropertyCha
     /// <summary>
     /// Gets the resource as a stream.
     /// </summary>
-    /// <returns>A stream containing the resource data.</returns>
+    /// <returns>A stream containing the resource data. The caller is responsible for disposing this stream.</returns>
+    /// <remarks>
+    /// This method creates a new <see cref="MemoryStream"/> containing the serialized resource data.
+    /// The returned stream must be disposed by the caller to prevent memory leaks.
+    /// Consider using a using statement or using declaration when calling this method.
+    /// </remarks>
     public async Task<Stream> AsStreamAsync()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var memoryStream = new MemoryStream();
-        await SaveToStreamAsync(memoryStream).ConfigureAwait(false);
-        memoryStream.Position = 0;
-        return memoryStream;
+        try
+        {
+            await SaveToStreamAsync(memoryStream).ConfigureAwait(false);
+            memoryStream.Position = 0;
+            return memoryStream;
+        }
+        catch
+        {
+            // If an exception occurs, dispose the stream to prevent memory leak
+            memoryStream.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
