@@ -14,6 +14,7 @@ namespace TS4Tools.WrapperDealer.Tests.Plugins;
 /// Integration tests for the complete plugin system.
 /// Tests the interaction between registration and legacy compatibility.
 /// </summary>
+[Collection("AResourceHandlerBridge")]
 public sealed class PluginSystemIntegrationTests : IDisposable
 {
     private readonly ILogger<PluginRegistrationManager> _logger = new NullLogger<PluginRegistrationManager>();
@@ -21,8 +22,8 @@ public sealed class PluginSystemIntegrationTests : IDisposable
 
     public void Dispose()
     {
-        _manager?.Dispose();
         AResourceHandlerBridge.Reset();
+        _manager?.Dispose();
     }
 
     [Fact]

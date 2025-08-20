@@ -19,6 +19,7 @@ namespace TS4Tools.WrapperDealer.Tests.Integration;
 /// Integration tests for WrapperDealer plugin system integration (Phase 4.20.3).
 /// Tests the complete flow from plugin registration to resource creation.
 /// </summary>
+[Collection("AResourceHandlerBridge")]
 public sealed class WrapperDealerPluginIntegrationTests : IDisposable
 {
     private readonly ServiceProvider _serviceProvider;
@@ -142,6 +143,7 @@ public sealed class WrapperDealerPluginIntegrationTests : IDisposable
 
     public void Dispose()
     {
+        AResourceHandlerBridge.Reset();
         _pluginManager?.Dispose();
         _serviceProvider?.Dispose();
         GC.SuppressFinalize(this);

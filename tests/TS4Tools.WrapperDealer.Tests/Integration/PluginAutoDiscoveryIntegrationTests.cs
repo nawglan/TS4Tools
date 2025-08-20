@@ -19,6 +19,7 @@ namespace TS4Tools.WrapperDealer.Tests.Integration;
 /// Integration tests for Phase 4.20.4 Auto-Discovery functionality.
 /// Tests the complete flow from WrapperDealer initialization through plugin auto-discovery.
 /// </summary>
+[Collection("AResourceHandlerBridge")]
 public sealed class PluginAutoDiscoveryIntegrationTests : IDisposable
 {
     private readonly ServiceProvider _serviceProvider;

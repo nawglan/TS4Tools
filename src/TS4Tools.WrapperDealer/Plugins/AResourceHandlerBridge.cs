@@ -56,6 +56,17 @@ public static class AResourceHandlerBridge
                 throw new InvalidOperationException("AResourceHandlerBridge must be initialized before use");
             }
 
+            // Check if the manager has been disposed (common in test scenarios)
+            try
+            {
+                // This will throw ObjectDisposedException if the manager is disposed
+                var testCount = _registrationManager.RegisteredPluginCount;
+            }
+            catch (ObjectDisposedException)
+            {
+                throw new InvalidOperationException("AResourceHandlerBridge's PluginRegistrationManager has been disposed. Call Initialize() with a new manager.");
+            }
+
             try
             {
                 // Create a synthetic plugin metadata for the manually registered handler

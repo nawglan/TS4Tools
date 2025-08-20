@@ -19,6 +19,7 @@ namespace TS4Tools.WrapperDealer.Tests.Integration;
 /// Integration tests for Step 3 of Phase 4.20: Legacy Plugin Compatibility Validation.
 /// Tests complete compatibility with real-world community plugin patterns.
 /// </summary>
+[Collection("AResourceHandlerBridge")]
 public sealed class LegacyPluginCompatibilityTests : IDisposable
 {
     private readonly ServiceProvider _serviceProvider;
@@ -49,6 +50,10 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
+        
         var initialPluginCount = _pluginManager.RegisteredPluginCount;
 
         // Act - Register exactly like ComplateResourceHandler does:
@@ -74,6 +79,10 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
+        
         var initialPluginCount = _pluginManager.RegisteredPluginCount;
 
         // Act - Register exactly like ModularResourceHandler does:
@@ -95,6 +104,10 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
+        
         var initialPluginCount = _pluginManager.RegisteredPluginCount;
 
         // Act - Register multiple resource types like real community plugins do
@@ -122,6 +135,9 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
 
         // Step 1: Plugin registers its resource handlers (like in plugin constructor)
         AResourceHandlerBridge.Add("0xCommunity1", typeof(LegacyCommunityResource));
@@ -151,6 +167,10 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
+        
         var initialCount = _pluginManager.RegisteredPluginCount;
 
         // Act - Mix modern plugin registration with legacy patterns
@@ -187,6 +207,9 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
 
         // Act & Assert - Invalid registrations should be handled gracefully
         
@@ -212,6 +235,10 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
         // Reset bridge state to ensure clean test
         AResourceHandlerBridge.Reset();
         WrapperDealer.Initialize(_serviceProvider);
+        
+        // Explicitly ensure bridge is initialized (workaround for test isolation issues)
+        AResourceHandlerBridge.Initialize(_pluginManager);
+        
         var startTime = DateTime.UtcNow;
 
         // Act - Register many legacy plugins rapidly
@@ -243,9 +270,9 @@ public sealed class LegacyPluginCompatibilityTests : IDisposable
 
     public void Dispose()
     {
+        AResourceHandlerBridge.Reset();
         _pluginManager?.Dispose();
         _serviceProvider?.Dispose();
-        AResourceHandlerBridge.Reset();
     }
 
     /// <summary>
