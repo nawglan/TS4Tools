@@ -1,0 +1,16 @@
+{
+  "GeneratedAt": "2025-08-20T13:53:53.1744901Z",
+  "Summary": {
+    "TotalPackages": 1084,
+    "SuccessfulPackages": 1084,
+    "FailedPackages": 0,
+    "TotalResources": 0,
+    "SuccessfullyParsedResources": 0,
+    "FullyIdentifiedResources": 0,
+    "TotalSizeBytes": 76081110335,
+    "ParseSuccessRate": 0,
+    "IdentificationSuccessRate": 0
+  },
+  "ResourceTypes": [],
+  "UnknownResourceTypes": []
+}

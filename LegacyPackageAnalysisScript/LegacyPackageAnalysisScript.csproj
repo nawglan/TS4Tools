@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="../Sims4Tools/s4pi/Interfaces/bin/Debug/s4pi.Interfaces.dll" />
+    <Reference Include="../Sims4Tools/s4pi/Package/bin/Debug/s4pi.Package.dll" />
+    <Reference Include="../Sims4Tools/s4pi/WrapperDealer/bin/Debug/s4pi.WrapperDealer.dll" />
+    <Reference Include="../Sims4Tools/s4pi/Settings/bin/Debug/s4pi.Settings.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
