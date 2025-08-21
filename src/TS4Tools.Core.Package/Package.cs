@@ -475,7 +475,7 @@ public sealed class Package : IPackage
 
     private void LoadIndex(Stream stream, PackageHeader header)
     {
-        if (header.IndexPosition == 0 || header.IndexSize == 0)
+        if (header.IndexSize == 0 || header.ResourceCount == 0)
         {
             _index = new PackageResourceIndex();
             return;
