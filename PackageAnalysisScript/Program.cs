@@ -349,7 +349,7 @@ internal class Program
         int counter = 0;
         decimal number = bytes;
 
-        while (Math.Round(number / 1024) >= 1)
+        while (Math.Round(number / 1024) >= 1 && counter < suffixes.Length - 1)
         {
             number = number / 1024;
             counter++;

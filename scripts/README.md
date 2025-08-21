@@ -209,6 +209,69 @@ perl scripts/fix-emojis.pl docs/README.md
 perl scripts/fix-emojis.pl -y docs/README.md
 ```
 
+## Test Scripts
+
+These scripts verify the functionality of specific components and can be used during development or debugging.
+
+### Object Definition Resource Tests
+
+Scripts for testing the Object Definition Resource implementation (0xC0DB5AE7):
+
+#### `FinalVerificationTest.cs`
+
+🧪 **Comprehensive verification** of Object Definition Resource integration:
+
+- Tests ResourceTypeRegistry recognition
+- Verifies factory registration and functionality
+- Validates dependency injection discovery mechanism
+- Confirms all systems work together correctly
+
+```bash
+# Run the verification test
+cd /home/dez/code/TS4Tools/scripts
+dotnet run --project ../examples/BasicPackageReader FinalVerificationTest.cs
+```
+
+#### `TestObjectDefinitionFactory.cs`
+
+🔍 **Factory-specific testing**:
+
+- Verifies ObjectDefinitionResourceFactory is registered
+- Tests resource type support and priority
+- Validates resource creation functionality
+
+#### `TestObjectDefinitionRecognition.cs`
+
+📊 **Recognition testing with real packages**:
+
+- Tests resource type registry integration
+- Loads actual Sims 4 packages to verify Object Definition Resource detection
+- Validates tag and extension mapping
+
+#### `TestObjectDefinitionResource.cs`
+
+⚡ **Basic resource creation test**:
+
+- Simple verification that factory can create empty resources
+- Useful for quick debugging of registration issues
+
+### General Development Tests
+
+#### `test_di.cs`
+
+🔧 **Dependency Injection verification**:
+
+- Tests that resource factories are properly registered
+- Validates IResourceFactory interface registration
+- Useful for debugging service registration issues
+
+### Usage Notes
+
+- These test scripts were created during the Object Definition Resource implementation
+- They serve as examples for testing new resource type implementations
+- Run them with `dotnet run` or compile as standalone test programs
+- They use the same dependency injection setup as the main application
+
 ## Troubleshooting
 
 ### Common Issues

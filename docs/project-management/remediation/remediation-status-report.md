@@ -85,6 +85,26 @@ August 18, 2025, significant progress has been made in security auditing and mem
   - **Test Coverage:** 53/53 tests passing including disposal verification tests
   - **Memory Safety:** ENHANCED ✓
 
+- **✅ B1.2: Audit ImageResource disposal implementation** - COMPLETED August 21, 2025
+  - **Status:** ENHANCED - Comprehensive disposal pattern implemented across all image resources
+  - **Details:** Enhanced disposal implementation for all image resource types in TS4Tools.Resources.Images
+  - **Resources Enhanced:**
+    - ✅ ImageResource - Complete IDisposable pattern with proper resource cleanup
+    - ✅ LRLEResource - Enhanced disposal with lock-based thread safety and proper bitmap disposal
+    - ✅ RLEResource - Improved disposal pattern with array clearing and logging
+    - ✅ ThumbnailCacheResource - Enhanced stream disposal with proper nullification
+  - **Improvements:**
+    - ✅ Proper `Dispose(bool disposing)` pattern implementation
+    - ✅ `GC.SuppressFinalize(this)` optimization for all image resources
+    - ✅ Thread-safe disposal for LRLEResource with lock synchronization
+    - ✅ Large object nullification (_imageData, _rawData, _cachedBitmap)
+    - ✅ Comprehensive `ThrowIfDisposed()` checks on all public property accessors
+    - ✅ Stream disposal and nullification for ThumbnailCacheResource
+  - **Test Coverage:** 290/290 image resource tests passing including new disposal verification tests
+  - **Memory Safety:** SIGNIFICANTLY ENHANCED ✓
+
+- **✅ B1.3: Audit all Stream usage patterns** - COMPLETED August 20, 2025 - Fixed AsStreamAsync disposal patterns
+
 ## In Progress Tasks 🔄
 
 Currently no tasks are in progress. Ready to continue with next remediation tasks.

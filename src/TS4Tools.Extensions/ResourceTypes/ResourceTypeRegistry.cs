@@ -98,6 +98,7 @@ public sealed partial class ResourceTypeRegistry : IResourceTypeRegistry
             // Catalog Resources
             { 0x319E4F1D, ("CASP", ".casp") },
             { 0x034AEECB, ("OBJD", ".objd") },
+            { 0xC0DB5AE7, ("OBJDEF", ".objdef") }, // Object Definition Resource
             { 0x0355E0A6, ("CAS", ".cas") },
 
             // Animation and Rigs

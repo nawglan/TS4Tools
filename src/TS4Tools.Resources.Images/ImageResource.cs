@@ -212,7 +212,15 @@ public sealed class ImageResource : IResource, IDisposable
     /// <summary>
     /// Gets the raw image data as a read-only span.
     /// </summary>
-    public ReadOnlySpan<byte> ImageData => _imageData.AsSpan();
+    /// <exception cref="ObjectDisposedException">Thrown when the resource has been disposed.</exception>
+    public ReadOnlySpan<byte> ImageData
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _imageData.AsSpan();
+        }
+    }
 
     /// <summary>
     /// Gets or sets the raw image data.
@@ -439,10 +447,37 @@ public sealed class ImageResource : IResource, IDisposable
     /// </summary>
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Protected method to implement the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">true if disposing from Dispose(); false if called from finalizer</param>
+    private void Dispose(bool disposing)
+    {
         if (_isDisposed)
             return;
 
-        _imageData = Array.Empty<byte>();
+        if (disposing)
+        {
+            // Dispose managed resources
+            
+            // Clear large objects to help GC
+            if (_imageData.Length > 0)
+            {
+                _imageData = Array.Empty<byte>();
+            }
+
+            // Reset metadata to default state
+            _metadata = new ImageMetadata { Format = ImageFormat.Unknown };
+            
+            // Clear modification flag
+            _isModified = false;
+        }
+
+        // Mark as disposed
         _isDisposed = true;
     }
 

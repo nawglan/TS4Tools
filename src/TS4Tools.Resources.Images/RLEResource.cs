@@ -628,13 +628,32 @@ public sealed class RLEResource : IRLEResource, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (!_disposed)
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Protected method to implement the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">true if disposing from Dispose(); false if called from finalizer</param>
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
         {
+            // Dispose managed resources
+            
+            // Clear large objects to help GC
             _data = Array.Empty<byte>();
             _mipHeaders = Array.Empty<MipHeader>();
-            _disposed = true;
-            _logger.LogDebug("RLEResource disposed");
+            
+            _logger?.LogDebug("RLEResource disposed");
         }
+
+        // Mark as disposed
+        _disposed = true;
     }
 
     /// <summary>

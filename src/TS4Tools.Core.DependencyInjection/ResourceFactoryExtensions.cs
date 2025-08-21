@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 using Microsoft.Extensions.DependencyInjection;
+using TS4Tools.Core.Interfaces.Resources;
 using TS4Tools.Core.Resources;
 using TS4Tools.Resources.Catalog;
 using TS4Tools.Resources.Images;
@@ -56,6 +57,9 @@ public static class ResourceFactoryExtensions
 
         // Register Catalog Tag Resource Factory (Phase 4.18.2 - Catalog Tagging System)
         services.AddResourceFactory<CatalogTagResource, CatalogTagResourceFactory>();
+
+        // Register Object Definition Resource Factory (Phase 4.18.3 - Object Definition Resource Support)
+        services.AddResourceFactory<ObjectDefinitionResource, ObjectDefinitionResourceFactory>();
 
         // Register Text Resource Factory
         services.AddResourceFactory<ITextResource, TextResourceFactory>();

@@ -100,8 +100,11 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // Register the factory
+        // Register the factory as its specific type
         services.Add(new ServiceDescriptor(typeof(TFactory), typeof(TFactory), lifetime));
+        
+        // Also register the factory as IResourceFactory for discovery
+        services.Add(new ServiceDescriptor(typeof(IResourceFactory), typeof(TFactory), lifetime));
 
         return services;
     }

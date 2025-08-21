@@ -1,6 +1,7 @@
 using System.ComponentModel;
 
 using TS4Tools.Core.Interfaces;
+using TS4Tools.Core.Interfaces.Resources;
 
 namespace TS4Tools.Resources.Catalog;
 
@@ -8,7 +9,7 @@ namespace TS4Tools.Resources.Catalog;
 /// Represents a reference to a resource (TGI - Type, Group, Instance) used in catalog objects.
 /// Resource references typically point to meshes, textures, or other assets needed for object rendering.
 /// </summary>
-public readonly record struct ResourceReference : INotifyPropertyChanged
+public readonly record struct ResourceReference : INotifyPropertyChanged, IResourceReference
 {
     #region Properties
 
@@ -29,6 +30,19 @@ public readonly record struct ResourceReference : INotifyPropertyChanged
     /// </summary>
     [ElementPriority(2)]
     public ulong Instance { get; init; }
+
+    #endregion
+
+    #region IResourceReference Implementation
+
+    /// <inheritdoc />
+    uint IResourceReference.Type => ResourceType;
+
+    /// <inheritdoc />
+    uint IResourceReference.Group => ResourceGroup;
+
+    /// <inheritdoc />
+    public bool IsValid => ResourceType != 0 || ResourceGroup != 0 || Instance != 0;
 
     #endregion
 

@@ -41,7 +41,7 @@
 #### B1. IDisposable Pattern Audit
 
 - [x] B1.1: Audit DataResource disposal implementation ✅ COMPLETED 2025-08-18
-- [ ] B1.2: Audit ImageResource disposal implementation
+- [x] B1.2: Audit ImageResource disposal implementation ✅ COMPLETED 2025-08-21
 - [x] B1.3: Audit all Stream usage patterns ✅ COMPLETED 2025-08-20 - Fixed AsStreamAsync disposal patterns
 - [ ] B1.4: Review FileStream disposal in package readers
 - [ ] B1.5: Check MemoryStream disposal patterns

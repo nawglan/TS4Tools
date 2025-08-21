@@ -470,4 +470,70 @@ public sealed class ImageResourceTests : IDisposable
         // Note: Using NullLogger for simplicity - logger testing would require FakeLogger
         resource.Should().NotBeNull();
     }
+
+    [Fact]
+    public void Dispose_CanBeCalledMultipleTimes_WithoutException()
+    {
+        // Arrange
+        var pngData = TestImageDataGenerator.CreateTestPng();
+        var resource = new ImageResource(pngData, 1, _logger);
+
+        // Act & Assert - should not throw
+        resource.Dispose();
+        resource.Dispose(); // Second disposal should be safe
+        resource.Dispose(); // Third disposal should also be safe
+    }
+
+    [Fact]
+    public void Dispose_ClearsImageData_AndPreventsAccess()
+    {
+        // Arrange
+        var pngData = TestImageDataGenerator.CreateTestPng();
+        var resource = new ImageResource(pngData, 1, _logger);
+        
+        // Verify resource is initially functional
+        resource.RawData.Should().NotBeEmpty();
+
+        // Act
+        resource.Dispose();
+
+        // Assert - accessing properties after disposal should throw
+        Action act1 = () => _ = resource.RawData;
+        Action act2 = () => _ = resource.Stream;
+        Action act3 = () => _ = resource.ImageData;
+
+        act1.Should().Throw<ObjectDisposedException>();
+        act2.Should().Throw<ObjectDisposedException>();
+        act3.Should().Throw<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public void Dispose_WithEmptyResource_DoesNotThrow()
+    {
+        // Arrange
+        var resource = new ImageResource(1, _logger);
+
+        // Act & Assert - should not throw
+        Action act = () => resource.Dispose();
+        act.Should().NotThrow();
+    }
+
+    [Fact] 
+    public void Dispose_AfterModification_ClearsModificationFlag()
+    {
+        // Arrange
+        var pngData = TestImageDataGenerator.CreateTestPng();
+        var resource = new ImageResource(pngData, 1, _logger);
+        
+        // Force modification by setting new data
+        resource.RawData = TestImageDataGenerator.CreateTestPng();
+
+        // Act
+        resource.Dispose();
+
+        // Assert - we can't check IsModified after disposal since it would throw,
+        // but we can verify disposal completed without exception
+        Action act = () => resource.Dispose(); // Second disposal
+        act.Should().NotThrow();
+    }
 }

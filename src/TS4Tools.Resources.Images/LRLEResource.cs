@@ -750,17 +750,36 @@ public sealed class LRLEResource : CoreLRLE.ILRLEResource, IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (!_disposed)
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Protected method to implement the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">true if disposing from Dispose(); false if called from finalizer</param>
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
         {
             lock (_lockObject)
             {
+                // Dispose managed resources
                 _cachedBitmap?.Dispose();
                 _cachedBitmap = null;
+                
                 _colorTable?.Dispose();
                 _colorTable = null;
+                
+                // Clear large objects to help GC
                 _rawData = null;
-                _disposed = true;
             }
         }
+
+        // Mark as disposed
+        _disposed = true;
     }
 }

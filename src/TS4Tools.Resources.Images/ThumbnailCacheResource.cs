@@ -635,11 +635,28 @@ public sealed class ThumbnailCacheResource : IResource, IDisposable, INotifyProp
     /// <inheritdoc/>
     public void Dispose()
     {
-        if (!_disposed)
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Protected method to implement the dispose pattern.
+    /// </summary>
+    /// <param name="disposing">true if disposing from Dispose(); false if called from finalizer</param>
+    private void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
         {
+            // Dispose managed resources
             _stream?.Dispose();
-            _disposed = true;
+            _stream = null;
         }
+
+        // Mark as disposed
+        _disposed = true;
     }
 }
 
