@@ -421,14 +421,19 @@ public sealed class Package : IPackage
 
         var fileAccess = readOnly ? FileAccess.Read : FileAccess.ReadWrite;
         var fileStream = new FileStream(filePath, FileMode.Open, fileAccess, FileShare.Read, 4096, FileOptions.Asynchronous);
+
+        Package? package = null;
         try
         {
-            var package = new Package(fileStream, compressionService, readOnly, filePath);
+            package = new Package(fileStream, compressionService, readOnly, filePath);
             await Task.CompletedTask.ConfigureAwait(false); // Placeholder for any async initialization
+
+            // Transfer ownership of fileStream to package - don't dispose here
             return package;
         }
         catch
         {
+            // If package creation failed, dispose the stream
             await fileStream.DisposeAsync().ConfigureAwait(false);
             throw;
         }
