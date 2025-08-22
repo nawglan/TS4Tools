@@ -11,6 +11,7 @@ namespace TS4Tools.WrapperDealer.Tests.Plugins;
 /// Tests for the AResourceHandler bridge compatibility layer.
 /// Validates legacy API compatibility and modern system integration.
 /// </summary>
+[Collection("AResourceHandlerBridge")]
 public sealed class AResourceHandlerBridgeTests : IDisposable
 {
     private readonly ILogger<PluginRegistrationManager> _logger = new NullLogger<PluginRegistrationManager>();
@@ -18,8 +19,8 @@ public sealed class AResourceHandlerBridgeTests : IDisposable
 
     public void Dispose()
     {
-        _manager?.Dispose();
         AResourceHandlerBridge.Reset();
+        _manager?.Dispose();
     }
 
     [Fact]

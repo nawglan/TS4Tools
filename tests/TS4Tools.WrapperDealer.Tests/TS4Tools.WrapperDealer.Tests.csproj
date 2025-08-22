@@ -18,6 +18,11 @@
   <ItemGroup>
     <ProjectReference Include="../../src/TS4Tools.WrapperDealer/TS4Tools.WrapperDealer.csproj" />
     <ProjectReference Include="../TS4Tools.Tests.Common/TS4Tools.Tests.Common.csproj" />
+    <ProjectReference Include="../../src/TS4Tools.Resources.Catalog/TS4Tools.Resources.Catalog.csproj" />
+    <ProjectReference Include="../../src/TS4Tools.Resources.Images/TS4Tools.Resources.Images.csproj" />
+    <ProjectReference Include="../../src/TS4Tools.Resources.Strings/TS4Tools.Resources.Strings.csproj" />
+    <ProjectReference Include="../../src/TS4Tools.Resources.Text/TS4Tools.Resources.Text.csproj" />
+    <ProjectReference Include="../../src/TS4Tools.Core.DependencyInjection/TS4Tools.Core.DependencyInjection.csproj" />
   </ItemGroup>
 
 </Project>

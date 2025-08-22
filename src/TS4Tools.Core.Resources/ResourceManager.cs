@@ -19,6 +19,8 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace TS4Tools.Core.Resources;
@@ -73,6 +75,9 @@ internal sealed class ResourceManager : IResourceManager, IDisposable
         // Register default factory in the registrations dictionary for statistics
         var defaultRegistrationKey = $"{typeof(IResource).FullName}:{typeof(DefaultResourceFactory).FullName}";
         _factoryRegistrations[defaultRegistrationKey] = defaultFactory;
+
+        // Auto-discover and register all IResourceFactory instances from DI container
+        DiscoverAndRegisterResourceFactories();
 
         // Setup cache cleanup timer if caching is enabled
         var options = _optionsMonitor.CurrentValue;
@@ -392,6 +397,49 @@ internal sealed class ResourceManager : IResourceManager, IDisposable
     {
         // Rough estimation - in a real implementation you might want more accurate tracking
         return _resourceCache.Count * 1024; // Assume 1KB per cached resource entry overhead
+    }
+
+    /// <summary>
+    /// Discovers and registers all IResourceFactory instances from the dependency injection container.
+    /// This enables automatic registration of resource factories from all loaded modules.
+    /// </summary>
+    private void DiscoverAndRegisterResourceFactories()
+    {
+        try
+        {
+            // Get all registered IResourceFactory instances from the service provider
+            var factories = _serviceProvider.GetServices<IResourceFactory>();
+            var registeredCount = 0;
+
+            foreach (var factory in factories)
+            {
+                if (factory == null) continue;
+
+                // Register factory for each of its supported resource types
+                foreach (var resourceType in factory.SupportedResourceTypes)
+                {
+                    // Skip the wildcard entry as DefaultFactory already handles it
+                    if (resourceType == "*") continue;
+
+                    // Register the factory (may override DefaultFactory for specific types)
+                    _resourceFactories.AddOrUpdate(resourceType, factory, (key, oldValue) => factory);
+                    
+                    _logger.LogDebug("Registered resource factory {FactoryType} for resource type {ResourceType}", 
+                        factory.GetType().Name, resourceType);
+                }
+
+                // Register in the factory registrations for statistics
+                var registrationKey = $"{factory.GetType().GetInterfaces().FirstOrDefault()?.FullName}:{factory.GetType().FullName}";
+                _factoryRegistrations[registrationKey] = factory;
+                registeredCount++;
+            }
+
+            _logger.LogInformation("Auto-discovered and registered {FactoryCount} resource factories from DI container", registeredCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to auto-discover resource factories from DI container. Using default factory only.");
+        }
     }
 
     /// <inheritdoc />

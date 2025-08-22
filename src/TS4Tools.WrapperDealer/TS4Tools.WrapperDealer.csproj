@@ -14,6 +14,7 @@
     <ProjectReference Include="../TS4Tools.Core.Package/TS4Tools.Core.Package.csproj" />
     <ProjectReference Include="../TS4Tools.Core.Resources/TS4Tools.Core.Resources.csproj" />
     <ProjectReference Include="../TS4Tools.Core.Plugins/TS4Tools.Core.Plugins.csproj" />
+    <ProjectReference Include="../TS4Tools.Core.Settings/TS4Tools.Core.Settings.csproj" />
     <ProjectReference Include="../TS4Tools.Extensions/TS4Tools.Extensions.csproj" />
   </ItemGroup>
 

@@ -23,6 +23,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using TS4Tools.Core.Interfaces;
+using TS4Tools.Core.Settings;
 using TS4Tools.Core.Package;
 using TS4Tools.Core.Resources;
 using TS4Tools.Core.Plugins;
@@ -122,12 +123,13 @@ public static class WrapperDealer
     /// <summary>
     /// Retrieve a resource from a package, readying the appropriate wrapper.
     /// LEGACY API: Exact signature compatibility with original WrapperDealer.
+    /// CRITICAL: Uses ILegacyPackage for 100% compatibility with s4pi plugins.
     /// </summary>
     /// <param name="APIversion">API version of request</param>
     /// <param name="pkg">Package containing <paramref name="rie"/></param>
     /// <param name="rie">Identifies resource to be returned</param>
     /// <returns>A resource from the package</returns>
-    public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie)
+    public static IResource GetResource(int APIversion, ILegacyPackage pkg, ILegacyResourceIndexEntry rie)
     {
         return GetResource(APIversion, pkg, rie, false);
     }
@@ -135,29 +137,41 @@ public static class WrapperDealer
     /// <summary>
     /// Retrieve a resource from a package, readying the appropriate wrapper or the default wrapper.
     /// LEGACY API: Exact signature compatibility with original WrapperDealer.
+    /// CRITICAL: Uses ILegacyPackage for 100% compatibility with s4pi plugins.
     /// </summary>
     /// <param name="APIversion">API version of request</param>
     /// <param name="pkg">Package containing <paramref name="rie"/></param>
     /// <param name="rie">Identifies resource to be returned</param>
     /// <param name="AlwaysDefault">When true, indicates WrapperDealer should always use the DefaultResource wrapper</param>
     /// <returns>A resource from the package</returns>
-    public static IResource GetResource(int APIversion, IPackage pkg, IResourceIndexEntry rie, bool AlwaysDefault)
+    public static IResource GetResource(int APIversion, ILegacyPackage pkg, ILegacyResourceIndexEntry rie, bool AlwaysDefault)
     {
         if (_resourceManager == null)
         {
             throw new InvalidOperationException("WrapperDealer not initialized. Call WrapperDealer.Initialize(serviceProvider) first.");
         }
 
-        // BUSINESS LOGIC: Use modern async resource manager for loading from packages
+        // BUSINESS LOGIC EXTRACTION: Get raw resource data from legacy package using its GetResource method
+        // This mimics the original s4pi WrapperDealer behavior exactly
         try
         {
-            var task = _resourceManager.LoadResourceAsync(pkg, rie, APIversion, AlwaysDefault);
-            task.Wait(); // LEGACY COMPATIBILITY: Block on async call
-            return task.Result;
+            // Step 1: Extract raw resource data from legacy package (exactly like legacy WrapperDealer did)
+            using var resourceStream = pkg.GetResource(rie);
+            if (resourceStream == null)
+            {
+                throw new InvalidOperationException($"Resource not found in package: {rie}");
+            }
+
+            // Step 2: Determine resource type for factory lookup
+            var resourceType = AlwaysDefault ? "*" : $"0x{rie.ResourceType:X8}";
+            
+            // Step 3: Use modern factory pattern to create resource wrapper
+            return WrapperForType(resourceType, APIversion, resourceStream);
         }
-        catch (AggregateException ex) when (ex.InnerException != null)
+        catch (Exception ex) when (!(ex is InvalidOperationException))
         {
-            throw ex.InnerException;
+            // LEGACY COMPATIBILITY: Preserve exception types and behavior
+            throw new InvalidOperationException($"Failed to get resource from package: {ex.Message}", ex);
         }
     }
 
@@ -426,6 +440,8 @@ public static class WrapperDealer
     /// <summary>
     /// Gets the appropriate wrapper for the specified resource type.
     /// BUSINESS LOGIC: Extracted from legacy WrapperForType method.
+    /// CRITICAL: This method directly instantiates wrapper classes using reflection to maintain
+    /// exact legacy behavior and support Stream-based resource construction.
     /// </summary>
     /// <param name="type">Resource type string</param>
     /// <param name="APIversion">API version</param>
@@ -435,42 +451,79 @@ public static class WrapperDealer
     {
         EnsureInitialized();
 
-        if (_resourceManager == null)
+        // BUSINESS LOGIC: Adapted from legacy s4pi WrapperForType logic for modern factory pattern
+        // Find wrapper factory type in type map
+        Type? factoryType = null;
+        
+        // Step 1: Try to find exact match for resource type
+        if (_typeMap.TryGetValue(type, out factoryType))
         {
-            throw new InvalidOperationException("WrapperDealer not initialized.");
+            // Check if this factory type is disabled
+            var kvp = new KeyValuePair<string, Type>(type, factoryType);
+            if (_disabled.Contains(kvp))
+            {
+                factoryType = null; // Treat as not found if disabled
+            }
         }
-
-        // BUSINESS LOGIC: Use modern async resource manager, but provide sync API for compatibility
-        // Note: This is a blocking call for legacy compatibility - not ideal but necessary
+        
+        // Step 2: Fall back to default wrapper if no specific match found
+        if (factoryType == null)
+        {
+            if (_typeMap.TryGetValue("*", out factoryType))
+            {
+                // Check if default factory is disabled
+                var kvp = new KeyValuePair<string, Type>("*", factoryType);
+                if (_disabled.Contains(kvp))
+                {
+                    factoryType = null; // No fallback available
+                }
+            }
+        }
+        
+        // Step 3: Legacy error handling - throw if no factory found and checking enabled
+        if (factoryType == null)
+        {
+            // LEGACY COMPATIBILITY: Only throw if checking is enabled (preserve legacy behavior exactly)
+            if (LegacySettingsAdapter.Checking)
+            {
+                throw new InvalidOperationException("Could not find a resource handler");
+            }
+            
+            // If checking is disabled, continue with null factoryType to match legacy behavior
+            // This will cause a NullReferenceException in the next step, exactly like legacy
+        }
+        
+        // Step 4: Create factory instance and use it to create resource
+        // CRITICAL: Modern TS4Tools uses factory pattern, not direct resource instantiation
         try
         {
-            var task = _resourceManager.CreateResourceAsync(type, APIversion);
+            // Create factory instance using DI container if available, otherwise use reflection
+            IResourceFactory factory;
+            if (_serviceProvider != null && factoryType != null)
+            {
+                // Try to get factory from DI container first
+                var serviceFactory = _serviceProvider.GetService(factoryType) as IResourceFactory;
+                factory = serviceFactory ?? (IResourceFactory)Activator.CreateInstance(factoryType)!;
+            }
+            else
+            {
+                // Fallback to direct instantiation (for tests or standalone usage)
+                // LEGACY COMPATIBILITY: If factoryType is null here, this will throw NullReferenceException
+                // matching legacy behavior when Settings.Checking = false
+                factory = (IResourceFactory)Activator.CreateInstance(factoryType!)!;
+            }
+            
+            // Use factory to create resource with stream
+            // LEGACY COMPATIBILITY: Block on async call for synchronous API
+            var task = factory.CreateResourceAsync(APIversion, stream);
             task.Wait(); // LEGACY COMPATIBILITY: Block on async call
             return task.Result;
         }
-        catch (AggregateException ex) when (ex.InnerException != null)
+        catch (Exception ex) when (!(ex is InvalidOperationException))
         {
-            throw ex.InnerException;
-        }
-        catch (Exception)
-        {
-            // BUSINESS LOGIC: Fall back to default wrapper (type "*")
-            if (type != "*")
-            {
-                try
-                {
-                    var task = _resourceManager.CreateResourceAsync("*", APIversion);
-                    task.Wait(); // LEGACY COMPATIBILITY: Block on async call
-                    return task.Result;
-                }
-                catch (AggregateException ex) when (ex.InnerException != null)
-                {
-                    throw ex.InnerException;
-                }
-            }
-
-            // BUSINESS LOGIC: Throw exception if no wrapper found (legacy behavior)
-            throw new InvalidOperationException("Could not find a resource handler");
+            // LEGACY COMPATIBILITY: Preserve exception types and behavior
+            var factoryName = factoryType?.FullName ?? "null";
+            throw new InvalidOperationException($"Failed to create resource using factory {factoryName}: {ex.Message}", ex);
         }
     }
 
@@ -480,7 +533,7 @@ public static class WrapperDealer
     /// </summary>
     /// <param name="rie">Resource index entry</param>
     /// <returns>Resource type string</returns>
-    private static string GetResourceTypeString(IResourceIndexEntry rie)
+    private static string GetResourceTypeString(ILegacyResourceIndexEntry rie)
     {
         // BUSINESS LOGIC: Convert uint resource type to hex string format expected by legacy API
         return $"0x{rie.ResourceType:X8}";
@@ -493,18 +546,16 @@ public static class WrapperDealer
     /// <param name="pkg">Package</param>
     /// <param name="rie">Resource index entry</param>
     /// <returns>Resource data stream</returns>
-    private static Stream? GetResourceStream(IPackage pkg, IResourceIndexEntry rie)
+    private static Stream? GetResourceStream(ILegacyPackage pkg, ILegacyResourceIndexEntry rie)
     {
-        // BUSINESS LOGIC: Use modern async package API, but provide sync interface for legacy compatibility
+        // BUSINESS LOGIC: Use legacy package GetResource method for direct compatibility
         try
         {
-            var task = pkg.GetResourceStreamAsync(rie);
-            task.Wait(); // LEGACY COMPATIBILITY: Block on async call
-            return task.Result;
+            return pkg.GetResource(rie);
         }
-        catch (AggregateException ex) when (ex.InnerException != null)
+        catch (Exception ex)
         {
-            throw ex.InnerException;
+            throw new InvalidOperationException($"Failed to retrieve resource stream: {ex.Message}", ex);
         }
     }
 

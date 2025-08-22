@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TS4Tools.Core.Resources;
 using TS4Tools.Resources.Catalog.Services;
 
 namespace TS4Tools.Resources.Catalog;
@@ -22,7 +23,12 @@ public static class ServiceCollectionExtensions
         // Register catalog type registry
         services.AddSingleton<CatalogTypeRegistry>();
 
-        // Register catalog resource factories
+        // Register catalog resource factories as IResourceFactory (for auto-discovery)
+        services.AddSingleton<IResourceFactory, CatalogResourceFactory>();
+        services.AddSingleton<IResourceFactory, ObjectCatalogResourceFactory>();
+        services.AddSingleton<IResourceFactory, CatalogTagResourceFactory>();
+
+        // Register catalog resource factories as concrete types
         services.AddSingleton<CatalogResourceFactory>();
         services.AddSingleton<ObjectCatalogResourceFactory>();
         services.AddSingleton<CatalogTagResourceFactory>();
