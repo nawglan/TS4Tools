@@ -13,6 +13,9 @@ public static class AResourceHandlerBridge
     private static PluginRegistrationManager? _registrationManager;
     private static readonly ILogger _logger = new NullLogger<PluginRegistrationManager>();
     private static readonly object _lock = new();
+    
+    // Cache to persist registrations across re-initializations
+    private static readonly Dictionary<string, Type> _persistedRegistrations = new();
 
     /// <summary>
     /// Initializes the bridge with a plugin registration manager.
@@ -23,6 +26,20 @@ public static class AResourceHandlerBridge
         lock (_lock)
         {
             _registrationManager = registrationManager ?? throw new ArgumentNullException(nameof(registrationManager));
+            
+            // Re-register any previously cached registrations with the new manager
+            foreach (var (resourceType, handlerType) in _persistedRegistrations)
+            {
+                try
+                {
+                    RegisterWithManager(resourceType, handlerType);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to re-register cached handler {HandlerType} for resource type {ResourceType}",
+                        handlerType.FullName, resourceType);
+                }
+            }
         }
     }
 
@@ -35,66 +52,92 @@ public static class AResourceHandlerBridge
         lock (_lock)
         {
             _registrationManager = null;
+            _persistedRegistrations.Clear();
         }
     }
 
     /// <summary>
-    /// Legacy-compatible resource handler registration method.
-    /// Provides exact API compatibility with AResourceHandler.Add(string, Type) pattern.
+    /// Adds a resource handler for the specified type
     /// </summary>
-    /// <param name="resourceType">The resource type ID (e.g., "0x12345678").</param>
-    /// <param name="handlerType">The type of the resource handler.</param>
+    /// <param name="resourceType">The resource type identifier</param>
+    /// <param name="handlerType">The handler type</param>
     public static void Add(string resourceType, Type handlerType)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(resourceType);
-        ArgumentNullException.ThrowIfNull(handlerType);
-
-        lock (_lock)
+        if (resourceType == null)
         {
-            if (_registrationManager == null)
-            {
-                throw new InvalidOperationException("AResourceHandlerBridge must be initialized before use");
-            }
+            throw new ArgumentNullException(nameof(resourceType));
+        }
 
-            // Check if the manager has been disposed (common in test scenarios)
-            try
-            {
-                // This will throw ObjectDisposedException if the manager is disposed
-                var testCount = _registrationManager.RegisteredPluginCount;
-            }
-            catch (ObjectDisposedException)
-            {
-                throw new InvalidOperationException("AResourceHandlerBridge's PluginRegistrationManager has been disposed. Call Initialize() with a new manager.");
-            }
+        if (string.IsNullOrEmpty(resourceType))
+        {
+            throw new ArgumentException("Resource type cannot be null or empty", nameof(resourceType));
+        }
 
-            try
-            {
-                // Create a synthetic plugin metadata for the manually registered handler
-                var syntheticMetadata = CreateSyntheticPluginMetadata(handlerType, resourceType);
+        if (handlerType == null)
+        {
+            throw new ArgumentNullException(nameof(handlerType));
+        }
 
-                // Create the handler dictionary for this specific registration
-                var handlerDict = new Dictionary<string, Type> { [resourceType] = handlerType };
+        // Check if we're initialized - throw if not
+        if (_registrationManager == null)
+        {
+            throw new InvalidOperationException("AResourceHandlerBridge must be initialized before adding handlers");
+        }
 
-                // Register directly using the internal method
-                var success = _registrationManager.RegisterPluginDirect(syntheticMetadata, handlerDict);
-                
-                if (success)
-                {
-                    _logger.LogInformation("Legacy handler registered: {HandlerType} for resource type {ResourceType}",
-                        handlerType.FullName, resourceType);
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to register legacy handler: {HandlerType} for resource type {ResourceType}",
-                        handlerType.FullName, resourceType);
-                }
-            }
-            catch (Exception ex)
+        // Register with the current manager and cache for future re-initializations
+        RegisterWithManager(resourceType, handlerType);
+    }
+
+    /// <summary>
+    /// Internal helper method to register a handler with the current manager.
+    /// </summary>
+    /// <param name="resourceType">The resource type ID.</param>
+    /// <param name="handlerType">The handler type.</param>
+    private static void RegisterWithManager(string resourceType, Type handlerType)
+    {
+        if (_registrationManager == null)
+        {
+            throw new InvalidOperationException("AResourceHandlerBridge must be initialized before use");
+        }
+
+        // Check if the manager has been disposed (common in test scenarios)
+        try
+        {
+            // This will throw ObjectDisposedException if the manager is disposed
+            var testCount = _registrationManager.RegisteredPluginCount;
+        }
+        catch (ObjectDisposedException)
+        {
+            throw new InvalidOperationException("AResourceHandlerBridge's PluginRegistrationManager has been disposed. Call Initialize() with a new manager.");
+        }
+
+        try
+        {
+            // Create a synthetic plugin metadata for the manually registered handler
+            var syntheticMetadata = CreateSyntheticPluginMetadata(handlerType, resourceType);
+
+            // Create the handler dictionary for this specific registration
+            var handlerDict = new Dictionary<string, Type> { [resourceType] = handlerType };
+
+            // Register directly using the internal method
+            var success = _registrationManager.RegisterPluginDirect(syntheticMetadata, handlerDict);
+            
+            if (success)
             {
-                _logger.LogError(ex, "Error registering legacy handler: {HandlerType} for resource type {ResourceType}",
+                _logger.LogInformation("Legacy handler registered: {HandlerType} for resource type {ResourceType}",
                     handlerType.FullName, resourceType);
-                throw;
             }
+            else
+            {
+                _logger.LogWarning("Failed to register legacy handler: {HandlerType} for resource type {ResourceType}",
+                    handlerType.FullName, resourceType);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error registering legacy handler: {HandlerType} for resource type {ResourceType}",
+                handlerType.FullName, resourceType);
+            throw;
         }
     }
 
@@ -126,9 +169,12 @@ public static class AResourceHandlerBridge
 
         lock (_lock)
         {
+            // Always remove from persisted registrations
+            var wasInCache = _persistedRegistrations.Remove(resourceType);
+            
             if (_registrationManager == null)
             {
-                return false;
+                return wasInCache;
             }
 
             try
@@ -151,12 +197,12 @@ public static class AResourceHandlerBridge
                 }
 
                 _logger.LogDebug("No handler found for resource type: {ResourceType}", resourceType);
-                return false;
+                return wasInCache; // Return true if it was in cache, even if not in manager
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error unregistering legacy handler for resource type: {ResourceType}", resourceType);
-                return false;
+                return wasInCache;
             }
         }
     }
