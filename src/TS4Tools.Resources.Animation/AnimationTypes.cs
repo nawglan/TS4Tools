@@ -742,3 +742,21 @@ public class FacialMorphTarget
     /// </summary>
     public IReadOnlyList<Vector3> VertexDeltas { get; set; } = Array.Empty<Vector3>();
 }
+
+/// <summary>
+/// Resource type constants for animation resources.
+/// </summary>
+public static class AnimationResourceTypes
+{
+    /// <summary>
+    /// JAZZ Animation State Machine Resource (0x02D5DF13).
+    /// XML-based animation state machines and transitions.
+    /// </summary>
+    public const uint JazzResourceType = 0x02D5DF13;
+
+    /// <summary>
+    /// Animation Clip Resource (0x6B20C4F3).
+    /// Binary animation clip data.
+    /// </summary>
+    public const uint ClipResourceType = 0x6B20C4F3;
+}

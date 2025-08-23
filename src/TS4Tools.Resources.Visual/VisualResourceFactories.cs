@@ -47,7 +47,7 @@ public sealed class ThumbnailResourceFactory : ResourceFactoryBase<ThumbnailReso
     /// <summary>
     /// Initializes a new instance of the <see cref="ThumbnailResourceFactory"/> class.
     /// </summary>
-    public ThumbnailResourceFactory() : base(new[] { "THUM", "THUMB", "0x3453CF95" }, priority: 50)
+    public ThumbnailResourceFactory() : base(new[] { "THUM", "THUMB", "0x3453CF95", "0x3C2A8647" }, priority: 50)
     {
     }
 

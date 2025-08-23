@@ -27,11 +27,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResourceFactory, CatalogResourceFactory>();
         services.AddSingleton<IResourceFactory, ObjectCatalogResourceFactory>();
         services.AddSingleton<IResourceFactory, CatalogTagResourceFactory>();
+        services.AddSingleton<IResourceFactory, CWALResourceFactory>();
 
         // Register catalog resource factories as concrete types
         services.AddSingleton<CatalogResourceFactory>();
         services.AddSingleton<ObjectCatalogResourceFactory>();
         services.AddSingleton<CatalogTagResourceFactory>();
+        services.AddSingleton<CWALResourceFactory>();
 
         // Register catalog management services
         services.AddSingleton<ICatalogTagManagementService, CatalogTagManagementService>();

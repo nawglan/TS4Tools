@@ -11,6 +11,7 @@
     <ProjectReference Include="../src/TS4Tools.Core.DependencyInjection/TS4Tools.Core.DependencyInjection.csproj" />
     <ProjectReference Include="../src/TS4Tools.Core.Package/TS4Tools.Core.Package.csproj" />
     <ProjectReference Include="../src/TS4Tools.Extensions/TS4Tools.Extensions.csproj" />
+    <ProjectReference Include="../tests/TS4Tools.Tests.Common/TS4Tools.Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

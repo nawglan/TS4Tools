@@ -35,8 +35,15 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        // Register the CAS Part resource factory
-        services.AddTransient<IResourceFactory, CasPartResourceFactory>();
+        // Register concrete factory types first
+        services.AddSingleton<CasPartResourceFactory>();
+        services.AddSingleton<SimOutfitResourceFactory>();
+
+        // Register as interface implementations
+        services.AddTransient<IResourceFactory, CasPartResourceFactory>(provider =>
+            provider.GetRequiredService<CasPartResourceFactory>());
+        services.AddTransient<IResourceFactory, SimOutfitResourceFactory>(provider =>
+            provider.GetRequiredService<SimOutfitResourceFactory>());
 
         return services;
     }

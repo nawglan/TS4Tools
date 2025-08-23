@@ -22,6 +22,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<CharacterResourceFactory>();
         services.AddSingleton<RigResourceFactory>();
         services.AddSingleton<FacialAnimationResourceFactory>();
+        services.AddSingleton<JazzResourceFactory>();
+        services.AddSingleton<ClipHeaderResourceFactory>();
 
         // Register as interface implementations
         services.AddTransient<IResourceFactory, AnimationResourceFactory>(provider =>
@@ -32,6 +34,10 @@ public static class ServiceCollectionExtensions
             provider.GetRequiredService<RigResourceFactory>());
         services.AddTransient<IResourceFactory, FacialAnimationResourceFactory>(provider =>
             provider.GetRequiredService<FacialAnimationResourceFactory>());
+        services.AddTransient<IResourceFactory, JazzResourceFactory>(provider =>
+            provider.GetRequiredService<JazzResourceFactory>());
+        services.AddTransient<IResourceFactory, ClipHeaderResourceFactory>(provider =>
+            provider.GetRequiredService<ClipHeaderResourceFactory>());
 
         return services;
     }

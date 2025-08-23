@@ -16,7 +16,7 @@ public class EffectResourceFactory : ResourceFactoryBase<IEffectResource>
     /// </summary>
     /// <param name="logger">Logger for diagnostic information</param>
     public EffectResourceFactory(ILogger<EffectResourceFactory> logger)
-        : base(new[] { "RSLT", "MATD", "EFCT", "SHAD" }, priority: 50)
+        : base(new[] { "RSLT", "MATD", "EFCT", "SHAD", "LITE", "0x03B4C61D" }, priority: 50)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -61,6 +61,8 @@ public class EffectResourceFactory : ResourceFactoryBase<IEffectResource>
             "MATD" => 0x033B2B66, // Material Definition
             "EFCT" => 0x033C3C97, // Effect Resource
             "SHAD" => 0x033D4DC8, // Shader Resource
+            "LITE" => 0x03B4C61D, // Light Resource
+            "0X03B4C61D" => 0x03B4C61D, // Hex format support
             _ => 0
         };
 

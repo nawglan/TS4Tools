@@ -20,6 +20,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TS4Tools.Core.Interfaces.Resources;
 using TS4Tools.Core.Resources;
+using TS4Tools.Resources.Animation;
 using TS4Tools.Resources.Catalog;
 using TS4Tools.Resources.Images;
 using TS4Tools.Resources.Strings;
@@ -66,6 +67,12 @@ public static class ResourceFactoryExtensions
 
         // Register Icon Resource Factory (Phase 4.18 - Visual Enhancement)
         services.AddResourceFactory<IconResource, IconResourceFactory>();
+
+        // Register Animation Resource Factory
+        services.AddResourceFactory<TS4Tools.Resources.Animation.IAnimationResource, AnimationResourceFactory>();
+
+        // Register Clip Header Resource Factory (Phase 4.19 - BC4A5044 Support)
+        services.AddResourceFactory<IClipHeaderResource, ClipHeaderResourceFactory>();
 
         return services;
     }

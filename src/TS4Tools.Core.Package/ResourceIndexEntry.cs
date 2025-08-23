@@ -219,7 +219,8 @@ internal sealed class ResourceIndexEntry : IResourceIndexEntry
         var instanceLow = reader.ReadUInt32();
         var instance = ((ulong)instanceHigh << 32) | instanceLow;
         var chunkOffset = reader.ReadUInt32();
-        var fileSize = reader.ReadUInt32();
+        var fileSizeRaw = reader.ReadUInt32();
+        var fileSize = fileSizeRaw & 0x7FFFFFFF; // Mask out the high bit flag as per DBPF spec
         var memorySize = reader.ReadUInt32();
         var compressedAndUnknown = reader.ReadUInt32();
 

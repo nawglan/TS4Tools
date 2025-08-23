@@ -47,7 +47,8 @@ public sealed class SoundResourceFactory : ResourceFactoryBase<ISoundResource>
             "0x02C9EFF2", // Audio Tuning Resource Type  
             "0x1B25A024", // Sound properties
             "0xC202C770", // Music data file
-            "0xD2DC5BAD"  // Ambience
+            "0xD2DC5BAD", // Ambience
+            "0x01A527DB"  // Audio SNR (voice/audio)
         };
     }
 

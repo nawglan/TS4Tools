@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../src/TS4Tools.Core.DependencyInjection/TS4Tools.Core.DependencyInjection.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.Interfaces/TS4Tools.Core.Interfaces.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.Package/TS4Tools.Core.Package.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.Resources/TS4Tools.Core.Resources.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Resources.Animation/TS4Tools.Resources.Animation.csproj" />
+    <ProjectReference Include="../tests/TS4Tools.Tests.Common/TS4Tools.Tests.Common.csproj" />
+  </ItemGroup>
+
+</Project>

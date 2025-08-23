@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../src/TS4Tools.Core.System/TS4Tools.Core.System.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.Package/TS4Tools.Core.Package.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.Resources/TS4Tools.Core.Resources.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Core.DependencyInjection/TS4Tools.Core.DependencyInjection.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Resources.Common/TS4Tools.Resources.Common.csproj" />
+    <ProjectReference Include="../src/TS4Tools.Resources.Animation/TS4Tools.Resources.Animation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+  </ItemGroup>
+
+</Project>

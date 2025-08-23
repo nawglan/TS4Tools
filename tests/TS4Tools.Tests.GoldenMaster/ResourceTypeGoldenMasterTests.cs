@@ -20,6 +20,7 @@ using TS4Tools.Resources.Text.DependencyInjection;
 using TS4Tools.Resources.Images.DependencyInjection;
 using TS4Tools.Resources.Geometry.DependencyInjection;
 using TS4Tools.Resources.Catalog;
+using TS4Tools.Resources.Audio;
 using Xunit;
 
 namespace TS4Tools.Tests.GoldenMaster;
@@ -50,6 +51,7 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
         services.AddImageResources();
         services.AddGeometryResources();
         services.AddCatalogResources();
+        services.AddAudioVideoResources();
 
         _serviceProvider = services.BuildServiceProvider();
         _packageFactory = _serviceProvider.GetRequiredService<IPackageFactory>();
@@ -69,6 +71,7 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0x2F7D0004, "PNG Image Resource")]
     [InlineData(0x319E4F1D, "Catalog Resource")]
     [InlineData(0x8EAF13DE, "Animation Resource (ANIM)")]
+    [InlineData(0xBC4A5044, "Animation Resource (BC4A5044)")]
     [InlineData(0x015A1849, "3D Geometry Resource (GEOM)")]
     [InlineData(0xF0582F9A, "Audio Resource")]
     [InlineData(0x791F5C85, "Script Resource")]
@@ -77,6 +80,7 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0x73E93EE5, "Text Resource")]
     [InlineData(0x6B20C4F3, "Effects Resource")]
     [InlineData(0x0166038C, "Utility Resource (Config)")]
+    [InlineData(0x545AC67A, "Material Resource (SWB)")]
     // Missing Resource Types from Implementation Analysis
     [InlineData(0x00B2D882, "DDS/TXTC Resource (Texture Compositor)")]
     [InlineData(0x19301120, "World Color Timeline Resource")]
@@ -101,7 +105,18 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
     [InlineData(0x0C772E27, "Facial Animation Resource")]
     // Additional Visual and Specialized Resources
     [InlineData(0x3453CF95, "Thumbnail Resource (THUM/THUMB)")]
+    [InlineData(0x3C2A8647, "Thumbnail Resource (Additional Type)")]
     [InlineData(0xCF9A4ACE, "Modular Resource (MODULAR)")]
+    [InlineData(0x01D10F34, "MLOD Resource (Object Geometry LODs)")]
+    [InlineData(0x81CA1A10, "MTBL Resource (Material Table)")]
+    [InlineData(0xD5F0F921, "CWAL Resource (Wall Pattern Catalog)")]
+    [InlineData(0xFD04E3BE, "Audio Configuration Resource")]
+    [InlineData(0x3C1AF1F2, "PNG Thumbnail Resource")]
+    [InlineData(0x01A527DB, "Audio SNR Resource (Voice/Audio)")]
+    [InlineData(0x02D5DF13, "JAZZ Animation State Machine Resource")]
+    [InlineData(0x03B4C61D, "LITE Light Resource")]
+    [InlineData(0x01D0E75D, "MODEL Geometry Resource (Mesh Variant)")]
+    [InlineData(0x025ED6F4, "SIMO Sim Outfit Resource")]
     [InlineData(0x0000038C, "Config Resource (Utility)")]
     [InlineData(0x0166044C, "Metadata Resource (Utility)")]
     [InlineData(0x9D1FFBCD, "Lot Catalog Resource (Catalog)")]
@@ -401,6 +416,8 @@ public sealed class ResourceTypeGoldenMasterTests : IDisposable
             { 0x319E4F1D, "Catalog Data" },
             { 0x0355E0A6, "Neighborhood Data" },
             { 0x8EAF13DE, "Animation Data" },
+            { 0xBC4A5044, "Animation Data (BC4A5044)" },
+            { 0x545AC67A, "Material Data (SWB)" },
             { 0x015A1849, "3D Geometry" },
             { 0xF0582F9A, "Audio Resources" },
             { 0x2F7D0004, "PNG Images" },

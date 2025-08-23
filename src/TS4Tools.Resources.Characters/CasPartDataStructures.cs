@@ -67,6 +67,68 @@ public readonly record struct SwatchColor(
 }
 
 /// <summary>
+/// Represents a slider reference for body or facial modifications.
+/// Sliders control morphing and deformation of character meshes.
+/// </summary>
+public readonly record struct SliderReference(
+    /// <summary>Hash identifier for the slider</summary>
+    uint SliderHash,
+    /// <summary>Value of the slider (-1.0 to 1.0 typically)</summary>
+    float Value,
+    /// <summary>Category of the slider (body, face, etc.)</summary>
+    SliderCategory Category = SliderCategory.Body)
+{
+    /// <summary>
+    /// Gets whether this slider value is at its default (0.0).
+    /// </summary>
+    public bool IsDefault => Math.Abs(Value) < 0.001f;
+
+    /// <summary>
+    /// Gets the absolute value of the slider.
+    /// </summary>
+    public float AbsoluteValue => Math.Abs(Value);
+
+    /// <summary>
+    /// Clamps the slider value to the valid range (-1.0 to 1.0).
+    /// </summary>
+    /// <returns>A new SliderReference with clamped value</returns>
+    public SliderReference Clamped() => this with { Value = Math.Clamp(Value, -1.0f, 1.0f) };
+}
+
+/// <summary>
+/// Categories for character sliders.
+/// </summary>
+public enum SliderCategory
+{
+    /// <summary>Body shape sliders</summary>
+    Body = 0,
+    /// <summary>Facial feature sliders</summary>
+    Face = 1,
+    /// <summary>Hair sliders</summary>
+    Hair = 2,
+    /// <summary>Accessory sliders</summary>
+    Accessory = 3
+}
+
+/// <summary>
+/// Resource type constants for character resources.
+/// </summary>
+public static class CharacterResourceTypes
+{
+    /// <summary>
+    /// Sim Outfit Resource (0x025ED6F4).
+    /// XML-based sim outfit definitions with clothing and modifications.
+    /// </summary>
+    public const uint SimOutfitResourceType = 0x025ED6F4;
+
+    /// <summary>
+    /// CAS Part Resource (0x034AEECB).
+    /// Character Asset System part definitions.
+    /// </summary>
+    public const uint CasPartResourceType = 0x034AEECB;
+}
+
+/// <summary>
 /// Level-of-Detail information for a CAS part mesh.
 /// Defines different quality levels for rendering optimization.
 /// </summary>

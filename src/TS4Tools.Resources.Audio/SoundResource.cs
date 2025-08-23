@@ -64,6 +64,11 @@ public sealed class SoundResource : ISoundResource, IDisposable
     /// </summary>
     public const uint AmbienceResourceType = 0xD2DC5BAD;
 
+    /// <summary>
+    /// Audio SNR resource type for voice/audio files.
+    /// </summary>
+    public const uint AudioSnrResourceType = 0x01A527DB;
+
     private readonly int _requestedApiVersion;
     private readonly ILogger<SoundResource>? _logger;
     private readonly ObservableList<TypedValue> _contentFields;

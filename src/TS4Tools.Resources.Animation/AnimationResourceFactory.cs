@@ -16,7 +16,7 @@ public class AnimationResourceFactory : ResourceFactoryBase<IAnimationResource>
     /// </summary>
     /// <param name="logger">Logger for diagnostic information</param>
     public AnimationResourceFactory(ILogger<AnimationResourceFactory> logger)
-        : base(new[] { "CLIP", "ANIM", "S3CL", "JAZZ", "IKPD", "IKTM" }, priority: 50)
+        : base(new[] { "CLIP", "ANIM", "S3CL", "JAZZ", "IKPD", "IKTM", "CLHD" }, priority: 50)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -63,6 +63,7 @@ public class AnimationResourceFactory : ResourceFactoryBase<IAnimationResource>
             "JAZZ" => 0x02D5DF13, // Jazz Animation Resource
             "IKPD" => 0x0354796A, // IK Pose Data
             "IKTM" => 0x0354796B, // IK Track Mask
+            "CLHD" => 0xBC4A5044, // Clip Header Resource (TS4)
             _ => 0
         };
 

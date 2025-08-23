@@ -21,6 +21,7 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
             "BMP",      // BMP Image
             "IMG",      // Generic Image
             "TEX",      // Texture
+            "0x3C1AF1F2",  // PNG Thumbnail
         });
 
     /// <summary>
@@ -59,6 +60,12 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
         // Add hex equivalents
         foreach (var typeString in SupportedResourceTypeStrings)
         {
+            // Skip if already a hex string
+            if (typeString.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             var hexValue = typeString.ToUpperInvariant() switch
             {
                 "DDS" => $"0x{ImageResource.DdsResourceType:X8}",     // 0x00B2D882
@@ -261,6 +268,12 @@ public sealed class ImageResourceFactory : ResourceFactoryBase<ImageResource>
     /// <returns>True if conversion was successful</returns>
     protected override bool TryGetResourceTypeId(string resourceType, out uint id)
     {
+        // Handle hex string format first
+        if (resourceType.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            return uint.TryParse(resourceType[2..], global::System.Globalization.NumberStyles.HexNumber, null, out id);
+        }
+
         // Use ImageResource constants for correct mappings
         id = resourceType.ToUpperInvariant() switch
         {

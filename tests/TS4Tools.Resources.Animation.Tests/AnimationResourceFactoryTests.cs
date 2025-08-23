@@ -90,7 +90,8 @@ public class AnimationResourceFactoryTests
         supportedTypes.Should().Contain("JAZZ");
         supportedTypes.Should().Contain("IKPD");
         supportedTypes.Should().Contain("IKTM");
-        supportedTypes.Should().HaveCount(6);
+        supportedTypes.Should().Contain("CLHD");
+        supportedTypes.Should().HaveCount(7);
     }
 
     [Theory]
@@ -100,6 +101,7 @@ public class AnimationResourceFactoryTests
     [InlineData("JAZZ")]
     [InlineData("IKPD")]
     [InlineData("IKTM")]
+    [InlineData("CLHD")]
     public void SupportedResourceTypes_ShouldContainExpectedType(string typeId)
     {
         // Act
@@ -116,7 +118,7 @@ public class AnimationResourceFactoryTests
         var supportedTypes = _factory.SupportedResourceTypes;
 
         // Assert
-        supportedTypes.Should().HaveCount(6);
+        supportedTypes.Should().HaveCount(7);
     }
 
     [Fact]

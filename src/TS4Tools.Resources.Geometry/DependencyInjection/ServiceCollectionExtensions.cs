@@ -40,11 +40,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IResourceFactory, GeometryResourceFactory>();
         services.AddSingleton<IResourceFactory, MeshResourceFactory>();
         services.AddSingleton<IResourceFactory, ModularResourceFactory>();
+        services.AddSingleton<IResourceFactory, MLODResourceFactory>();
 
         // Register typed factories
         services.AddSingleton<GeometryResourceFactory>();
         services.AddSingleton<MeshResourceFactory>();
         services.AddSingleton<ModularResourceFactory>();
+        services.AddSingleton<MLODResourceFactory>();
 
         return services;
     }

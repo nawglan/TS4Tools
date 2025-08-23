@@ -103,6 +103,7 @@ public sealed partial class ResourceTypeRegistry : IResourceTypeRegistry
 
             // Animation and Rigs
             { 0x6B20C4F3, ("CLIP", ".clip") },
+            { 0xBC4A5044, ("CLHD", ".bnry") }, // Clip Header Resource
             { 0x8EAF13DE, ("RIG", ".rig") },
 
             // Audio

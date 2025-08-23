@@ -134,6 +134,11 @@ public sealed class ImageResource : IResource, IDisposable
     /// </summary>
     public const uint TgaResourceType = 0x2F7D0005;
 
+    /// <summary>
+    /// PNG thumbnail resource type.
+    /// </summary>
+    public const uint PngThumbnailResourceType = 0x3C1AF1F2;
+
     private readonly int _requestedApiVersion;
     private readonly ILogger<ImageResource>? _logger;
     private byte[] _imageData = Array.Empty<byte>();

@@ -17,7 +17,15 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddTransient<IResourceFactory, EffectResourceFactory>();
+        // Register concrete factory types first
+        services.AddSingleton<EffectResourceFactory>();
+        services.AddSingleton<LightResourceFactory>();
+
+        // Register as interface implementations
+        services.AddTransient<IResourceFactory, EffectResourceFactory>(provider =>
+            provider.GetRequiredService<EffectResourceFactory>());
+        services.AddTransient<IResourceFactory, LightResourceFactory>(provider =>
+            provider.GetRequiredService<LightResourceFactory>());
 
         return services;
     }

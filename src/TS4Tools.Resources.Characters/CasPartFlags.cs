@@ -74,6 +74,9 @@ public enum CasPartFlags2 : byte
 [Flags]
 public enum AgeGenderFlags : uint
 {
+    /// <summary>No age or gender specified</summary>
+    None = 0,
+
     /// <summary>Available for baby Sims</summary>
     Baby = 0x00000001,
 
