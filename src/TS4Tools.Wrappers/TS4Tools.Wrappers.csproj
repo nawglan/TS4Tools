@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TS4Tools.Wrappers</RootNamespace>
+    <Description>Resource type wrappers for TS4Tools - STBL, NameMap, and more</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Interfaces\TS4Tools.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core\TS4Tools.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TS4Tools.Wrappers.Tests" />
+  </ItemGroup>
+
+</Project>
