@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TS4Tools</RootNamespace>
+    <Description>Core library for TS4Tools - Sims 4 package manipulation</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Interfaces\TS4Tools.Interfaces.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TS4Tools.Core.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>TS4Tools</RootNamespace>
+    <Description>Core interfaces for TS4Tools - Sims 4 package manipulation library</Description>
+  </PropertyGroup>
+
+</Project>
