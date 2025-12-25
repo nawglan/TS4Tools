@@ -1,0 +1,112 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TS4Tools.UI.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="TS4Tools.UI.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="{Binding Title}"
+        Width="1200" Height="800"
+        WindowStartupLocation="CenterScreen">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
+                <Separator />
+                <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="Save _As..." Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" IsEnabled="{Binding HasOpenPackage}" />
+                <Separator />
+                <MenuItem Header="_Close" Command="{Binding ClosePackageCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <Separator />
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}" InputGesture="Alt+F4" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" InputGesture="Ctrl+Z" IsEnabled="False" />
+                <MenuItem Header="_Redo" InputGesture="Ctrl+Y" IsEnabled="False" />
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" InputGesture="F5" IsEnabled="{Binding HasOpenPackage}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="8,4">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding ResourceCount, StringFormat='Resources: {0}'}"
+                           Margin="16,0" VerticalAlignment="Center" IsVisible="{Binding HasOpenPackage}" />
+                <TextBlock Grid.Column="2" Text="{Binding PackagePath}"
+                           VerticalAlignment="Center" Opacity="0.7" IsVisible="{Binding HasOpenPackage}" />
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid ColumnDefinitions="300,Auto,*">
+            <!-- Resource List Panel -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <!-- Filter Box -->
+                    <Border DockPanel.Dock="Top" Padding="8">
+                        <TextBox Watermark="Filter resources..." Text="{Binding FilterText}" />
+                    </Border>
+
+                    <!-- Resource List -->
+                    <ListBox ItemsSource="{Binding FilteredResources}"
+                             SelectedItem="{Binding SelectedResource}"
+                             Margin="0,0,0,0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="4,2">
+                                    <TextBlock Text="{Binding TypeName}" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding DisplayKey}" FontSize="11" Opacity="0.7" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
+
+            <!-- Resource Detail Panel -->
+            <Border Grid.Column="2" Padding="16">
+                <Grid>
+                    <!-- Empty State -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                IsVisible="{Binding !HasOpenPackage}">
+                        <TextBlock Text="TS4Tools" FontSize="32" FontWeight="Light" HorizontalAlignment="Center" />
+                        <TextBlock Text="Cross-platform Sims 4 Package Editor" FontSize="14" Opacity="0.7"
+                                   HorizontalAlignment="Center" Margin="0,8,0,24" />
+                        <Button Content="Open Package..." Command="{Binding OpenPackageCommand}"
+                                HorizontalAlignment="Center" Padding="24,8" />
+                    </StackPanel>
+
+                    <!-- Resource Details -->
+                    <DockPanel IsVisible="{Binding HasOpenPackage}">
+                        <Border DockPanel.Dock="Top" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedResourceTypeName}" FontSize="18" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding SelectedResourceKey}" FontSize="12" Opacity="0.7" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <ScrollViewer>
+                            <TextBlock Text="{Binding SelectedResourceInfo}" TextWrapping="Wrap" />
+                        </ScrollViewer>
+                    </DockPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

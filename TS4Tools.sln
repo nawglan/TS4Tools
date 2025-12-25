@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.Wrappers", "src\TS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.Wrappers.Tests", "tests\TS4Tools.Wrappers.Tests\TS4Tools.Wrappers.Tests.csproj", "{A41D497E-EB76-4D49-9F9C-D3A582BFADC5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TS4Tools.UI", "src\TS4Tools.UI\TS4Tools.UI.csproj", "{60681768-EDDA-44DF-AF96-B65402038341}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,18 @@ Global
 		{A41D497E-EB76-4D49-9F9C-D3A582BFADC5}.Release|x64.Build.0 = Release|Any CPU
 		{A41D497E-EB76-4D49-9F9C-D3A582BFADC5}.Release|x86.ActiveCfg = Release|Any CPU
 		{A41D497E-EB76-4D49-9F9C-D3A582BFADC5}.Release|x86.Build.0 = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|x64.Build.0 = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Debug|x86.Build.0 = Debug|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|x64.ActiveCfg = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|x64.Build.0 = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|x86.ActiveCfg = Release|Any CPU
+		{60681768-EDDA-44DF-AF96-B65402038341}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,5 +108,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{FF63D5C0-AF63-46E4-A3CB-D5B4DD183E23} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{A41D497E-EB76-4D49-9F9C-D3A582BFADC5} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{60681768-EDDA-44DF-AF96-B65402038341} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
