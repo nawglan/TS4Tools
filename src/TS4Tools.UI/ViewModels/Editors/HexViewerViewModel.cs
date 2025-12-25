@@ -8,6 +8,7 @@ namespace TS4Tools.UI.ViewModels.Editors;
 public partial class HexViewerViewModel : ViewModelBase
 {
     private const int BytesPerLine = 16;
+    private const int MaxDisplayBytes = 64 * 1024; // 64KB limit to prevent UI freezing
 
     [ObservableProperty]
     private string _hexContent = string.Empty;
@@ -15,9 +16,13 @@ public partial class HexViewerViewModel : ViewModelBase
     [ObservableProperty]
     private int _dataLength;
 
+    [ObservableProperty]
+    private bool _isTruncated;
+
     public void LoadData(ReadOnlyMemory<byte> data)
     {
         DataLength = data.Length;
+        IsTruncated = data.Length > MaxDisplayBytes;
         HexContent = FormatHexView(data.Span);
     }
 
@@ -27,6 +32,10 @@ public partial class HexViewerViewModel : ViewModelBase
             return "(No data)";
 
         var sb = new StringBuilder();
+
+        // Limit display size to prevent crashes
+        int displayLength = Math.Min(data.Length, MaxDisplayBytes);
+        bool truncated = data.Length > MaxDisplayBytes;
 
         // Header
         sb.Append("Offset    ");
@@ -38,14 +47,14 @@ public partial class HexViewerViewModel : ViewModelBase
         sb.AppendLine();
         sb.AppendLine(new string('-', 10 + (BytesPerLine * 3) + 2 + BytesPerLine));
 
-        // Data rows
-        for (int offset = 0; offset < data.Length; offset += BytesPerLine)
+        // Data rows (limited to displayLength)
+        for (int offset = 0; offset < displayLength; offset += BytesPerLine)
         {
             // Offset column
             sb.Append(CultureInfo.InvariantCulture, $"{offset:X8}  ");
 
             // Hex bytes
-            int lineBytes = Math.Min(BytesPerLine, data.Length - offset);
+            int lineBytes = Math.Min(BytesPerLine, displayLength - offset);
             for (int i = 0; i < BytesPerLine; i++)
             {
                 if (i < lineBytes)
@@ -68,6 +77,13 @@ public partial class HexViewerViewModel : ViewModelBase
             }
 
             sb.AppendLine();
+        }
+
+        // Truncation indicator
+        if (truncated)
+        {
+            sb.AppendLine();
+            sb.AppendLine(CultureInfo.InvariantCulture, $"... and {data.Length - MaxDisplayBytes:N0} more bytes (showing first {MaxDisplayBytes / 1024}KB of {data.Length:N0} bytes)");
         }
 
         return sb.ToString();

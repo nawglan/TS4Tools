@@ -110,7 +110,7 @@ public sealed class TextResource : TypedResource
     /// <summary>
     /// Gets the number of lines in the text.
     /// </summary>
-    public int LineCount => string.IsNullOrEmpty(_text) ? 0 : _text.Split('\n').Length;
+    public int LineCount => string.IsNullOrEmpty(_text) ? 0 : _text.Replace("\r\n", "\n").Split('\n').Length;
 
     /// <summary>
     /// Gets whether this appears to be XML content.

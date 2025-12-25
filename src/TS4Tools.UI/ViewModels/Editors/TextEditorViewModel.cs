@@ -49,7 +49,8 @@ public partial class TextEditorViewModel : ViewModelBase
 
     private void UpdateStats()
     {
-        LineCount = string.IsNullOrEmpty(Text) ? 0 : Text.Split('\n').Length;
+        // Count lines properly handling both LF and CRLF
+        LineCount = string.IsNullOrEmpty(Text) ? 0 : Text.Replace("\r\n", "\n").Split('\n').Length;
         CharacterCount = Text.Length;
         IsXml = Text.TrimStart().StartsWith("<?xml", StringComparison.OrdinalIgnoreCase)
              || Text.TrimStart().StartsWith('<');
