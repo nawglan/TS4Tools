@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -8,12 +9,17 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TS4Tools;
 using TS4Tools.Package;
+using TS4Tools.UI.ViewModels.Editors;
+using TS4Tools.UI.Views.Dialogs;
+using TS4Tools.UI.Views.Editors;
+using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
+    private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
 
     private DbpfPackage? _package;
@@ -33,7 +39,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _filterText = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedResource))]
     private ResourceItemViewModel? _selectedResource;
+
+    public bool HasSelectedResource => SelectedResource != null;
 
     [ObservableProperty]
     private string _selectedResourceTypeName = string.Empty;
@@ -43,6 +52,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _selectedResourceInfo = string.Empty;
+
+    [ObservableProperty]
+    private Control? _editorContent;
 
     public bool HasOpenPackage => _package != null;
 
@@ -153,6 +165,7 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedResourceTypeName = string.Empty;
             SelectedResourceKey = string.Empty;
             SelectedResourceInfo = string.Empty;
+            EditorContent = null;
             return;
         }
 
@@ -171,7 +184,38 @@ public partial class MainWindowViewModel : ViewModelBase
             info += $"Compressed: {entry.IsCompressed}";
 
             SelectedResourceInfo = info;
+
+            // Create appropriate editor based on resource type
+            EditorContent = key.ResourceType switch
+            {
+                0x220557DA => CreateStblEditor(key, data), // STBL
+                0x0166038C => CreateNameMapEditor(key, data), // NameMap
+                _ => CreateHexViewer(data) // Default hex viewer
+            };
         }
+    }
+
+    private static HexViewerView CreateHexViewer(ReadOnlyMemory<byte> data)
+    {
+        var vm = new HexViewerViewModel();
+        vm.LoadData(data);
+        return new HexViewerView { DataContext = vm };
+    }
+
+    private static StblEditorView CreateStblEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new StblResource(key, data);
+        var vm = new StblEditorViewModel();
+        vm.LoadResource(resource);
+        return new StblEditorView { DataContext = vm };
+    }
+
+    private static NameMapEditorView CreateNameMapEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new NameMapResource(key, data);
+        var vm = new NameMapEditorViewModel();
+        vm.LoadResource(resource);
+        return new NameMapEditorView { DataContext = vm };
     }
 
     [RelayCommand]
@@ -299,5 +343,214 @@ public partial class MainWindowViewModel : ViewModelBase
 
             await dialog.ShowDialog(window);
         }
+    }
+
+    [RelayCommand]
+    private async Task ExportResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var key = SelectedResource.Key;
+        var defaultName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}.bin";
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Resource",
+            SuggestedFileName = defaultName,
+            FileTypeChoices = [BinaryFileType, AllFilesType]
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var entry = _package.Find(key);
+                if (entry == null)
+                {
+                    StatusMessage = "Resource not found";
+                    return;
+                }
+
+                var data = await _package.GetResourceDataAsync(entry);
+                await using var stream = await file.OpenWriteAsync();
+                await stream.WriteAsync(data);
+                StatusMessage = $"Exported {data.Length:N0} bytes";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Export error: {ex.Message}";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportResourceAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Resource",
+            AllowMultiple = false,
+            FileTypeFilter = [BinaryFileType, AllFilesType]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            // Try to parse S4_Type_Group_Instance format
+            ResourceKey key;
+            if (TryParseS4FileName(fileName, out var parsedKey))
+            {
+                key = parsedKey;
+            }
+            else
+            {
+                // Use a default key - user should edit later
+                key = new ResourceKey(0x00000000, 0x00000000, (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            }
+
+            var data = await File.ReadAllBytesAsync(filePath);
+            var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var item = new ResourceItemViewModel(key);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                StatusMessage = $"Imported {data.Length:N0} bytes";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Import error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void DeleteResource()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+
+        if (entry != null)
+        {
+            _package.DeleteResource(entry);
+            var item = SelectedResource;
+            Resources.Remove(item);
+            FilteredResources.Remove(item);
+            SelectedResource = null;
+            OnPropertyChanged(nameof(ResourceCount));
+            StatusMessage = "Resource deleted";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ReplaceResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Replace Resource",
+            AllowMultiple = false,
+            FileTypeFilter = [BinaryFileType, AllFilesType]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var key = SelectedResource.Key;
+            var entry = _package.Find(key);
+
+            if (entry == null)
+            {
+                StatusMessage = "Resource not found";
+                return;
+            }
+
+            var data = await File.ReadAllBytesAsync(files[0].Path.LocalPath);
+            _package.ReplaceResource(entry, data);
+            await UpdateSelectedResourceDetailsAsync();
+            StatusMessage = $"Replaced with {data.Length:N0} bytes";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Replace error: {ex.Message}";
+        }
+    }
+
+    private static TopLevel? GetTopLevel()
+    {
+        return TopLevel.GetTopLevel(
+            App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null);
+    }
+
+    private static bool TryParseS4FileName(string fileName, out ResourceKey key)
+    {
+        key = default;
+
+        // Expected format: S4_XXXXXXXX_XXXXXXXX_XXXXXXXXXXXXXXXX
+        if (!fileName.StartsWith("S4_", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var parts = fileName[3..].Split('_');
+        if (parts.Length != 3)
+            return false;
+
+        try
+        {
+            var type = Convert.ToUInt32(parts[0], 16);
+            var group = Convert.ToUInt32(parts[1], 16);
+            var instance = Convert.ToUInt64(parts[2], 16);
+            key = new ResourceKey(type, group, instance);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task HashCalculatorAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new HashCalculatorWindow();
+        await dialog.ShowDialog(window);
+        StatusMessage = "Hash calculator closed";
+    }
+
+    [RelayCommand]
+    private async Task PackageStatsAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new PackageStatsWindow(_package);
+        await dialog.ShowDialog(window);
     }
 }

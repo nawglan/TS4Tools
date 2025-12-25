@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="450"
+        x:Class="TS4Tools.UI.Views.Dialogs.PackageStatsWindow"
+        Title="Package Statistics"
+        Width="500" Height="450"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Package Info -->
+        <Border Grid.Row="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1" CornerRadius="4" Padding="12">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="File:" FontWeight="SemiBold" Margin="0,0,16,4" />
+                <SelectableTextBlock Grid.Row="0" Grid.Column="1" x:Name="FilePathText" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,16,4" />
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="VersionText" Margin="0,0,0,4" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Total Resources:" FontWeight="SemiBold" Margin="0,0,16,0" />
+                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TotalResourcesText" />
+            </Grid>
+        </Border>
+
+        <!-- Section Header -->
+        <TextBlock Grid.Row="1" Text="Resources by Type" FontWeight="SemiBold" Margin="0,16,0,8" />
+
+        <!-- Type Breakdown -->
+        <Border Grid.Row="2" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1" CornerRadius="4">
+            <DataGrid x:Name="TypeBreakdownGrid"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Type" Binding="{ReflectionBinding TypeName}" Width="*" />
+                    <DataGridTextColumn Header="Type ID" Binding="{ReflectionBinding TypeHex}" Width="120" />
+                    <DataGridTextColumn Header="Count" Binding="{ReflectionBinding Count}" Width="80" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Close Button -->
+        <Button Grid.Row="3" Content="Close" Click="CloseButton_Click"
+                HorizontalAlignment="Right" Margin="0,16,0,0" Padding="24,8" />
+    </Grid>
+</Window>

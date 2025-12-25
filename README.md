@@ -31,11 +31,13 @@ The original s4pe (Sims 4 Package Editor), based on the s4pi (Sims 4 Package Int
 - ✅ Core DBPF package reader/writer
 - ✅ ZLIB compression + RefPack decompression
 - ✅ Resource handler system
-- ✅ STBL (String Table) wrapper
-- ✅ NameMap wrapper
-- ✅ FNV hashing utilities
-- ✅ Avalonia UI application (basic package viewer)
-- 🔲 Resource editing capabilities
+- ✅ STBL (String Table) wrapper with editor
+- ✅ NameMap wrapper with editor
+- ✅ FNV hashing utilities + calculator tool
+- ✅ Avalonia UI application with resource editors
+- ✅ Resource import/export/delete operations
+- ✅ Hex viewer for raw resource data
+- ✅ Package statistics dialog
 - 🔲 Advanced resource wrappers (CAS, Catalog, Mesh)
 
 ## Building

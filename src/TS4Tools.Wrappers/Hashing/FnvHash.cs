@@ -97,4 +97,15 @@ public static class FnvHash
         ArgumentNullException.ThrowIfNull(value);
         return Fnv64(value.ToLowerInvariant());
     }
+
+    /// <summary>
+    /// Computes FNV-24 hash (used for CLIP hashes in TS4).
+    /// This is FNV-32 masked to 24 bits.
+    /// </summary>
+    /// <param name="value">The string to hash.</param>
+    /// <returns>The 24-bit hash value.</returns>
+    public static uint Fnv24(string value)
+    {
+        return Fnv32Lower(value) & 0x00FFFFFF;
+    }
 }

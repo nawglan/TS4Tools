@@ -30,6 +30,16 @@
             <MenuItem Header="_Edit">
                 <MenuItem Header="_Undo" InputGesture="Ctrl+Z" IsEnabled="False" />
                 <MenuItem Header="_Redo" InputGesture="Ctrl+Y" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="_Replace Resource..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                <Separator />
+                <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_FNV Hash Calculator..." Command="{Binding HashCalculatorCommand}" />
+                <MenuItem Header="_Package Statistics..." Command="{Binding PackageStatsCommand}" IsEnabled="{Binding HasOpenPackage}" />
             </MenuItem>
             <MenuItem Header="_View">
                 <MenuItem Header="_Refresh" Command="{Binding RefreshCommand}" InputGesture="F5" IsEnabled="{Binding HasOpenPackage}" />
@@ -64,6 +74,14 @@
                     <ListBox ItemsSource="{Binding FilteredResources}"
                              SelectedItem="{Binding SelectedResource}"
                              Margin="0,0,0,0">
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <Separator />
+                                <MenuItem Header="_Delete" Command="{Binding DeleteResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Margin="4,2">
@@ -94,16 +112,15 @@
 
                     <!-- Resource Details -->
                     <DockPanel IsVisible="{Binding HasOpenPackage}">
-                        <Border DockPanel.Dock="Top" Margin="0,0,0,16">
+                        <Border DockPanel.Dock="Top" Margin="0,0,0,8">
                             <StackPanel>
                                 <TextBlock Text="{Binding SelectedResourceTypeName}" FontSize="18" FontWeight="SemiBold" />
                                 <TextBlock Text="{Binding SelectedResourceKey}" FontSize="12" Opacity="0.7" Margin="0,4,0,0" />
                             </StackPanel>
                         </Border>
 
-                        <ScrollViewer>
-                            <TextBlock Text="{Binding SelectedResourceInfo}" TextWrapping="Wrap" />
-                        </ScrollViewer>
+                        <!-- Editor Content -->
+                        <ContentControl Content="{Binding EditorContent}" />
                     </DockPanel>
                 </Grid>
             </Border>
