@@ -190,6 +190,9 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 0x220557DA => CreateStblEditor(key, data), // STBL
                 0x0166038C => CreateNameMapEditor(key, data), // NameMap
+                0x03B33DDF or 0x6017E896 => CreateTextEditor(key, data), // Tuning XML
+                0x00B00000 or 0x00B2D882 => CreateImageViewer(key, data), // PNG, DDS
+                0x545AC67A => CreateSimDataViewer(key, data), // SimData
                 _ => CreateHexViewer(data) // Default hex viewer
             };
         }
@@ -216,6 +219,30 @@ public partial class MainWindowViewModel : ViewModelBase
         var vm = new NameMapEditorViewModel();
         vm.LoadResource(resource);
         return new NameMapEditorView { DataContext = vm };
+    }
+
+    private static TextEditorView CreateTextEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new TextResource(key, data);
+        var vm = new TextEditorViewModel();
+        vm.LoadResource(resource);
+        return new TextEditorView { DataContext = vm };
+    }
+
+    private static ImageViewerView CreateImageViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new ImageResource(key, data);
+        var vm = new ImageViewerViewModel();
+        vm.LoadResource(resource);
+        return new ImageViewerView { DataContext = vm };
+    }
+
+    private static SimDataViewerView CreateSimDataViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new SimDataResource(key, data);
+        var vm = new SimDataViewerViewModel();
+        vm.LoadResource(resource);
+        return new SimDataViewerView { DataContext = vm };
     }
 
     [RelayCommand]

@@ -8,15 +8,15 @@ public sealed class ResourceItemViewModel : ViewModelBase
     {
         { 0x220557DA, "String Table (STBL)" },
         { 0x0166038C, "Name Map" },
-        { 0x545AC67A, "Audio (SNR)" },
+        { 0x545AC67A, "SimData (DATA)" },
         { 0x01D10F34, "Rig (BSRF)" },
         { 0x015A1849, "Geometry (GEOM)" },
-        { 0x00B2D882, "Image (DST)" },
+        { 0x00B2D882, "Image (DDS/DST)" },
         { 0x00B00000, "Image (PNG)" },
         { 0x034AEECB, "CAS Part" },
         { 0x0418FE2A, "Catalog Object" },
-        { 0x02D5DF13, "SimData" },
-        { 0x6017E896, "Tuning (XML)" },
+        { 0x03B33DDF, "Tuning (XML)" },
+        { 0x6017E896, "Tuning Instance (XML)" },
         { 0x73E93EEB, "Tuning Instance" }
     };
 

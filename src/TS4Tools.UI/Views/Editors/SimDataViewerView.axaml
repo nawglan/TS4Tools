@@ -1,0 +1,79 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.SimDataViewerView"
+             x:DataType="vm:SimDataViewerViewModel">
+
+    <Design.DataContext>
+        <vm:SimDataViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="SimData Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding VersionHex, StringFormat='Version: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding SchemaCount, StringFormat='Schemas: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding DataSize, StringFormat='Size: {0:N0} bytes'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="(Invalid)" IsVisible="{Binding !IsValid}"
+                           VerticalAlignment="Center" Foreground="Red" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid ColumnDefinitions="*,Auto,*">
+            <!-- Left Panel: Header Info and Schemas -->
+            <DockPanel Grid.Column="0">
+                <!-- Header Info -->
+                <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                    <TextBox Text="{Binding HeaderInfo}"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                             FontSize="12"
+                             MinHeight="120"
+                             MaxHeight="160" />
+                </Border>
+
+                <!-- Schemas List -->
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Schemas" FontWeight="SemiBold"
+                               Margin="8,8,8,4" />
+                    <ListBox ItemsSource="{Binding Schemas}" Margin="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Index, StringFormat='[{0}]'}" Opacity="0.5" />
+                                    <TextBlock Text="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </DockPanel>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
+
+            <!-- Right Panel: Hex Preview -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="Raw Data Preview" FontWeight="SemiBold"
+                           Margin="8,8,8,4" />
+                <TextBox Text="{Binding HexPreview}"
+                         IsReadOnly="True"
+                         TextWrapping="NoWrap"
+                         FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                         FontSize="12"
+                         Margin="8,0,8,8" />
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.TextEditorView"
+             x:DataType="vm:TextEditorViewModel">
+
+    <Design.DataContext>
+        <vm:TextEditorViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="Text Editor" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding LineCount, StringFormat='Lines: {0:N0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding CharacterCount, StringFormat='Chars: {0:N0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="(XML)" IsVisible="{Binding IsXml}"
+                               VerticalAlignment="Center" Foreground="{DynamicResource SystemAccentColor}" />
+                    <TextBlock Text="*" IsVisible="{Binding IsModified}"
+                               VerticalAlignment="Center" Foreground="Orange" FontWeight="Bold" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <CheckBox Content="UTF-8 BOM" IsChecked="{Binding HasBom}" VerticalAlignment="Center" />
+                    <Button Content="Apply" Command="{Binding ApplyChangesCommand}"
+                            IsEnabled="{Binding IsModified}" />
+                    <Button Content="Revert" Command="{Binding RevertChangesCommand}"
+                            IsEnabled="{Binding IsModified}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Text Editor -->
+        <TextBox Text="{Binding Text}"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 TextWrapping="NoWrap"
+                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                 FontSize="13" />
+    </DockPanel>
+</UserControl>
