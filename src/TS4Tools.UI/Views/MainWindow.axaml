@@ -19,6 +19,16 @@
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
+                <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
+                    <MenuItem.Styles>
+                        <Style Selector="MenuItem">
+                            <Setter Property="Header" Value="{ReflectionBinding FileName}" />
+                            <Setter Property="Command" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentFileCommand}" />
+                            <Setter Property="CommandParameter" Value="{ReflectionBinding Path}" />
+                            <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Path}" />
+                        </Style>
+                    </MenuItem.Styles>
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="Save _As..." Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" IsEnabled="{Binding HasOpenPackage}" />
@@ -30,6 +40,8 @@
             <MenuItem Header="_Edit">
                 <MenuItem Header="_Undo" InputGesture="Ctrl+Z" IsEnabled="False" />
                 <MenuItem Header="_Redo" InputGesture="Ctrl+Y" IsEnabled="False" />
+                <Separator />
+                <MenuItem Header="_Copy Resource Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
                 <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
@@ -67,7 +79,14 @@
                 <DockPanel>
                     <!-- Filter Box -->
                     <Border DockPanel.Dock="Top" Padding="8">
-                        <TextBox Watermark="Filter resources..." Text="{Binding FilterText}" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Watermark="Filter resources..." Text="{Binding FilterText}" />
+                            <Button Grid.Column="1" Content="{Binding SortMode}"
+                                    Command="{Binding CycleSortModeCommand}"
+                                    ToolTip.Tip="Toggle sort mode"
+                                    Margin="4,0,0,0" Padding="8,4"
+                                    FontSize="11" />
+                        </Grid>
                     </Border>
 
                     <!-- Resource List -->
@@ -76,6 +95,8 @@
                              Margin="0,0,0,0">
                         <ListBox.ContextMenu>
                             <ContextMenu>
+                                <MenuItem Header="_Copy Resource Key" Command="{Binding CopyResourceKeyCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <Separator />
                                 <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <Separator />

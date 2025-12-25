@@ -2,8 +2,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,11 +18,27 @@ using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels;
 
+/// <summary>
+/// Sort modes for the resource list.
+/// </summary>
+public enum ResourceSortMode
+{
+    TypeName,
+    Instance,
+    Size
+}
+
 public partial class MainWindowViewModel : ViewModelBase
 {
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
+
+    private static readonly string RecentFilesPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "TS4Tools", "recent.json");
+
+    private const int MaxRecentFiles = 10;
 
     private DbpfPackage? _package;
 
@@ -64,11 +82,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
 
+    public ObservableCollection<RecentFileViewModel> RecentFiles { get; } = [];
+
+    [ObservableProperty]
+    private ResourceSortMode _sortMode = ResourceSortMode.TypeName;
+
     public MainWindowViewModel()
     {
         PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(FilterText))
+            if (e.PropertyName == nameof(FilterText) || e.PropertyName == nameof(SortMode))
             {
                 ApplyFilter();
             }
@@ -77,6 +100,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 _ = UpdateSelectedResourceDetailsAsync();
             }
         };
+
+        LoadRecentFiles();
     }
 
     [RelayCommand]
@@ -115,6 +140,7 @@ public partial class MainWindowViewModel : ViewModelBase
             Title = $"TS4Tools - {System.IO.Path.GetFileName(path)}";
 
             PopulateResourceList();
+            AddToRecentFiles(path);
 
             StatusMessage = $"Loaded {ResourceCount} resources";
             OnPropertyChanged(nameof(HasOpenPackage));
@@ -147,10 +173,19 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var filter = FilterText.Trim().ToLowerInvariant();
         var filtered = string.IsNullOrEmpty(filter)
-            ? Resources
+            ? Resources.AsEnumerable()
             : Resources.Where(r =>
                 r.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
                 r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+        // Apply sorting
+        filtered = SortMode switch
+        {
+            ResourceSortMode.TypeName => filtered.OrderBy(r => r.TypeName).ThenBy(r => r.Key.Instance),
+            ResourceSortMode.Instance => filtered.OrderBy(r => r.Key.Instance),
+            ResourceSortMode.Size => filtered, // Size would require entry lookup, keep as-is for now
+            _ => filtered
+        };
 
         foreach (var item in filtered)
         {
@@ -579,5 +614,137 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var dialog = new PackageStatsWindow(_package);
         await dialog.ShowDialog(window);
+    }
+
+    [RelayCommand]
+    private async Task CopyResourceKeyAsync()
+    {
+        if (SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var keyString = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+
+        var topLevel = GetTopLevel();
+        if (topLevel?.Clipboard is { } clipboard)
+        {
+            await clipboard.SetTextAsync(keyString);
+            StatusMessage = $"Copied: {keyString}";
+        }
+    }
+
+    [RelayCommand]
+    private void CycleSortMode()
+    {
+        SortMode = SortMode switch
+        {
+            ResourceSortMode.TypeName => ResourceSortMode.Instance,
+            ResourceSortMode.Instance => ResourceSortMode.TypeName,
+            _ => ResourceSortMode.TypeName
+        };
+        StatusMessage = $"Sorting by: {SortMode}";
+    }
+
+    [RelayCommand]
+    private async Task OpenRecentFileAsync(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        if (File.Exists(path))
+        {
+            await LoadPackageAsync(path);
+        }
+        else
+        {
+            StatusMessage = $"File not found: {path}";
+            // Remove from recent files
+            var item = RecentFiles.FirstOrDefault(r => r.Path == path);
+            if (item != null)
+            {
+                RecentFiles.Remove(item);
+                SaveRecentFiles();
+            }
+        }
+    }
+
+    private void LoadRecentFiles()
+    {
+        RecentFiles.Clear();
+
+        try
+        {
+            if (File.Exists(RecentFilesPath))
+            {
+                var json = File.ReadAllText(RecentFilesPath);
+                var paths = JsonSerializer.Deserialize<string[]>(json) ?? [];
+
+                foreach (var path in paths.Take(MaxRecentFiles))
+                {
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        RecentFiles.Add(new RecentFileViewModel(path));
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors loading recent files
+        }
+    }
+
+    private void SaveRecentFiles()
+    {
+        try
+        {
+            var dir = Path.GetDirectoryName(RecentFilesPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            var paths = RecentFiles.Select(r => r.Path).ToArray();
+            var json = JsonSerializer.Serialize(paths);
+            File.WriteAllText(RecentFilesPath, json);
+        }
+        catch
+        {
+            // Ignore errors saving recent files
+        }
+    }
+
+    private void AddToRecentFiles(string path)
+    {
+        // Remove if already exists
+        var existing = RecentFiles.FirstOrDefault(r => r.Path == path);
+        if (existing != null)
+        {
+            RecentFiles.Remove(existing);
+        }
+
+        // Add to front
+        RecentFiles.Insert(0, new RecentFileViewModel(path));
+
+        // Trim to max
+        while (RecentFiles.Count > MaxRecentFiles)
+        {
+            RecentFiles.RemoveAt(RecentFiles.Count - 1);
+        }
+
+        SaveRecentFiles();
+    }
+}
+
+/// <summary>
+/// View model for a recent file entry.
+/// </summary>
+public sealed class RecentFileViewModel
+{
+    public string Path { get; }
+    public string FileName => System.IO.Path.GetFileName(Path);
+    public string Directory => System.IO.Path.GetDirectoryName(Path) ?? "";
+
+    public RecentFileViewModel(string path)
+    {
+        Path = path;
     }
 }
