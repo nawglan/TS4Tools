@@ -24,15 +24,38 @@ public sealed class ResourceItemViewModel : ViewModelBase
 
     public uint FileSize { get; }
 
+    /// <summary>
+    /// Human-readable name for the instance, if available from NameMap.
+    /// </summary>
+    public string? InstanceName { get; }
+
+    /// <summary>
+    /// Whether this resource has a known instance name.
+    /// </summary>
+    public bool HasInstanceName => InstanceName != null;
+
     public string TypeName => KnownTypes.TryGetValue(Key.ResourceType, out var name)
         ? name
         : $"Unknown (0x{Key.ResourceType:X8})";
 
-    public string DisplayKey => $"T: 0x{Key.ResourceType:X8} | G: 0x{Key.ResourceGroup:X8} | I: 0x{Key.Instance:X16}";
+    /// <summary>
+    /// Display string for the instance ID, showing name if available.
+    /// </summary>
+    public string InstanceDisplay => HasInstanceName
+        ? $"{InstanceName}"
+        : $"0x{Key.Instance:X16}";
 
-    public ResourceItemViewModel(ResourceKey key, uint fileSize)
+    /// <summary>
+    /// Full display key with type, group, and instance.
+    /// </summary>
+    public string DisplayKey => HasInstanceName
+        ? $"G: 0x{Key.ResourceGroup:X8} | {InstanceName} (0x{Key.Instance:X16})"
+        : $"G: 0x{Key.ResourceGroup:X8} | I: 0x{Key.Instance:X16}";
+
+    public ResourceItemViewModel(ResourceKey key, uint fileSize, string? instanceName = null)
     {
         Key = key;
         FileSize = fileSize;
+        InstanceName = instanceName;
     }
 }

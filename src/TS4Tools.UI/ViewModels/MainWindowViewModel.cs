@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TS4Tools;
 using TS4Tools.Package;
+using TS4Tools.UI.Services;
 using TS4Tools.UI.ViewModels.Editors;
 using TS4Tools.UI.Views.Dialogs;
 using TS4Tools.UI.Views.Editors;
@@ -31,6 +32,7 @@ public enum ResourceSortMode
 public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
     private bool _disposed;
+    private readonly HashNameService _hashNameService = new();
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
@@ -140,10 +142,16 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             PackagePath = path;
             Title = $"TS4Tools - {System.IO.Path.GetFileName(path)}";
 
+            // Load hash-to-name mappings from NameMap resources
+            await _hashNameService.LoadFromPackageAsync(_package);
+
             PopulateResourceList();
             AddToRecentFiles(path);
 
-            StatusMessage = $"Loaded {ResourceCount} resources";
+            var nameCount = _hashNameService.Count;
+            StatusMessage = nameCount > 0
+                ? $"Loaded {ResourceCount} resources ({nameCount} named)"
+                : $"Loaded {ResourceCount} resources";
             OnPropertyChanged(nameof(HasOpenPackage));
             OnPropertyChanged(nameof(ResourceCount));
         }
@@ -162,7 +170,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         foreach (var entry in _package.Resources)
         {
-            var item = new ResourceItemViewModel(entry.Key, entry.FileSize);
+            var instanceName = _hashNameService.TryGetName(entry.Key.Instance);
+            var item = new ResourceItemViewModel(entry.Key, entry.FileSize, instanceName);
             Resources.Add(item);
             FilteredResources.Add(item);
         }
@@ -177,7 +186,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             ? Resources.AsEnumerable()
             : Resources.Where(r =>
                 r.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                (r.InstanceName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
 
         // Apply sorting
         filtered = SortMode switch
@@ -346,6 +356,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             await _package.DisposeAsync();
             _package = null;
         }
+        _hashNameService.Clear();
         PackagePath = string.Empty;
         Title = "TS4Tools";
         Resources.Clear();
@@ -488,7 +499,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             if (entry != null)
             {
-                var item = new ResourceItemViewModel(key, entry.FileSize);
+                var instanceName = _hashNameService.TryGetName(key.Instance);
+                var item = new ResourceItemViewModel(key, entry.FileSize, instanceName);
                 Resources.Add(item);
                 ApplyFilter();
                 SelectedResource = item;

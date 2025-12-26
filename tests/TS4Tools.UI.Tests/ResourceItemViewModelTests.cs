@@ -102,14 +102,14 @@ public class ResourceItemViewModelTests
     }
 
     [Fact]
-    public void DisplayKey_FormatsCorrectly()
+    public void DisplayKey_WithoutInstanceName_FormatsCorrectly()
     {
         // Arrange
         var key = new ResourceKey(0x12345678, 0xABCDEF01, 0xFEDCBA9876543210);
         var vm = new ResourceItemViewModel(key, 100);
 
         // Act & Assert
-        vm.DisplayKey.Should().Be("T: 0x12345678 | G: 0xABCDEF01 | I: 0xFEDCBA9876543210");
+        vm.DisplayKey.Should().Be("G: 0xABCDEF01 | I: 0xFEDCBA9876543210");
     }
 
     [Fact]
@@ -120,6 +120,76 @@ public class ResourceItemViewModelTests
         var vm = new ResourceItemViewModel(key, 100);
 
         // Act & Assert
-        vm.DisplayKey.Should().Be("T: 0x00000001 | G: 0x00000002 | I: 0x0000000000000003");
+        vm.DisplayKey.Should().Be("G: 0x00000002 | I: 0x0000000000000003");
+    }
+
+    [Fact]
+    public void InstanceName_WhenProvided_IsSet()
+    {
+        // Arrange
+        var key = new ResourceKey(0x220557DA, 0, 0x123456789ABCDEF0);
+        const string instanceName = "trait_Genius";
+
+        // Act
+        var vm = new ResourceItemViewModel(key, 100, instanceName);
+
+        // Assert
+        vm.InstanceName.Should().Be(instanceName);
+        vm.HasInstanceName.Should().BeTrue();
+    }
+
+    [Fact]
+    public void InstanceName_WhenNull_HasInstanceNameIsFalse()
+    {
+        // Arrange
+        var key = new ResourceKey(0x220557DA, 0, 0x123456789ABCDEF0);
+
+        // Act
+        var vm = new ResourceItemViewModel(key, 100);
+
+        // Assert
+        vm.InstanceName.Should().BeNull();
+        vm.HasInstanceName.Should().BeFalse();
+    }
+
+    [Fact]
+    public void InstanceDisplay_WithName_ShowsName()
+    {
+        // Arrange
+        var key = new ResourceKey(0x220557DA, 0, 0x123456789ABCDEF0);
+        const string instanceName = "trait_Genius";
+
+        // Act
+        var vm = new ResourceItemViewModel(key, 100, instanceName);
+
+        // Assert
+        vm.InstanceDisplay.Should().Be("trait_Genius");
+    }
+
+    [Fact]
+    public void InstanceDisplay_WithoutName_ShowsHex()
+    {
+        // Arrange
+        var key = new ResourceKey(0x220557DA, 0, 0x123456789ABCDEF0);
+
+        // Act
+        var vm = new ResourceItemViewModel(key, 100);
+
+        // Assert
+        vm.InstanceDisplay.Should().Be("0x123456789ABCDEF0");
+    }
+
+    [Fact]
+    public void DisplayKey_WithInstanceName_ShowsNameAndHex()
+    {
+        // Arrange
+        var key = new ResourceKey(0x220557DA, 0x12345678, 0xABCDEF0123456789);
+        const string instanceName = "simlish_strings";
+
+        // Act
+        var vm = new ResourceItemViewModel(key, 100, instanceName);
+
+        // Assert
+        vm.DisplayKey.Should().Be("G: 0x12345678 | simlish_strings (0xABCDEF0123456789)");
     }
 }
