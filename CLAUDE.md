@@ -68,6 +68,45 @@ Before implementing ANY feature:
 - Nullable reference types with explicit handling
 - `Span<T>`/`Memory<T>` for efficient binary processing
 
+### Event Subscription Management
+
+Always track and unsubscribe event handlers to prevent memory leaks:
+
+```csharp
+// BAD - lambda subscriptions in loops are never unsubscribed
+foreach (var item in items)
+{
+    var vm = new ItemViewModel(item);
+    vm.PropertyChanged += (s, e) => { /* handle */ };  // Memory leak!
+    _viewModels.Add(vm);
+}
+
+// GOOD - track subscriptions for cleanup
+private readonly List<(ItemViewModel VM, PropertyChangedEventHandler Handler)> _subscriptions = [];
+
+private void LoadItems()
+{
+    ClearSubscriptions();  // Clean up previous subscriptions
+    foreach (var item in items)
+    {
+        var vm = new ItemViewModel(item);
+        PropertyChangedEventHandler handler = (s, e) => { /* handle */ };
+        vm.PropertyChanged += handler;
+        _subscriptions.Add((vm, handler));
+        _viewModels.Add(vm);
+    }
+}
+
+private void ClearSubscriptions()
+{
+    foreach (var (vm, handler) in _subscriptions)
+        vm.PropertyChanged -= handler;
+    _subscriptions.Clear();
+}
+```
+
+This pattern is critical in MVVM ViewModels where child ViewModels are created dynamically.
+
 ### Security for .package Parsing
 
 Never trust file values without validation:
