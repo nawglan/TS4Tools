@@ -56,6 +56,13 @@ public partial class NameMapEditorViewModel : ViewModelBase
         foreach (var (hash, name) in _resource)
         {
             var vm = new NameMapEntryViewModel(hash, name);
+            vm.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == nameof(NameMapEntryViewModel.Name) && sender is NameMapEntryViewModel changedEntry)
+                {
+                    _resource[changedEntry.Hash] = changedEntry.Name;
+                }
+            };
             Entries.Add(vm);
             FilteredEntries.Add(vm);
         }

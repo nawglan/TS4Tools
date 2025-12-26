@@ -56,6 +56,13 @@ public partial class StblEditorViewModel : ViewModelBase
         foreach (var entry in _resource.Entries)
         {
             var vm = new StblEntryViewModel(entry.KeyHash, entry.Value);
+            vm.PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == nameof(StblEntryViewModel.Value) && sender is StblEntryViewModel changedEntry)
+                {
+                    _resource[changedEntry.KeyHash] = changedEntry.Value;
+                }
+            };
             Entries.Add(vm);
             FilteredEntries.Add(vm);
         }
