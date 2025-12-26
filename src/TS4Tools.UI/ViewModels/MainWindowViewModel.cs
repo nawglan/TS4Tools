@@ -161,7 +161,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         foreach (var entry in _package.Resources)
         {
-            var item = new ResourceItemViewModel(entry.Key);
+            var item = new ResourceItemViewModel(entry.Key, entry.FileSize);
             Resources.Add(item);
             FilteredResources.Add(item);
         }
@@ -183,7 +183,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             ResourceSortMode.TypeName => filtered.OrderBy(r => r.TypeName).ThenBy(r => r.Key.Instance),
             ResourceSortMode.Instance => filtered.OrderBy(r => r.Key.Instance),
-            ResourceSortMode.Size => filtered, // Size would require entry lookup, keep as-is for now
+            ResourceSortMode.Size => filtered.OrderByDescending(r => r.FileSize),
             _ => filtered
         };
 
@@ -487,7 +487,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             if (entry != null)
             {
-                var item = new ResourceItemViewModel(key);
+                var item = new ResourceItemViewModel(key, entry.FileSize);
                 Resources.Add(item);
                 ApplyFilter();
                 SelectedResource = item;

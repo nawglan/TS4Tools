@@ -22,14 +22,17 @@ public sealed class ResourceItemViewModel : ViewModelBase
 
     public ResourceKey Key { get; }
 
+    public uint FileSize { get; }
+
     public string TypeName => KnownTypes.TryGetValue(Key.ResourceType, out var name)
         ? name
         : $"Unknown (0x{Key.ResourceType:X8})";
 
     public string DisplayKey => $"T: 0x{Key.ResourceType:X8} | G: 0x{Key.ResourceGroup:X8} | I: 0x{Key.Instance:X16}";
 
-    public ResourceItemViewModel(ResourceKey key)
+    public ResourceItemViewModel(ResourceKey key, uint fileSize)
     {
         Key = key;
+        FileSize = fileSize;
     }
 }
