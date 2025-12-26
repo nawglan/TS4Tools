@@ -6,6 +6,22 @@ namespace TS4Tools.Package;
 /// <summary>
 /// Writes a package to a stream.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs
+///
+/// Saving logic - SaveAs(Stream) (lines 96-174):
+/// - Write header first (line 99)
+/// - Write all resource data with updated offsets (lines 102-147)
+/// - Write index at current position (lines 149-156)
+/// - Update header fields: indexcount, indexsize, indexposition (lines 158-166)
+///
+/// Index type optimization (lines 101-111):
+/// - Analyzes unique Type/Group/InstanceHigh values
+/// - Sets flags to store common values in index header
+/// - 0x01: Type shared, 0x02: Group shared, 0x04: InstanceHigh shared
+///
+/// FileSize bit 31 must always be set when writing (ResourceIndexEntry.cs line 99).
+/// </remarks>
 internal sealed class PackageWriter
 {
     private readonly DbpfPackage _package;

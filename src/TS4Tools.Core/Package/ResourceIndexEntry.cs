@@ -5,6 +5,24 @@ namespace TS4Tools.Package;
 /// <summary>
 /// Implementation of a resource index entry.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs
+///
+/// Entry layout (32 bytes when fully expanded):
+/// - Type (4 bytes) - lines 51-55
+/// - Group (4 bytes) - lines 61-65
+/// - Instance (8 bytes: high << 32 | low) - lines 71-80
+/// - ChunkOffset (4 bytes) - lines 86-90
+/// - FileSize (4 bytes, bit 31 always set, mask with 0x7FFFFFFF) - lines 96-100
+/// - MemSize (4 bytes) - lines 106-110
+/// - Compressed (2 bytes) - lines 116-120
+/// - Unknown2 (2 bytes, always 1) - lines 126-130
+///
+/// Index type flags optimize storage (PackageIndex.cs lines 35-46):
+/// - 0x01: Type stored in index header
+/// - 0x02: Group stored in index header
+/// - 0x04: InstanceHigh stored in index header
+/// </remarks>
 internal sealed class ResourceIndexEntry : IMutableResourceIndexEntry
 {
     private ResourceKey _key;

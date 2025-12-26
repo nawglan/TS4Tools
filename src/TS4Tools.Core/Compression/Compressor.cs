@@ -5,6 +5,17 @@ namespace TS4Tools.Compression;
 /// <summary>
 /// Handles compression of resource data.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi/Package/Compression.cs
+///
+/// Compression logic - CompressStream() and _compress() (lines 189-230):
+/// - Uses DeflaterOutputStream from SharpZipLib
+/// - Only compresses if result is smaller than input (lines 216-226)
+/// - New implementation uses .NET ZLibStream
+///
+/// Compression type marker 0x5A42 ("ZB") is used in index entries
+/// to indicate ZLIB-compressed resources.
+/// </remarks>
 internal static class Compressor
 {
     /// <summary>

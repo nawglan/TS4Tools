@@ -5,6 +5,26 @@ namespace TS4Tools.Compression;
 /// <summary>
 /// Handles decompression of resource data.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi/Package/Compression.cs
+///
+/// Compression detection (lines 49-60):
+/// - byte[0] == 0x78: ZLIB/DEFLATE (Sims 4 primary format)
+/// - byte[1] == 0xFB: RefPack/QFS (legacy EA format)
+///
+/// ZLIB decompression (lines 62-75):
+/// - Uses InflaterInputStream from SharpZipLib
+/// - New implementation uses .NET ZLibStream
+///
+/// RefPack decompression - OldDecompress() (lines 92-168):
+/// - Size encoding: compressionType != 0x80 → 3-byte size, else 4-byte size (lines 96-104)
+/// - Control byte ranges:
+///   - 0x00-0x7F: 2-byte command (lines 110-121)
+///   - 0x80-0xBF: 3-byte command (lines 123-135)
+///   - 0xC0-0xDF: 4-byte command (lines 136-149)
+///   - 0xE0-0xFB: Plain text run (lines 150-156)
+///   - 0xFC-0xFF: End marker (lines 158-164)
+/// </remarks>
 internal static class Decompressor
 {
     /// <summary>

@@ -7,6 +7,22 @@ namespace TS4Tools.Package;
 /// <summary>
 /// Implementation of a DBPF package file.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs
+///
+/// Header format (96 bytes):
+/// - Offset 0: Magic "DBPF" (lines 593)
+/// - Offset 4: Major version = 2 (lines 594)
+/// - Offset 8: Minor version = 1 (lines 595)
+/// - Offset 36: Index count (line 601)
+/// - Offset 40: Index position low (line 604)
+/// - Offset 44: Index size (line 602)
+/// - Offset 60: Unused4 = 3 (lines 596, 603)
+/// - Offset 64: Index position (line 604)
+///
+/// Reading flow: constructor → CheckHeader() → Index property (lines 547-636)
+/// Saving flow: SavePackage() → SaveAs() (lines 54-174)
+/// </remarks>
 public sealed class DbpfPackage : IMutablePackage
 {
     private readonly Stream? _stream;
