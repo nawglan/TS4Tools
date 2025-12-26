@@ -162,6 +162,9 @@ public sealed class DbpfPackage : IMutablePackage
         if (indexPosition < PackageLimits.HeaderSize || indexPosition > _stream.Length)
             throw new PackageFormatException($"Invalid index position: {indexPosition}");
 
+        // TODO: Validate indexSize against PackageLimits.MaxResourceSize before allocation
+        // to prevent OOM from malformed files with very large index size values
+
         // Read entire index into memory
         _stream.Position = indexPosition;
         var indexData = new byte[indexSize];
@@ -277,6 +280,9 @@ public sealed class DbpfPackage : IMutablePackage
 
         if (_stream == null)
             throw new InvalidOperationException("Package has no backing stream.");
+
+        // TODO: Validate rie.FileSize against PackageLimits.MaxResourceSize before allocation
+        // to prevent OOM from malformed files with very large resource size values
 
         // Read from stream
         _stream.Position = rie.ChunkOffset;

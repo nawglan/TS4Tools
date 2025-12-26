@@ -68,6 +68,7 @@ internal sealed class PackageWriter
             }
 
             var newEntry = entry.Clone();
+            // TODO: Add overflow checks for these casts - files > 4GB will cause silent data loss
             newEntry.ChunkOffset = (uint)output.Position;
             newEntry.MemorySize = (uint)resourceData.Length;
 

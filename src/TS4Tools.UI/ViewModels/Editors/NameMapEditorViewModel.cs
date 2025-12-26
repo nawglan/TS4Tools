@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -11,6 +12,7 @@ namespace TS4Tools.UI.ViewModels.Editors;
 public partial class NameMapEditorViewModel : ViewModelBase
 {
     private NameMapResource? _resource;
+    private readonly List<(NameMapEntryViewModel ViewModel, PropertyChangedEventHandler Handler)> _subscriptions = [];
 
     [ObservableProperty]
     private string _filterText = string.Empty;
@@ -46,8 +48,18 @@ public partial class NameMapEditorViewModel : ViewModelBase
         RefreshEntries();
     }
 
+    private void ClearSubscriptions()
+    {
+        foreach (var (viewModel, handler) in _subscriptions)
+        {
+            viewModel.PropertyChanged -= handler;
+        }
+        _subscriptions.Clear();
+    }
+
     private void RefreshEntries()
     {
+        ClearSubscriptions();
         Entries.Clear();
         FilteredEntries.Clear();
 
@@ -56,13 +68,15 @@ public partial class NameMapEditorViewModel : ViewModelBase
         foreach (var (hash, name) in _resource)
         {
             var vm = new NameMapEntryViewModel(hash, name);
-            vm.PropertyChanged += (sender, e) =>
+            PropertyChangedEventHandler handler = (sender, e) =>
             {
                 if (e.PropertyName == nameof(NameMapEntryViewModel.Name) && sender is NameMapEntryViewModel changedEntry)
                 {
                     _resource[changedEntry.Hash] = changedEntry.Name;
                 }
             };
+            vm.PropertyChanged += handler;
+            _subscriptions.Add((vm, handler));
             Entries.Add(vm);
             FilteredEntries.Add(vm);
         }

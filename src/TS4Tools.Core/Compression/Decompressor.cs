@@ -73,6 +73,12 @@ internal static class Decompressor
         int offset = 1; // Skip the already-read byte1 (0xFB marker)
         bool isLargeSize = compressionType != 0x80;
 
+        // Validate we have enough bytes for the header
+        int headerBytesNeeded = isLargeSize ? 4 : 5; // 1 (already read) + 3 or 4 for size
+        if (compressed.Length < headerBytesNeeded)
+            throw new PackageFormatException(
+                $"RefPack data too short for header. Need {headerBytesNeeded} bytes, got {compressed.Length}.");
+
         // Read uncompressed size (big-endian, 3 or 4 bytes depending on type)
         int uncompressedSize;
         if (isLargeSize)
@@ -94,6 +100,11 @@ internal static class Decompressor
                 compressed[offset + 3];
             offset += 4;
         }
+
+        // Validate uncompressed size before allocation to prevent OOM attacks
+        if (uncompressedSize < 0 || uncompressedSize > PackageLimits.MaxResourceSize)
+            throw new PackageFormatException(
+                $"RefPack uncompressed size {uncompressedSize} exceeds maximum allowed {PackageLimits.MaxResourceSize}.");
 
         var result = new byte[uncompressedSize];
         int resultPos = 0;

@@ -28,6 +28,7 @@ public enum ResourceSortMode
     Size
 }
 
+// TODO: Implement IAsyncDisposable to ensure DbpfPackage is disposed when window closes without explicit ClosePackage
 public partial class MainWindowViewModel : ViewModelBase
 {
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
@@ -97,6 +98,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else if (e.PropertyName == nameof(SelectedResource))
             {
+                // TODO: Add error handling for fire-and-forget async - consider .ContinueWith() for exception logging
                 _ = UpdateSelectedResourceDetailsAsync();
             }
         };
@@ -359,6 +361,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (!string.IsNullOrEmpty(PackagePath))
         {
+            // TODO: Add error handling for fire-and-forget async - consider async command or .ContinueWith()
             _ = LoadPackageAsync(PackagePath);
         }
     }
@@ -638,7 +641,8 @@ public partial class MainWindowViewModel : ViewModelBase
         SortMode = SortMode switch
         {
             ResourceSortMode.TypeName => ResourceSortMode.Instance,
-            ResourceSortMode.Instance => ResourceSortMode.TypeName,
+            ResourceSortMode.Instance => ResourceSortMode.Size,
+            ResourceSortMode.Size => ResourceSortMode.TypeName,
             _ => ResourceSortMode.TypeName
         };
         StatusMessage = $"Sorting by: {SortMode}";
@@ -688,7 +692,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch
         {
-            // Ignore errors loading recent files
+            // TODO: Consider logging recent files loading errors for diagnostics instead of silent swallowing
         }
     }
 
@@ -708,7 +712,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch
         {
-            // Ignore errors saving recent files
+            // TODO: Consider logging recent files saving errors for diagnostics instead of silent swallowing
         }
     }
 

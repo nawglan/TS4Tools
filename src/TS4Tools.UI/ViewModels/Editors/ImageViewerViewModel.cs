@@ -48,6 +48,8 @@ public partial class ImageViewerViewModel : ViewModelBase
         {
             try
             {
+                // TODO: Verify Avalonia Bitmap copies data from stream. If not, stream must be kept alive
+                // with the ViewModel lifetime to avoid potential issues with disposed stream access.
                 using var stream = new MemoryStream(resource.ImageData.ToArray());
                 Image = new Bitmap(stream);
                 IsPreviewAvailable = true;
