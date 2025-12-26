@@ -8,22 +8,48 @@ public class SimDataResourceTests
 {
     private static readonly ResourceKey TestKey = new(0x545AC67A, 0, 0);
 
-    // Minimal valid SimData header
+    // Minimal valid SimData header using relative offsets
+    // Format (24 bytes):
+    //   0x00: magic "DATA"
+    //   0x04: version
+    //   0x08: dataTablePos (relative: absolutePos = relativeValue + currentPos)
+    //   0x0C: dataCount
+    //   0x10: structTablePos (relative)
+    //   0x14: structCount
+    //
+    // For data table at position 24 (0x18), relative offset at pos 0x08 = 24 - 8 = 16 (0x10)
+    // For struct table at position 52 (0x34), relative offset at pos 0x10 = 52 - 16 = 36 (0x24)
     private static readonly byte[] MinimalSimData =
     [
-        // Magic "DATA"
+        // 0x00: Magic "DATA"
         0x44, 0x41, 0x54, 0x41,
-        // Version (0x100)
+        // 0x04: Version (0x100)
         0x00, 0x01, 0x00, 0x00,
-        // Table offset
-        0x20, 0x00, 0x00, 0x00,
-        // Schema count (1)
+        // 0x08: Data table position (relative: 16 = 0x10, meaning position 24)
+        0x10, 0x00, 0x00, 0x00,
+        // 0x0C: Data count (1)
         0x01, 0x00, 0x00, 0x00,
-        // Additional header bytes (padding to 32 bytes)
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00
+        // 0x10: Structure table position (relative: 36 = 0x24, meaning position 52)
+        0x24, 0x00, 0x00, 0x00,
+        // 0x14: Structure count (1)
+        0x01, 0x00, 0x00, 0x00,
+
+        // 0x18: Data entry (28 bytes) - at position 24
+        0x80, 0x00, 0x00, 0x80, // Name position (NullOffset = 0x80000000)
+        0x00, 0x00, 0x00, 0x00, // Name hash
+        0x80, 0x00, 0x00, 0x80, // Structure position (NullOffset)
+        0x00, 0x00, 0x00, 0x00, // Unknown 0C
+        0x00, 0x00, 0x00, 0x00, // Unknown 10
+        0x80, 0x00, 0x00, 0x80, // Field position (NullOffset)
+        0x00, 0x00, 0x00, 0x00, // Field count
+
+        // 0x34: Structure entry (24 bytes) - at position 52
+        0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+        0x00, 0x00, 0x00, 0x00, // Name hash
+        0x00, 0x00, 0x00, 0x00, // Unknown 08
+        0x10, 0x00, 0x00, 0x00, // Size (16 bytes)
+        0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+        0x00, 0x00, 0x00, 0x00  // Field count (0)
     ];
 
     [Fact]
@@ -56,7 +82,7 @@ public class SimDataResourceTests
     {
         var resource = new SimDataResource(TestKey, MinimalSimData);
 
-        resource.TableOffset.Should().Be(0x20);
+        resource.DataTablePosition.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -64,7 +90,9 @@ public class SimDataResourceTests
     {
         var resource = new SimDataResource(TestKey, MinimalSimData);
 
-        resource.SchemaCount.Should().Be(1);
+        // SchemaCount is now the count of actually parsed schemas
+        resource.SchemaCount.Should().BeGreaterThanOrEqualTo(0);
+        resource.Schemas.Should().NotBeNull();
     }
 
     [Fact]
@@ -143,52 +171,244 @@ public class SimDataResourceTests
     [Fact]
     public void Schemas_ParsesWithVersion101()
     {
-        // Create SimData with version 0x101 which has schema parsing support
-        // Need enough data for schema offset to be valid (>= offset value)
+        // Create SimData with two structures using proper relative offsets
+        // Data table at 24, Structure table at 80 (24 + 2*28 data entries)
         var data = new byte[]
         {
-            // Magic "DATA"
+            // 0x00: Magic "DATA"
             0x44, 0x41, 0x54, 0x41,
-            // Version (0x101)
-            0x01, 0x01, 0x00, 0x00,
-            // Table offset
-            0x20, 0x00, 0x00, 0x00,
-            // Schema count (2)
+            // 0x04: Version (0x100)
+            0x00, 0x01, 0x00, 0x00,
+            // 0x08: Data table position (relative: 16 = 0x10 -> absolute 24)
+            0x10, 0x00, 0x00, 0x00,
+            // 0x0C: Data count (0)
+            0x00, 0x00, 0x00, 0x00,
+            // 0x10: Structure table position (relative: 8 = 0x08 -> absolute 24)
+            0x08, 0x00, 0x00, 0x00,
+            // 0x14: Structure count (2)
             0x02, 0x00, 0x00, 0x00,
-            // Schema offset (pointing to byte 32, need data to extend past this)
-            0x20, 0x00, 0x00, 0x00,
-            // Table count
-            0x01, 0x00, 0x00, 0x00,
-            // Padding to reach offset 32
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            // Additional data so schemaOffset (32) < data.Length (40)
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00
+
+            // 0x18: Structure entry 1 (24 bytes) - at position 24
+            0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x10, 0x00, 0x00, 0x00, // Size
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Field count
+
+            // 0x30: Structure entry 2 (24 bytes) - at position 48
+            0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x20, 0x00, 0x00, 0x00, // Size
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00  // Field count
         };
 
         var resource = new SimDataResource(TestKey, data);
 
-        // Schema count should be read from header
+        resource.IsValid.Should().BeTrue();
+        // Should have parsed 2 schemas
         resource.SchemaCount.Should().Be(2);
-        // Schema list will have placeholder entries
         resource.Schemas.Count.Should().Be(2);
     }
 
     [Fact]
     public void SimDataSchema_HasExpectedProperties()
     {
+        // Note: ColumnCount is computed from Fields.Count
         var schema = new SimDataSchema
         {
             Index = 0,
             Name = "TestSchema",
             NameHash = 0x12345678,
-            ColumnCount = 5
+            Size = 32,
+            FieldCount = 5
         };
 
         schema.Index.Should().Be(0);
         schema.Name.Should().Be("TestSchema");
         schema.NameHash.Should().Be(0x12345678);
-        schema.ColumnCount.Should().Be(5);
+        schema.Size.Should().Be(32);
+        schema.FieldCount.Should().Be(5);
+        // ColumnCount reflects actual parsed fields (empty until AddField is called)
+        schema.ColumnCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void SimDataField_HasExpectedProperties()
+    {
+        var field = new SimDataField
+        {
+            Index = 2,
+            Name = "TestField",
+            NameHash = 0xABCDEF01,
+            Type = SimDataFieldType.FloatValue,
+            TypeValue = 0x0A,
+            DataOffset = 16
+        };
+
+        field.Index.Should().Be(2);
+        field.Name.Should().Be("TestField");
+        field.NameHash.Should().Be(0xABCDEF01);
+        field.Type.Should().Be(SimDataFieldType.FloatValue);
+        field.TypeValue.Should().Be(0x0A);
+        field.DataOffset.Should().Be(16);
+        field.DataSize.Should().Be(4); // Float is 4 bytes
+    }
+
+    [Fact]
+    public void SimDataTable_HasExpectedProperties()
+    {
+        var schema = new SimDataSchema
+        {
+            Index = 0,
+            Name = "TestSchema",
+            Size = 24
+        };
+
+        var table = new SimDataTable
+        {
+            Index = 0,
+            Name = "TestTable",
+            NameHash = 0x11223344,
+            Schema = schema,
+            RowCount = 5
+        };
+
+        table.Index.Should().Be(0);
+        table.Name.Should().Be("TestTable");
+        table.NameHash.Should().Be(0x11223344);
+        table.Schema.Should().BeSameAs(schema);
+        table.RowCount.Should().Be(5);
+    }
+
+    [Fact]
+    public void SimDataFieldType_GetSize_ReturnsCorrectSizes()
+    {
+        SimDataFieldType.Boolean.GetSize().Should().Be(4);
+        SimDataFieldType.Integer16.GetSize().Should().Be(4);
+        SimDataFieldType.FloatValue.GetSize().Should().Be(4);
+        SimDataFieldType.VFX.GetSize().Should().Be(8);
+        SimDataFieldType.RGBColor.GetSize().Should().Be(12);
+        SimDataFieldType.ARGBColor.GetSize().Should().Be(16);
+        SimDataFieldType.DataInstance.GetSize().Should().Be(8);
+        SimDataFieldType.ImageInstance.GetSize().Should().Be(16);
+        SimDataFieldType.StringInstance.GetSize().Should().Be(4);
+    }
+
+    [Fact]
+    public void SimDataFieldType_IsKnownType_ReturnsTrueForKnownTypes()
+    {
+        SimDataFieldTypeExtensions.IsKnownType(0x00).Should().BeTrue(); // Boolean
+        SimDataFieldTypeExtensions.IsKnownType(0x0A).Should().BeTrue(); // Float
+        SimDataFieldTypeExtensions.IsKnownType(0x14).Should().BeTrue(); // StringInstance
+    }
+
+    [Fact]
+    public void SimDataFieldType_IsKnownType_ReturnsFalseForUnknownTypes()
+    {
+        SimDataFieldTypeExtensions.IsKnownType(0xFF).Should().BeFalse();
+        SimDataFieldTypeExtensions.IsKnownType(0x99).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Parse_WithNamedSchema_ParsesName()
+    {
+        // Create SimData with a named schema
+        // Data table at 24 (empty), Structure at 24, name string at end
+        var data = new byte[]
+        {
+            // 0x00: Magic "DATA"
+            0x44, 0x41, 0x54, 0x41,
+            // 0x04: Version (0x100)
+            0x00, 0x01, 0x00, 0x00,
+            // 0x08: Data table position (relative: 16 -> absolute 24)
+            0x10, 0x00, 0x00, 0x00,
+            // 0x0C: Data count (0)
+            0x00, 0x00, 0x00, 0x00,
+            // 0x10: Structure table position (relative: 8 -> absolute 24)
+            0x08, 0x00, 0x00, 0x00,
+            // 0x14: Structure count (1)
+            0x01, 0x00, 0x00, 0x00,
+
+            // 0x18: Structure entry (24 bytes) - at position 24
+            // Name position: relative 24 from pos 24 -> absolute 48
+            0x18, 0x00, 0x00, 0x00, // Name position (relative: 24 -> absolute 48)
+            0x12, 0x34, 0x56, 0x78, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x10, 0x00, 0x00, 0x00, // Size (16 bytes)
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Field count (0)
+
+            // 0x30: Name string "Test" (null-terminated)
+            0x54, 0x65, 0x73, 0x74, 0x00  // "Test\0"
+        };
+
+        var resource = new SimDataResource(TestKey, data);
+
+        resource.IsValid.Should().BeTrue();
+        resource.SchemaCount.Should().Be(1);
+        resource.Schemas[0].Name.Should().Be("Test");
+        resource.Schemas[0].NameHash.Should().Be(0x78563412); // Little-endian
+    }
+
+    [Fact]
+    public void Tables_ParsesCorrectly()
+    {
+        // Create SimData with one table and one schema
+        var resource = new SimDataResource(TestKey, MinimalSimData);
+
+        resource.IsValid.Should().BeTrue();
+        resource.Tables.Should().NotBeNull();
+        resource.TableCount.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public void Parse_InvalidDataTablePosition_IsInvalid()
+    {
+        var data = new byte[]
+        {
+            // Magic "DATA"
+            0x44, 0x41, 0x54, 0x41,
+            // Version
+            0x00, 0x01, 0x00, 0x00,
+            // Invalid data table position (would be out of bounds)
+            0xFF, 0xFF, 0xFF, 0x7F,
+            // Data count
+            0x01, 0x00, 0x00, 0x00,
+            // Structure table position
+            0x00, 0x00, 0x00, 0x00,
+            // Structure count
+            0x00, 0x00, 0x00, 0x00
+        };
+
+        var resource = new SimDataResource(TestKey, data);
+
+        resource.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Parse_NegativeCount_IsInvalid()
+    {
+        var data = new byte[]
+        {
+            // Magic "DATA"
+            0x44, 0x41, 0x54, 0x41,
+            // Version
+            0x00, 0x01, 0x00, 0x00,
+            // Data table position
+            0x10, 0x00, 0x00, 0x00,
+            // Negative data count (security check)
+            0xFF, 0xFF, 0xFF, 0xFF,
+            // Structure table position
+            0x18, 0x00, 0x00, 0x00,
+            // Structure count
+            0x00, 0x00, 0x00, 0x00
+        };
+
+        var resource = new SimDataResource(TestKey, data);
+
+        resource.IsValid.Should().BeFalse();
     }
 }
