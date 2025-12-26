@@ -215,6 +215,33 @@ public class DbpfPackageTests
             .WithMessage("*end of file*header*");
     }
 
+    [Fact]
+    public async Task OpenAsync_OversizedIndexSize_ThrowsPackageFormatException()
+    {
+        // Create a package header with an invalid index size (> MaxResourceSize)
+        var header = CreateHeaderWithIndexSize(PackageLimits.MaxResourceSize + 1, indexCount: 1);
+        using var stream = new MemoryStream(header);
+
+        var act = async () => await DbpfPackage.OpenAsync(stream);
+
+        await act.Should().ThrowAsync<PackageFormatException>()
+            .WithMessage("*index size*");
+    }
+
+    [Fact]
+    public async Task OpenAsync_IndexSizeExceedsFileLength_ThrowsPackageFormatException()
+    {
+        // Create a package header where index size claims more bytes than file contains
+        // Header is 96 bytes, index position is at 96, but we claim 1000 bytes
+        var header = CreateHeaderWithIndexSize(1000, indexCount: 1);
+        using var stream = new MemoryStream(header);
+
+        var act = async () => await DbpfPackage.OpenAsync(stream);
+
+        await act.Should().ThrowAsync<PackageFormatException>()
+            .WithMessage("*exceeds*");
+    }
+
     private static byte[] GenerateTestData(int size)
     {
         var data = new byte[size];
@@ -224,5 +251,34 @@ public class DbpfPackageTests
             data[i] = (byte)(i % 256);
         }
         return data;
+    }
+
+    /// <summary>
+    /// Creates a valid DBPF header with a specified index size for testing validation.
+    /// </summary>
+    private static byte[] CreateHeaderWithIndexSize(int indexSize, int indexCount)
+    {
+        var header = new byte[PackageLimits.HeaderSize];
+
+        // DBPF magic
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(0), PackageLimits.Magic);
+
+        // Version 2.1
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(4), 2);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(8), 1);
+
+        // Index count at offset 36
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(36), indexCount);
+
+        // Index size at offset 44
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(44), indexSize);
+
+        // Index type flags at offset 60
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(60), 3);
+
+        // Index position at offset 64 (right after header)
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(64), PackageLimits.HeaderSize);
+
+        return header;
     }
 }

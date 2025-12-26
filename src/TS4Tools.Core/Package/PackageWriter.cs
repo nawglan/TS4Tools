@@ -12,6 +12,17 @@ internal sealed class PackageWriter
     private readonly List<ResourceIndexEntry> _resources;
     private readonly Stream? _sourceStream;
 
+    /// <summary>
+    /// Converts a long value to uint with overflow checking for DBPF 4GB limit.
+    /// </summary>
+    private static uint ToUInt32Checked(long value, string fieldName)
+    {
+        if (value < 0 || value > uint.MaxValue)
+            throw new PackageFormatException(
+                $"{fieldName} ({value:N0}) exceeds 32-bit limit. DBPF format is limited to 4GB.");
+        return (uint)value;
+    }
+
     public PackageWriter(DbpfPackage package, List<ResourceIndexEntry> resources, Stream? sourceStream)
     {
         _package = package;
@@ -68,18 +79,16 @@ internal sealed class PackageWriter
             }
 
             var newEntry = entry.Clone();
-            // TODO: Add overflow checks for these casts - files > 4GB will cause silent data loss
-            newEntry.ChunkOffset = (uint)output.Position;
-            newEntry.MemorySize = (uint)resourceData.Length;
+            newEntry.ChunkOffset = ToUInt32Checked(output.Position, "Chunk offset");
+            newEntry.MemorySize = ToUInt32Checked(resourceData.Length, "Memory size");
+            newEntry.FileSize = ToUInt32Checked(dataToWrite.Length, "File size");
 
             if (isCompressed)
             {
-                newEntry.FileSize = (uint)dataToWrite.Length;
                 newEntry.CompressionType = Compressor.ZlibCompressionType;
             }
             else
             {
-                newEntry.FileSize = (uint)dataToWrite.Length;
                 newEntry.CompressionType = Compressor.NoCompression;
             }
 
@@ -107,6 +116,9 @@ internal sealed class PackageWriter
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 
         output.Position = 64; // Index position
+        if (indexPosition > int.MaxValue)
+            throw new PackageFormatException(
+                $"Index position ({indexPosition:N0}) exceeds 32-bit limit. DBPF format is limited to 4GB.");
         BinaryPrimitives.WriteInt32LittleEndian(buffer, (int)indexPosition);
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 

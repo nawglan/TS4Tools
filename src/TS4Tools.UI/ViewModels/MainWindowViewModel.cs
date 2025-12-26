@@ -28,9 +28,9 @@ public enum ResourceSortMode
     Size
 }
 
-// TODO: Implement IAsyncDisposable to ensure DbpfPackage is disposed when window closes without explicit ClosePackage
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
+    private bool _disposed;
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
@@ -98,8 +98,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else if (e.PropertyName == nameof(SelectedResource))
             {
-                // TODO: Add error handling for fire-and-forget async - consider .ContinueWith() for exception logging
-                _ = UpdateSelectedResourceDetailsAsync();
+                ExecuteAsync(UpdateSelectedResourceDetailsAsync, "Error loading resource");
             }
         };
 
@@ -357,12 +356,11 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Refresh()
+    private async Task RefreshAsync()
     {
         if (!string.IsNullOrEmpty(PackagePath))
         {
-            // TODO: Add error handling for fire-and-forget async - consider async command or .ContinueWith()
-            _ = LoadPackageAsync(PackagePath);
+            await LoadPackageAsync(PackagePath);
         }
     }
 
@@ -690,9 +688,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // TODO: Consider logging recent files loading errors for diagnostics instead of silent swallowing
+            System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to load recent files: {ex.Message}");
         }
     }
 
@@ -710,9 +708,9 @@ public partial class MainWindowViewModel : ViewModelBase
             var json = JsonSerializer.Serialize(paths);
             File.WriteAllText(RecentFilesPath, json);
         }
-        catch
+        catch (Exception ex)
         {
-            // TODO: Consider logging recent files saving errors for diagnostics instead of silent swallowing
+            System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to save recent files: {ex.Message}");
         }
     }
 
@@ -735,6 +733,34 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         SaveRecentFiles();
+    }
+
+    /// <summary>
+    /// Executes an async task with error handling, updating StatusMessage on failure.
+    /// </summary>
+    private async void ExecuteAsync(Func<Task> asyncAction, string errorPrefix = "Error")
+    {
+        try
+        {
+            await asyncAction().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"{errorPrefix}: {ex}");
+            StatusMessage = $"{errorPrefix}: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Disposes the package when the window closes without explicit ClosePackage.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        await CloseCurrentPackageAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
     }
 }
 

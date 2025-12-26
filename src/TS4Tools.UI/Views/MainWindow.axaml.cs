@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using TS4Tools.UI.ViewModels;
 
@@ -9,5 +10,14 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainWindowViewModel();
+        Closed += OnWindowClosed;
+    }
+
+    private async void OnWindowClosed(object? sender, EventArgs e)
+    {
+        if (DataContext is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync().ConfigureAwait(false);
+        }
     }
 }

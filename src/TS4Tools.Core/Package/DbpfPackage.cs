@@ -162,8 +162,16 @@ public sealed class DbpfPackage : IMutablePackage
         if (indexPosition < PackageLimits.HeaderSize || indexPosition > _stream.Length)
             throw new PackageFormatException($"Invalid index position: {indexPosition}");
 
-        // TODO: Validate indexSize against PackageLimits.MaxResourceSize before allocation
-        // to prevent OOM from malformed files with very large index size values
+        // Validate index size to prevent OOM from malformed files
+        if (indexSize < 0 || indexSize > PackageLimits.MaxResourceSize)
+            throw new PackageFormatException(
+                $"Invalid index size: {indexSize}. Must be between 0 and {PackageLimits.MaxResourceSize:N0} bytes.");
+
+        // Verify index doesn't extend beyond file
+        long maxPossibleIndexSize = _stream.Length - indexPosition;
+        if (indexSize > maxPossibleIndexSize)
+            throw new PackageFormatException(
+                $"Index size ({indexSize:N0}) exceeds remaining file length ({maxPossibleIndexSize:N0}).");
 
         // Read entire index into memory
         _stream.Position = indexPosition;
@@ -281,8 +289,19 @@ public sealed class DbpfPackage : IMutablePackage
         if (_stream == null)
             throw new InvalidOperationException("Package has no backing stream.");
 
-        // TODO: Validate rie.FileSize against PackageLimits.MaxResourceSize before allocation
-        // to prevent OOM from malformed files with very large resource size values
+        // Validate resource size to prevent OOM from malformed files
+        if (rie.FileSize > PackageLimits.MaxResourceSize)
+            throw new PackageFormatException(
+                $"Resource file size ({rie.FileSize:N0}) exceeds maximum ({PackageLimits.MaxResourceSize:N0}).");
+
+        if (rie.IsCompressed && rie.MemorySize > PackageLimits.MaxResourceSize)
+            throw new PackageFormatException(
+                $"Resource uncompressed size ({rie.MemorySize:N0}) exceeds maximum ({PackageLimits.MaxResourceSize:N0}).");
+
+        // Verify resource doesn't extend beyond file
+        if (rie.ChunkOffset + rie.FileSize > (ulong)_stream.Length)
+            throw new PackageFormatException(
+                $"Resource at 0x{rie.ChunkOffset:X8} extends beyond end of file.");
 
         // Read from stream
         _stream.Position = rie.ChunkOffset;
