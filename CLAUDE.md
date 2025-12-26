@@ -33,18 +33,27 @@ dotnet run --project src/TS4Tools.UI  # Run the application
 
 ## Development Philosophy
 
+### Legacy Code is the Primary Source of Truth
+
+The legacy s4pi/s4pe codebase in `legacy_references/Sims4Tools/` is a **working, battle-tested implementation**. It has been used by the Sims modding community for years and correctly handles real-world .package files. When implementing any feature:
+
+- **Trust the legacy code** - It works. If something seems odd, investigate why before assuming it's wrong.
+- **Port algorithms faithfully** - The legacy code's algorithms are proven correct. Modernize the syntax, not the logic.
+- **Use legacy as test oracle** - If your implementation produces different results than legacy for the same input, your implementation is likely wrong.
+
 ### Legacy Analysis is MANDATORY
 
 Before implementing ANY feature:
 
-1. **Analyze s4pi** (`legacy_references/Sims4Tools/s4pi/` and `s4pi Wrappers/`) - understand the business logic, edge cases, and data formats
-2. **Analyze s4pe** (`legacy_references/Sims4Tools/s4pe/`) - understand UI patterns and user workflows
-3. **Extract business logic** - document algorithms, validation rules, format handling
-4. **Design modern implementation** - preserve logic while using modern .NET patterns
-5. **Validate against legacy** - ensure equivalent behavior for same inputs
+1. **Find the legacy implementation** - Search `legacy_references/Sims4Tools/s4pi/`, `s4pi Wrappers/`, and `s4pe/` for the relevant code
+2. **Understand the algorithm** - Read and understand what the legacy code does and why
+3. **Document the source** - Add comments referencing the legacy file and line numbers (e.g., `// Source: DSTResource.cs lines 197-270`)
+4. **Port with modern patterns** - Rewrite using C# 12+, Span<T>, async/await, but preserve the core logic
+5. **Validate against legacy** - Ensure equivalent behavior for the same inputs
 
 ### Core Principles
 
+- **Legacy-first**: When in doubt, do what the legacy code does
 - **No copy-paste**: Understand the "why" and rewrite with modern patterns
 - **Test-first from legacy analysis**: Write tests based on s4pi/s4pe behavior, not assumptions
 - **Cross-platform**: Must work consistently on Windows, macOS, Linux
@@ -53,9 +62,10 @@ Before implementing ANY feature:
 
 ### Forbidden Practices
 
-- Copying s4pi/s4pe code without understanding it
-- Implementing without analyzing legacy counterparts
+- Implementing features without first finding the legacy implementation
+- Assuming the legacy code is wrong without thorough investigation
 - Writing tests from assumptions instead of legacy analysis
+- Using external libraries when legacy code provides a working algorithm
 - Referencing s4pi/s4pe code outside of `legacy_references/Sims4Tools/`
 
 ## Code Quality

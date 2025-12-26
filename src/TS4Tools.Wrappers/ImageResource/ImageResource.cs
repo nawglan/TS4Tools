@@ -148,6 +148,84 @@ public sealed class ImageResource : TypedResource
         DetectFormat(data);
         OnChanged();
     }
+
+    /// <summary>
+    /// Gets the DXT compression format from the DDS header FourCC.
+    /// </summary>
+    public DxtFormat DxtFormat
+    {
+        get
+        {
+            if (Format != ImageFormat.Dds && Format != ImageFormat.Dst)
+                return DxtFormat.Unknown;
+
+            var fourCc = DxtDecoder.GetFourCc(_imageData);
+
+            // Handle DST (shuffled) formats
+            if (fourCc == DstDecoder.FourCcDst1) return DxtFormat.Dxt1;
+            if (fourCc == DstDecoder.FourCcDst5) return DxtFormat.Dxt5;
+
+            // Handle standard DXT formats
+            if (fourCc == DxtDecoder.FourCcDxt1) return DxtFormat.Dxt1;
+            if (fourCc == DxtDecoder.FourCcDxt5) return DxtFormat.Dxt5;
+
+            return DxtFormat.Unknown;
+        }
+    }
+
+    /// <summary>
+    /// Decodes the image to RGBA32 pixels (4 bytes per pixel: R, G, B, A).
+    /// Returns null if decoding is not supported for this format.
+    /// </summary>
+    /// <returns>RGBA32 pixel data, or null if unsupported.</returns>
+    public byte[]? GetDecodedPixels()
+    {
+        return Format switch
+        {
+            ImageFormat.Png => null, // PNG is handled directly by Avalonia
+            ImageFormat.Dds => DecodeDds(_imageData),
+            ImageFormat.Dst => DecodeDst(_imageData),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Decodes DDS texture data to RGBA32 pixels.
+    /// </summary>
+    private static byte[]? DecodeDds(ReadOnlySpan<byte> data)
+    {
+        return DxtDecoder.DecompressDds(data);
+    }
+
+    /// <summary>
+    /// Decodes DST (shuffled) texture data to RGBA32 pixels.
+    /// First unshuffles to DDS, then decompresses.
+    /// </summary>
+    private static byte[]? DecodeDst(ReadOnlySpan<byte> data)
+    {
+        // First unshuffle DST to standard DDS
+        var ddsData = DstDecoder.UnshuffleToDds(data);
+        if (ddsData == null)
+            return null;
+
+        // Then decompress the DDS
+        return DxtDecoder.DecompressDds(ddsData);
+    }
+}
+
+/// <summary>
+/// DXT compression formats.
+/// </summary>
+public enum DxtFormat
+{
+    /// <summary>Unknown or unsupported format.</summary>
+    Unknown,
+
+    /// <summary>DXT1 (BC1) - 4:1 compression, 1-bit alpha.</summary>
+    Dxt1,
+
+    /// <summary>DXT5 (BC3) - 4:1 compression, interpolated alpha.</summary>
+    Dxt5
 }
 
 /// <summary>
