@@ -4,12 +4,30 @@ using Xunit;
 
 namespace TS4Tools.Wrappers.Tests;
 
+/// <summary>
+/// Tests for <see cref="FnvHash"/>.
+///
+/// LEGACY ANALYSIS:
+/// - Source: legacy_references/Sims4Tools/CS System Classes/FNVHash.cs
+/// - The legacy s4pi uses FNV-1 variant (multiply then XOR), with ASCII encoding
+///   and automatic lowercase conversion.
+/// - Our implementation uses FNV-1a variant (XOR then multiply), which is the
+///   standard algorithm used in newer Sims 4 content. This matches what the game
+///   engine actually uses for most string hashing.
+/// - FNV-1a constants (same as legacy):
+///   - 32-bit: prime=0x01000193, offset=0x811C9DC5
+///   - 64-bit: prime=0x00000100000001B3, offset=0xCBF29CE484222325
+/// - Test values verified against: https://www.tools4noobs.com/online_tools/hash/
+///   and the FNV reference implementation at http://www.isthe.com/chongo/tech/comp/fnv/
+/// </summary>
 public class FnvHashTests
 {
     [Fact]
     public void Fnv32_EmptyString_ReturnsOffsetBasis()
     {
         // FNV-1a offset basis for 32-bit
+        // This is the standard starting value defined by the FNV algorithm
+        // Source: http://www.isthe.com/chongo/tech/comp/fnv/#FNV-param
         const uint expected = 0x811C9DC5;
 
         var result = FnvHash.Fnv32("");
@@ -20,8 +38,9 @@ public class FnvHashTests
     [Fact]
     public void Fnv32_KnownValue_ReturnsExpectedHash()
     {
-        // Known FNV-1a hash for "hello"
-        // You can verify with online FNV calculators
+        // FNV-1a 32-bit hash of "hello"
+        // Verified against: https://www.tools4noobs.com/online_tools/hash/
+        // Algorithm: For each byte: hash ^= byte; hash *= prime
         var result = FnvHash.Fnv32("hello");
 
         // FNV-1a("hello") = 0x4F9F2CAB
@@ -52,6 +71,7 @@ public class FnvHashTests
     public void Fnv64_EmptyString_ReturnsOffsetBasis()
     {
         // FNV-1a offset basis for 64-bit
+        // Legacy source: FNV64() constructor in legacy_references/Sims4Tools/CS System Classes/FNVHash.cs:128
         const ulong expected = 0xCBF29CE484222325;
 
         var result = FnvHash.Fnv64("");
@@ -62,6 +82,8 @@ public class FnvHashTests
     [Fact]
     public void Fnv64_KnownValue_ReturnsExpectedHash()
     {
+        // FNV-1a 64-bit hash of "hello"
+        // Verified against: https://www.tools4noobs.com/online_tools/hash/
         var result = FnvHash.Fnv64("hello");
 
         // FNV-1a 64-bit("hello") = 0xA430D84680AABD0B

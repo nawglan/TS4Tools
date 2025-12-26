@@ -5,8 +5,25 @@ using Xunit;
 
 namespace TS4Tools.Wrappers.Tests;
 
+/// <summary>
+/// Tests for <see cref="StblResource"/>.
+///
+/// LEGACY ANALYSIS:
+/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/StblResource/StblResource.cs
+/// - STBL format specification:
+///   - Magic: "STBL" (0x4C425453 little-endian)
+///   - Version: uint16 (current = 5)
+///   - IsCompressed: byte
+///   - NumEntries: uint64
+///   - Reserved: 2 bytes
+///   - StringLength: uint32
+///   - Entries: KeyHash (uint32), Flags (byte), StringLength (uint16), String (UTF-8)
+/// - The legacy uses BinaryReader/BinaryWriter for parsing.
+/// - Type ID: 0x220557DA
+/// </summary>
 public class StblResourceTests
 {
+    // STBL resource type ID - verified from legacy s4pi wrapper registration
     private static readonly ResourceKey TestKey = new(0x220557DA, 0, 0);
 
     [Fact]

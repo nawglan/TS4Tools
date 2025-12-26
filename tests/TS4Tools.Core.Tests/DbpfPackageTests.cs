@@ -4,6 +4,25 @@ using Xunit;
 
 namespace TS4Tools.Core.Tests;
 
+/// <summary>
+/// Tests for <see cref="DbpfPackage"/>.
+///
+/// LEGACY ANALYSIS:
+/// - Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs
+/// - DBPF (Database Packed File) format specification:
+///   - Magic: "DBPF" (0x46504244 little-endian)
+///   - Major Version: 2 (uint32)
+///   - Minor Version: 1 (uint32)
+///   - Header size: 96 bytes
+///   - Index position: stored at offset 64 (uint32)
+///   - Index count: at offset 36 (int32)
+///   - Index size: at offset 44 (int32)
+/// - The 4GB limit is due to 32-bit offsets in the index
+/// - Resource index entry size varies based on index type flags:
+///   - Full entry: 32 bytes (Type, Group, InstanceHigh, InstanceLow, ChunkOffset, FileSize, MemSize, Compressed, Unknown2)
+///   - Optimized: shared Type/Group/InstanceHigh in header
+/// - FileSize bit 31 is always set (mask with 0x7FFFFFFF)
+/// </summary>
 public class DbpfPackageTests
 {
     [Fact]
