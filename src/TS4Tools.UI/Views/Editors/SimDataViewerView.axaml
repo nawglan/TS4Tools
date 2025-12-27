@@ -125,16 +125,72 @@
             <!-- Splitter 2 -->
             <GridSplitter Grid.Column="3" Width="4" Background="Transparent" />
 
-            <!-- Right Panel: Hex Preview -->
+            <!-- Right Panel: Row Data and Hex Preview -->
             <DockPanel Grid.Column="4">
-                <TextBlock DockPanel.Dock="Top" Text="Raw Data Preview" FontWeight="SemiBold"
+                <TextBlock DockPanel.Dock="Top" Text="Table Rows" FontWeight="SemiBold"
                            Margin="8,8,8,4" />
-                <TextBox Text="{Binding HexPreview}"
-                         IsReadOnly="True"
-                         TextWrapping="NoWrap"
-                         FontFamily="Consolas, Monaco, 'Courier New', monospace"
-                         FontSize="11"
-                         Margin="4,0,4,8" />
+
+                <!-- Row List with Values -->
+                <Grid RowDefinitions="*,4,Auto">
+                    <ListBox Grid.Row="0"
+                             ItemsSource="{Binding SelectedTable.Rows}"
+                             Margin="4,0,4,4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SimDataRowViewModel">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Text="{Binding RowIndex, StringFormat='Row {0}'}"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,8,0"
+                                               MinWidth="60" />
+                                    <ItemsControl ItemsSource="{Binding Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:SimDataCellViewModel">
+                                                <Border Margin="2" Padding="4,2"
+                                                        BorderThickness="1"
+                                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                        CornerRadius="3">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding FieldName}"
+                                                                   FontSize="10"
+                                                                   Opacity="0.7" />
+                                                        <TextBox Text="{Binding EditValue}"
+                                                                 IsReadOnly="{Binding !IsEditable}"
+                                                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                                                 FontSize="11"
+                                                                 MinWidth="80"
+                                                                 Padding="2" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
+                                  ResizeDirection="Rows" />
+
+                    <!-- Hex Preview -->
+                    <DockPanel Grid.Row="2">
+                        <TextBlock DockPanel.Dock="Top" Text="Raw Data Preview" FontWeight="SemiBold"
+                                   Margin="8,4,8,4" Opacity="0.8" />
+                        <TextBox Text="{Binding HexPreview}"
+                                 IsReadOnly="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                 FontSize="11"
+                                 MaxHeight="200"
+                                 Margin="4,0,4,8" />
+                    </DockPanel>
+                </Grid>
             </DockPanel>
         </Grid>
     </DockPanel>

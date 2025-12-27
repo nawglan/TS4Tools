@@ -350,6 +350,9 @@ public sealed class SimDataResource : TypedResource
             Position = (uint)position
         };
 
+        // Subscribe to data changes to mark resource dirty
+        table.DataChanged += OnTableDataChanged;
+
         return (table, fieldPos);
     }
 
@@ -810,6 +813,14 @@ public sealed class SimDataResource : TypedResource
     /// </summary>
     internal void MarkDirty() => _isDirty = true;
 
+    /// <summary>
+    /// Event handler for table data changes.
+    /// </summary>
+    private void OnTableDataChanged(object? sender, EventArgs e)
+    {
+        MarkDirty();
+    }
+
     /// <inheritdoc/>
     protected override void InitializeDefaults()
     {
@@ -1014,5 +1025,110 @@ public sealed class SimDataTable
     public bool GetBoolean(int rowIndex, SimDataField field)
     {
         return GetUInt32(rowIndex, field) != 0;
+    }
+
+    /// <summary>
+    /// Reads an int16 field value.
+    /// </summary>
+    public short GetInt16(int rowIndex, SimDataField field)
+    {
+        var bytes = GetFieldBytes(rowIndex, field);
+        if (bytes.Length < 2)
+            return 0;
+        return BinaryPrimitives.ReadInt16LittleEndian(bytes);
+    }
+
+    /// <summary>
+    /// Reads a uint64 field value.
+    /// </summary>
+    public ulong GetUInt64(int rowIndex, SimDataField field)
+    {
+        var bytes = GetFieldBytes(rowIndex, field);
+        if (bytes.Length < 8)
+            return 0;
+        return BinaryPrimitives.ReadUInt64LittleEndian(bytes);
+    }
+
+    /// <summary>
+    /// Event raised when data is modified.
+    /// </summary>
+    public event EventHandler? DataChanged;
+
+    /// <summary>
+    /// Gets a writable span for a field at the specified row.
+    /// </summary>
+    private Span<byte> GetFieldBytesWritable(int rowIndex, SimDataField field)
+    {
+        if (Schema == null || rowIndex < 0 || rowIndex >= RowCount)
+            return Span<byte>.Empty;
+
+        int rowSize = (int)Schema.Size;
+        int offset = (rowIndex * rowSize) + (int)field.DataOffset;
+        int size = field.DataSize;
+
+        if (offset < 0 || offset + size > _rawData.Length)
+            return Span<byte>.Empty;
+
+        return _rawData.AsSpan(offset, size);
+    }
+
+    /// <summary>
+    /// Sets a uint32 field value.
+    /// </summary>
+    public void SetUInt32(int rowIndex, SimDataField field, uint value)
+    {
+        var bytes = GetFieldBytesWritable(rowIndex, field);
+        if (bytes.Length >= 4)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(bytes, value);
+            DataChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Sets a float field value.
+    /// </summary>
+    public void SetFloat(int rowIndex, SimDataField field, float value)
+    {
+        var bytes = GetFieldBytesWritable(rowIndex, field);
+        if (bytes.Length >= 4)
+        {
+            BinaryPrimitives.WriteSingleLittleEndian(bytes, value);
+            DataChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Sets a boolean field value.
+    /// </summary>
+    public void SetBoolean(int rowIndex, SimDataField field, bool value)
+    {
+        SetUInt32(rowIndex, field, value ? 1u : 0u);
+    }
+
+    /// <summary>
+    /// Sets an int16 field value.
+    /// </summary>
+    public void SetInt16(int rowIndex, SimDataField field, short value)
+    {
+        var bytes = GetFieldBytesWritable(rowIndex, field);
+        if (bytes.Length >= 2)
+        {
+            BinaryPrimitives.WriteInt16LittleEndian(bytes, value);
+            DataChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Sets a uint64 field value.
+    /// </summary>
+    public void SetUInt64(int rowIndex, SimDataField field, ulong value)
+    {
+        var bytes = GetFieldBytesWritable(rowIndex, field);
+        if (bytes.Length >= 8)
+        {
+            BinaryPrimitives.WriteUInt64LittleEndian(bytes, value);
+            DataChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
 }

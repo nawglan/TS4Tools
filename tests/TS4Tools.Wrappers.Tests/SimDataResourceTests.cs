@@ -601,4 +601,190 @@ public class SimDataResourceTests
     }
 
     #endregion
+
+    #region SimDataTable Getter/Setter Tests
+
+    private static SimDataTable CreateTableWithField(SimDataFieldType fieldType, uint size, byte[] rawData)
+    {
+        var field = new SimDataField
+        {
+            Index = 0,
+            Name = "TestField",
+            NameHash = 0x12345678,
+            Type = fieldType,
+            TypeValue = (uint)fieldType,
+            DataOffset = 0
+        };
+
+        var schema = new SimDataSchema
+        {
+            Index = 0,
+            Name = "TestSchema",
+            NameHash = 0xABCD1234,
+            Size = size,
+            FieldCount = 1
+        };
+        schema.AddField(field);
+
+        var table = new SimDataTable
+        {
+            Index = 0,
+            Name = "TestTable",
+            NameHash = 0x11223344,
+            Schema = schema,
+            RowCount = 1
+        };
+        table.SetRawData(rawData);
+
+        return table;
+    }
+
+    [Fact]
+    public void SetUInt32_ModifiesData()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetUInt32(0, field, 0x12345678);
+
+        table.GetUInt32(0, field).Should().Be(0x12345678);
+    }
+
+    [Fact]
+    public void SetFloat_ModifiesData()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.FloatValue, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetFloat(0, field, 3.14159f);
+
+        table.GetFloat(0, field).Should().BeApproximately(3.14159f, 0.00001f);
+    }
+
+    [Fact]
+    public void SetBoolean_True_SetsNonZero()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetBoolean(0, field, true);
+
+        table.GetBoolean(0, field).Should().BeTrue();
+        table.GetUInt32(0, field).Should().Be(1);
+    }
+
+    [Fact]
+    public void SetBoolean_False_SetsZero()
+    {
+        var rawData = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetBoolean(0, field, false);
+
+        table.GetBoolean(0, field).Should().BeFalse();
+        table.GetUInt32(0, field).Should().Be(0);
+    }
+
+    [Fact]
+    public void SetInt16_ModifiesData()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Integer16, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetInt16(0, field, -1234);
+
+        table.GetInt16(0, field).Should().Be(-1234);
+    }
+
+    [Fact]
+    public void SetUInt64_ModifiesData()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.DataInstance, 8, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetUInt64(0, field, 0xDEADBEEFCAFEBABE);
+
+        table.GetUInt64(0, field).Should().Be(0xDEADBEEFCAFEBABE);
+    }
+
+    [Fact]
+    public void DataChanged_RaisesEventOnSet()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        var eventRaised = false;
+        table.DataChanged += (_, _) => eventRaised = true;
+
+        table.SetUInt32(0, field, 1);
+
+        eventRaised.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GetFieldBytes_InvalidRow_ReturnsEmpty()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        var bytes = table.GetFieldBytes(-1, field);
+
+        bytes.IsEmpty.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GetFieldBytes_RowOutOfRange_ReturnsEmpty()
+    {
+        var rawData = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        var bytes = table.GetFieldBytes(10, field);
+
+        bytes.IsEmpty.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SetUInt32_InvalidRow_DoesNothing()
+    {
+        var rawData = new byte[] { 0x12, 0x34, 0x56, 0x78 };
+        var table = CreateTableWithField(SimDataFieldType.Boolean, 4, rawData);
+        var field = table.Schema!.Fields[0];
+
+        table.SetUInt32(-1, field, 0);
+
+        // Data should be unchanged
+        table.GetUInt32(0, field).Should().Be(0x78563412);
+    }
+
+    [Fact]
+    public void SetUInt32_NoSchema_DoesNothing()
+    {
+        var table = new SimDataTable
+        {
+            Index = 0,
+            Name = "TestTable",
+            Schema = null,
+            RowCount = 1
+        };
+        var field = new SimDataField
+        {
+            Index = 0,
+            Type = SimDataFieldType.Boolean,
+            DataOffset = 0
+        };
+
+        // Should not throw
+        table.SetUInt32(0, field, 123);
+    }
+
+    #endregion
 }
