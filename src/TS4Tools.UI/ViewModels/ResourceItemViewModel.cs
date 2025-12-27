@@ -14,7 +14,8 @@ public sealed class ResourceItemViewModel : ViewModelBase
         { 0x00B2D882, "Image (DDS/DST)" },
         { 0x00B00000, "Image (PNG)" },
         { 0x034AEECB, "CAS Part" },
-        { 0x0418FE2A, "Catalog Object" },
+        { 0x319E4F1D, "Catalog Object (COBJ)" },
+        { 0x0418FE2A, "Fence (CFEN)" },
         { 0x03B33DDF, "Tuning (XML)" },
         { 0x6017E896, "Tuning Instance (XML)" },
         { 0x73E93EEB, "Tuning Instance" }

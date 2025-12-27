@@ -1,0 +1,149 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="TS4Tools.UI.Views.Editors.CatalogViewerView"
+             x:DataType="vm:CatalogViewerViewModel">
+
+    <Design.DataContext>
+        <vm:CatalogViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="{Binding ResourceTypeName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding VersionDisplay, StringFormat='Version: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding PriceDisplay}"
+                           VerticalAlignment="Center" FontWeight="SemiBold" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content - Two Columns -->
+        <Grid ColumnDefinitions="*,Auto,*">
+
+            <!-- Left Panel: Summary, Aural, Placement Info -->
+            <ScrollViewer Grid.Column="0">
+                <StackPanel Margin="8" Spacing="16">
+
+                    <!-- Summary Section -->
+                    <Expander Header="Summary" IsExpanded="True">
+                        <TextBox Text="{Binding SummaryInfo}"
+                                 IsReadOnly="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                 FontSize="11"
+                                 MinHeight="150" />
+                    </Expander>
+
+                    <!-- Aural Properties Section -->
+                    <Expander Header="Aural Properties" IsExpanded="False">
+                        <TextBox Text="{Binding AuralInfo}"
+                                 IsReadOnly="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                 FontSize="11"
+                                 MinHeight="100" />
+                    </Expander>
+
+                    <!-- Placement Section -->
+                    <Expander Header="Placement &amp; Object Properties" IsExpanded="False">
+                        <TextBox Text="{Binding PlacementInfo}"
+                                 IsReadOnly="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                 FontSize="11"
+                                 MinHeight="120" />
+                    </Expander>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
+
+            <!-- Right Panel: Lists (Tags, Selling Points, Colors, Styles) -->
+            <ScrollViewer Grid.Column="2">
+                <StackPanel Margin="8" Spacing="16">
+
+                    <!-- Tags Section -->
+                    <Expander Header="{Binding Tags.Count, StringFormat='Tags ({0})'}" IsExpanded="True">
+                        <DataGrid ItemsSource="{Binding Tags}"
+                                  IsReadOnly="True"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  GridLinesVisibility="Horizontal"
+                                  FontSize="11"
+                                  MaxHeight="150">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" />
+                                <DataGridTextColumn Header="Tag" Binding="{Binding TagHex}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+
+                    <!-- Selling Points Section -->
+                    <Expander Header="{Binding SellingPoints.Count, StringFormat='Selling Points ({0})'}" IsExpanded="True">
+                        <DataGrid ItemsSource="{Binding SellingPoints}"
+                                  IsReadOnly="True"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  GridLinesVisibility="Horizontal"
+                                  FontSize="11"
+                                  MaxHeight="150">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" />
+                                <DataGridTextColumn Header="Commodity" Binding="{Binding CommodityHex}" Width="80" />
+                                <DataGridTextColumn Header="Amount" Binding="{Binding Amount}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+
+                    <!-- Colors Section -->
+                    <Expander Header="{Binding Colors.Count, StringFormat='Colors ({0})'}" IsExpanded="False">
+                        <DataGrid ItemsSource="{Binding Colors}"
+                                  IsReadOnly="True"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  GridLinesVisibility="Horizontal"
+                                  FontSize="11"
+                                  MaxHeight="150">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" />
+                                <DataGridTextColumn Header="ARGB" Binding="{Binding ArgbHex}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+
+                    <!-- Product Styles Section -->
+                    <Expander Header="{Binding ProductStyles.Count, StringFormat='Product Styles ({0})'}" IsExpanded="False">
+                        <DataGrid ItemsSource="{Binding ProductStyles}"
+                                  IsReadOnly="True"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  GridLinesVisibility="Horizontal"
+                                  FontSize="11"
+                                  MaxHeight="150">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="35" />
+                                <DataGridTextColumn Header="Type" Binding="{Binding TypeHex}" Width="90" />
+                                <DataGridTextColumn Header="Group" Binding="{Binding GroupHex}" Width="90" />
+                                <DataGridTextColumn Header="Instance" Binding="{Binding InstanceHex}" Width="*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+
+                </StackPanel>
+            </ScrollViewer>
+
+        </Grid>
+    </DockPanel>
+</UserControl>

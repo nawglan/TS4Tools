@@ -16,6 +16,7 @@ using TS4Tools.UI.ViewModels.Editors;
 using TS4Tools.UI.Views.Dialogs;
 using TS4Tools.UI.Views.Editors;
 using TS4Tools.Wrappers;
+using TS4Tools.Wrappers.CatalogResource;
 
 namespace TS4Tools.UI.ViewModels;
 
@@ -253,6 +254,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 RcolConstants.Rslt or        // 0xD3044521 - RSLT
                 RcolConstants.Ftpt           // 0xD382BF57 - FTPT
                     => CreateRcolViewer(key, data),
+                0x319E4F1D => CreateCatalogViewer(key, data), // COBJ (Catalog Object)
                 _ => CreateHexViewer(data) // Default hex viewer
             };
         }
@@ -311,6 +313,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var vm = new RcolViewerViewModel();
         vm.LoadResource(resource);
         return new RcolViewerView { DataContext = vm };
+    }
+
+    private static CatalogViewerView CreateCatalogViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new CobjResource(key, data);
+        var vm = new CatalogViewerViewModel();
+        vm.LoadResource(resource);
+        return new CatalogViewerView { DataContext = vm };
     }
 
     [RelayCommand]
