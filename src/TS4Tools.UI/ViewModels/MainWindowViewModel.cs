@@ -239,6 +239,20 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 0x03B33DDF or 0x6017E896 => CreateTextEditor(key, data), // Tuning XML
                 0x00B00000 or 0x00B2D882 => CreateImageViewer(key, data), // PNG, DDS
                 0x545AC67A => CreateSimDataViewer(key, data), // SimData
+                // RCOL resource types (standalone)
+                RcolConstants.Modl or        // 0x01661233 - MODL
+                RcolConstants.Matd or        // 0x01D0E75D - MATD
+                RcolConstants.Mlod or        // 0x01D10F34 - MLOD
+                RcolConstants.Mtst or        // 0x02019972 - MTST
+                RcolConstants.Tree or        // 0x021D7E8C - TREE
+                RcolConstants.TkMk or        // 0x033260E3 - TkMk
+                RcolConstants.SlotAdjusts or // 0x0355E0A6 - Slot Adjusts
+                RcolConstants.Lite or        // 0x03B4C61D - LITE
+                RcolConstants.Anim or        // 0x63A33EA7 - ANIM
+                RcolConstants.Vpxy or        // 0x736884F1 - VPXY
+                RcolConstants.Rslt or        // 0xD3044521 - RSLT
+                RcolConstants.Ftpt           // 0xD382BF57 - FTPT
+                    => CreateRcolViewer(key, data),
                 _ => CreateHexViewer(data) // Default hex viewer
             };
         }
@@ -289,6 +303,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var vm = new SimDataViewerViewModel();
         vm.LoadResource(resource);
         return new SimDataViewerView { DataContext = vm };
+    }
+
+    private static RcolViewerView CreateRcolViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new RcolResource(key, data);
+        var vm = new RcolViewerViewModel();
+        vm.LoadResource(resource);
+        return new RcolViewerView { DataContext = vm };
     }
 
     [RelayCommand]

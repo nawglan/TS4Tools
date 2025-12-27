@@ -1,0 +1,158 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="TS4Tools.UI.Views.Editors.RcolViewerView"
+             x:DataType="vm:RcolViewerViewModel">
+
+    <Design.DataContext>
+        <vm:RcolViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="RCOL Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding VersionDisplay, StringFormat='Version: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding ChunkCount, StringFormat='Chunks: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding PublicChunksCount, StringFormat='Public: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding ExternalCount, StringFormat='External: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="(Invalid)" IsVisible="{Binding !IsValid}"
+                           VerticalAlignment="Center" Foreground="Red" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content - Three Columns -->
+        <Grid ColumnDefinitions="*,Auto,*,Auto,*">
+
+            <!-- Left Panel: Header Info and Chunks List -->
+            <DockPanel Grid.Column="0">
+                <!-- Header Info -->
+                <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                    <TextBox Text="{Binding HeaderInfo}"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                             FontSize="11"
+                             MinHeight="80"
+                             MaxHeight="100" />
+                </Border>
+
+                <!-- Chunks List -->
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Chunks" FontWeight="SemiBold"
+                               Margin="8,8,8,4" />
+
+                    <ListBox ItemsSource="{Binding Chunks}"
+                             SelectedItem="{Binding SelectedChunk}"
+                             Margin="4,0,4,8">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RcolChunkViewModel">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Index, StringFormat='[{0}]'}" Opacity="0.5" Width="25" />
+                                    <TextBlock Text="{Binding Tag}" FontWeight="SemiBold" Width="45" />
+                                    <TextBlock Text="{Binding TypeName}" Opacity="0.7" Width="80" />
+                                    <TextBlock Text="{Binding SizeDisplay}" Opacity="0.5" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </DockPanel>
+
+            <!-- Splitter 1 -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
+
+            <!-- Center Panel: External Resources -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="External Resources" FontWeight="SemiBold"
+                           Margin="8,8,8,4" />
+
+                <DataGrid ItemsSource="{Binding ExternalResources}"
+                          IsReadOnly="True"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="True"
+                          CanUserSortColumns="False"
+                          GridLinesVisibility="Horizontal"
+                          FontSize="11"
+                          Margin="4,0,4,8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="30" />
+                        <DataGridTextColumn Header="Type" Binding="{Binding TypeName}" Width="80" />
+                        <DataGridTextColumn Header="Group" Binding="{Binding GroupHex}" Width="90" />
+                        <DataGridTextColumn Header="Instance" Binding="{Binding InstanceHex}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <!-- Splitter 2 -->
+            <GridSplitter Grid.Column="3" Width="4" Background="Transparent" />
+
+            <!-- Right Panel: Selected Chunk Details -->
+            <DockPanel Grid.Column="4">
+                <TextBlock DockPanel.Dock="Top" Text="Chunk Details" FontWeight="SemiBold"
+                           Margin="8,8,8,4" />
+
+                <!-- Show chunk details when one is selected -->
+                <Grid IsVisible="{Binding SelectedChunk, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <DockPanel DataContext="{Binding SelectedChunk}">
+                        <!-- Chunk Info -->
+                        <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1"
+                                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Tag:" FontWeight="SemiBold" Width="60" />
+                                    <TextBlock Text="{Binding Tag}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Type:" FontWeight="SemiBold" Width="60" />
+                                    <TextBlock Text="{Binding TypeHex}" />
+                                    <TextBlock Text="{Binding TypeName}" Opacity="0.7" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="TGI:" FontWeight="SemiBold" Width="60" />
+                                    <TextBlock Text="{Binding TgiString}" FontFamily="Consolas, Monaco, 'Courier New', monospace" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Position:" FontWeight="SemiBold" Width="60" />
+                                    <TextBlock Text="{Binding PositionHex}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Size:" FontWeight="SemiBold" Width="60" />
+                                    <TextBlock Text="{Binding SizeDisplay}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hex Dump -->
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="Hex Dump" FontWeight="SemiBold"
+                                       Margin="8,8,8,4" Opacity="0.8" />
+                            <TextBox Text="{Binding HexDump}"
+                                     IsReadOnly="True"
+                                     TextWrapping="NoWrap"
+                                     FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                     FontSize="11"
+                                     Margin="4,0,4,8" />
+                        </DockPanel>
+                    </DockPanel>
+                </Grid>
+
+                <!-- Show placeholder when no chunk is selected -->
+                <TextBlock IsVisible="{Binding SelectedChunk, Converter={x:Static ObjectConverters.IsNull}}"
+                           Text="Select a chunk to view details"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Opacity="0.5" />
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
