@@ -354,20 +354,461 @@ public sealed class SimDataResource : TypedResource
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// SimData serialization uses a two-phase approach:
+    /// Phase 1: Write all data with placeholder offsets
+    /// Phase 2: Patch all relative offsets
+    /// Source: DataResource.cs UnParse, lines 80-168
+    /// </remarks>
     protected override ReadOnlyMemory<byte> Serialize()
     {
-        // SimData serialization is complex with relative offsets.
-        // For now, return the original raw data unchanged.
-        // Full serialization would require:
-        // 1. Write header with blank offsets
-        // 2. Write data table entries
-        // 3. Write structure table entries
-        // 4. Write field tables
-        // 5. Write all name strings
-        // 6. Patch all relative offsets
-        // Source: DataResource.cs UnParse, lines 80-168
-        return _rawData;
+        // If we have raw data and haven't been modified, return as-is
+        // This is an optimization for the common read-only case
+        if (_rawData.Length > 0 && !_isDirty)
+            return _rawData;
+
+        // Calculate total buffer size
+        int totalSize = CalculateTotalSize();
+        var buffer = new byte[totalSize];
+        int pos = 0;
+
+        // Phase 1: Write with placeholder offsets
+        // Source: DataResource.cs UnParse, lines 91-113
+
+        // Write header
+        pos = WriteHeader(buffer.AsSpan(), pos);
+
+        // Padding between header and data table (8 bytes)
+        // Source: DataResource.cs lines 103-104
+        pos = SimDataWriter.WritePadding(buffer.AsSpan(), pos, 8);
+
+        // Record data table position
+        uint dataTablePos = (uint)pos;
+
+        // Write data table entries
+        pos = WriteDataTableEntries(buffer.AsSpan(), pos);
+
+        // Padding for 16-byte alignment before field data
+        // Source: DataResource.cs DataList.UnParse line 774
+        int fieldDataPadding = SimDataWriter.CalculatePadding(pos - (int)dataTablePos, 16);
+        if (fieldDataPadding > 0 && fieldDataPadding < 16)
+            pos = SimDataWriter.WritePadding(buffer.AsSpan(), pos, fieldDataPadding);
+
+        // Write field data for each table
+        pos = WriteFieldData(buffer.AsSpan(), pos);
+
+        // Record structure table position
+        uint structTablePos = (uint)pos;
+
+        // Write structure table entries
+        pos = WriteStructureTableEntries(buffer.AsSpan(), pos);
+
+        // Write field tables for each structure
+        pos = WriteFieldTables(buffer.AsSpan(), pos);
+
+        // Write all name strings
+        // Source: DataResource.cs UnParse lines 118-154
+        pos = WriteAllNames(buffer.AsSpan(), pos);
+
+        // Phase 2: Patch all offsets
+        // Source: DataResource.cs UnParse lines 156-165
+        PatchHeaderOffsets(buffer.AsSpan(), dataTablePos, structTablePos);
+        PatchStructureOffsets(buffer.AsSpan());
+        PatchFieldOffsets(buffer.AsSpan());
+        PatchDataTableOffsets(buffer.AsSpan());
+
+        return buffer.AsMemory(0, pos);
     }
+
+    /// <summary>
+    /// Calculates the total size needed for serialization.
+    /// </summary>
+    private int CalculateTotalSize()
+    {
+        int size = HeaderSize; // 24 bytes
+        size += 8; // Header padding
+
+        // Data table entries
+        size += _tables.Count * DataEntrySize;
+
+        // Padding before field data (max 16 bytes)
+        size += 16;
+
+        // Field data for each table
+        foreach (var table in _tables)
+        {
+            size += table.RawData.Length;
+        }
+
+        // Structure table entries
+        size += _schemas.Count * StructureEntrySize;
+
+        // Field table entries for each structure
+        foreach (var schema in _schemas)
+        {
+            size += schema.Fields.Count * FieldEntrySize;
+        }
+
+        // Name strings (with null terminators)
+        foreach (var schema in _schemas)
+        {
+            if (!string.IsNullOrEmpty(schema.Name))
+                size += schema.Name.Length + 1;
+            foreach (var field in schema.Fields)
+            {
+                if (!string.IsNullOrEmpty(field.Name))
+                    size += field.Name.Length + 1;
+            }
+        }
+        foreach (var table in _tables)
+        {
+            if (!string.IsNullOrEmpty(table.Name))
+                size += table.Name.Length + 1;
+        }
+
+        return size;
+    }
+
+    /// <summary>
+    /// Writes the header with placeholder offsets.
+    /// Source: DataResource.cs UnParse lines 92-97
+    /// </summary>
+    private int WriteHeader(Span<byte> buffer, int pos)
+    {
+        SimDataWriter.WriteUInt32(buffer, pos, Magic);
+        pos += 4;
+
+        SimDataWriter.WriteUInt32(buffer, pos, Version);
+        pos += 4;
+
+        // Placeholder for data table offset (will be patched)
+        SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+        pos += 4;
+
+        SimDataWriter.WriteInt32(buffer, pos, _tables.Count);
+        pos += 4;
+
+        // Placeholder for structure table offset (will be patched)
+        SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+        pos += 4;
+
+        SimDataWriter.WriteInt32(buffer, pos, _schemas.Count);
+        pos += 4;
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes data table entries with placeholder offsets.
+    /// Source: DataResource.cs Data.UnParse lines 601-615
+    /// </summary>
+    private int WriteDataTableEntries(Span<byte> buffer, int pos)
+    {
+        foreach (var table in _tables)
+        {
+            table.SerializationPosition = (uint)pos;
+
+            // Name offset (placeholder)
+            SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+            pos += 4;
+
+            // Name hash
+            SimDataWriter.WriteUInt32(buffer, pos, table.NameHash);
+            pos += 4;
+
+            // Structure offset (placeholder)
+            SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+            pos += 4;
+
+            // Unknown 0C
+            SimDataWriter.WriteUInt32(buffer, pos, table.Unknown0C);
+            pos += 4;
+
+            // Unknown 10
+            SimDataWriter.WriteUInt32(buffer, pos, table.Unknown10);
+            pos += 4;
+
+            // Field data offset (placeholder)
+            SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+            pos += 4;
+
+            // Row count
+            SimDataWriter.WriteInt32(buffer, pos, table.RowCount);
+            pos += 4;
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes field data for each table.
+    /// Source: DataResource.cs DataList.UnParse lines 779-787
+    /// </summary>
+    private int WriteFieldData(Span<byte> buffer, int pos)
+    {
+        foreach (var table in _tables)
+        {
+            if (table.RawData.Length == 0)
+            {
+                table.FieldDataSerializationPosition = SimDataWriter.NullOffset;
+                continue;
+            }
+
+            table.FieldDataSerializationPosition = (uint)pos;
+            table.RawData.Span.CopyTo(buffer[pos..]);
+            pos += table.RawData.Length;
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes structure table entries with placeholder offsets.
+    /// Source: DataResource.cs Structure.UnParse lines 238-256
+    /// </summary>
+    private int WriteStructureTableEntries(Span<byte> buffer, int pos)
+    {
+        foreach (var schema in _schemas)
+        {
+            schema.SerializationPosition = (uint)pos;
+
+            // Name offset (placeholder)
+            SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+            pos += 4;
+
+            // Name hash
+            SimDataWriter.WriteUInt32(buffer, pos, schema.NameHash);
+            pos += 4;
+
+            // Unknown 08
+            SimDataWriter.WriteUInt32(buffer, pos, schema.Unknown08);
+            pos += 4;
+
+            // Size
+            SimDataWriter.WriteUInt32(buffer, pos, schema.Size);
+            pos += 4;
+
+            // Field table offset (placeholder)
+            SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+            pos += 4;
+
+            // Field count
+            SimDataWriter.WriteInt32(buffer, pos, schema.Fields.Count);
+            pos += 4;
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes field tables for each structure.
+    /// Source: DataResource.cs StructureList.UnParse lines 359-365
+    /// </summary>
+    private int WriteFieldTables(Span<byte> buffer, int pos)
+    {
+        foreach (var schema in _schemas)
+        {
+            if (schema.Fields.Count == 0)
+            {
+                schema.FieldTableSerializationPosition = SimDataWriter.NullOffset;
+                continue;
+            }
+
+            schema.FieldTableSerializationPosition = (uint)pos;
+
+            foreach (var field in schema.Fields)
+            {
+                field.SerializationPosition = (uint)pos;
+
+                // Name offset (placeholder)
+                SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+                pos += 4;
+
+                // Name hash
+                SimDataWriter.WriteUInt32(buffer, pos, field.NameHash);
+                pos += 4;
+
+                // Type
+                SimDataWriter.WriteUInt32(buffer, pos, field.TypeValue);
+                pos += 4;
+
+                // Data offset
+                SimDataWriter.WriteUInt32(buffer, pos, field.DataOffset);
+                pos += 4;
+
+                // Unknown 10 offset (placeholder)
+                SimDataWriter.WriteUInt32(buffer, pos, SimDataWriter.Zero32);
+                pos += 4;
+            }
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Writes all name strings and records their positions.
+    /// Source: DataResource.cs UnParse lines 118-154
+    /// </summary>
+    private int WriteAllNames(Span<byte> buffer, int pos)
+    {
+        // Write field names first (per legacy order)
+        foreach (var schema in _schemas)
+        {
+            foreach (var field in schema.Fields)
+            {
+                if (string.IsNullOrEmpty(field.Name))
+                {
+                    field.NameSerializationPosition = SimDataWriter.NullOffset;
+                }
+                else
+                {
+                    field.NameSerializationPosition = (uint)pos;
+                    int written = SimDataWriter.WriteNullTerminatedString(buffer, pos, field.Name);
+                    pos += written;
+                }
+            }
+        }
+
+        // Write structure names
+        foreach (var schema in _schemas)
+        {
+            if (string.IsNullOrEmpty(schema.Name))
+            {
+                schema.NameSerializationPosition = SimDataWriter.NullOffset;
+            }
+            else
+            {
+                schema.NameSerializationPosition = (uint)pos;
+                int written = SimDataWriter.WriteNullTerminatedString(buffer, pos, schema.Name);
+                pos += written;
+            }
+        }
+
+        // Write data table names
+        foreach (var table in _tables)
+        {
+            if (string.IsNullOrEmpty(table.Name))
+            {
+                table.NameSerializationPosition = SimDataWriter.NullOffset;
+            }
+            else
+            {
+                table.NameSerializationPosition = (uint)pos;
+                int written = SimDataWriter.WriteNullTerminatedString(buffer, pos, table.Name);
+                pos += written;
+            }
+        }
+
+        return pos;
+    }
+
+    /// <summary>
+    /// Patches the header offsets.
+    /// Source: DataResource.cs UnParse lines 161-165
+    /// </summary>
+    private static void PatchHeaderOffsets(Span<byte> buffer, uint dataTablePos, uint structTablePos)
+    {
+        // Data table offset at position 8
+        // Formula: dataTablePos - 8 (relative to position after reading)
+        uint dataOffset = dataTablePos - 8;
+        SimDataWriter.WriteUInt32(buffer, 8, dataOffset);
+
+        // Structure table offset at position 16
+        // Formula: structTablePos - 16
+        uint structOffset = structTablePos - 16;
+        SimDataWriter.WriteUInt32(buffer, 16, structOffset);
+    }
+
+    /// <summary>
+    /// Patches structure table offsets.
+    /// Source: DataResource.cs Structure.WriteOffsets lines 258-275
+    /// </summary>
+    private void PatchStructureOffsets(Span<byte> buffer)
+    {
+        foreach (var schema in _schemas)
+        {
+            int pos = (int)schema.SerializationPosition;
+
+            // Name offset at position 0
+            uint nameOffset = SimDataWriter.CalculateRelativeOffset(
+                schema.NameSerializationPosition, schema.SerializationPosition, 0);
+            SimDataWriter.WriteUInt32(buffer, pos, nameOffset);
+
+            // Field table offset at position 16
+            uint fieldTableOffset = SimDataWriter.CalculateRelativeOffset(
+                schema.FieldTableSerializationPosition, schema.SerializationPosition, 0x10);
+            SimDataWriter.WriteUInt32(buffer, pos + 16, fieldTableOffset);
+        }
+    }
+
+    /// <summary>
+    /// Patches field table offsets.
+    /// Source: DataResource.cs Field.WriteOffsets lines 443-457
+    /// </summary>
+    private void PatchFieldOffsets(Span<byte> buffer)
+    {
+        foreach (var schema in _schemas)
+        {
+            foreach (var field in schema.Fields)
+            {
+                int pos = (int)field.SerializationPosition;
+
+                // Name offset at position 0
+                uint nameOffset = SimDataWriter.CalculateRelativeOffset(
+                    field.NameSerializationPosition, field.SerializationPosition, 0);
+                SimDataWriter.WriteUInt32(buffer, pos, nameOffset);
+
+                // Unknown 10 offset at position 16
+                // Note: We preserve the original Unknown10Position as we don't modify it
+                uint unknown10Offset = SimDataWriter.CalculateRelativeOffset(
+                    field.Unknown10Position, field.SerializationPosition, 0x10);
+                SimDataWriter.WriteUInt32(buffer, pos + 16, unknown10Offset);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Patches data table entry offsets.
+    /// Source: DataResource.cs Data.WriteOffsets lines 617-643
+    /// </summary>
+    private void PatchDataTableOffsets(Span<byte> buffer)
+    {
+        foreach (var table in _tables)
+        {
+            int pos = (int)table.SerializationPosition;
+
+            // Name offset at position 0
+            uint nameOffset = SimDataWriter.CalculateRelativeOffset(
+                table.NameSerializationPosition, table.SerializationPosition, 0);
+            SimDataWriter.WriteUInt32(buffer, pos, nameOffset);
+
+            // Structure offset at position 8
+            uint structOffset;
+            if (table.Schema == null)
+            {
+                structOffset = SimDataWriter.NullOffset;
+            }
+            else
+            {
+                structOffset = SimDataWriter.CalculateRelativeOffset(
+                    table.Schema.SerializationPosition, table.SerializationPosition, 0x08);
+            }
+            SimDataWriter.WriteUInt32(buffer, pos + 8, structOffset);
+
+            // Field data offset at position 20
+            uint fieldOffset = SimDataWriter.CalculateRelativeOffset(
+                table.FieldDataSerializationPosition, table.SerializationPosition, 0x14);
+            SimDataWriter.WriteUInt32(buffer, pos + 20, fieldOffset);
+        }
+    }
+
+    // Dirty flag for serialization optimization
+    private bool _isDirty;
+
+    /// <summary>
+    /// Marks the resource as dirty, requiring full serialization.
+    /// </summary>
+    internal void MarkDirty() => _isDirty = true;
 
     /// <inheritdoc/>
     protected override void InitializeDefaults()
@@ -379,6 +820,7 @@ public sealed class SimDataResource : TypedResource
         IsValid = false;
         _schemas.Clear();
         _tables.Clear();
+        _isDirty = true;
     }
 
     /// <summary>
@@ -419,6 +861,15 @@ public sealed class SimDataSchema
     /// <summary>Position of this entry in the file.</summary>
     internal uint Position { get; init; }
 
+    /// <summary>Position where this schema was written during serialization.</summary>
+    internal uint SerializationPosition { get; set; }
+
+    /// <summary>Position where the name string was written during serialization.</summary>
+    internal uint NameSerializationPosition { get; set; }
+
+    /// <summary>Position where the field table was written during serialization.</summary>
+    internal uint FieldTableSerializationPosition { get; set; }
+
     /// <summary>Fields (columns) defined by this schema.</summary>
     public IReadOnlyList<SimDataField> Fields => _fields;
 
@@ -458,6 +909,12 @@ public sealed class SimDataField
     /// <summary>Position of this entry in the file.</summary>
     internal uint Position { get; init; }
 
+    /// <summary>Position where this field was written during serialization.</summary>
+    internal uint SerializationPosition { get; set; }
+
+    /// <summary>Position where the name string was written during serialization.</summary>
+    internal uint NameSerializationPosition { get; set; }
+
     /// <summary>Gets the byte size for this field's type.</summary>
     public int DataSize => Type.GetSize();
 }
@@ -493,6 +950,15 @@ public sealed class SimDataTable
 
     /// <summary>Position of this entry in the file.</summary>
     internal uint Position { get; init; }
+
+    /// <summary>Position where this table was written during serialization.</summary>
+    internal uint SerializationPosition { get; set; }
+
+    /// <summary>Position where the name string was written during serialization.</summary>
+    internal uint NameSerializationPosition { get; set; }
+
+    /// <summary>Position where the field data was written during serialization.</summary>
+    internal uint FieldDataSerializationPosition { get; set; }
 
     /// <summary>Raw field data for this table.</summary>
     public ReadOnlyMemory<byte> RawData => _rawData;

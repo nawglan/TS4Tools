@@ -411,4 +411,194 @@ public class SimDataResourceTests
 
         resource.IsValid.Should().BeFalse();
     }
+
+    #region Serialization Tests
+
+    [Fact]
+    public void Serialize_MinimalSimData_ProducesValidHeader()
+    {
+        var resource = new SimDataResource(TestKey, MinimalSimData);
+
+        var serialized = resource.Data.ToArray();
+
+        // Should start with magic "DATA"
+        serialized.Length.Should().BeGreaterThanOrEqualTo(24);
+        var magic = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(serialized);
+        magic.Should().Be(SimDataResource.Magic);
+    }
+
+    [Fact]
+    public void Serialize_MinimalSimData_PreservesVersion()
+    {
+        var resource = new SimDataResource(TestKey, MinimalSimData);
+
+        var serialized = resource.Data.ToArray();
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.Version.Should().Be(resource.Version);
+    }
+
+    [Fact]
+    public void RoundTrip_MinimalSimData_PreservesCounts()
+    {
+        var original = new SimDataResource(TestKey, MinimalSimData);
+
+        var serialized = original.Data;
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.IsValid.Should().Be(original.IsValid);
+        reparsed.SchemaCount.Should().Be(original.SchemaCount);
+        reparsed.TableCount.Should().Be(original.TableCount);
+    }
+
+    [Fact]
+    public void RoundTrip_WithNamedSchema_PreservesName()
+    {
+        // SimData with a named schema
+        var data = new byte[]
+        {
+            // Header
+            0x44, 0x41, 0x54, 0x41, // Magic "DATA"
+            0x00, 0x01, 0x00, 0x00, // Version (0x100)
+            0x10, 0x00, 0x00, 0x00, // Data table position (relative: 16 -> absolute 24)
+            0x00, 0x00, 0x00, 0x00, // Data count (0)
+            0x08, 0x00, 0x00, 0x00, // Structure table position (relative: 8 -> absolute 24)
+            0x01, 0x00, 0x00, 0x00, // Structure count (1)
+
+            // Structure entry at position 24
+            0x18, 0x00, 0x00, 0x00, // Name position (relative: 24 -> absolute 48)
+            0x12, 0x34, 0x56, 0x78, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x10, 0x00, 0x00, 0x00, // Size (16 bytes)
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Field count (0)
+
+            // Name string "Test" at position 48
+            0x54, 0x65, 0x73, 0x74, 0x00  // "Test\0"
+        };
+
+        var original = new SimDataResource(TestKey, data);
+        original.IsValid.Should().BeTrue();
+        original.Schemas[0].Name.Should().Be("Test");
+
+        var serialized = original.Data;
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.IsValid.Should().BeTrue();
+        reparsed.SchemaCount.Should().Be(1);
+        reparsed.Schemas[0].Name.Should().Be("Test");
+        reparsed.Schemas[0].NameHash.Should().Be(original.Schemas[0].NameHash);
+    }
+
+    [Fact]
+    public void RoundTrip_WithTwoSchemas_PreservesAll()
+    {
+        // SimData with two structures
+        var data = new byte[]
+        {
+            // Header
+            0x44, 0x41, 0x54, 0x41, // Magic "DATA"
+            0x00, 0x01, 0x00, 0x00, // Version (0x100)
+            0x10, 0x00, 0x00, 0x00, // Data table position (relative: 16 -> absolute 24)
+            0x00, 0x00, 0x00, 0x00, // Data count (0)
+            0x08, 0x00, 0x00, 0x00, // Structure table position (relative: 8 -> absolute 24)
+            0x02, 0x00, 0x00, 0x00, // Structure count (2)
+
+            // Structure entry 1 at position 24
+            0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+            0x11, 0x11, 0x11, 0x11, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x10, 0x00, 0x00, 0x00, // Size
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00, // Field count
+
+            // Structure entry 2 at position 48
+            0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+            0x22, 0x22, 0x22, 0x22, // Name hash
+            0x00, 0x00, 0x00, 0x00, // Unknown 08
+            0x20, 0x00, 0x00, 0x00, // Size
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00  // Field count
+        };
+
+        var original = new SimDataResource(TestKey, data);
+        original.IsValid.Should().BeTrue();
+        original.SchemaCount.Should().Be(2);
+
+        var serialized = original.Data;
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.IsValid.Should().BeTrue();
+        reparsed.SchemaCount.Should().Be(2);
+        reparsed.Schemas[0].NameHash.Should().Be(0x11111111);
+        reparsed.Schemas[0].Size.Should().Be(16);
+        reparsed.Schemas[1].NameHash.Should().Be(0x22222222);
+        reparsed.Schemas[1].Size.Should().Be(32);
+    }
+
+    [Fact]
+    public void RoundTrip_EmptySimData_ProducesValidOutput()
+    {
+        // Minimal valid SimData with no data and no structures
+        // Table offsets must point to valid positions within buffer
+        // Data table offset at pos 8: relative 0x10 -> absolute 24
+        // Structure table offset at pos 16: relative 0x08 -> absolute 24
+        var data = new byte[]
+        {
+            // Header (24 bytes)
+            0x44, 0x41, 0x54, 0x41, // Magic "DATA"
+            0x00, 0x01, 0x00, 0x00, // Version (0x100)
+            0x10, 0x00, 0x00, 0x00, // Data table position (relative: 16 -> absolute 24)
+            0x00, 0x00, 0x00, 0x00, // Data count (0)
+            0x08, 0x00, 0x00, 0x00, // Structure table position (relative: 8 -> absolute 24)
+            0x00, 0x00, 0x00, 0x00, // Structure count (0)
+            // 8 bytes padding so position 24 is valid
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        };
+
+        var original = new SimDataResource(TestKey, data);
+        original.IsValid.Should().BeTrue();
+
+        var serialized = original.Data;
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.IsValid.Should().BeTrue();
+        reparsed.SchemaCount.Should().Be(0);
+        reparsed.TableCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void Serialize_PreservesUnknownFields()
+    {
+        // SimData with non-zero Unknown08 values
+        var data = new byte[]
+        {
+            // Header
+            0x44, 0x41, 0x54, 0x41, // Magic "DATA"
+            0x00, 0x01, 0x00, 0x00, // Version (0x100)
+            0x10, 0x00, 0x00, 0x00, // Data table position
+            0x00, 0x00, 0x00, 0x00, // Data count (0)
+            0x08, 0x00, 0x00, 0x00, // Structure table position
+            0x01, 0x00, 0x00, 0x00, // Structure count (1)
+
+            // Structure entry
+            0x80, 0x00, 0x00, 0x80, // Name position (NullOffset)
+            0xAA, 0xBB, 0xCC, 0xDD, // Name hash
+            0x12, 0x34, 0x56, 0x78, // Unknown 08 (non-zero)
+            0x10, 0x00, 0x00, 0x00, // Size
+            0x80, 0x00, 0x00, 0x80, // Field table position (NullOffset)
+            0x00, 0x00, 0x00, 0x00  // Field count
+        };
+
+        var original = new SimDataResource(TestKey, data);
+        original.Schemas[0].Unknown08.Should().Be(0x78563412); // Little-endian
+
+        var serialized = original.Data;
+        var reparsed = new SimDataResource(TestKey, serialized);
+
+        reparsed.Schemas[0].Unknown08.Should().Be(original.Schemas[0].Unknown08);
+    }
+
+    #endregion
 }
