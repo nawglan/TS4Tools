@@ -1,4 +1,84 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace TS4Tools.Wrappers.MeshChunks;
+
+/// <summary>
+/// Flags for model rendering and shader behavior.
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/MiscellaneousResource/ModelFlags.cs lines 28-43
+/// </summary>
+[Flags]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Legacy name compatibility")]
+public enum ModelFlags : uint
+{
+    /// <summary>No special flags.</summary>
+    None = 0,
+
+    /// <summary>Uses instanced shader rendering.</summary>
+    UsesInstancedShader = 1 << 0,
+
+    /// <summary>Enables vertical scaling.</summary>
+    VerticalScaling = 1 << 1,
+
+    /// <summary>Requires procedural lightmap generation.</summary>
+    RequiresProceduralLightmap = 1 << 2,
+
+    /// <summary>Uses tree-specific instanced shader.</summary>
+    UsesTreeInstanceShader = 1 << 3,
+
+    /// <summary>Enables horizontal scaling.</summary>
+    HorizontalScaling = 1 << 4,
+
+    /// <summary>Object is a portal.</summary>
+    IsPortal = 1 << 5,
+
+    /// <summary>Uses counter cutout rendering.</summary>
+    UsesCounterCutout = 1 << 6,
+
+    /// <summary>Shares terrain lightmap.</summary>
+    ShareTerrainLightmap = 1 << 7,
+
+    /// <summary>Uses wall lightmap.</summary>
+    UsesWallLightmap = 1 << 8,
+
+    /// <summary>Uses cutout rendering.</summary>
+    UsesCutout = 1 << 9,
+
+    /// <summary>Instance uses full transform matrix.</summary>
+    InstanceWithFullTransform = 1 << 10
+}
+
+/// <summary>
+/// Flags for wall/door cutout width and texture mapping.
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/MiscellaneousResource/WidthAndMappingFlags.cs lines 28-39
+/// </summary>
+[Flags]
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Legacy name compatibility")]
+public enum WidthAndMappingFlags : byte
+{
+    /// <summary>No special flags.</summary>
+    None = 0,
+
+    /// <summary>Width cutout bit 0.</summary>
+    WidthCutout1 = 1 << 0,
+
+    /// <summary>Width cutout bit 1.</summary>
+    WidthCutout2 = 1 << 1,
+
+    /// <summary>Width cutout bit 2.</summary>
+    WidthCutout3 = 1 << 2,
+
+    /// <summary>No opaque rendering.</summary>
+    NoOpaque = 1 << 3,
+
+    /// <summary>Object is an archway.</summary>
+    IsArchway = 1 << 4,
+
+    /// <summary>Uses single texture for cutout.</summary>
+    SingleTextureCutout = 1 << 5,
+
+    /// <summary>Diagonal cutout mapping is in use.</summary>
+    DiagonalCutoutMappingInUse = 1 << 6
+}
 
 /// <summary>
 /// Flags for vertex buffer format.

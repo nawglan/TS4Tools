@@ -242,4 +242,164 @@ public class PackageWriterTests
         using var stream = new MemoryStream();
         await package.SaveToStreamAsync(stream);
     }
+
+    [Fact]
+    public async Task WriteAsync_IncompressibleData_PreservesData()
+    {
+        // Arrange - random data doesn't compress well
+        using var package = DbpfPackage.CreateNew();
+        var key = new ResourceKey(0x220557DA, 0, 0);
+        var data = new byte[500];
+        new Random(12345).NextBytes(data);
+        package.AddResource(key, data);
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert - verify data is preserved regardless of compression
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        var entry = reloaded.Find(key);
+        entry.Should().NotBeNull();
+        var readData = await reloaded.GetResourceDataAsync(entry!);
+        readData.ToArray().Should().BeEquivalentTo(data);
+    }
+
+    [Fact]
+    public async Task WriteAsync_ZeroLengthResource_PreservesEmptyData()
+    {
+        // Arrange - edge case: empty resource
+        using var package = DbpfPackage.CreateNew();
+        var key = new ResourceKey(0x220557DA, 0, 0);
+        var data = Array.Empty<byte>();
+        package.AddResource(key, data);
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        var entry = reloaded.Find(key);
+        entry.Should().NotBeNull();
+        var readData = await reloaded.GetResourceDataAsync(entry!);
+        readData.ToArray().Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task WriteAsync_ManyResources_PreservesAllData()
+    {
+        // Arrange - test with 100+ resources to verify scalability
+        using var package = DbpfPackage.CreateNew();
+        var resources = new Dictionary<ResourceKey, byte[]>();
+        const int resourceCount = 150;
+
+        for (int i = 0; i < resourceCount; i++)
+        {
+            var key = new ResourceKey(0x220557DA, (uint)(i / 50), (ulong)i);
+            var data = new byte[50 + i % 100];
+            new Random(i).NextBytes(data);
+            resources[key] = data;
+            package.AddResource(key, data);
+        }
+
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        reloaded.ResourceCount.Should().Be(resourceCount);
+
+        foreach (var (key, expectedData) in resources)
+        {
+            var entry = reloaded.Find(key);
+            entry.Should().NotBeNull($"Resource {key} should exist");
+            var readData = await reloaded.GetResourceDataAsync(entry!);
+            readData.ToArray().Should().BeEquivalentTo(expectedData);
+        }
+    }
+
+    [Fact]
+    public async Task WriteAsync_AllSameInstanceHigh_OptimizesIndex()
+    {
+        // Arrange - all resources have same instance high bits
+        using var package = DbpfPackage.CreateNew();
+        const uint instanceHigh = 0x12345678;
+        package.AddResource(new ResourceKey(1, 1, ((ulong)instanceHigh << 32) | 1), new byte[] { 1 });
+        package.AddResource(new ResourceKey(2, 2, ((ulong)instanceHigh << 32) | 2), new byte[] { 2 });
+        package.AddResource(new ResourceKey(3, 3, ((ulong)instanceHigh << 32) | 3), new byte[] { 3 });
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert - reload and verify all resources preserved
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        reloaded.ResourceCount.Should().Be(3);
+
+        foreach (var entry in reloaded.Resources)
+        {
+            ((uint)(entry.Key.Instance >> 32)).Should().Be(instanceHigh);
+        }
+    }
+
+    [Fact]
+    public async Task WriteAsync_VerySmallResource_PreservesData()
+    {
+        // Arrange - single byte resource
+        using var package = DbpfPackage.CreateNew();
+        var key = new ResourceKey(0x220557DA, 0, 0);
+        var data = new byte[] { 0x42 };
+        package.AddResource(key, data);
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        var entry = reloaded.Find(key);
+        entry.Should().NotBeNull();
+        var readData = await reloaded.GetResourceDataAsync(entry!);
+        readData.ToArray().Should().BeEquivalentTo(data);
+    }
+
+    [Fact]
+    public async Task WriteAsync_DifferentTypes_PreservesAllTypes()
+    {
+        // Arrange - resources with different types (no optimization possible)
+        using var package = DbpfPackage.CreateNew();
+        var types = new uint[] { 0x220557DA, 0x00B2D882, 0x034AEECB, 0x545AC67A };
+
+        foreach (var type in types)
+        {
+            var key = new ResourceKey(type, 0, type);
+            package.AddResource(key, BitConverter.GetBytes(type));
+        }
+
+        using var stream = new MemoryStream();
+
+        // Act
+        await package.SaveToStreamAsync(stream);
+
+        // Assert
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        reloaded.ResourceCount.Should().Be(types.Length);
+
+        foreach (var type in types)
+        {
+            var key = new ResourceKey(type, 0, type);
+            var entry = reloaded.Find(key);
+            entry.Should().NotBeNull();
+            entry!.Key.ResourceType.Should().Be(type);
+        }
+    }
 }
