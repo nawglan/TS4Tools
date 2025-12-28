@@ -389,8 +389,10 @@ FodyWeavers.xsd
 *.sln.iml
 .idea/
 
-# Claude Code configuration
-.claude/
+# Claude Code configuration (ignore contents, not directory)
+.claude/*
+# But allow shared commands to be committed
+!.claude/commands/
 
 # Avalonia specific
 *.avalonia
