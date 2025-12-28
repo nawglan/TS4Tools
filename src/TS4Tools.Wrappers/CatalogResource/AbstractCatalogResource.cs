@@ -166,7 +166,7 @@ public abstract class AbstractCatalogResource : TypedResource
     /// <remarks>
     /// Source: AbstractCatalogResource.cs lines 491-534
     /// </remarks>
-    protected override void Parse(ReadOnlySpan<byte> data)
+    protected sealed override void Parse(ReadOnlySpan<byte> data)
     {
         int offset = 0;
 
@@ -259,15 +259,18 @@ public abstract class AbstractCatalogResource : TypedResource
         if (Version >= 0x19)
         {
             FallbackObjectKey = TgiReference.Parse(data[offset..]);
-            // offset += TgiReference.SerializedSize; // Not needed, we're done
+            offset += TgiReference.SerializedSize;
         }
+
+        // Type-specific fields
+        ParseTypeSpecific(data, ref offset);
     }
 
     /// <inheritdoc/>
     /// <remarks>
     /// Source: AbstractCatalogResource.cs lines 536-592
     /// </remarks>
-    protected override ReadOnlyMemory<byte> Serialize()
+    protected sealed override ReadOnlyMemory<byte> Serialize()
     {
         int size = CalculateSerializedSize();
         var buffer = new byte[size];
@@ -360,11 +363,42 @@ public abstract class AbstractCatalogResource : TypedResource
         if (Version >= 0x19)
         {
             FallbackObjectKey.WriteTo(buffer.AsSpan(offset));
-            // offset += TgiReference.SerializedSize;
+            offset += TgiReference.SerializedSize;
         }
+
+        // Type-specific fields
+        SerializeTypeSpecific(buffer.AsSpan(), ref offset);
 
         return buffer;
     }
+
+    /// <summary>
+    /// Parses type-specific fields after the base AbstractCatalogResource fields.
+    /// Override this in derived classes to parse additional fields.
+    /// </summary>
+    /// <param name="data">The full data span.</param>
+    /// <param name="offset">The current offset after base fields. Update this as you read.</param>
+    protected virtual void ParseTypeSpecific(ReadOnlySpan<byte> data, ref int offset)
+    {
+        // Default implementation does nothing
+    }
+
+    /// <summary>
+    /// Serializes type-specific fields after the base AbstractCatalogResource fields.
+    /// Override this in derived classes to serialize additional fields.
+    /// </summary>
+    /// <param name="buffer">The full buffer span.</param>
+    /// <param name="offset">The current offset after base fields. Update this as you write.</param>
+    protected virtual void SerializeTypeSpecific(Span<byte> buffer, ref int offset)
+    {
+        // Default implementation does nothing
+    }
+
+    /// <summary>
+    /// Gets the size in bytes of the type-specific fields when serialized.
+    /// Override this in derived classes.
+    /// </summary>
+    protected virtual int GetTypeSpecificSerializedSize() => 0;
 
     /// <inheritdoc/>
     protected override void InitializeDefaults()
@@ -422,6 +456,9 @@ public abstract class AbstractCatalogResource : TypedResource
         // Fallback key (version 0x19+)
         if (Version >= 0x19)
             size += TgiReference.SerializedSize;
+
+        // Type-specific fields
+        size += GetTypeSpecificSerializedSize();
 
         return size;
     }
