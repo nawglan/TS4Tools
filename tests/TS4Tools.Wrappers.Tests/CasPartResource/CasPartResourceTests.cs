@@ -9,10 +9,10 @@ namespace TS4Tools.Wrappers.Tests.CasPartResource;
 /// Tests for <see cref="CasPartResource"/>.
 ///
 /// LEGACY ANALYSIS:
-/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResource.cs
+/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResourceTS4.cs
 /// - CAS Part defines Create-A-Sim clothing and accessory parts
 /// - Type ID: 0x034AEECB
-/// - Complex structure with version-gated fields (v27-v37+)
+/// - Legacy supports versions 27 (0x1B) and 28 (0x1C)
 /// </summary>
 public class CasPartResourceTests
 {
@@ -32,8 +32,7 @@ public class CasPartResourceTests
         casp.SwatchColors.Count.Should().Be(0);
         casp.LodBlocks.Should().NotBeNull();
         casp.LodBlocks.Count.Should().Be(0);
-        casp.Overrides.Should().NotBeNull();
-        casp.Overrides.Count.Should().Be(0);
+        casp.Overrides.Should().Be(0);
         casp.TgiBlocks.Should().NotBeNull();
         casp.TgiBlocks.Count.Should().Be(0);
     }
@@ -86,17 +85,17 @@ public class CasPartResourceTests
     public void RoundTrip_WithFlags_PreservesFlags()
     {
         var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
-        original.FlagList.Add(new CaspFlag(0x0041, 0x00000001)); // Color category, value 1
-        original.FlagList.Add(new CaspFlag(0x0042, 0x00000002)); // Style category, value 2
+        original.FlagList.Add(new CaspFlag(0x0041, 0x0001)); // Color category, value 1
+        original.FlagList.Add(new CaspFlag(0x0042, 0x0002)); // Style category, value 2
 
         var data = original.Data.ToArray();
         var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
 
         parsed.FlagList.Count.Should().Be(2);
         parsed.FlagList[0].Category.Should().Be(0x0041);
-        parsed.FlagList[0].Value.Should().Be(0x00000001);
+        parsed.FlagList[0].Value.Should().Be(0x0001);
         parsed.FlagList[1].Category.Should().Be(0x0042);
-        parsed.FlagList[1].Value.Should().Be(0x00000002);
+        parsed.FlagList[1].Value.Should().Be(0x0002);
     }
 
     [Fact]
@@ -119,27 +118,22 @@ public class CasPartResourceTests
     }
 
     [Fact]
-    public void RoundTrip_WithOverrides_PreservesOverrides()
+    public void RoundTrip_WithOverrides_PreservesValue()
     {
         var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
-        original.Overrides.Add(new CaspOverride(1, 0.5f));
-        original.Overrides.Add(new CaspOverride(2, 0.75f));
+        original.Overrides = 5;
 
         var data = original.Data.ToArray();
         var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
 
-        parsed.Overrides.Count.Should().Be(2);
-        parsed.Overrides[0].Region.Should().Be(1);
-        parsed.Overrides[0].Layer.Should().BeApproximately(0.5f, 0.001f);
-        parsed.Overrides[1].Region.Should().Be(2);
-        parsed.Overrides[1].Layer.Should().BeApproximately(0.75f, 0.001f);
+        parsed.Overrides.Should().Be(5);
     }
 
     [Fact]
-    public void RoundTrip_VersionGatedFields_V37_PreservesAll()
+    public void RoundTrip_VersionGatedFields_V28_PreservesAll()
     {
         var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
-        original.Version = 37;
+        original.Version = 0x1C; // 28
 
         // Version 27+ fields
         original.SharedUvMapSpace = 0x12345678;
@@ -147,37 +141,27 @@ public class CasPartResourceTests
         // Version 28+ fields
         original.VoiceEffectHash = 0xFEDCBA9876543210;
 
-        // Version 30+ fields
-        original.UsedMaterialCount = 3;
-        original.MaterialSetUpperBodyHash = 0x11111111;
-        original.MaterialSetLowerBodyHash = 0x22222222;
-        original.MaterialSetShoesHash = 0x33333333;
-        original.EmissionMapKey = 5;
-
-        // Version 31+ fields
-        original.HideForOccultFlags = OccultTypesDisabled.Alien;
-
-        // Version 32+ fields
-        original.Reserved1 = 1;
-
-        // Version 34+ fields
-        original.PackId = 42;
-        original.PackFlags = PackFlag.HidePackIcon;
-
         var data = original.Data.ToArray();
         var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
 
         parsed.SharedUvMapSpace.Should().Be(0x12345678);
         parsed.VoiceEffectHash.Should().Be(0xFEDCBA9876543210);
-        parsed.UsedMaterialCount.Should().Be(3);
-        parsed.MaterialSetUpperBodyHash.Should().Be(0x11111111);
-        parsed.MaterialSetLowerBodyHash.Should().Be(0x22222222);
-        parsed.MaterialSetShoesHash.Should().Be(0x33333333);
-        parsed.EmissionMapKey.Should().Be(5);
-        parsed.HideForOccultFlags.Should().Be(OccultTypesDisabled.Alien);
-        parsed.Reserved1.Should().Be(1);
-        parsed.PackId.Should().Be(42);
-        parsed.PackFlags.Should().Be(PackFlag.HidePackIcon);
+    }
+
+    [Fact]
+    public void RoundTrip_Version27_NoVoiceEffectHash()
+    {
+        var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        original.Version = 0x1B; // 27
+
+        // Version 27+ fields only
+        original.SharedUvMapSpace = 0x12345678;
+
+        var data = original.Data.ToArray();
+        var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
+
+        parsed.SharedUvMapSpace.Should().Be(0x12345678);
+        parsed.VoiceEffectHash.Should().Be(0); // Not present in v27
     }
 
     [Fact]
@@ -191,7 +175,7 @@ public class CasPartResourceTests
         original.AuralMaterialHash = 0x11223344;
         original.ParmFlags = ParmFlag.ShowInUI | ParmFlag.AllowForRandom | ParmFlag.DefaultForBodyType;
         original.ExcludePartFlags = ExcludePartFlag.Hat | ExcludePartFlag.Hair;
-        original.ExcludeModifierRegionFlags = 0x1234567890ABCDEF;
+        original.ExcludeModifierRegionFlags = 0x12345678; // 32-bit in legacy
         original.DeprecatedPrice = 500;
         original.PartTitleKey = 0xDEADBEEF;
         original.PartDescriptionKey = 0xCAFEBABE;
@@ -204,10 +188,10 @@ public class CasPartResourceTests
         original.RegionMapKey = 3;
         original.NormalMapKey = 4;
         original.SpecularMapKey = 5;
+        original.Overrides = 1;
 
         original.SwatchColors.Add(new SwatchColor(unchecked((int)0xFFAABBCC)));
-        original.FlagList.Add(new CaspFlag(0x0041, 0x00001234));
-        original.Overrides.Add(new CaspOverride(1, 0.5f));
+        original.FlagList.Add(new CaspFlag(0x0041, 0x1234));
         original.TgiBlocks.Add(new CaspTgiBlock(0x1234567890ABCDEF, 0x12345678, 0x00000001));
 
         // Serialize twice and compare
@@ -237,5 +221,30 @@ public class CasPartResourceTests
         resource.Should().NotBeNull();
         resource!.Version.Should().Be(Wrappers.CasPartResource.CasPartResource.DefaultVersion);
         resource.Name.Should().Be(string.Empty);
+    }
+
+    [Fact]
+    public void ExcludeModifierRegionFlags_Is32Bit()
+    {
+        var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        original.ExcludeModifierRegionFlags = 0xFFFFFFFF; // Max 32-bit value
+
+        var data = original.Data.ToArray();
+        var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
+
+        parsed.ExcludeModifierRegionFlags.Should().Be(0xFFFFFFFF);
+    }
+
+    [Fact]
+    public void FlagValue_Is16Bit()
+    {
+        var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        original.FlagList.Add(new CaspFlag(0xFFFF, 0xFFFF)); // Max 16-bit values
+
+        var data = original.Data.ToArray();
+        var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
+
+        parsed.FlagList[0].Category.Should().Be(0xFFFF);
+        parsed.FlagList[0].Value.Should().Be(0xFFFF);
     }
 }

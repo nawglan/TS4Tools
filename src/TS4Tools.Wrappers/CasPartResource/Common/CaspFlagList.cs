@@ -4,8 +4,8 @@ namespace TS4Tools.Wrappers.CasPartResource;
 
 /// <summary>
 /// A list of CAS part flags with uint32 count prefix.
-/// Version-aware parsing: v37+ uses 6-byte flags, v36 and below uses 4-byte flags.
-/// Source: legacy_references/.../Lists/FlagList.cs
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResourceTS4.cs
+/// See lines 596-621: FlagList class
 /// </summary>
 public sealed class CaspFlagList : List<CaspFlag>
 {
@@ -13,12 +13,6 @@ public sealed class CaspFlagList : List<CaspFlag>
     /// Maximum reasonable number of flags (OOM protection).
     /// </summary>
     private const int MaxFlagCount = 1000;
-
-    /// <summary>
-    /// Version threshold for 32-bit flag values.
-    /// v37 (0x25) and above use uint32 values; below use ushort.
-    /// </summary>
-    public const uint Version32BitThreshold = 37;
 
     /// <summary>
     /// Creates an empty CaspFlagList.
@@ -36,12 +30,11 @@ public sealed class CaspFlagList : List<CaspFlag>
 
     /// <summary>
     /// Parses a CaspFlagList from a span.
-    /// Format: uint32 count + (count * flag entries)
+    /// Format: uint32 count + (count * 4-byte flag entries)
     /// </summary>
     /// <param name="data">The data span to parse from.</param>
-    /// <param name="version">The resource version (determines flag size).</param>
     /// <param name="bytesRead">The total bytes consumed.</param>
-    public static CaspFlagList Parse(ReadOnlySpan<byte> data, uint version, out int bytesRead)
+    public static CaspFlagList Parse(ReadOnlySpan<byte> data, out int bytesRead)
     {
         int offset = 0;
         uint count = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -55,25 +48,15 @@ public sealed class CaspFlagList : List<CaspFlag>
         var list = new CaspFlagList();
         list.Capacity = (int)count;
 
-        bool use32BitValues = version >= Version32BitThreshold;
-        int flagSize = use32BitValues ? CaspFlag.SerializedSize : CaspFlag.LegacySerializedSize;
-
         for (int i = 0; i < count; i++)
         {
-            if (offset + flagSize > data.Length)
+            if (offset + CaspFlag.SerializedSize > data.Length)
             {
                 throw new InvalidDataException($"Truncated flag data at index {i}");
             }
 
-            if (use32BitValues)
-            {
-                list.Add(CaspFlag.Parse(data[offset..]));
-            }
-            else
-            {
-                list.Add(CaspFlag.ParseLegacy(data[offset..]));
-            }
-            offset += flagSize;
+            list.Add(CaspFlag.Parse(data[offset..]));
+            offset += CaspFlag.SerializedSize;
         }
 
         bytesRead = offset;
@@ -84,41 +67,28 @@ public sealed class CaspFlagList : List<CaspFlag>
     /// Writes this list to a span.
     /// </summary>
     /// <param name="buffer">The buffer to write to.</param>
-    /// <param name="version">The resource version (determines flag size).</param>
     /// <returns>The number of bytes written.</returns>
-    public int WriteTo(Span<byte> buffer, uint version)
+    public int WriteTo(Span<byte> buffer)
     {
         int offset = 0;
 
         BinaryPrimitives.WriteUInt32LittleEndian(buffer[offset..], (uint)Count);
         offset += 4;
 
-        bool use32BitValues = version >= Version32BitThreshold;
-
         foreach (var flag in this)
         {
-            if (use32BitValues)
-            {
-                flag.WriteTo(buffer[offset..]);
-                offset += CaspFlag.SerializedSize;
-            }
-            else
-            {
-                flag.WriteToLegacy(buffer[offset..]);
-                offset += CaspFlag.LegacySerializedSize;
-            }
+            flag.WriteTo(buffer[offset..]);
+            offset += CaspFlag.SerializedSize;
         }
 
         return offset;
     }
 
     /// <summary>
-    /// Gets the serialized size in bytes for the given version.
+    /// Gets the serialized size in bytes.
     /// </summary>
-    public int GetSerializedSize(uint version)
+    public int GetSerializedSize()
     {
-        bool use32BitValues = version >= Version32BitThreshold;
-        int flagSize = use32BitValues ? CaspFlag.SerializedSize : CaspFlag.LegacySerializedSize;
-        return 4 + (Count * flagSize);
+        return 4 + (Count * CaspFlag.SerializedSize);
     }
 }
