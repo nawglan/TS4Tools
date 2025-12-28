@@ -1,6 +1,5 @@
 // Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPFlags.cs
 
-using System.Diagnostics.CodeAnalysis;
 
 namespace TS4Tools.Wrappers.CasPartResource;
 

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Platform.Storage;
@@ -34,6 +28,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
     private bool _disposed;
     private readonly HashNameService _hashNameService = new();
+    private readonly PropertyChangedEventHandler _propertyChangedHandler;
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
@@ -93,7 +88,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     public MainWindowViewModel()
     {
-        PropertyChanged += (_, e) =>
+        _propertyChangedHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(FilterText) || e.PropertyName == nameof(SortMode))
             {
@@ -104,6 +99,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 ExecuteAsync(UpdateSelectedResourceDetailsAsync, "Error loading resource");
             }
         };
+        PropertyChanged += _propertyChangedHandler;
 
         LoadRecentFiles();
     }
@@ -803,6 +799,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
 
+        PropertyChanged -= _propertyChangedHandler;
         await CloseCurrentPackageAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }

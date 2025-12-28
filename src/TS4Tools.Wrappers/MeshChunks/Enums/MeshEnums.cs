@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 
 namespace TS4Tools.Wrappers.MeshChunks;
 

@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using TS4Tools.Compression;
 
 namespace TS4Tools.Package;
@@ -113,13 +112,15 @@ internal sealed class PackageWriter
             newEntries.Add((newEntry, dataToWrite));
         }
 
+        // Reuse a single buffer for all 4-byte writes to reduce allocations
+        var buffer = new byte[4];
+
         // Write index
         long indexPosition = output.Position;
-        int indexSize = await WriteIndexAsync(output, indexType, newEntries.Select(x => x.Entry).ToList(), cancellationToken).ConfigureAwait(false);
+        int indexSize = await WriteIndexAsync(output, indexType, newEntries.Select(x => x.Entry).ToList(), buffer, cancellationToken).ConfigureAwait(false);
 
         // Update header with final values
         output.Position = 36; // Index count
-        var buffer = new byte[4];
         BinaryPrimitives.WriteInt32LittleEndian(buffer, newEntries.Count);
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 
@@ -170,6 +171,7 @@ internal sealed class PackageWriter
         Stream output,
         uint indexType,
         List<ResourceIndexEntry> entries,
+        byte[] buffer,
         CancellationToken cancellationToken)
     {
         long startPosition = output.Position;
@@ -180,7 +182,6 @@ internal sealed class PackageWriter
         uint headerInstanceHigh = entries.Count > 0 ? (uint)(entries[0].Key.Instance >> 32) : 0;
 
         // Write index type
-        var buffer = new byte[4];
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, indexType);
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 
@@ -204,7 +205,7 @@ internal sealed class PackageWriter
         // Write entries
         foreach (var entry in entries)
         {
-            await WriteEntryAsync(output, entry, indexType, cancellationToken).ConfigureAwait(false);
+            await WriteEntryAsync(output, entry, indexType, buffer, cancellationToken).ConfigureAwait(false);
         }
 
         return (int)(output.Position - startPosition);
@@ -214,10 +215,9 @@ internal sealed class PackageWriter
         Stream output,
         ResourceIndexEntry entry,
         uint indexType,
+        byte[] buffer,
         CancellationToken cancellationToken)
     {
-        var buffer = new byte[4];
-
         // Write Type if not in header
         if ((indexType & 0x01) == 0)
         {
@@ -255,10 +255,9 @@ internal sealed class PackageWriter
         BinaryPrimitives.WriteUInt32LittleEndian(buffer, entry.MemorySize);
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
 
-        // Compressed + Unknown2
-        var buffer2 = new byte[4];
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer2, entry.CompressionType);
-        BinaryPrimitives.WriteUInt16LittleEndian(buffer2.AsSpan(2), entry.Unknown2);
-        await output.WriteAsync(buffer2, cancellationToken).ConfigureAwait(false);
+        // Compressed + Unknown2 (reuse buffer for 2 uint16 values)
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer, entry.CompressionType);
+        BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(2), entry.Unknown2);
+        await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
     }
 }

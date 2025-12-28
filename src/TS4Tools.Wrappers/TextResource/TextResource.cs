@@ -1,4 +1,3 @@
-using System.Text;
 using TS4Tools.Resources;
 
 namespace TS4Tools.Wrappers;
@@ -7,6 +6,12 @@ namespace TS4Tools.Wrappers;
 /// Text/XML resource for tuning files and other plain text content.
 /// Resource Types: 0x03B33DDF (Tuning), 0x6017E896 (Tuning XML), and others.
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/TextResource/TextResource.cs
+///
+/// Legacy implementation uses StreamReader.ReadToEnd() pattern. This modern
+/// implementation parses directly from ReadOnlySpan with explicit UTF-8 BOM handling.
+/// </remarks>
 [ResourceHandler(0x03B33DDF)] // Tuning
 [ResourceHandler(0x6017E896)] // Tuning XML
 public sealed class TextResource : TypedResource

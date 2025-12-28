@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 
 namespace TS4Tools.UI;

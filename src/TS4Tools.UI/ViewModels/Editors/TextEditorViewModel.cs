@@ -4,9 +4,11 @@ using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels.Editors;
 
-public partial class TextEditorViewModel : ViewModelBase
+public partial class TextEditorViewModel : ViewModelBase, IDisposable
 {
+    private bool _disposed;
     private TextResource? _resource;
+    private readonly PropertyChangedEventHandler _propertyChangedHandler;
 
     [ObservableProperty]
     private string _text = string.Empty;
@@ -28,13 +30,14 @@ public partial class TextEditorViewModel : ViewModelBase
 
     public TextEditorViewModel()
     {
-        PropertyChanged += (_, e) =>
+        _propertyChangedHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(Text))
             {
                 UpdateStats();
             }
         };
+        PropertyChanged += _propertyChangedHandler;
     }
 
     public void LoadResource(TextResource resource)
@@ -82,4 +85,13 @@ public partial class TextEditorViewModel : ViewModelBase
     }
 
     public ReadOnlyMemory<byte> GetData() => _resource?.Data ?? ReadOnlyMemory<byte>.Empty;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        PropertyChanged -= _propertyChangedHandler;
+        GC.SuppressFinalize(this);
+    }
 }

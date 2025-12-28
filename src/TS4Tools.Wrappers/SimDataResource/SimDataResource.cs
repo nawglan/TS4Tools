@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using TS4Tools.Resources;
 
 namespace TS4Tools.Wrappers;

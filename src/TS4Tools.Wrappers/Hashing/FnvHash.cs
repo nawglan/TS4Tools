@@ -1,4 +1,3 @@
-using System.Text;
 
 namespace TS4Tools.Wrappers.Hashing;
 

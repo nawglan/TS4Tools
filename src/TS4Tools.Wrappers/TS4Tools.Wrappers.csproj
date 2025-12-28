@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.Buffers.Binary" />
+    <Using Include="System.Collections" />
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Text" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TS4Tools.Interfaces\TS4Tools.Interfaces.csproj" />
     <ProjectReference Include="..\TS4Tools.Core\TS4Tools.Core.csproj" />
   </ItemGroup>

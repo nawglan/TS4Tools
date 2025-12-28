@@ -6,6 +6,14 @@ namespace TS4Tools.Wrappers;
 /// Image resource for PNG and DDS/DST textures.
 /// Resource Types: 0x00B00000 (PNG), 0x00B2D882 (DDS/DST).
 /// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/RLEResource.cs
+///
+/// Legacy implementation handles DST (shuffled DXT) and RLE compressed textures.
+/// This modern implementation combines both into a single unified resource that
+/// can parse and serve PNG, DDS, and DST formats.
+/// </remarks>
 [ResourceHandler(0x00B00000)] // PNG
 [ResourceHandler(0x00B2D882)] // DDS/DST
 public sealed class ImageResource : TypedResource

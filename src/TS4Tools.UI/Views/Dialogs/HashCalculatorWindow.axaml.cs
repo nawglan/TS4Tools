@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using TS4Tools.Wrappers.Hashing;
@@ -7,11 +6,25 @@ namespace TS4Tools.UI.Views.Dialogs;
 
 public partial class HashCalculatorWindow : Window
 {
+    private readonly EventHandler<TextChangedEventArgs> _textChangedHandler;
+    private readonly EventHandler<RoutedEventArgs> _isCheckedChangedHandler;
+
     public HashCalculatorWindow()
     {
         InitializeComponent();
-        InputTextBox.TextChanged += (_, _) => Calculate();
-        LowercaseCheckBox.IsCheckedChanged += (_, _) => Calculate();
+
+        _textChangedHandler = (_, _) => Calculate();
+        _isCheckedChangedHandler = (_, _) => Calculate();
+
+        InputTextBox.TextChanged += _textChangedHandler;
+        LowercaseCheckBox.IsCheckedChanged += _isCheckedChangedHandler;
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        InputTextBox.TextChanged -= _textChangedHandler;
+        LowercaseCheckBox.IsCheckedChanged -= _isCheckedChangedHandler;
+        base.OnClosed(e);
     }
 
     private void Calculate()

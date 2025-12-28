@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TS4Tools.Wrappers;
 
