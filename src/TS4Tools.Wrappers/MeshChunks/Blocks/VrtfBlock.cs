@@ -219,8 +219,15 @@ public sealed class VrtfBlock : RcolBlock
     /// <summary>
     /// Finds a layout by usage type.
     /// </summary>
-    public ElementLayout? FindLayout(ElementUsage usage) =>
-        Layouts.FirstOrDefault(x => x.Usage == usage);
+    public ElementLayout? FindLayout(ElementUsage usage)
+    {
+        foreach (var layout in Layouts)
+        {
+            if (layout.Usage == usage)
+                return layout;
+        }
+        return null;
+    }
 
     /// <summary>
     /// Finds all layouts with the specified usage.
