@@ -1,15 +1,17 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>
 /// Decoder for Sims 4 DST (shuffled texture) format.
 /// DST files are DXT textures with block data shuffled for compression efficiency.
-///
-/// LEGACY ANALYSIS:
-/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs
+/// </summary>
+/// <remarks>
+/// Source: s4pi Wrappers/ImageResource/DSTResource.cs (Unshuffle method, lines 197-270)
 /// - DST1 is shuffled DXT1 (BC1): 8-byte blocks split into two halves
 /// - DST5 is shuffled DXT5 (BC3): 16-byte blocks split into four parts
 /// - The DDS header (128 bytes) is preserved, only the data section is shuffled
-/// </summary>
+/// </remarks>
 public static class DstDecoder
 {
     /// <summary>

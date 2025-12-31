@@ -1,15 +1,18 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DDS.cs
+// Source: legacy_references/Sims4Tools/s4pi Extras/DDSPanel/DdsSquish.cs
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>
 /// Decoder for DXT (S3 Texture Compression) formats.
 /// Implements BC1 (DXT1) and BC3 (DXT5) block decompression.
-///
-/// LEGACY ANALYSIS:
-/// - Source: legacy_references/Sims4Tools/s4pi Extras/DDSPanel/DdsSquish.cs
-/// - Legacy uses native squish library via P/Invoke
-/// - This implementation is pure managed C# based on DirectX/OpenGL specifications
-/// - Output is RGBA32 (8 bits per channel, in memory order: R, G, B, A)
 /// </summary>
+/// <remarks>
+/// Source: s4pi Wrappers/ImageResource/DDS.cs (FourCC enums, PixelFormat)
+/// Source: s4pi Extras/DDSPanel/DdsSquish.cs (native squish library P/Invoke)
+/// - Legacy uses native squish library; this is pure managed C# based on DirectX/OpenGL specs
+/// - Output is RGBA32 (8 bits per channel, in memory order: R, G, B, A)
+/// </remarks>
 public static class DxtDecoder
 {
     /// <summary>

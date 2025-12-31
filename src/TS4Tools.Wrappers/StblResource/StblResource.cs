@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/StblResource/StblResource.cs
+
 using TS4Tools.Resources;
 
 namespace TS4Tools.Wrappers;
@@ -6,6 +8,12 @@ namespace TS4Tools.Wrappers;
 /// String Table (STBL) resource containing localized strings.
 /// Resource Type: 0x220557DA
 /// </summary>
+/// <remarks>
+/// Source: s4pi Wrappers/StblResource/StblResource.cs
+/// Header: magic "STBL" (4), version (2), isCompressed (1), numEntries (8), reserved (2), stringLength (4)
+/// Entry: keyHash (4), flags (1), length (2), UTF-8 string data
+/// Handler TypeId: 0x220557DA
+/// </remarks>
 [ResourceHandler(0x220557DA)]
 public sealed class StblResource : TypedResource
 {

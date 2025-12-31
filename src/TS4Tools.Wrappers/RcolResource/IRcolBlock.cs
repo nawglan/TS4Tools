@@ -1,8 +1,14 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/GenericRCOLResource/IRCOLBlock.cs
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>
 /// Interface for RCOL chunk blocks.
 /// </summary>
+/// <remarks>
+/// Source: s4pi Wrappers/GenericRCOLResource/IRCOLBlock.cs
+/// Legacy interface exposes Tag (string), ResourceType (uint), and UnParse() method.
+/// </remarks>
 public interface IRcolBlock
 {
     /// <summary>

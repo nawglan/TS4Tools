@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/NameMapResource/NameMapResource.cs
+
 using TS4Tools.Resources;
 
 namespace TS4Tools.Wrappers;
@@ -6,6 +8,11 @@ namespace TS4Tools.Wrappers;
 /// Name Map resource containing hash-to-name mappings.
 /// Resource Type: 0x0166038C
 /// </summary>
+/// <remarks>
+/// Source: s4pi Wrappers/NameMapResource/NameMapResource.cs
+/// Format: version (uint32), count (int32), entries (ulong hash, int32 length, char[] name)
+/// Handler TypeId: 0x0166038C
+/// </remarks>
 [ResourceHandler(0x0166038C)]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Domain-specific resource type, not a generic collection")]
 public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>

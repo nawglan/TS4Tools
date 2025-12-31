@@ -1,3 +1,4 @@
+// Source: legacy_references/Sims4Tools/CS System Classes/FNVHash.cs
 
 namespace TS4Tools.Wrappers.Hashing;
 
@@ -5,6 +6,12 @@ namespace TS4Tools.Wrappers.Hashing;
 /// Fowler-Noll-Vo hash functions used by The Sims 4 for string hashing.
 /// Implements FNV-1a variant for both 32-bit and 64-bit hashes.
 /// </summary>
+/// <remarks>
+/// Source: CS System Classes/FNVHash.cs
+/// Legacy implementation uses HashAlgorithm base class; this is a modern static implementation.
+/// FNV32 parameters: prime=0x01000193, offset=0x811C9DC5
+/// FNV64 parameters: prime=0x00000100000001B3, offset=0xCBF29CE484222325
+/// </remarks>
 public static class FnvHash
 {
     // FNV-1a 32-bit parameters
