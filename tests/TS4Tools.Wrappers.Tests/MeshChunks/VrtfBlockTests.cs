@@ -535,13 +535,35 @@ public class VrtfBlockTests
 
     #region ElementFormat Extension Tests
 
+    /// <summary>
+    /// Tests ByteSize() for all ElementFormat values.
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/MeshChunks/VRTF.cs lines 122-146
+    /// </summary>
     [Theory]
+    // Float formats
     [InlineData(ElementFormat.Float1, 4)]
     [InlineData(ElementFormat.Float2, 8)]
     [InlineData(ElementFormat.Float3, 12)]
     [InlineData(ElementFormat.Float4, 16)]
+    // Byte formats (4 bytes each)
+    [InlineData(ElementFormat.UByte4, 4)]
+    [InlineData(ElementFormat.ColorUByte4, 4)]
+    [InlineData(ElementFormat.UByte4N, 4)]
+    // Short formats (2 shorts = 4 bytes, 4 shorts = 8 bytes)
+    [InlineData(ElementFormat.Short2, 4)]
+    [InlineData(ElementFormat.Short2N, 4)]
     [InlineData(ElementFormat.Short4, 8)]
+    [InlineData(ElementFormat.Short4N, 8)]
+    // Unsigned short formats
+    [InlineData(ElementFormat.UShort2N, 4)]
     [InlineData(ElementFormat.UShort4N, 8)]
+    // Packed decimal formats (4 bytes for 10-10-10-2 bit layout)
+    [InlineData(ElementFormat.Dec3N, 4)]
+    [InlineData(ElementFormat.UDec3N, 4)]
+    // Half-precision float formats
+    [InlineData(ElementFormat.Float16x2, 4)]
+    [InlineData(ElementFormat.Float16x4, 8)]
+    // Special format
     [InlineData(ElementFormat.Short4DropShadow, 8)]
     public void ElementFormat_ByteSize_ReturnsCorrectSize(ElementFormat format, int expectedSize)
     {
@@ -552,11 +574,32 @@ public class VrtfBlockTests
         size.Should().Be(expectedSize);
     }
 
+    /// <summary>
+    /// Tests FloatCount() for all ElementFormat values.
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/MeshChunks/VRTF.cs lines 97-121
+    /// </summary>
     [Theory]
+    // 1 float
     [InlineData(ElementFormat.Float1, 1)]
+    // 2 floats
     [InlineData(ElementFormat.Float2, 2)]
+    [InlineData(ElementFormat.Short2, 2)]
+    [InlineData(ElementFormat.Short2N, 2)]
+    [InlineData(ElementFormat.UShort2N, 2)]
+    [InlineData(ElementFormat.Float16x2, 2)]
+    // 3 floats
     [InlineData(ElementFormat.Float3, 3)]
+    [InlineData(ElementFormat.Short4, 3)]
+    [InlineData(ElementFormat.Short4N, 3)]
+    [InlineData(ElementFormat.UByte4N, 3)]
+    [InlineData(ElementFormat.UShort4N, 3)]
+    [InlineData(ElementFormat.Dec3N, 3)]
+    [InlineData(ElementFormat.UDec3N, 3)]
+    // 4 floats
     [InlineData(ElementFormat.Float4, 4)]
+    [InlineData(ElementFormat.ColorUByte4, 4)]
+    [InlineData(ElementFormat.Short4DropShadow, 4)]
+    [InlineData(ElementFormat.Float16x4, 4)]
     public void ElementFormat_FloatCount_ReturnsCorrectCount(ElementFormat format, int expectedCount)
     {
         // Act
@@ -564,6 +607,42 @@ public class VrtfBlockTests
 
         // Assert
         count.Should().Be(expectedCount);
+    }
+
+    /// <summary>
+    /// Validates ByteSize for commonly used vertex formats in meshes.
+    /// This tests realistic combinations as they would appear in actual mesh data.
+    /// </summary>
+    [Fact]
+    public void ElementFormat_ByteSize_CommonMeshFormats_CorrectStride()
+    {
+        // A typical skinned mesh vertex format: Position(Float3) + Normal(Float3) + UV(Float2) + BoneIndices(UByte4) + BoneWeights(UByte4N)
+        var expectedStride =
+            ElementFormat.Float3.ByteSize() +    // Position: 12
+            ElementFormat.Float3.ByteSize() +    // Normal: 12
+            ElementFormat.Float2.ByteSize() +    // UV: 8
+            ElementFormat.UByte4.ByteSize() +    // BoneIndices: 4
+            ElementFormat.UByte4N.ByteSize();    // BoneWeights: 4
+
+        expectedStride.Should().Be(40);
+    }
+
+    /// <summary>
+    /// Validates ByteSize for shadow mesh formats.
+    /// </summary>
+    [Fact]
+    public void ElementFormat_ByteSize_ShadowFormats_CorrectStride()
+    {
+        // Sun shadow format
+        var sunShadowStride = ElementFormat.Short4.ByteSize();
+        sunShadowStride.Should().Be(8);
+
+        // Drop shadow format
+        var dropShadowStride =
+            ElementFormat.UShort4N.ByteSize() +         // Position: 8
+            ElementFormat.Short4DropShadow.ByteSize();  // UV: 8
+
+        dropShadowStride.Should().Be(16);
     }
 
     #endregion

@@ -102,7 +102,7 @@ public static class ElementFormatExtensions
     {
         ElementFormat.Float1 => 1,
         ElementFormat.Float2 or ElementFormat.UShort2N or ElementFormat.Short2
-            or ElementFormat.Float16x2 => 2,
+            or ElementFormat.Short2N or ElementFormat.Float16x2 => 2,
         ElementFormat.Short4 or ElementFormat.Short4N or ElementFormat.UByte4N
             or ElementFormat.UShort4N or ElementFormat.Float3
             or ElementFormat.Dec3N or ElementFormat.UDec3N => 3,
@@ -118,7 +118,8 @@ public static class ElementFormatExtensions
     {
         ElementFormat.Float1 or ElementFormat.UByte4 or ElementFormat.ColorUByte4
             or ElementFormat.UByte4N or ElementFormat.UShort2N or ElementFormat.Short2
-            or ElementFormat.Dec3N or ElementFormat.UDec3N or ElementFormat.Float16x2 => 4,
+            or ElementFormat.Short2N or ElementFormat.Dec3N or ElementFormat.UDec3N
+            or ElementFormat.Float16x2 => 4,
         ElementFormat.UShort4N or ElementFormat.Float2 or ElementFormat.Short4
             or ElementFormat.Short4N or ElementFormat.Short4DropShadow
             or ElementFormat.Float16x4 => 8,
