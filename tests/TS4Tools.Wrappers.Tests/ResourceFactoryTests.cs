@@ -195,6 +195,198 @@ public class ResourceFactoryTests
 
     #endregion
 
+    #region RigResourceFactory Tests
+
+    [Fact]
+    public void RigResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new RigResourceFactory();
+        var key = new ResourceKey(RigResource.TypeId, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<RigResource>();
+    }
+
+    #endregion
+
+    #region NgmpHashMapResourceFactory Tests
+
+    [Fact]
+    public void NgmpHashMapResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new NgmpHashMapResourceFactory();
+        var key = new ResourceKey(0xF3A38370, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<NgmpHashMapResource>();
+    }
+
+    #endregion
+
+    #region ObjKeyResourceFactory Tests
+
+    [Fact]
+    public void ObjKeyResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new ObjKeyResourceFactory();
+        var key = new ResourceKey(0x02DC343F, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<ObjKeyResource>();
+    }
+
+    #endregion
+
+    #region ScriptResourceFactory Tests
+
+    [Fact]
+    public void ScriptResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new ScriptResourceFactory();
+        var key = new ResourceKey(0x073FAA07, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<ScriptResource>();
+    }
+
+    #endregion
+
+    #region ModularResourceFactory Tests
+
+    [Fact]
+    public void ModularResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new ModularResourceFactory();
+        var key = new ResourceKey(0xCF9A4ACE, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<ModularResource>();
+    }
+
+    #endregion
+
+    #region ComplateResourceFactory Tests
+
+    [Fact]
+    public void ComplateResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new ComplateResourceFactory();
+        var key = new ResourceKey(0x044AE110, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<ComplateResource>();
+    }
+
+    #endregion
+
+    #region TxtcResourceFactory Tests
+
+    [Fact]
+    public void TxtcResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new TxtcResourceFactory();
+        var key = new ResourceKey(0x033A1435, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<TxtcResource>();
+    }
+
+    #endregion
+
+    #region UserCAStPresetResourceFactory Tests
+
+    [Fact]
+    public void UserCAStPresetResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new UserCAStPresetResourceFactory();
+        var key = new ResourceKey(0x0591B1AF, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<UserCAStPresetResource>();
+    }
+
+    #endregion
+
+    #region MiscResource Factory Tests
+
+    [Fact]
+    public void AuevResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new AuevResourceFactory();
+        var key = new ResourceKey(0xBDD82221, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<AuevResource>();
+    }
+
+    [Fact]
+    public void MtblResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new MtblResourceFactory();
+        var key = new ResourceKey(0x81CA1A10, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<MtblResource>();
+    }
+
+    [Fact]
+    public void SkyBoxTextureResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new SkyBoxTextureResourceFactory();
+        var key = new ResourceKey(0x71A449C9, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<SkyBoxTextureResource>();
+    }
+
+    [Fact]
+    public void TmltResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new TmltResourceFactory();
+        var key = new ResourceKey(0xB0118C15, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<TmltResource>();
+    }
+
+    [Fact]
+    public void TrimResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new TrimResourceFactory();
+        var key = new ResourceKey(0x76BCF80C, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<TrimResource>();
+    }
+
+    #endregion
+
     #region Catalog Resource Factory Tests
 
     [Theory]
