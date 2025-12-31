@@ -1,10 +1,10 @@
 # TS4Tools Work Session
 
-Find actionable work that moves the TS4Tools rewrite forward, implement it with tests, and commit.
+Find actionable work that moves the TS4Tools rewrite forward, implement it, and commit.
 
 ## Arguments
 
-- `$ARGUMENTS` - Optional focus area (e.g., "wrappers", "core", "ui") or "help"
+- `$ARGUMENTS` - Optional focus area or "help"
 
 ---
 
@@ -28,16 +28,18 @@ TS4Tools Work Session
 Usage: /work [focus]
 
 Focus areas (optional):
-  wrappers   Prioritize resource wrapper implementations
-  core       Prioritize core package/parsing functionality
-  tests      Prioritize test coverage gaps
-  ui         Prioritize UI/ViewModel work
+  wrappers   Resource wrapper implementations
+  core       Core package/parsing functionality
+  tests      Test coverage improvements
+  ui         UI/ViewModel work
+  docs       Documentation updates
 
 Without a focus, auto-discovers the best next task based on:
-  1. Partially implemented features needing completion
-  2. Missing wrapper implementations (legacy exists, modern doesn't)
-  3. Test coverage gaps
-  4. TODOs/FIXMEs in the codebase
+  1. Build/test failures (must be fixed first)
+  2. Partially implemented features (TODOs, WIP)
+  3. Missing functionality (legacy exists, modern doesn't)
+  4. Test coverage gaps
+  5. Code quality improvements
 
 Examples:
   /work              Auto-discover and implement next task
@@ -49,215 +51,187 @@ Examples:
 
 ---
 
-## PHASE 1: Discovery (Find Work)
+## PHASE 1: Health Check
 
-### 1.1 Check for In-Progress Work
+Before looking for work, verify the codebase is healthy:
 
-First, look for existing incomplete work:
+```bash
+# Check build status
+dotnet build
 
-```
-# Check for TODOs and FIXMEs in modern code
-grep: "TODO|FIXME|HACK|XXX" in src/
-
-# Check for partial implementations (NotImplementedException)
-grep: "NotImplementedException|throw new NotSupportedException" in src/
-
-# Check for WIP markers
-grep: "WIP|Work.in.Progress" in src/
+# Check test status
+dotnet test
 ```
 
-If found, these are HIGH PRIORITY - complete existing work before starting new.
-
-### 1.2 Identify Missing Wrappers
-
-Compare legacy wrappers to modern implementations:
-
-```
-# Legacy resource files (the source of truth)
-glob: legacy_references/Sims4Tools/s4pi Wrappers/**/*Resource.cs
-glob: legacy_references/Sims4Tools/s4pi Wrappers/**/*Wrapper.cs
-
-# Modern implementations
-glob: src/TS4Tools.Wrappers/**/*.cs
-
-# Find resources in legacy without modern equivalent
-# A legacy FooResource.cs should have a modern FooResource.cs
-```
-
-### 1.3 Find Test Coverage Gaps
-
-```
-# Modern resource files
-glob: src/TS4Tools.Wrappers/**/*Resource.cs
-glob: src/TS4Tools.Core/**/*.cs
-
-# Test files
-glob: tests/**/*Tests.cs
-
-# Resources without tests are HIGH PRIORITY
-```
-
-### 1.4 Check for Missing Core Features
-
-```
-# Core legacy features
-glob: legacy_references/Sims4Tools/s4pi/Package/*.cs
-glob: legacy_references/Sims4Tools/s4pi/Interfaces/*.cs
-
-# Modern core
-glob: src/TS4Tools.Core/**/*.cs
-```
+**If build fails:** The task is to fix the build. Stop discovery.
+**If tests fail:** The task is to fix failing tests. Stop discovery.
 
 ---
 
-## PHASE 2: Selection (Choose Task)
+## PHASE 2: Discovery (Find Work)
 
-Based on discovery, select ONE task using this priority:
+Search for work across the entire codebase. Look for coherent units of work that make sense as a single commit - this could be small or large.
 
-1. **HIGHEST**: Complete partially-implemented features (TODOs, NotImplementedException)
-2. **HIGH**: Add tests for existing implementations without test coverage
-3. **MEDIUM**: Port a new wrapper from legacy (prefer smaller, self-contained ones)
-4. **LOWER**: Add edge case tests for existing test files
+### 2.1 Check for Incomplete Work
 
-**Selection criteria for new wrappers:**
-- Prefer wrappers with fewer dependencies
-- Prefer smaller files (< 500 lines in legacy)
-- Prefer wrappers with clear, documented structure
+```
+# TODOs, FIXMEs, and WIP markers
+grep: "TODO|FIXME|HACK|XXX|WIP" in src/
+
+# Partial implementations
+grep: "NotImplementedException|NotSupportedException" in src/
+```
+
+### 2.2 Compare Legacy vs Modern
+
+Look at ALL areas, not just wrappers:
+
+```
+# Core functionality
+legacy_references/Sims4Tools/s4pi/Package/
+legacy_references/Sims4Tools/s4pi/Interfaces/
+→ Compare with src/TS4Tools.Core/
+
+# Resource wrappers
+legacy_references/Sims4Tools/s4pi Wrappers/
+→ Compare with src/TS4Tools.Wrappers/
+
+# UI features
+legacy_references/Sims4Tools/s4pe/
+→ Compare with src/TS4Tools.UI/
+
+# Compatibility layer
+→ Check src/TS4Tools.Compatibility/ completeness
+```
+
+### 2.3 Find Test Gaps
+
+```
+# Find implementations without corresponding tests
+glob: src/**/*.cs
+glob: tests/**/*Tests.cs
+```
+
+### 2.4 Look for Enhancement Opportunities
+
+- Performance improvements visible from code review
+- API consistency issues
+- Missing validation or error handling
+- Refactoring that improves maintainability
+
+---
+
+## PHASE 3: Selection (Choose Task)
+
+Select ONE coherent task. The task should:
+
+1. **Make sense as a single commit** - A logical unit of change
+2. **Be completable** - Don't select half of a feature
+3. **Have clear scope** - Know when you're done
+
+Task examples (any size is valid):
+- Fix a single bug
+- Complete a TODO
+- Port an entire resource wrapper with tests
+- Add comprehensive tests for a module
+- Refactor a subsystem for better patterns
+- Implement a missing core feature
 
 **Output the selected task:**
 ```
 ## Selected Task
 
-**Type:** [Complete WIP | Add Tests | New Wrapper | Edge Cases]
-**Target:** {file or feature name}
-**Reason:** {why this was selected}
-**Legacy Reference:** {path to legacy file if applicable}
+**Type:** {Fix | Feature | Test | Refactor | Enhancement}
+**Target:** {description of what will change}
+**Scope:** {files/areas affected}
+**Reason:** {why this task was selected}
+**Definition of Done:** {how to know the task is complete}
 ```
 
 ---
 
-## PHASE 3: Implementation
+## PHASE 4: Implementation
 
-### 3.1 For "Complete WIP" Tasks
+Execute the task completely:
 
-1. Read the file with the TODO/NotImplementedException
-2. Find the corresponding legacy implementation
-3. Understand what's missing
-4. Implement it following legacy logic
-5. Add `// Source: {legacy_file} lines X-Y` reference
+1. **Understand the context** - Read relevant code, legacy references if applicable
+2. **Make changes** - Follow project patterns from CLAUDE.md
+3. **Add source references** - For any code ported from legacy
+4. **Write/update tests** - Ensure the change is tested
+5. **Validate** - Run `dotnet build` and `dotnet test`
 
-### 3.2 For "Add Tests" Tasks
+### Source References
 
-1. Read the implementation being tested
-2. Read the legacy equivalent for test cases
-3. Create tests covering:
-   - Basic functionality (parse/serialize round-trip)
-   - Edge cases (empty, null, boundary values)
-   - Error cases (invalid data)
-4. Follow existing test patterns in the project
+When porting from legacy, add references:
+```csharp
+// Source: legacy_references/Sims4Tools/{path} lines X-Y
+```
 
-### 3.3 For "New Wrapper" Tasks
+This applies to ALL ported code, not just wrappers.
 
-1. Read the legacy implementation thoroughly
-2. Create the modern file in `src/TS4Tools.Wrappers/`
-3. Port the logic using modern C# patterns:
-   - Primary constructors
-   - Span<T> for binary parsing
-   - Nullable reference types
-   - Collection expressions
-4. Add `// Source:` reference to ALL files:
-   - Resource class: `// Source: legacy_references/Sims4Tools/s4pi Wrappers/{ResourceName}/{ResourceName}.cs lines X-Y`
-   - Factory class: Reference the `AResourceHandler` class from legacy (e.g., `// Source: ... lines 423-433`)
-   - Helper classes: Reference the parent resource or equivalent legacy file
-5. Create corresponding test file
-
-### 3.4 Validation
-
-After implementation:
+### Validation
 
 ```bash
-# Build to catch errors
 dotnet build
-
-# Run tests
 dotnet test
 ```
 
-**If build fails:** Fix errors before proceeding
-**If tests fail:** Fix tests before proceeding
-
-### 3.5 Source Reference Check
-
-Before committing, verify ALL new/modified files have source references:
-
-```
-# Check for missing source references in new files
-grep -L "// Source:" {new_files}
-```
-
-**Every file in `src/TS4Tools.Wrappers/` MUST have a `// Source:` comment.**
-If missing, add it before proceeding. See CLAUDE.md for format.
+**Do not proceed to commit if build or tests fail.**
 
 ---
 
-## PHASE 4: Commit
+## PHASE 5: Commit
 
-### 4.1 Stage Changes
+### 5.1 Review Changes
 
 ```bash
 git status
 git diff
-git add <relevant files>
 ```
 
-### 4.2 Craft Commit Message
+Ensure changes are coherent and complete.
 
-Use conventional commit format:
+### 5.2 Commit
 
-```
-feat: {what was added}
-
-{Why this change was made - 1-2 sentences}
-
-Source: {legacy file reference}
-
-Generated with Claude Code
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-```
-
-**Type prefixes:**
-- `feat:` - New wrapper or feature
-- `test:` - New or improved tests
-- `fix:` - Bug fix or completing WIP
-
-### 4.3 Commit
+Use conventional commit format with explanation:
 
 ```bash
+git add <files>
 git commit -m "$(cat <<'EOF'
-{commit message}
+<type>: <description>
+
+<Why this change - 1-2 sentences>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 EOF
 )"
 ```
 
+**Type prefixes:**
+- `feat:` - New functionality
+- `fix:` - Bug fix
+- `test:` - Test additions/improvements
+- `refactor:` - Code restructuring
+- `perf:` - Performance improvement
+- `docs:` - Documentation
+
 ---
 
-## PHASE 5: Summary
-
-Output work session summary:
+## PHASE 6: Summary
 
 ```markdown
 ## Work Session Complete
 
 **Task:** {description}
-**Files Changed:** {count}
-**Tests Added/Modified:** {count}
-**Commit:** {short hash} - {first line of message}
+**Commit:** {short hash} - {message}
 
-### Changes Made
-- {bulleted list of changes}
+### Changes
+- {bulleted list}
 
-### Next Steps
-- {suggested follow-up work if any}
+### Suggested Next Steps
+- {follow-up work if any}
 ```
 
 ---
@@ -265,8 +239,7 @@ Output work session summary:
 ## Execution Notes
 
 - Use TodoWrite to track progress through phases
-- If any phase fails, report the failure and stop
-- Always validate with `dotnet build` and `dotnet test`
-- Reference CLAUDE.md patterns for code style
-- Be thorough but focused - one complete task is better than multiple incomplete ones
-- If the codebase is in a broken state (build fails), prioritize fixing that first
+- One complete task is better than multiple incomplete ones
+- Task size doesn't matter - coherence does
+- If blocked, report why and stop
+- Always validate before committing
