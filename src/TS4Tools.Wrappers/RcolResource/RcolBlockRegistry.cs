@@ -33,6 +33,9 @@ public static class RcolBlockRegistry
         Register(FtptBlock.TypeId, "FTPT", data => new FtptBlock(data));
         Register(RsltBlock.TypeId, "RSLT", data => new RsltBlock(data));
         Register(MatdBlock.TypeId, "MATD", data => new MatdBlock(data));
+
+        // Slot adjustment block (note: has no tag in binary data)
+        Register(BondBlock.TypeId, "BOND", data => new BondBlock(data));
     }
 
     /// <summary>
