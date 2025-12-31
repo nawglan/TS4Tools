@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/TextResource/TextResource.cs lines 129-144
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>

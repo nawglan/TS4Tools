@@ -51,6 +51,16 @@ Before implementing ANY feature:
 4. **Port with modern patterns** - Rewrite using C# 12+, Span<T>, async/await, but preserve the core logic
 5. **Validate against legacy** - Ensure equivalent behavior for the same inputs
 
+### Source References Apply to ALL Files
+
+Every file in `src/TS4Tools.Wrappers/` must include a `// Source:` comment, including:
+
+- **Resource classes** - Reference the legacy resource implementation
+- **Factory classes** - Reference the legacy `AResourceHandler` class (e.g., `// Source: legacy_references/Sims4Tools/s4pi Wrappers/StblResource/StblResource.cs lines 423-433`)
+- **Helper/Common classes** - Reference the legacy equivalent or parent resource file
+
+This applies even when the modern pattern differs from legacy (e.g., factories vs. handlers). Document what legacy code the modern implementation replaces.
+
 ### Core Principles
 
 - **Legacy-first**: When in doubt, do what the legacy code does

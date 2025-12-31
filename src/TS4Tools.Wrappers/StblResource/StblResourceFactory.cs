@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/StblResource/StblResource.cs lines 423-433
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>

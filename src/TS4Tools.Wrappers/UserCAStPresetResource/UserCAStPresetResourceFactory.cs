@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/UserCAStPresetResource/UserCAStPresetResource.cs lines 239-251
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>

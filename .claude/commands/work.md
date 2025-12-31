@@ -165,7 +165,10 @@ Based on discovery, select ONE task using this priority:
    - Span<T> for binary parsing
    - Nullable reference types
    - Collection expressions
-4. Add `// Source:` reference
+4. Add `// Source:` reference to ALL files:
+   - Resource class: `// Source: legacy_references/Sims4Tools/s4pi Wrappers/{ResourceName}/{ResourceName}.cs lines X-Y`
+   - Factory class: Reference the `AResourceHandler` class from legacy (e.g., `// Source: ... lines 423-433`)
+   - Helper classes: Reference the parent resource or equivalent legacy file
 5. Create corresponding test file
 
 ### 3.4 Validation
@@ -182,6 +185,18 @@ dotnet test
 
 **If build fails:** Fix errors before proceeding
 **If tests fail:** Fix tests before proceeding
+
+### 3.5 Source Reference Check
+
+Before committing, verify ALL new/modified files have source references:
+
+```
+# Check for missing source references in new files
+grep -L "// Source:" {new_files}
+```
+
+**Every file in `src/TS4Tools.Wrappers/` MUST have a `// Source:` comment.**
+If missing, add it before proceeding. See CLAUDE.md for format.
 
 ---
 

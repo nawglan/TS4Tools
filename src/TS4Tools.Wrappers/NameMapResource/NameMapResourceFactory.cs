@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/NameMapResource/NameMapResource.cs lines 204-212
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>

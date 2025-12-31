@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResourceTS4.cs lines 765-779
+
 using TS4Tools.Resources;
 
 namespace TS4Tools.Wrappers.CasPartResource;

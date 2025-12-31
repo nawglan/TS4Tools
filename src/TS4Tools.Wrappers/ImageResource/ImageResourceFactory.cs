@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/ImageResource.cs lines 71-82
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>

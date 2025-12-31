@@ -1,3 +1,5 @@
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/DataResource/DataResource.cs lines 806-816
+
 namespace TS4Tools.Wrappers;
 
 /// <summary>
