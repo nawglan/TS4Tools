@@ -98,7 +98,7 @@ public class RcolResourceTests
         chunk.TgiBlock.Instance.Should().Be(0x123456789ABCDEF0);
         chunk.TgiBlock.ResourceGroup.Should().Be(0x00000001);
         chunk.Block.Tag.Should().Be("MODL");
-        chunk.Block.IsKnownType.Should().BeFalse(); // UnknownRcolBlock
+        chunk.Block.IsKnownType.Should().BeTrue(); // ModlBlock is registered
     }
 
     [Fact]

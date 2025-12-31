@@ -307,14 +307,12 @@ public sealed class RcolResource : TypedResource
     }
 
     /// <summary>
-    /// Creates an RCOL block from raw data.
-    /// Currently returns UnknownRcolBlock; can be extended with a registry for specific types.
+    /// Creates an RCOL block from raw data using the block registry.
+    /// Source: GenericRCOLResourceHandler.RCOLDealer pattern from legacy s4pi.
     /// </summary>
-    private static UnknownRcolBlock CreateBlock(uint resourceType, ReadOnlySpan<byte> data)
+    private static RcolBlock CreateBlock(uint resourceType, ReadOnlySpan<byte> data)
     {
-        // For now, all blocks are unknown. A future RcolBlockRegistry could
-        // return specific block types based on resourceType or tag.
-        return new UnknownRcolBlock(resourceType, data);
+        return RcolBlockRegistry.CreateBlock(resourceType, data);
     }
 
     /// <summary>
