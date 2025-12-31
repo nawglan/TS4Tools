@@ -4,17 +4,25 @@ Perform a comprehensive code audit for the TS4Tools project. This audit ensures 
 
 ## Arguments
 
-- `$ARGUMENTS` - Scope of audit (see help for options)
-
-## Instructions
-
-Parse the scope from `$ARGUMENTS`.
+- `$ARGUMENTS` - Scope of audit (optional, defaults to help)
 
 ---
 
-## HELP (if scope is empty, `help`, or `?`)
+## Decision Logic
 
-If no arguments or `help`/`?` is provided, display this help and exit:
+**FIRST**, check `$ARGUMENTS`:
+
+1. **If empty, `help`, or `?`** → Display help message and STOP
+2. **If `full`** → Run all three audit categories
+3. **If `legacy`** → Run Category 1 only
+4. **If `dotnet`** → Run Category 2 only
+5. **If `tests`** → Run Category 3 only
+
+---
+
+## Default: HELP (no arguments, `help`, or `?`)
+
+When `$ARGUMENTS` is empty or equals `help` or `?`, display this help message and **exit immediately without running any audit**:
 
 ```
 TS4Tools Audit Command
@@ -42,17 +50,17 @@ Severity Levels:
   INFO    - Nice to have, track for future
 ```
 
-**Exit after displaying help.**
+**STOP HERE if showing help. Do not proceed to audit categories.**
 
 ---
 
-## FULL AUDIT (if scope is `full`)
+## Scope: `full`
 
-Run all three categories below in sequence.
+Run all three categories below in sequence (Category 1, 2, and 3).
 
 ---
 
-## CATEGORY 1: Legacy Compliance (if scope is `legacy` or `full`)
+## Category 1: Legacy Compliance (scope: `legacy` or `full`)
 
 ### 1.1 Missing Source References [ERROR]
 
@@ -97,7 +105,7 @@ Compare public methods/properties between modern and legacy implementations.
 
 ---
 
-## CATEGORY 2: .NET Best Practices (if scope is `dotnet` or `full`)
+## Category 2: .NET Best Practices (scope: `dotnet` or `full`)
 
 ### 2.1 Missing Input Validation [ERROR]
 
@@ -172,7 +180,7 @@ grep: "new byte\[\d+\]" in Parse/Serialize methods
 
 ---
 
-## CATEGORY 3: Test Quality (if scope is `tests` or `full`)
+## Category 3: Test Quality (scope: `tests` or `full`)
 
 ### 3.1 Coverage Gaps [ERROR]
 
