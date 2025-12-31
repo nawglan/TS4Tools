@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TS4Tools.Core\TS4Tools.Core.csproj" />
+    <ProjectReference Include="..\..\src\TS4Tools.Wrappers\TS4Tools.Wrappers.csproj" />
   </ItemGroup>
 
 </Project>
