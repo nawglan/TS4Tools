@@ -101,10 +101,13 @@ public static class ElementFormatExtensions
     public static int FloatCount(this ElementFormat format) => format switch
     {
         ElementFormat.Float1 => 1,
-        ElementFormat.Float2 or ElementFormat.UShort2N or ElementFormat.Short2 => 2,
+        ElementFormat.Float2 or ElementFormat.UShort2N or ElementFormat.Short2
+            or ElementFormat.Float16x2 => 2,
         ElementFormat.Short4 or ElementFormat.Short4N or ElementFormat.UByte4N
-            or ElementFormat.UShort4N or ElementFormat.Float3 => 3,
-        ElementFormat.ColorUByte4 or ElementFormat.Float4 or ElementFormat.Short4DropShadow => 4,
+            or ElementFormat.UShort4N or ElementFormat.Float3
+            or ElementFormat.Dec3N or ElementFormat.UDec3N => 3,
+        ElementFormat.ColorUByte4 or ElementFormat.Float4 or ElementFormat.Short4DropShadow
+            or ElementFormat.Float16x4 => 4,
         _ => throw new NotSupportedException($"Unsupported element format: {format}")
     };
 
@@ -114,9 +117,11 @@ public static class ElementFormatExtensions
     public static int ByteSize(this ElementFormat format) => format switch
     {
         ElementFormat.Float1 or ElementFormat.UByte4 or ElementFormat.ColorUByte4
-            or ElementFormat.UByte4N or ElementFormat.UShort2N or ElementFormat.Short2 => 4,
+            or ElementFormat.UByte4N or ElementFormat.UShort2N or ElementFormat.Short2
+            or ElementFormat.Dec3N or ElementFormat.UDec3N or ElementFormat.Float16x2 => 4,
         ElementFormat.UShort4N or ElementFormat.Float2 or ElementFormat.Short4
-            or ElementFormat.Short4N or ElementFormat.Short4DropShadow => 8,
+            or ElementFormat.Short4N or ElementFormat.Short4DropShadow
+            or ElementFormat.Float16x4 => 8,
         ElementFormat.Float3 => 12,
         ElementFormat.Float4 => 16,
         _ => throw new NotSupportedException($"Unsupported element format: {format}")
