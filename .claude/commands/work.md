@@ -1,6 +1,6 @@
 # TS4Tools Work Session
 
-Find actionable work that moves the TS4Tools rewrite forward, implement it, and commit.
+Find meaningful work that moves the TS4Tools rewrite forward, implement it, and commit.
 
 ## Arguments
 
@@ -32,19 +32,21 @@ Focus areas (optional):
   core       Core package/parsing functionality
   tests      Test coverage improvements
   ui         UI/ViewModel work
-  docs       Documentation updates
 
-Without a focus, auto-discovers the best next task based on:
+Without a focus, auto-discovers meaningful work based on priority:
   1. Build/test failures (must be fixed first)
-  2. Partially implemented features (TODOs, WIP)
-  3. Missing functionality (legacy exists, modern doesn't)
-  4. Test coverage gaps
-  5. Code quality improvements
+  2. Missing core functionality (Package API, compression)
+  3. Unimplemented resource wrappers (legacy exists, modern doesn't)
+  4. Partially implemented features (complete the work)
+  5. Test coverage for untested resources
+
+This command focuses on SIGNIFICANT work that advances the project.
+It will NOT select trivial tasks like typo fixes or comment updates.
 
 Examples:
   /work              Auto-discover and implement next task
   /work wrappers     Focus on resource wrapper work
-  /work tests        Focus on improving test coverage
+  /work core         Focus on core package functionality
 ```
 
 **STOP HERE if showing help.**
@@ -70,81 +72,130 @@ dotnet test
 
 ## PHASE 2: Discovery (Find Work)
 
-Search for work across the entire codebase. Look for coherent units of work that make sense as a single commit - this could be small or large.
+Search for work across the entire codebase, categorizing by impact tier.
 
-### 2.1 Check for Incomplete Work
+### 2.1 Tier 1: Critical (Must Fix)
 
-```
-# TODOs, FIXMEs, and WIP markers
-grep: "TODO|FIXME|HACK|XXX|WIP" in src/
+Build failures or test failures. Already handled in Phase 1.
 
-# Partial implementations
-grep: "NotImplementedException|NotSupportedException" in src/
-```
-
-### 2.2 Compare Legacy vs Modern
-
-Look at ALL areas, not just wrappers:
+### 2.2 Tier 2: High Impact (New Functionality)
 
 ```
-# Core functionality
-legacy_references/Sims4Tools/s4pi/Package/
-legacy_references/Sims4Tools/s4pi/Interfaces/
-→ Compare with src/TS4Tools.Core/
-
-# Resource wrappers
+# Find resource wrappers that exist in legacy but NOT in modern
+# Compare:
 legacy_references/Sims4Tools/s4pi Wrappers/
-→ Compare with src/TS4Tools.Wrappers/
+→ vs src/TS4Tools.Wrappers/
 
-# UI features
-legacy_references/Sims4Tools/s4pe/
-→ Compare with src/TS4Tools.UI/
-
-# Compatibility layer
-→ Check src/TS4Tools.Compatibility/ completeness
+# Find core functionality gaps
+legacy_references/Sims4Tools/s4pi/Package/
+→ vs src/TS4Tools.Core/Package/
 ```
 
-### 2.3 Find Test Gaps
+Look for entire resource types or major features that are unimplemented.
+
+### 2.3 Tier 3: Medium Impact (Completing Features)
 
 ```
-# Find implementations without corresponding tests
-glob: src/**/*.cs
-glob: tests/**/*Tests.cs
+# NotImplementedException - features started but not finished
+grep: "NotImplementedException|NotSupportedException" in src/
+
+# TODO markers indicating incomplete work
+grep: "TODO|FIXME|WIP" in src/
+
+# Resources with no tests
+# Compare wrapper files to test files
 ```
 
-### 2.4 Look for Enhancement Opportunities
+Only consider if the incomplete work represents a coherent feature, not a single minor TODO.
 
-- Performance improvements visible from code review
-- API consistency issues
-- Missing validation or error handling
-- Refactoring that improves maintainability
+### 2.4 Tier 4: Low Impact (Minor Improvements)
+
+- Code quality improvements
+- Additional edge case handling
+- Performance micro-optimizations
+- Documentation
+
+**Do NOT automatically select Tier 4 work.** See Phase 3.
+
+---
+
+## PHASE 2.5: Significance Evaluation
+
+Before proceeding to selection, verify the discovered work is significant.
+
+### Significant Work Criteria
+
+Work is significant if it:
+
+1. **Implements new functionality** - A resource type, API, or feature from legacy that doesn't exist in modern
+2. **Fixes blocking issues** - Build failures, test failures, broken functionality
+3. **Completes a coherent unit** - An entire resource wrapper with factory + tests, not just one method
+4. **Enables other work** - Core functionality that unblocks future features
+5. **Requires legacy analysis** - Following CLAUDE.md's mandate to port from legacy
+
+### NOT Significant Work
+
+Do **NOT** select:
+
+- Typo fixes or comment updates
+- Adding docstrings to working code
+- Renaming without functional change
+- Single-line "improvements"
+- Formatting or style changes
+- Work that doesn't require understanding the legacy codebase
+
+If you find yourself wanting to select work that doesn't meet the significance criteria, that work should be rejected.
 
 ---
 
 ## PHASE 3: Selection (Choose Task)
 
-Select ONE coherent task. The task should:
+### 3.1 Priority Selection
 
-1. **Make sense as a single commit** - A logical unit of change
-2. **Be completable** - Don't select half of a feature
-3. **Have clear scope** - Know when you're done
+Select work from the highest available tier:
 
-Task examples (any size is valid):
-- Fix a single bug
-- Complete a TODO
-- Port an entire resource wrapper with tests
-- Add comprehensive tests for a module
-- Refactor a subsystem for better patterns
-- Implement a missing core feature
+1. **Tier 1 (Critical):** Always select if present
+2. **Tier 2 (High Impact):** Select the most impactful unimplemented feature
+3. **Tier 3 (Medium Impact):** Select the most complete partial implementation
+4. **Tier 4 (Low Impact):** See 3.2
 
-**Output the selected task:**
+### 3.2 Low Impact Fallback
+
+If only Tier 4 work is found, **DO NOT automatically proceed**.
+
+Instead, present the options to the user:
+
+```
+## No Significant Work Found
+
+Only low-impact work was discovered:
+- {list of Tier 4 items}
+
+Would you like to proceed with one of these, or skip this session?
+```
+
+Wait for user confirmation before implementing Tier 4 work.
+
+### 3.3 Task Requirements
+
+The selected task must:
+
+1. **Be completable as a coherent unit** - Don't select half a feature
+2. **Require legacy analysis** - Reference s4pi/s4pe code
+3. **Include tests** - New functionality needs test coverage
+4. **Have clear scope** - Know exactly when you're done
+
+### 3.4 Task Output
+
 ```
 ## Selected Task
 
-**Type:** {Fix | Feature | Test | Refactor | Enhancement}
+**Tier:** {1-Critical | 2-High | 3-Medium}
+**Type:** {Fix | Feature | Test | Refactor}
 **Target:** {description of what will change}
+**Legacy Source:** {path to legacy code being ported}
 **Scope:** {files/areas affected}
-**Reason:** {why this task was selected}
+**Why Significant:** {how this advances the project}
 **Definition of Done:** {how to know the task is complete}
 ```
 
@@ -154,10 +205,10 @@ Task examples (any size is valid):
 
 Execute the task completely:
 
-1. **Understand the context** - Read relevant code, legacy references if applicable
+1. **Study the legacy code** - Read and understand the s4pi/s4pe implementation
 2. **Make changes** - Follow project patterns from CLAUDE.md
-3. **Add source references** - For any code ported from legacy
-4. **Write/update tests** - Ensure the change is tested
+3. **Add source references** - `// Source: legacy_references/Sims4Tools/{path} lines X-Y`
+4. **Write tests** - Comprehensive tests, not just happy path
 5. **Validate** - Run `dotnet build` and `dotnet test`
 
 ### Source References
@@ -215,7 +266,6 @@ EOF
 - `test:` - Test additions/improvements
 - `refactor:` - Code restructuring
 - `perf:` - Performance improvement
-- `docs:` - Documentation
 
 ---
 
@@ -225,6 +275,7 @@ EOF
 ## Work Session Complete
 
 **Task:** {description}
+**Tier:** {impact tier}
 **Commit:** {short hash} - {message}
 
 ### Changes
@@ -239,7 +290,7 @@ EOF
 ## Execution Notes
 
 - Use TodoWrite to track progress through phases
-- One complete task is better than multiple incomplete ones
-- Task size doesn't matter - coherence does
-- If blocked, report why and stop
+- One complete significant task is the goal
+- Always reference legacy code when implementing
+- If only trivial work exists, ask the user before proceeding
 - Always validate before committing
