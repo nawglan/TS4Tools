@@ -399,6 +399,33 @@ public class ResourceFactoryTests
 
     #endregion
 
+    #region ClipResourceFactory Tests
+
+    [Fact]
+    public void ClipResourceFactory_CreateEmpty_ReturnsValidResource()
+    {
+        var factory = new ClipResourceFactory();
+        var key = new ResourceKey(ClipResource.TypeId, 0, 0);
+
+        var resource = factory.CreateEmpty(key);
+
+        resource.Should().NotBeNull();
+        resource.Should().BeOfType<ClipResource>();
+    }
+
+    [Fact]
+    public void ClipResourceFactory_Create_ReturnsCorrectType()
+    {
+        var factory = new ClipResourceFactory();
+        var key = new ResourceKey(ClipResource.TypeId, 0, 0);
+
+        var resource = factory.Create(key, ReadOnlyMemory<byte>.Empty);
+
+        resource.Should().BeOfType<ClipResource>();
+    }
+
+    #endregion
+
     #region Catalog Resource Factory Tests
 
     [Theory]
