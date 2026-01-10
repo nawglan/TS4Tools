@@ -48,6 +48,29 @@ public sealed class SwatchColorList : List<SwatchColor>
     }
 
     /// <summary>
+    /// Parses a SwatchColorList from a span with ref offset.
+    /// </summary>
+    public static SwatchColorList ParseAt(ReadOnlySpan<byte> data, ref int offset)
+    {
+        byte count = data[offset++];
+        var list = new SwatchColorList();
+        list.Capacity = count;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (offset + SwatchColor.SerializedSize > data.Length)
+            {
+                throw new InvalidDataException($"Truncated swatch color data at index {i}");
+            }
+
+            list.Add(SwatchColor.Parse(data[offset..]));
+            offset += SwatchColor.SerializedSize;
+        }
+
+        return list;
+    }
+
+    /// <summary>
     /// Writes this list to a span.
     /// </summary>
     public int WriteTo(Span<byte> buffer)
@@ -67,6 +90,25 @@ public sealed class SwatchColorList : List<SwatchColor>
         }
 
         return offset;
+    }
+
+    /// <summary>
+    /// Serializes this list with ref offset.
+    /// </summary>
+    public void Serialize(Span<byte> buffer, ref int offset)
+    {
+        if (Count > 255)
+        {
+            throw new InvalidOperationException($"SwatchColorList count {Count} exceeds byte max (255)");
+        }
+
+        buffer[offset++] = (byte)Count;
+
+        foreach (var color in this)
+        {
+            color.WriteTo(buffer[offset..]);
+            offset += SwatchColor.SerializedSize;
+        }
     }
 
     /// <summary>
