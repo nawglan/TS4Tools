@@ -263,7 +263,10 @@ grep: "\[Fact\]|\[Theory\]" - Find test methods
 
 ### 1. Write Report
 
-Create `.claude/audit-reports/audit-{timestamp}.md`:
+Create `.claude/audit-reports/audit-{YYYY-MM-DD}-{HHMMSS}.md`:
+
+**Format**: Use full timestamp with date AND time to allow multiple audits per day.
+- Example: `audit-2026-01-10-143052.md` (January 10, 2026 at 14:30:52)
 
 ```markdown
 # Audit Results: {scope}
@@ -311,7 +314,7 @@ Output to conversation:
 - Warnings: Y
 - Info: Z
 
-Report saved to: .claude/audit-reports/audit-{timestamp}.md
+Report saved to: .claude/audit-reports/audit-{YYYY-MM-DD}-{HHMMSS}.md
 
 {If errors > 0: "Run /audit again after fixing errors to verify."}
 ```
