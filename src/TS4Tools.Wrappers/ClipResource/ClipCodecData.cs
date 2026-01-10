@@ -1,8 +1,5 @@
 // Source: legacy_references/Sims4Tools/s4pi Wrappers/AnimationResources/S3CLIP.cs lines 28-142
 
-using System.Buffers.Binary;
-using System.Text;
-
 namespace TS4Tools.Wrappers;
 
 /// <summary>

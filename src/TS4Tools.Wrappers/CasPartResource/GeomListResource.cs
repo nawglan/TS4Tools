@@ -1,6 +1,5 @@
 // Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/GEOMListResource.cs
 
-using System.Buffers.Binary;
 using TS4Tools.Resources;
 using TS4Tools.Wrappers.CasPartResource;
 

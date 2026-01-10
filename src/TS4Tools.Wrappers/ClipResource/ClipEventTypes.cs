@@ -1,7 +1,5 @@
 // Source: legacy_references/Sims4Tools/s4pi Wrappers/AnimationResources/ClipEvents.cs lines 65-503
 
-using System.Buffers.Binary;
-
 namespace TS4Tools.Wrappers;
 
 /// <summary>

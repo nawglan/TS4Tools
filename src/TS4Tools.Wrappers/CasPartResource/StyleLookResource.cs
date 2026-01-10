@@ -1,7 +1,5 @@
 // Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/StyleLookResource.cs
 
-using System.Buffers.Binary;
-using System.Text;
 using TS4Tools.Resources;
 using TS4Tools.Wrappers.CasPartResource;
 

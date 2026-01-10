@@ -77,16 +77,45 @@ This applies even when the modern pattern differs from legacy (e.g., factories v
 - Writing tests from assumptions instead of legacy analysis
 - Using external libraries when legacy code provides a working algorithm
 - Referencing s4pi/s4pe code outside of `legacy_references/Sims4Tools/`
+- Adding `using System.*` directives to .cs files (use global usings in .csproj instead)
 
 ## Code Quality
 
 ### C# Patterns
 
 - Use C# 12+ features (primary constructors, collection expressions)
-- Global usings declared in .csproj, NOT in .cs files
 - Async/await for all I/O operations
 - Nullable reference types with explicit handling
 - `Span<T>`/`Memory<T>` for efficient binary processing
+
+### Global Usings (CRITICAL)
+
+**NEVER add `using System.*` directives to .cs files.** All common usings are declared as global usings in each project's .csproj file.
+
+Available in `TS4Tools.Wrappers.csproj`:
+- `System.Buffers.Binary` - BinaryPrimitives for endian-aware reading
+- `System.Collections` - Collection interfaces
+- `System.Diagnostics.CodeAnalysis` - Nullability attributes
+- `System.Text` - Encoding, StringBuilder
+
+Available in `Directory.Build.props` (all projects):
+- `System.Collections.ObjectModel` - ObservableCollection
+- Common System namespaces
+
+```csharp
+// BAD - DO NOT DO THIS
+using System.Buffers.Binary;
+using System.Text;
+
+namespace TS4Tools.Wrappers;
+public class MyResource { }
+
+// GOOD - just use the types directly, they're globally available
+namespace TS4Tools.Wrappers;
+public class MyResource { }
+```
+
+If you need a namespace not in global usings, add it to the appropriate .csproj `<Using>` ItemGroup, not to individual .cs files.
 
 ### Event Subscription Management
 
