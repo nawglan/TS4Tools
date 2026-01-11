@@ -74,7 +74,8 @@ public class MatdBlockTests
     }
 
     /// <summary>
-    /// Creates a minimal MTRL block.
+    /// Creates a minimal MTRL block matching real MTNF format.
+    /// Format: Tag (4) + Unknown1 (4) + DataLength (4) + entry count (4)
     /// </summary>
     private static byte[] CreateMinimalMtrl()
     {
@@ -87,13 +88,14 @@ public class MatdBlockTests
         writer.Write((byte)'R');
         writer.Write((byte)'L');
 
-        // Header
-        writer.Write(0u); // Unknown1
-        writer.Write((ushort)0); // Unknown2
-        writer.Write((ushort)0); // Unknown3
+        // Unknown1
+        writer.Write(0u);
+
+        // DataLength (length of shader data section, which is just entry count = 4 bytes)
+        writer.Write(4u);
 
         // ShaderData count = 0
-        writer.Write(0); // No shader data entries
+        writer.Write(0);
 
         return ms.ToArray();
     }
@@ -133,13 +135,12 @@ public class MatdBlockTests
 
     /// <summary>
     /// Creates an MTRL block with one float shader data entry.
+    /// Format: Tag (4) + Unknown1 (4) + DataLength (4) + [entry count (4) + entry header (16) + float data (4)]
     /// </summary>
     private static byte[] CreateMtrlWithOneFloatEntry()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
-
-        long mtrlStart = ms.Position;
 
         // Tag: MTRL
         writer.Write((byte)'M');
@@ -147,23 +148,25 @@ public class MatdBlockTests
         writer.Write((byte)'R');
         writer.Write((byte)'L');
 
-        // Header (12 bytes)
-        writer.Write(0u); // Unknown1
-        writer.Write((ushort)0); // Unknown2
-        writer.Write((ushort)0); // Unknown3
+        // Unknown1
+        writer.Write(0u);
 
-        // ShaderData count = 1
+        // DataLength = entry count (4) + 1 entry header (16) + float data (4) = 24
+        writer.Write(24u);
+
+        // ShaderData section (24 bytes)
+        // Entry count = 1
         writer.Write(1);
 
-        // ShaderData header: field(4) + dataType(4) + count(4) + offset(4) = 16 bytes
-        // Transparency field (0x05D22FD3), dtFloat (1), count 1, offset = header size
-        writer.Write(0x05D22FD3u); // FieldType.Transparency
-        writer.Write(1u); // DataType.dtFloat
-        writer.Write(1); // count = 1
-        writer.Write(32u); // offset from MTRL start (after header + entry header)
+        // Entry header: field(4) + dataType(4) + count(4) + offset(4) = 16 bytes
+        // Offset is relative to start of shader data section: 4 + 16 = 20
+        writer.Write((uint)ShaderFieldType.Transparency); // 0x05D22FD3
+        writer.Write((uint)ShaderDataType.Float);         // 1
+        writer.Write(1);                                   // count = 1
+        writer.Write(20u);                                 // offset in shader data section
 
-        // Float data at offset 32
-        writer.Write(0.5f); // transparency value
+        // Float data at relative offset 20
+        writer.Write(0.5f);
 
         return ms.ToArray();
     }

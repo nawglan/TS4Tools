@@ -60,10 +60,6 @@ public enum MatdShaderType : uint
 /// MATD (Material Definition) block - defines material and shader properties.
 /// Resource Type: 0x01D0E75D
 /// Source: s4pi Wrappers/s4piRCOLChunks/MATD.cs
-///
-/// Note: This is a simplified implementation that parses the header and preserves
-/// the MTRL data as raw bytes for round-tripping. Full shader data parsing can be
-/// added in a future iteration.
 /// </summary>
 public sealed class MatdBlock : RcolBlock
 {
@@ -83,25 +79,28 @@ public sealed class MatdBlock : RcolBlock
     public override bool IsKnownType => true;
 
     /// <summary>Format version (typically 0x103 for TS4).</summary>
-    public uint Version { get; private set; } = 0x103;
+    public uint Version { get; set; } = 0x103;
 
     /// <summary>Material name hash (FNV hash of material name).</summary>
-    public uint MaterialNameHash { get; private set; }
+    public uint MaterialNameHash { get; set; }
 
     /// <summary>Shader type used by this material.</summary>
-    public MatdShaderType Shader { get; private set; }
+    public MatdShaderType Shader { get; set; }
 
     /// <summary>Whether this is a video surface (version >= 0x103 only).</summary>
-    public bool IsVideoSurface { get; private set; }
+    public bool IsVideoSurface { get; set; }
 
     /// <summary>Whether this is a painting surface (version >= 0x103 only).</summary>
-    public bool IsPaintingSurface { get; private set; }
+    public bool IsPaintingSurface { get; set; }
 
     /// <summary>Whether the new format is used (version >= 0x103).</summary>
     public bool IsNewFormat => Version >= NewFormatVersion;
 
-    /// <summary>The raw MTRL block data (for round-tripping).</summary>
-    public byte[] MtrlData { get; private set; } = [];
+    /// <summary>The raw MTRL block data (for round-tripping when parsing fails).</summary>
+    public byte[] MtrlData { get; set; } = [];
+
+    /// <summary>Parsed shader data from MTNF block. Null if parsing failed.</summary>
+    public MtnfData? MaterialData { get; set; }
 
     /// <summary>
     /// Creates an empty MATD block.
@@ -169,6 +168,20 @@ public sealed class MatdBlock : RcolBlock
             // If length seems wrong, take remaining data
             MtrlData = data[pos..].ToArray();
         }
+
+        // Try to parse the MTNF/MTRL data into structured form
+        if (MtrlData.Length > 0)
+        {
+            try
+            {
+                MaterialData = MtnfData.Parse(MtrlData);
+            }
+            catch
+            {
+                // Parsing failed, but we have raw data for round-tripping
+                MaterialData = null;
+            }
+        }
     }
 
     /// <summary>
@@ -191,9 +204,9 @@ public sealed class MatdBlock : RcolBlock
         writer.Write(MaterialNameHash);
         writer.Write((uint)Shader);
 
-        // Calculate MTRL length
-        int mtrlLength = MtrlData.Length;
-        writer.Write((uint)mtrlLength);
+        // Serialize MTRL data - prefer structured MaterialData if available
+        byte[] mtrlBytes = MaterialData?.Serialize() ?? MtrlData;
+        writer.Write((uint)mtrlBytes.Length);
 
         if (Version >= NewFormatVersion)
         {
@@ -202,9 +215,9 @@ public sealed class MatdBlock : RcolBlock
         }
 
         // Write MTRL data
-        if (MtrlData.Length > 0)
+        if (mtrlBytes.Length > 0)
         {
-            writer.Write(MtrlData);
+            writer.Write(mtrlBytes);
         }
 
         return ms.ToArray();

@@ -34,7 +34,8 @@ public static class RcolBlockRegistry
         Register(RsltBlock.TypeId, "RSLT", data => new RsltBlock(data));
         Register(MatdBlock.TypeId, "MATD", data => new MatdBlock(data));
 
-        // Slot adjustment block (note: has no tag in binary data)
+        // Bone/slot adjustment block (note: has no tag in binary data - identified by resource type only)
+        // BondBlock = SlotAdjust, uses "BOND" as a registration tag but binary has no tag
         Register(BondBlock.TypeId, "BOND", data => new BondBlock(data));
     }
 
