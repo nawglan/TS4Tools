@@ -101,6 +101,74 @@ public static class RcolConstants
     /// </summary>
     public const uint Ftpt = 0xD382BF57;
 
+    // Jazz State Machine chunk types (from JazzResource.cs)
+    // These are RCOL blocks used in animation state machines
+
+    /// <summary>
+    /// S_SM - Jazz State Machine
+    /// </summary>
+    public const uint JazzStateMachine = 0x02D5DF13;
+
+    /// <summary>
+    /// S_St - Jazz State
+    /// </summary>
+    public const uint JazzState = 0x02EEDAFE;
+
+    /// <summary>
+    /// S_DG - Jazz Decision Graph
+    /// </summary>
+    public const uint JazzDecisionGraph = 0x02EEDB18;
+
+    /// <summary>
+    /// S_AD - Jazz Actor Definition
+    /// </summary>
+    public const uint JazzActorDefinition = 0x02EEDB2F;
+
+    /// <summary>
+    /// S_PD - Jazz Parameter Definition
+    /// </summary>
+    public const uint JazzParameterDefinition = 0x02EEDB46;
+
+    /// <summary>
+    /// Play - Jazz Play Animation Node
+    /// </summary>
+    public const uint JazzPlayAnimationNode = 0x02EEDB5F;
+
+    /// <summary>
+    /// Rand - Jazz Random Node
+    /// </summary>
+    public const uint JazzRandomNode = 0x02EEDB70;
+
+    /// <summary>
+    /// SoPn - Jazz Select On Parameter Node
+    /// </summary>
+    public const uint JazzSelectOnParameterNode = 0x02EEDB92;
+
+    /// <summary>
+    /// DG00 - Jazz Select On Destination Node
+    /// </summary>
+    public const uint JazzSelectOnDestinationNode = 0x02EEDBA5;
+
+    /// <summary>
+    /// SNSN - Jazz Next State Node
+    /// </summary>
+    public const uint JazzNextStateNode = 0x02EEEBDC;
+
+    /// <summary>
+    /// Prop - Jazz Create Prop Node
+    /// </summary>
+    public const uint JazzCreatePropNode = 0x02EEEBDD;
+
+    /// <summary>
+    /// AcOp - Jazz Actor Operation Node
+    /// </summary>
+    public const uint JazzActorOperationNode = 0x02EEEBDE;
+
+    /// <summary>
+    /// Stop - Jazz Stop Animation Node
+    /// </summary>
+    public const uint JazzStopAnimationNode = 0x0344D438;
+
     /// <summary>
     /// All standalone RCOL resource type IDs (Y=yes in RCOLResources.txt).
     /// </summary>
@@ -110,8 +178,10 @@ public static class RcolConstants
         Matd,    // 0x01D0E75D
         Mlod,    // 0x01D10F34
         Mtst,    // 0x02019972
+        JazzStateMachine, // 0x02D5DF13 - S_SM
         Tree,    // 0x021D7E8C
         TkMk,    // 0x033260E3
+        JazzStopAnimationNode, // 0x0344D438 - Stop
         SlotAdjusts, // 0x0355E0A6
         Lite,    // 0x03B4C61D
         Anim,    // 0x63A33EA7
@@ -144,6 +214,20 @@ public static class RcolConstants
         Vpxy => "VPXY",
         Rslt => "RSLT",
         Ftpt => "FTPT",
+        // Jazz State Machine types
+        JazzStateMachine => "S_SM (Jazz State Machine)",
+        JazzState => "S_St (Jazz State)",
+        JazzDecisionGraph => "S_DG (Jazz Decision Graph)",
+        JazzActorDefinition => "S_AD (Jazz Actor Definition)",
+        JazzParameterDefinition => "S_PD (Jazz Parameter Definition)",
+        JazzPlayAnimationNode => "Play (Jazz Play Animation)",
+        JazzRandomNode => "Rand (Jazz Random)",
+        JazzSelectOnParameterNode => "SoPn (Jazz Select On Parameter)",
+        JazzSelectOnDestinationNode => "DG00 (Jazz Select On Destination)",
+        JazzNextStateNode => "SNSN (Jazz Next State)",
+        JazzCreatePropNode => "Prop (Jazz Create Prop)",
+        JazzActorOperationNode => "AcOp (Jazz Actor Operation)",
+        JazzStopAnimationNode => "Stop (Jazz Stop Animation)",
         _ => $"0x{resourceType:X8}"
     };
 }
