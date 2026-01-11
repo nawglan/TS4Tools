@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xF1EDBD86
 /// Source: CRPTResource.cs lines 27-153
 /// </summary>
-[ResourceHandler(0xF1EDBD86)]
 public sealed class CrptResource : SimpleCatalogResource
 {
     /// <summary>

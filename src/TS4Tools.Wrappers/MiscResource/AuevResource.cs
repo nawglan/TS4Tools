@@ -14,7 +14,6 @@ namespace TS4Tools.Wrappers;
 /// - GroupCount: int32
 /// - Content: string[GroupCount * 3] (each string is length-prefixed + null-terminated)
 /// </summary>
-[ResourceHandler(0xBDD82221)]
 public sealed class AuevResource : TypedResource
 {
     private const uint Magic = 0x56455541; // "AUEV" in little-endian

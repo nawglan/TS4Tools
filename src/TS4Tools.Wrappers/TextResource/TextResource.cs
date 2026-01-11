@@ -12,8 +12,6 @@ namespace TS4Tools.Wrappers;
 /// Legacy implementation uses StreamReader.ReadToEnd() pattern. This modern
 /// implementation parses directly from ReadOnlySpan with explicit UTF-8 BOM handling.
 /// </remarks>
-[ResourceHandler(0x03B33DDF)] // Tuning
-[ResourceHandler(0x6017E896)] // Tuning XML
 public sealed class TextResource : TypedResource
 {
     private static readonly byte[] Utf8Bom = [0xEF, 0xBB, 0xBF];

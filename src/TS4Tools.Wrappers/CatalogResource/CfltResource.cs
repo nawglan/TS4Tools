@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x84C23219
 /// Source: CFLTResource.cs lines 27-162
 /// </summary>
-[ResourceHandler(0x84C23219)]
 public sealed class CfltResource : SimpleCatalogResource
 {
     /// <summary>

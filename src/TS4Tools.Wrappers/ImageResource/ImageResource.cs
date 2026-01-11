@@ -14,8 +14,6 @@ namespace TS4Tools.Wrappers;
 /// This modern implementation combines both into a single unified resource that
 /// can parse and serve PNG, DDS, and DST formats.
 /// </remarks>
-[ResourceHandler(0x00B00000)] // PNG
-[ResourceHandler(0x00B2D882)] // DDS/DST
 public sealed class ImageResource : TypedResource
 {
     /// <summary>

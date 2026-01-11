@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x9F5CFF10
 /// Source: CSTLResource.cs lines 28-258
 /// </summary>
-[ResourceHandler(0x9F5CFF10)]
 public sealed class CstlResource : SimpleCatalogResource
 {
     /// <summary>

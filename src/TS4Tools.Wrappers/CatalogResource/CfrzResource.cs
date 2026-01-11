@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xA057811C
 /// Source: CFRZResource.cs lines 27-180
 /// </summary>
-[ResourceHandler(0xA057811C)]
 public sealed class CfrzResource : SimpleCatalogResource
 {
     /// <summary>

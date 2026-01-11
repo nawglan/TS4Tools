@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x07936CE0
 /// Source: CBLKResource.cs lines 27-285
 /// </summary>
-[ResourceHandler(0x07936CE0)]
 public sealed class CblkResource : SimpleCatalogResource
 {
     /// <summary>

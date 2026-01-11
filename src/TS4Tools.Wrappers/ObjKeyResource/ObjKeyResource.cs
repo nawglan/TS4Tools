@@ -7,7 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Type: 0x02DC343F
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ObjKeyResource/ObjKeyResource.cs
 /// </summary>
-[ResourceHandler(0x02DC343F)]
 public sealed class ObjKeyResource : TypedResource
 {
     /// <summary>

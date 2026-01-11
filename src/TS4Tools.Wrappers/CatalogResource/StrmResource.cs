@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x74050B1F
 /// Source: STRMResource.cs lines 27-199
 /// </summary>
-[ResourceHandler(0x74050B1F)]
 public sealed class StrmResource : SimpleCatalogResource
 {
     /// <summary>

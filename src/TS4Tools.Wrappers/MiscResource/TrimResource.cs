@@ -19,7 +19,6 @@ namespace TS4Tools.Wrappers;
 /// Version 3 entries are 12 bytes (3 floats: x, y, v)
 /// Version 4+ entries are 16 bytes (4 floats: x, y, v, mappingMode)
 /// </summary>
-[ResourceHandler(0x76BCF80C)]
 public sealed class TrimResource : TypedResource
 {
     private const uint Magic = 0x4D495254; // "TRIM" in little-endian

@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xE7ADA79D
 /// Source: CFTRResource.cs lines 27-162
 /// </summary>
-[ResourceHandler(0xE7ADA79D)]
 public sealed class CftrResource : SimpleCatalogResource
 {
     /// <summary>

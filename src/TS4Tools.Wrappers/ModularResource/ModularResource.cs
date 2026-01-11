@@ -7,7 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Type: 0xCF9A4ACE
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ModularResource/ModularResource.cs
 /// </summary>
-[ResourceHandler(0xCF9A4ACE)]
 public sealed class ModularResource : TypedResource
 {
     private readonly List<short> _tgiIndexes = [];

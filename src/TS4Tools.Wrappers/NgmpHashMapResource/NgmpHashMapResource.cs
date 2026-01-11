@@ -7,7 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Type: 0xF3A38370
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/NGMPHashMapResource/NGMPHashMapResource.cs
 /// </summary>
-[ResourceHandler(0xF3A38370)]
 public sealed class NgmpHashMapResource : TypedResource
 {
     /// <summary>

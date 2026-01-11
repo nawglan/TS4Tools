@@ -17,7 +17,6 @@ namespace TS4Tools.Wrappers;
 ///
 /// Each entry contains model IID, hash, flags, bounds, and VFX data.
 /// </summary>
-[ResourceHandler(0x81CA1A10)]
 public sealed class MtblResource : TypedResource
 {
     private const uint Magic = 0x4C42544D; // "MTBL" in little-endian

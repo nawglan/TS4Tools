@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xEBCBB16C
 /// Source: CTPTResource.cs lines 28-153
 /// </summary>
-[ResourceHandler(0xEBCBB16C)]
 public sealed class CtptResource : SimpleCatalogResource
 {
     /// <summary>

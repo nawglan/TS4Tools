@@ -16,7 +16,6 @@ namespace TS4Tools.Wrappers;
 /// - unknown3: uint32
 /// - presets: List of Preset entries
 /// </remarks>
-[ResourceHandler(0x0591B1AF)]
 public sealed class UserCAStPresetResource : TypedResource
 {
     private const uint DefaultVersion = 3;

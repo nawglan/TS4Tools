@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x1C1CF1F7
 /// Source: CRALResource.cs lines 27-146
 /// </summary>
-[ResourceHandler(0x1C1CF1F7)]
 public sealed class CralResource : SimpleCatalogResource
 {
     /// <summary>

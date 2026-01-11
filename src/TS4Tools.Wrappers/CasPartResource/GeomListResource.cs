@@ -14,7 +14,6 @@ namespace TS4Tools.Wrappers;
 /// Contains arrays of TGI keys (public, external, delay-load) and
 /// reference blocks linking CAS part regions to geometry resources.
 /// </remarks>
-[ResourceHandler(TypeId)]
 public sealed class GeomListResource : TypedResource
 {
     /// <summary>Resource type identifier.</summary>

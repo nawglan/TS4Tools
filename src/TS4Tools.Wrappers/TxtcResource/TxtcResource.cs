@@ -7,8 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Types: 0x033A1435, 0x0341ACC9
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/TxtcResource/TxtcResource.cs
 /// </summary>
-[ResourceHandler(0x033A1435)]
-[ResourceHandler(0x0341ACC9)]
 public sealed class TxtcResource : TypedResource
 {
     private readonly List<TxtcSuperBlock> _superBlocks = [];

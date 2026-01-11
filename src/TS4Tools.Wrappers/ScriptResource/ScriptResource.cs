@@ -23,7 +23,6 @@ namespace TS4Tools.Wrappers;
 /// The encryption algorithm uses XOR with values from md5table, using a seed
 /// derived from summing all md5table entries.
 /// </remarks>
-[ResourceHandler(0x073FAA07)]
 public sealed class ScriptResource : TypedResource
 {
     /// <summary>

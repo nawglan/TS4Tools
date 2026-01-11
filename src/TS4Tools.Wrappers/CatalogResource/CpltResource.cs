@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xA5DFFCF3
 /// Source: CPLTResource.cs lines 27-162
 /// </summary>
-[ResourceHandler(0xA5DFFCF3)]
 public sealed class CpltResource : SimpleCatalogResource
 {
     /// <summary>

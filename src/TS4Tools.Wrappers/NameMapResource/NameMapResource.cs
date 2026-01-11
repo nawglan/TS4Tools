@@ -13,7 +13,6 @@ namespace TS4Tools.Wrappers;
 /// Format: version (uint32), count (int32), entries (ulong hash, int32 length, char[] name)
 /// Handler TypeId: 0x0166038C
 /// </remarks>
-[ResourceHandler(0x0166038C)]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Domain-specific resource type, not a generic collection")]
 public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
 {

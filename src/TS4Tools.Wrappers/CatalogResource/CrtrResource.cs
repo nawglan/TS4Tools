@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0xB0311D0F
 /// Source: CRTRResource.cs lines 27-171
 /// </summary>
-[ResourceHandler(0xB0311D0F)]
 public sealed class CrtrResource : SimpleCatalogResource
 {
     /// <summary>

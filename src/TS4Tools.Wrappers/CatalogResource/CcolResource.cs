@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x1D6DF1CF
 /// Source: CCOLResource.cs lines 31-213
 /// </summary>
-[ResourceHandler(0x1D6DF1CF)]
 public sealed class CcolResource : AbstractCatalogResource
 {
     /// <summary>

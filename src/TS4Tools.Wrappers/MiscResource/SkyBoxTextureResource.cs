@@ -18,7 +18,6 @@ namespace TS4Tools.Wrappers;
 ///   - TexturePathLength: int32 (Unicode char count)
 ///   - TexturePath: string (Unicode, length * 2 bytes)
 /// </summary>
-[ResourceHandler(0x71A449C9)]
 public sealed class SkyBoxTextureResource : TypedResource
 {
     private const int MaxTextureCount = 1000; // Reasonable limit for validation

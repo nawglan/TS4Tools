@@ -14,7 +14,6 @@ namespace TS4Tools.Wrappers;
 /// Contains references to sim outfits, textures, animations, colors, and flags
 /// that define a complete look style in CAS.
 /// </remarks>
-[ResourceHandler(TypeId)]
 public sealed class StyleLookResource : TypedResource
 {
     /// <summary>Resource type identifier.</summary>

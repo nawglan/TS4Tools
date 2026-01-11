@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x3F0C529A
 /// Source: CSPNResource.cs lines 28-187
 /// </summary>
-[ResourceHandler(0x3F0C529A)]
 public sealed class CspnResource : SimpleCatalogResource
 {
     /// <summary>

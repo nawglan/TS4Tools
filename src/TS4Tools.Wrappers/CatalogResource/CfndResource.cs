@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x2FAE983E
 /// Source: CFNDResource.cs lines 27-199
 /// </summary>
-[ResourceHandler(0x2FAE983E)]
 public sealed class CfndResource : SimpleCatalogResource
 {
     /// <summary>

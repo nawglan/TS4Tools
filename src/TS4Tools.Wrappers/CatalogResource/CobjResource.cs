@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x319E4F1D
 /// Source: COBJResource.cs lines 30-36
 /// </summary>
-[ResourceHandler(0x319E4F1D)]
 public sealed class CobjResource : AbstractCatalogResource
 {
     /// <summary>

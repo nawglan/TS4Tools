@@ -385,18 +385,6 @@ public class ResourceFactoryTests
         resource.Should().BeOfType<TrimResource>();
     }
 
-    [Fact]
-    public void ThumWorldResourceFactory_CreateEmpty_ReturnsValidResource()
-    {
-        var factory = new ThumWorldResourceFactory();
-        var key = new ResourceKey(0x16CA6BC4, 0, 0);
-
-        var resource = factory.CreateEmpty(key);
-
-        resource.Should().NotBeNull();
-        resource.Should().BeOfType<ThumWorldResource>();
-    }
-
     #endregion
 
     #region ClipResourceFactory Tests

@@ -8,7 +8,6 @@ namespace TS4Tools.Wrappers.CatalogResource;
 /// Resource Type: 0x9A20CD1C
 /// Source: CSTRResource.cs lines 27-365
 /// </summary>
-[ResourceHandler(0x9A20CD1C)]
 public sealed class CstrResource : SimpleCatalogResource
 {
     /// <summary>

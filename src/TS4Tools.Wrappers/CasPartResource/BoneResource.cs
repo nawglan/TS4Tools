@@ -13,7 +13,6 @@ namespace TS4Tools.Wrappers;
 /// Contains a list of bones, each with a name and a 4x3 inverse bind pose matrix.
 /// Names are stored as 7-bit encoded length-prefixed BigEndianUnicode strings.
 /// </remarks>
-[ResourceHandler(TypeId)]
 public sealed class BoneResource : TypedResource
 {
     /// <summary>Resource type identifier.</summary>

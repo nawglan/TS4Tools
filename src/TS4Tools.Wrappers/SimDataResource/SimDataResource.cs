@@ -7,7 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Type: 0x545AC67A
 /// Source: DataResource.cs from legacy s4pi Wrappers/DataResource/
 /// </summary>
-[ResourceHandler(0x545AC67A)]
 public sealed class SimDataResource : TypedResource
 {
     /// <summary>

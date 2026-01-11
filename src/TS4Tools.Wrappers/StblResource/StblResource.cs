@@ -14,7 +14,6 @@ namespace TS4Tools.Wrappers;
 /// Entry: keyHash (4), flags (1), length (2), UTF-8 string data
 /// Handler TypeId: 0x220557DA
 /// </remarks>
-[ResourceHandler(0x220557DA)]
 public sealed class StblResource : TypedResource
 {
     /// <summary>

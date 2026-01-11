@@ -7,7 +7,6 @@ namespace TS4Tools.Wrappers;
 /// Resource Type: 0x044AE110
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ComplateResource/ComplateResource.cs
 /// </summary>
-[ResourceHandler(0x044AE110)]
 public sealed class ComplateResource : TypedResource
 {
     /// <summary>

@@ -34,7 +34,6 @@ namespace TS4Tools.Wrappers;
 /// - byte02: byte
 /// - byte03: byte
 /// </summary>
-[ResourceHandler(0xB0118C15)]
 public sealed class TmltResource : TypedResource
 {
     private const uint Magic = 0x544C4D54; // "TMLT" in little-endian

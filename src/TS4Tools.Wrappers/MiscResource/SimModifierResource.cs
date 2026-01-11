@@ -31,7 +31,6 @@ namespace TS4Tools.Wrappers;
 /// - DelayLoadKeys: TGIBlock[] (ITG order, 16 bytes each)
 /// - ObjectData: ObjectDataEntry[] (8 bytes each)
 /// </summary>
-[ResourceHandler(0xC5F6763E)]
 public sealed class SimModifierResource : TypedResource
 {
     // Validation limits
