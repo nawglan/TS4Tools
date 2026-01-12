@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Selection;
+using Avalonia.Input;
 using TS4Tools.UI.ViewModels;
 using TS4Tools.UI.Views.Controls;
 
@@ -30,7 +31,50 @@ public partial class MainWindow : Window, IAsyncDisposable
         // Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs
         WireSelectionSync();
 
+        // Wire up quick access keyboard shortcuts
+        // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs keyboard shortcuts
+        WireQuickAccessShortcuts();
+
         Closed += OnWindowClosed;
+    }
+
+    /// <summary>
+    /// Wires up Ctrl+1-9 for recent files and Ctrl+Shift+1-9 for bookmarks.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs MRU/Bookmark handling
+    /// </remarks>
+    private void WireQuickAccessShortcuts()
+    {
+        KeyDown += async (sender, e) =>
+        {
+            if (_viewModel == null) return;
+
+            // Check for digit key (D1-D9)
+            if (e.Key >= Key.D1 && e.Key <= Key.D9)
+            {
+                var index = e.Key - Key.D1; // 0-8
+
+                if (e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+                {
+                    // Ctrl+Shift+1-9: Open bookmark
+                    if (index < _viewModel.Bookmarks.Count)
+                    {
+                        await _viewModel.OpenBookmarkCommand.ExecuteAsync(_viewModel.Bookmarks[index].RawEntry);
+                        e.Handled = true;
+                    }
+                }
+                else if (e.KeyModifiers == KeyModifiers.Control)
+                {
+                    // Ctrl+1-9: Open recent file
+                    if (index < _viewModel.RecentFiles.Count)
+                    {
+                        await _viewModel.OpenRecentFileCommand.ExecuteAsync(_viewModel.RecentFiles[index].Path);
+                        e.Handled = true;
+                    }
+                }
+            }
+        };
     }
 
     /// <summary>
