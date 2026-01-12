@@ -394,32 +394,42 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             SelectedResourceInfo = info;
 
-            // Create appropriate editor based on resource type and track wrapper for property grid
-            (EditorContent, _currentResourceWrapper) = key.ResourceType switch
+            // Check if ForceHexView setting is enabled
+            // Source: legacy_references/Sims4Tools/s4pe Settings - hex viewing mode
+            if (SettingsService.Instance.Settings.ForceHexView)
             {
-                0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
-                0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
-                0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
-                0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
-                0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
-                0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
-                // RCOL resource types (standalone)
-                RcolConstants.Modl or        // 0x01661233 - MODL
-                RcolConstants.Matd or        // 0x01D0E75D - MATD
-                RcolConstants.Mlod or        // 0x01D10F34 - MLOD
-                RcolConstants.Mtst or        // 0x02019972 - MTST
-                RcolConstants.Tree or        // 0x021D7E8C - TREE
-                RcolConstants.TkMk or        // 0x033260E3 - TkMk
-                RcolConstants.SlotAdjusts or // 0x0355E0A6 - Slot Adjusts
-                RcolConstants.Lite or        // 0x03B4C61D - LITE
-                RcolConstants.Anim or        // 0x63A33EA7 - ANIM
-                RcolConstants.Vpxy or        // 0x736884F1 - VPXY
-                RcolConstants.Rslt or        // 0xD3044521 - RSLT
-                RcolConstants.Ftpt           // 0xD382BF57 - FTPT
-                    => CreateRcolViewerWithWrapper(key, data),
-                0x319E4F1D => CreateCatalogViewerWithWrapper(key, data), // COBJ (Catalog Object)
-                _ => (CreateHexViewer(data), null) // Default hex viewer, no wrapper
-            };
+                EditorContent = CreateHexViewer(data);
+                _currentResourceWrapper = null;
+            }
+            else
+            {
+                // Create appropriate editor based on resource type and track wrapper for property grid
+                (EditorContent, _currentResourceWrapper) = key.ResourceType switch
+                {
+                    0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
+                    0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
+                    0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
+                    0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                    0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
+                    0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
+                    // RCOL resource types (standalone)
+                    RcolConstants.Modl or        // 0x01661233 - MODL
+                    RcolConstants.Matd or        // 0x01D0E75D - MATD
+                    RcolConstants.Mlod or        // 0x01D10F34 - MLOD
+                    RcolConstants.Mtst or        // 0x02019972 - MTST
+                    RcolConstants.Tree or        // 0x021D7E8C - TREE
+                    RcolConstants.TkMk or        // 0x033260E3 - TkMk
+                    RcolConstants.SlotAdjusts or // 0x0355E0A6 - Slot Adjusts
+                    RcolConstants.Lite or        // 0x03B4C61D - LITE
+                    RcolConstants.Anim or        // 0x63A33EA7 - ANIM
+                    RcolConstants.Vpxy or        // 0x736884F1 - VPXY
+                    RcolConstants.Rslt or        // 0xD3044521 - RSLT
+                    RcolConstants.Ftpt           // 0xD382BF57 - FTPT
+                        => CreateRcolViewerWithWrapper(key, data),
+                    0x319E4F1D => CreateCatalogViewerWithWrapper(key, data), // COBJ (Catalog Object)
+                    _ => (CreateHexViewer(data), null) // Default hex viewer, no wrapper
+                };
+            }
 
             // Update property grid if visible
             if (ShowPropertyGrid)

@@ -89,6 +89,14 @@ public sealed class AppSettings
     public bool EnableFallbackHexPreview { get; set; }
     public float PreviewZoomFactor { get; set; } = 1.0f;
 
+    /// <summary>
+    /// When true, always show hex view instead of automatic preview selection.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe Settings - hex viewing mode
+    /// </remarks>
+    public bool ForceHexView { get; set; }
+
     // External editors
     // Source: Settings.settings lines 56-64, 86-94
     public string? HexEditorCommand { get; set; }

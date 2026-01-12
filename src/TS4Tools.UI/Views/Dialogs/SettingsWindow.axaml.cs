@@ -57,6 +57,7 @@ public partial class SettingsWindow : Window
         UseNamesCheckBox.IsChecked = _settings.UseNames;
         UseTagsCheckBox.IsChecked = _settings.UseTags;
         HexOnlyCheckBox.IsChecked = _settings.HexOnly;
+        ForceHexViewCheckBox.IsChecked = _settings.ForceHexView;
         EnableDDSPreviewCheckBox.IsChecked = _settings.EnableDDSPreview;
         EnableTextPreviewCheckBox.IsChecked = _settings.EnableFallbackTextPreview;
         EnableHexPreviewCheckBox.IsChecked = _settings.EnableFallbackHexPreview;
@@ -84,6 +85,7 @@ public partial class SettingsWindow : Window
         _settings.UseNames = UseNamesCheckBox.IsChecked == true;
         _settings.UseTags = UseTagsCheckBox.IsChecked == true;
         _settings.HexOnly = HexOnlyCheckBox.IsChecked == true;
+        _settings.ForceHexView = ForceHexViewCheckBox.IsChecked == true;
         _settings.EnableDDSPreview = EnableDDSPreviewCheckBox.IsChecked == true;
         _settings.EnableFallbackTextPreview = EnableTextPreviewCheckBox.IsChecked == true;
         _settings.EnableFallbackHexPreview = EnableHexPreviewCheckBox.IsChecked == true;

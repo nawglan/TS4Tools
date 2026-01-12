@@ -33,6 +33,8 @@
 
                     <TextBlock Text="Preview Options" FontWeight="SemiBold" FontSize="14" />
 
+                    <!-- Source: legacy_references/Sims4Tools/s4pe Settings - hex viewing mode -->
+                    <CheckBox x:Name="ForceHexViewCheckBox" Content="Force hex view for all resources (disable automatic preview)" />
                     <CheckBox x:Name="EnableDDSPreviewCheckBox" Content="Enable DDS image preview" />
                     <CheckBox x:Name="EnableTextPreviewCheckBox" Content="Enable fallback text preview" />
                     <CheckBox x:Name="EnableHexPreviewCheckBox" Content="Enable fallback hex preview" />
