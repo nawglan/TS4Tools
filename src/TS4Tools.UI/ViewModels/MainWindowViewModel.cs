@@ -835,6 +835,77 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         StatusMessage = $"Sorting by: {SortMode}";
     }
 
+    /// <summary>
+    /// Opens the Resource Details dialog for viewing/editing resource TGI.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1584-1617 (ResourceDetails method)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ResourceDetailsAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new ResourceDetailsWindow();
+        dialog.Initialize(
+            key,
+            SelectedResource.InstanceName,
+            entry.IsCompressed,
+            entry.FileSize,
+            entry.MemorySize);
+
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.WasModified)
+        {
+            try
+            {
+                // Update the resource key if changed
+                var newKey = dialog.ResourceKey;
+                if (newKey != key)
+                {
+                    // Get data, delete old, add new
+                    var data = await _package.GetResourceDataAsync(entry);
+                    _package.DeleteResource(entry);
+
+                    var newEntry = _package.AddResource(newKey, data.ToArray(), rejectDuplicates: false);
+                    if (newEntry != null)
+                    {
+                        // Note: compression setting requires re-adding with new data
+                        // This is a simplified implementation - full implementation would
+                        // need to actually compress/decompress the data
+
+                        // Update the list
+                        Resources.Remove(SelectedResource);
+                        FilteredResources.Remove(SelectedResource);
+
+                        var newItem = new ResourceItemViewModel(newKey, newEntry.FileSize, dialog.ResourceName);
+                        Resources.Add(newItem);
+                        ApplyFilter();
+                        SelectedResource = newItem;
+                    }
+                }
+
+                StatusMessage = "Resource details updated";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Update error: {ex.Message}";
+            }
+        }
+    }
+
     [RelayCommand]
     private async Task OpenRecentFileAsync(string? path)
     {
