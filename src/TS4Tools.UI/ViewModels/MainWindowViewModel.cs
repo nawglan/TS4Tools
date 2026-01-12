@@ -636,6 +636,89 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Opens the Batch Import dialog for importing multiple files.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task BatchImportAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new BatchImportWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.Files.Count > 0)
+        {
+            var imported = 0;
+            var errors = 0;
+
+            foreach (var filePath in dialog.Files)
+            {
+                try
+                {
+                    if (!File.Exists(filePath)) continue;
+
+                    var fileName = Path.GetFileName(filePath);
+                    ResourceKey key;
+
+                    if (TryParseS4FileName(fileName, out var parsedKey))
+                    {
+                        key = parsedKey;
+                    }
+                    else
+                    {
+                        // Generate a unique key
+                        key = new ResourceKey(0x00000000, 0x00000000, (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (ulong)imported);
+                    }
+
+                    // Check for existing resource
+                    var existing = _package.Find(key);
+                    if (existing != null && !dialog.Replace)
+                    {
+                        // Skip duplicate
+                        continue;
+                    }
+
+                    if (existing != null)
+                    {
+                        // Remove existing for replacement
+                        _package.DeleteResource(existing);
+                        var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                        if (existingItem != null)
+                        {
+                            Resources.Remove(existingItem);
+                        }
+                    }
+
+                    var data = await File.ReadAllBytesAsync(filePath);
+                    var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+                    if (entry != null)
+                    {
+                        var instanceName = dialog.UseNames ? Path.GetFileNameWithoutExtension(fileName) : _hashNameService.TryGetName(key.Instance);
+                        var item = new ResourceItemViewModel(key, entry.FileSize, instanceName);
+                        Resources.Add(item);
+                        imported++;
+                    }
+                }
+                catch
+                {
+                    errors++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+            StatusMessage = $"Imported {imported} file(s)" + (errors > 0 ? $", {errors} error(s)" : "");
+        }
+    }
+
     [RelayCommand]
     private async Task ReplaceResourceAsync()
     {

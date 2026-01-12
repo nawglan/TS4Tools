@@ -50,6 +50,7 @@
                 <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
                 <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="_Batch Import..." Command="{Binding BatchImportCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="_Replace Resource..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
