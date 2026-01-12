@@ -623,6 +623,49 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Saves a copy of the package without changing the current file path.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 903-928 (FileSaveCopyAs)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SaveCopyAsAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Copy As",
+            DefaultExtension = "package",
+            FileTypeChoices = [PackageFileType],
+            SuggestedFileName = !string.IsNullOrEmpty(PackagePath)
+                ? $"{Path.GetFileNameWithoutExtension(PackagePath)}_copy.package"
+                : "copy.package"
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var copyPath = file.Path.LocalPath;
+                await _package.SaveAsAsync(copyPath);
+                // Don't update PackagePath or Title - this is a copy
+                StatusMessage = $"Copy saved to {_fileSystem.GetFileName(copyPath)}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Save error: {ex.Message}";
+            }
+        }
+    }
+
     [RelayCommand]
     private async Task ClosePackageAsync()
     {

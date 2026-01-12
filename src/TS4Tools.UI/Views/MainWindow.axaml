@@ -36,6 +36,8 @@
                 <Separator />
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding CanSave}" />
                 <MenuItem Header="Save _As..." Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" IsEnabled="{Binding HasOpenPackage}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 903-928 -->
+                <MenuItem Header="Save C_opy As..." Command="{Binding SaveCopyAsCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <Separator />
                 <MenuItem Header="_Close" Command="{Binding ClosePackageCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <Separator />
