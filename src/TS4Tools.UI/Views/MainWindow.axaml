@@ -54,6 +54,8 @@
                 <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
             </MenuItem>
             <MenuItem Header="_Tools">
+                <MenuItem Header="_Search..." Command="{Binding SearchCommand}" InputGesture="Ctrl+F" IsEnabled="{Binding HasOpenPackage}" />
+                <Separator />
                 <MenuItem Header="_FNV Hash Calculator..." Command="{Binding HashCalculatorCommand}" />
                 <MenuItem Header="_Package Statistics..." Command="{Binding PackageStatsCommand}" IsEnabled="{Binding HasOpenPackage}" />
             </MenuItem>

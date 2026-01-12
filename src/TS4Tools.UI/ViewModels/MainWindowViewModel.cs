@@ -663,6 +663,31 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         await dialog.ShowDialog(window);
     }
 
+    /// <summary>
+    /// Opens the Search dialog to find resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task SearchAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new SearchWindow(_package, FilteredResources);
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.SelectedResult != null)
+        {
+            // Navigate to the selected resource
+            SelectedResource = dialog.SelectedResult;
+            StatusMessage = $"Found: {dialog.SelectedResult.TypeName}";
+        }
+    }
+
     [RelayCommand]
     private async Task CopyResourceKeyAsync()
     {
