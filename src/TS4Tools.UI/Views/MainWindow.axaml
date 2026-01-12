@@ -58,11 +58,12 @@
                 <Separator />
                 <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
-                <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs keyboard shortcuts -->
+                <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" InputGesture="Insert" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Batch Import..." Command="{Binding BatchImportCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 133-162 -->
                 <MenuItem Header="Import from _Package..." Command="{Binding ImportFromPackageCommand}" IsEnabled="{Binding HasOpenPackage}" />
-                <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" InputGesture="Ctrl+Shift+X" IsEnabled="{Binding HasSelectedResource}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 -->
                 <MenuItem Header="Export to P_ackage..." Command="{Binding ExportToPackageCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="_Replace Resource..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
@@ -106,7 +107,7 @@
             <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs -->
             <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 965-978 -->
             <MenuItem Header="_Bookmarks">
-                <MenuItem Header="_Add Current Package" Command="{Binding AddCurrentToBookmarksCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="_Add Current Package" Command="{Binding AddCurrentToBookmarksCommand}" InputGesture="Ctrl+Shift+B" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Organise Bookmarks..." Command="{Binding OrganiseBookmarksCommand}" />
                 <MenuItem Header="Set _Max Bookmarks..." Command="{Binding SetMaxBookmarksCommand}" />
                 <Separator IsVisible="{Binding HasBookmarks}" />
@@ -128,7 +129,7 @@
                 <MenuItem Header="_Custom Places..." Command="{Binding CustomPlacesCommand}" />
             </MenuItem>
             <MenuItem Header="_Help">
-                <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" />
+                <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" InputGesture="F1" />
             </MenuItem>
         </Menu>
 
