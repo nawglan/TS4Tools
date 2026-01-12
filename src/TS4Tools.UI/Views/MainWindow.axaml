@@ -21,6 +21,8 @@
             <MenuItem Header="_File">
                 <MenuItem Header="_New Package" Command="{Binding NewPackageCommand}" InputGesture="Ctrl+N" />
                 <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 794-797 -->
+                <MenuItem Header="Open _Read Only..." Command="{Binding OpenPackageReadOnlyCommand}" />
                 <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
                     <MenuItem.Styles>
                         <Style Selector="MenuItem">
@@ -32,7 +34,7 @@
                     </MenuItem.Styles>
                 </MenuItem>
                 <Separator />
-                <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding CanSave}" />
                 <MenuItem Header="Save _As..." Command="{Binding SaveAsCommand}" InputGesture="Ctrl+Shift+S" IsEnabled="{Binding HasOpenPackage}" />
                 <Separator />
                 <MenuItem Header="_Close" Command="{Binding ClosePackageCommand}" IsEnabled="{Binding HasOpenPackage}" />

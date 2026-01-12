@@ -48,6 +48,21 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [NotifyPropertyChangedFor(nameof(ResourceCount))]
     private string _packagePath = string.Empty;
 
+    /// <summary>
+    /// Whether the current package is opened in read-only mode.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 566-572 (ReadWrite property)
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
+    private bool _isReadOnly;
+
+    /// <summary>
+    /// Whether saving is allowed (package open and not read-only).
+    /// </summary>
+    public bool CanSave => HasOpenPackage && !IsReadOnly;
+
     [ObservableProperty]
     private string _title = "TS4Tools";
 
@@ -208,11 +223,46 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (files.Count == 1)
         {
             var path = files[0].Path.LocalPath;
-            await LoadPackageAsync(path);
+            await LoadPackageAsync(path, readOnly: false);
         }
     }
 
-    private async Task LoadPackageAsync(string path)
+    /// <summary>
+    /// Opens a package in read-only mode.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 794-797 (FileOpenReadOnly)
+    /// </remarks>
+    [RelayCommand]
+    private async Task OpenPackageReadOnlyAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Open Package (Read Only)",
+            AllowMultiple = false,
+            FileTypeFilter = [PackageFileType, AllFilesType]
+        });
+
+        if (files.Count == 1)
+        {
+            var path = files[0].Path.LocalPath;
+            await LoadPackageAsync(path, readOnly: true);
+        }
+    }
+
+    /// <summary>
+    /// Loads a package from disk.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 799-839 (FileOpen)
+    /// </remarks>
+    private async Task LoadPackageAsync(string path, bool readOnly = false)
     {
         try
         {
@@ -222,7 +272,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             _package = await DbpfPackage.OpenAsync(path);
             PackagePath = path;
-            Title = $"TS4Tools - {_fileSystem.GetFileName(path)}";
+            IsReadOnly = readOnly;
+
+            // Update title with read-only indicator
+            var fileName = _fileSystem.GetFileName(path);
+            Title = readOnly
+                ? $"TS4Tools - {fileName} [Read Only]"
+                : $"TS4Tools - {fileName}";
 
             // Load hash-to-name mappings from NameMap resources
             await _hashNameService.LoadFromPackageAsync(_package);
@@ -232,10 +288,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             var nameCount = _hashNameService.Count;
             StatusMessage = nameCount > 0
-                ? $"Loaded {ResourceCount} resources ({nameCount} named)"
-                : $"Loaded {ResourceCount} resources";
+                ? $"Loaded {ResourceCount} resources ({nameCount} named)" + (readOnly ? " [Read Only]" : "")
+                : $"Loaded {ResourceCount} resources" + (readOnly ? " [Read Only]" : "");
             OnPropertyChanged(nameof(HasOpenPackage));
             OnPropertyChanged(nameof(ResourceCount));
+            OnPropertyChanged(nameof(CanSave));
         }
         catch (Exception ex)
         {
@@ -582,12 +639,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
         _hashNameService.Clear();
         PackagePath = string.Empty;
+        IsReadOnly = false;
         Title = "TS4Tools";
         Resources.Clear();
         FilteredResources.Clear();
         SelectedResource = null;
         OnPropertyChanged(nameof(HasOpenPackage));
         OnPropertyChanged(nameof(ResourceCount));
+        OnPropertyChanged(nameof(CanSave));
     }
 
     [RelayCommand]
@@ -595,7 +654,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         if (!string.IsNullOrEmpty(PackagePath))
         {
-            await LoadPackageAsync(PackagePath);
+            var wasReadOnly = IsReadOnly;
+            await LoadPackageAsync(PackagePath, wasReadOnly);
         }
     }
 
