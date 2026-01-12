@@ -211,4 +211,80 @@ public class RcolBlockRegistryTests
         // SwizzleIndex = 0
         return data;
     }
+
+    [Fact]
+    public void CreateBlock_EmptyData_ReturnsUnknownBlock()
+    {
+        // Arrange
+        var data = Array.Empty<byte>();
+
+        // Act
+        var block = RcolBlockRegistry.CreateBlock(0xDEADBEEF, data);
+
+        // Assert
+        block.Should().BeOfType<UnknownRcolBlock>();
+    }
+
+    [Fact]
+    public void CreateBlock_ZeroTypeId_WithNoTag_ReturnsUnknownBlock()
+    {
+        // Arrange - data with unrecognized tag
+        var data = new byte[] { 0x00, 0x00, 0x00, 0x00, 0, 0, 0, 0 };
+
+        // Act
+        var block = RcolBlockRegistry.CreateBlock(0, data);
+
+        // Assert
+        block.Should().BeOfType<UnknownRcolBlock>();
+    }
+
+    [Fact]
+    public void IsTagRegistered_EmptyString_ReturnsFalse()
+    {
+        RcolBlockRegistry.IsTagRegistered(string.Empty).Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsRegistered_ZeroTypeId_ReturnsFalse()
+    {
+        RcolBlockRegistry.IsRegistered(0).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RegisteredTypes_IsNotEmpty()
+    {
+        RcolBlockRegistry.RegisteredTypes.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void RegisteredTags_IsNotEmpty()
+    {
+        RcolBlockRegistry.RegisteredTags.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void CreateBlock_DataShorterThanTag_ReturnsUnknownBlock()
+    {
+        // Arrange - data too short to have a valid tag
+        var data = new byte[] { 0x01, 0x02 };
+
+        // Act
+        var block = RcolBlockRegistry.CreateBlock(0xDEADBEEF, data);
+
+        // Assert
+        block.Should().BeOfType<UnknownRcolBlock>();
+    }
+
+    [Fact]
+    public void CreateBlock_NullBytesInTag_ReturnsUnknownBlock()
+    {
+        // Arrange - data with null bytes where tag should be
+        var data = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        // Act
+        var block = RcolBlockRegistry.CreateBlock(0, data);
+
+        // Assert
+        block.Should().BeOfType<UnknownRcolBlock>();
+    }
 }

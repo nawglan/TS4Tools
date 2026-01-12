@@ -74,4 +74,131 @@ public class CaspEnumsTests
         // Hat is bit 1, SkinOverlay is bit 58
         ((ulong)combined).Should().Be((1ul << 1) | (1ul << 58));
     }
+
+    [Fact]
+    public void ParmFlag_None_EqualsZero()
+    {
+        ((byte)ParmFlag.None).Should().Be(0);
+    }
+
+    [Fact]
+    public void AgeGenderFlags_None_EqualsZero()
+    {
+        ((uint)AgeGenderFlags.None).Should().Be(0u);
+    }
+
+    [Fact]
+    public void OccultTypesDisabled_None_EqualsZero()
+    {
+        ((uint)OccultTypesDisabled.None).Should().Be(0u);
+    }
+
+    [Fact]
+    public void ExcludePartFlag_None_EqualsZero()
+    {
+        ((ulong)ExcludePartFlag.None).Should().Be(0ul);
+    }
+
+    [Fact]
+    public void PackFlag_None_EqualsZero()
+    {
+        ((byte)PackFlag.None).Should().Be(0);
+    }
+
+    [Fact]
+    public void BodyType_All_EqualsZero()
+    {
+        ((uint)BodyType.All).Should().Be(0);
+    }
+
+    [Fact]
+    public void CASPartRegion_Base_EqualsZero()
+    {
+        ((uint)CASPartRegion.Base).Should().Be(0);
+    }
+
+    [Fact]
+    public void ParmFlag_HasFlag_WorksCorrectly()
+    {
+        var combined = ParmFlag.AllowForRandom | ParmFlag.ShowInUI;
+
+        combined.HasFlag(ParmFlag.AllowForRandom).Should().BeTrue();
+        combined.HasFlag(ParmFlag.ShowInUI).Should().BeTrue();
+        combined.HasFlag(ParmFlag.DefaultForBodyType).Should().BeFalse();
+        combined.HasFlag(ParmFlag.None).Should().BeTrue(); // None is always present in any flag
+    }
+
+    [Fact]
+    public void AgeGenderFlags_HasFlag_WorksCorrectly()
+    {
+        var combined = AgeGenderFlags.Adult | AgeGenderFlags.Elder | AgeGenderFlags.Female;
+
+        combined.HasFlag(AgeGenderFlags.Adult).Should().BeTrue();
+        combined.HasFlag(AgeGenderFlags.Female).Should().BeTrue();
+        combined.HasFlag(AgeGenderFlags.Male).Should().BeFalse();
+        combined.HasFlag(AgeGenderFlags.Child).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ExcludePartFlag_HasFlag_Works64Bit()
+    {
+        var combined = ExcludePartFlag.Blush | ExcludePartFlag.SkinOverlay;
+
+        // Blush is bit 32, SkinOverlay is bit 58 - both > 32 bits
+        combined.HasFlag(ExcludePartFlag.Blush).Should().BeTrue();
+        combined.HasFlag(ExcludePartFlag.SkinOverlay).Should().BeTrue();
+        combined.HasFlag(ExcludePartFlag.Hat).Should().BeFalse();
+    }
+
+    [Fact]
+    public void AgeGenderFlags_AllAges_CanCombine()
+    {
+        var allAges = AgeGenderFlags.Baby | AgeGenderFlags.Toddler | AgeGenderFlags.Child |
+                      AgeGenderFlags.Teen | AgeGenderFlags.YoungAdult | AgeGenderFlags.Adult |
+                      AgeGenderFlags.Elder;
+
+        ((uint)allAges).Should().Be(0x0000007F);
+    }
+
+    [Fact]
+    public void AgeGenderFlags_AllGenders_CanCombine()
+    {
+        var allGenders = AgeGenderFlags.Male | AgeGenderFlags.Female;
+
+        ((uint)allGenders).Should().Be(0x00003000);
+    }
+
+    [Fact]
+    public void BodyType_MaxValue_IsSkinOverlay()
+    {
+        // SkinOverlay (0x3A = 58) is the highest defined body type
+        ((uint)BodyType.SkinOverlay).Should().Be(0x3A);
+    }
+
+    [Fact]
+    public void CASPartRegion_MaxValue_IsMax()
+    {
+        // Max is the sentinel value for the enum
+        ((uint)CASPartRegion.Max).Should().Be(20);
+    }
+
+    [Theory]
+    [InlineData((uint)0xFFFFFFFF)]
+    [InlineData((uint)0x12345678)]
+    public void AgeGenderFlags_InvalidValues_CanBeCast(uint value)
+    {
+        // Enum should accept any uint value even if not defined
+        var flag = (AgeGenderFlags)value;
+        ((uint)flag).Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData((ulong)0xFFFFFFFFFFFFFFFF)]
+    [InlineData((ulong)0x123456789ABCDEF0)]
+    public void ExcludePartFlag_InvalidValues_CanBeCast(ulong value)
+    {
+        // Enum should accept any ulong value even if not defined
+        var flag = (ExcludePartFlag)value;
+        ((ulong)flag).Should().Be(value);
+    }
 }

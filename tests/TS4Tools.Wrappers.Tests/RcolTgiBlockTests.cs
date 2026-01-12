@@ -154,4 +154,101 @@ public class RcolTgiBlockTests
         var act = () => tgi.Write(bytes);
         act.Should().Throw<ArgumentException>().WithMessage("*too short*");
     }
+
+    [Fact]
+    public void Read_ZeroValues_ParsesCorrectly()
+    {
+        // Arrange - all zeros
+        var bytes = new byte[16];
+
+        // Act
+        var tgi = RcolTgiBlock.Read(bytes);
+
+        // Assert
+        tgi.Instance.Should().Be(0);
+        tgi.ResourceType.Should().Be(0);
+        tgi.ResourceGroup.Should().Be(0);
+    }
+
+    [Fact]
+    public void ZeroTgi_RoundTrips()
+    {
+        // Arrange
+        var tgi = new RcolTgiBlock(0, 0, 0);
+        var bytes = new byte[16];
+
+        // Act
+        tgi.Write(bytes);
+        var parsed = RcolTgiBlock.Read(bytes);
+
+        // Assert
+        parsed.Should().Be(tgi);
+    }
+
+    [Fact]
+    public void Read_EmptySpan_ThrowsArgumentException()
+    {
+        // Arrange & Act & Assert
+        try
+        {
+            _ = RcolTgiBlock.Read(ReadOnlySpan<byte>.Empty);
+            throw new Xunit.Sdk.XunitException("Expected ArgumentException was not thrown");
+        }
+        catch (ArgumentException ex)
+        {
+            ex.Message.Should().Contain("too short");
+        }
+    }
+
+    [Fact]
+    public void Write_MaxValues_PreservesCorrectly()
+    {
+        // Arrange - maximum values
+        var tgi = new RcolTgiBlock(ulong.MaxValue, uint.MaxValue, uint.MaxValue);
+        var bytes = new byte[16];
+
+        // Act
+        tgi.Write(bytes);
+        var parsed = RcolTgiBlock.Read(bytes);
+
+        // Assert
+        parsed.Instance.Should().Be(ulong.MaxValue);
+        parsed.ResourceType.Should().Be(uint.MaxValue);
+        parsed.ResourceGroup.Should().Be(uint.MaxValue);
+    }
+
+    [Fact]
+    public void Equals_ZeroBlocks_AreEqual()
+    {
+        // Arrange
+        var tgi1 = new RcolTgiBlock(0, 0, 0);
+        var tgi2 = new RcolTgiBlock(0, 0, 0);
+
+        // Assert
+        tgi1.Should().Be(tgi2);
+        tgi1.GetHashCode().Should().Be(tgi2.GetHashCode());
+    }
+
+    [Fact]
+    public void Equals_WithNull_ReturnsFalse()
+    {
+        // Arrange
+        var tgi = new RcolTgiBlock(0x1234, 0x5678, 0x9ABC);
+
+        // Assert
+        tgi.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ToString_ZeroValues_FormatsCorrectly()
+    {
+        // Arrange
+        var tgi = new RcolTgiBlock(0, 0, 0);
+
+        // Act
+        var str = tgi.ToString();
+
+        // Assert
+        str.Should().Be("0x00000000:0x00000000:0x0000000000000000");
+    }
 }
