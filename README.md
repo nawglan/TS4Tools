@@ -26,19 +26,14 @@ The original s4pe (Sims 4 Package Editor), based on the s4pi (Sims 4 Package Int
 
 ## Current Status
 
-🚧 **Work in Progress**
-
-- ✅ Core DBPF package reader/writer
-- ✅ ZLIB compression + RefPack decompression
-- ✅ Resource handler system
-- ✅ STBL (String Table) wrapper with editor
-- ✅ NameMap wrapper with editor
-- ✅ FNV hashing utilities + calculator tool
-- ✅ Avalonia UI application with resource editors
-- ✅ Resource import/export/delete operations
-- ✅ Hex viewer for raw resource data
-- ✅ Package statistics dialog
-- 🔲 Advanced resource wrappers (CAS, Catalog, Mesh)
+- Core DBPF package reader/writer with ZLIB + RefPack compression
+- Resource handler/factory system with 50+ resource wrappers
+- CAS, Catalog, Mesh, RCOL, Image (DDS/RLE), SimData, and more
+- 10 resource editors/viewers with specialized UI
+- 14 dialog windows (search, import, merge, statistics, etc.)
+- FNV hashing utilities + calculator tool
+- Cross-platform CI/CD (GitHub Actions)
+- 120+ test files with comprehensive coverage
 
 ## Building
 
@@ -61,7 +56,7 @@ This project builds upon the foundation laid by the original s4pe/s4pi contribut
 - **[andrewtavera](https://github.com/andrewtavera)** - Mesh parts and other help
 - **[granthes](https://github.com/granthes)** - Several contributions pre-release and in the early stages
 - **[snaitf](https://github.com/Snaitf)** - Decoding and contributions for CCOL, COBJ, trims as well as bugfixes
-- **IngeJones** - A kind contributor
+- **IngeJones** - A kind lady who doesn't want her name mentioned
 - **[Kuree](https://github.com/Kuree)** - Maintained the project in 2014 and 2015
 - **[CmarNYC](https://github.com/cmarNYC)** - Continued contributions
 - **[pbox](https://github.com/pboxx)** - Continued contributions
