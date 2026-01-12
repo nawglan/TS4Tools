@@ -1383,6 +1383,205 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     #endregion
 
+    #region Float and Save Preview
+    // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1148-1163, 2910-2936
+
+    /// <summary>
+    /// Indicates whether the current editor content can be floated.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1148-1151 (CanFloat)
+    /// </remarks>
+    public bool CanFloat => HasSelectedResource && EditorContent != null;
+
+    /// <summary>
+    /// Indicates whether the current preview can be saved.
+    /// Save is available when the preview content is text-based.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1089-1105 (CanSavePreview)
+    /// </remarks>
+    public bool CanSavePreview => HasSelectedResource && IsTextBasedPreview;
+
+    /// <summary>
+    /// Whether the current editor is text-based (for Save Preview feature).
+    /// </summary>
+    private bool IsTextBasedPreview
+    {
+        get
+        {
+            if (EditorContent == null) return false;
+            // Check if editor is text-based (STBL, NameMap, XML/Tuning, SimData, or text viewer)
+            return EditorContent is Views.Editors.StblEditorView
+                or Views.Editors.NameMapEditorView
+                or Views.Editors.TextEditorView
+                or Views.Editors.SimDataViewerView;
+        }
+    }
+
+    /// <summary>
+    /// Opens the current editor content in a floating window.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1153-1163 (EditFloat),
+    ///         lines 2910-2936 (f_FloatControl)
+    /// </remarks>
+    [RelayCommand]
+    private async Task FloatPreviewAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null) return;
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+
+            // Create a new editor control for the floating window
+            var (content, _) = key.ResourceType switch
+            {
+                0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
+                0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
+                0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
+                0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
+                _ => (CreateHexViewer(data), null)
+            };
+
+            var window = new Views.Dialogs.FloatingPreviewWindow();
+            window.SetContent(content, SelectedResource.InstanceName ?? SelectedResource.DisplayKey);
+
+            // Get the main window to set as owner
+            var mainWindow = App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (mainWindow != null)
+            {
+                window.Show(mainWindow);
+            }
+            else
+            {
+                window.Show();
+            }
+
+            StatusMessage = "Preview opened in floating window";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error opening floating preview: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Saves the current preview content to a file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1107-1146 (EditSavePreview)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SavePreviewAsync()
+    {
+        if (SelectedResource == null || EditorContent == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        // Get preview text content
+        var text = GetPreviewText();
+        if (string.IsNullOrEmpty(text))
+        {
+            StatusMessage = "No text content to save";
+            return;
+        }
+
+        // Build default filename from resource key
+        var key = SelectedResource.Key;
+        var baseName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+        if (!string.IsNullOrEmpty(SelectedResource.InstanceName))
+        {
+            baseName = SelectedResource.InstanceName;
+        }
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Preview Content",
+            SuggestedFileName = baseName + ".txt",
+            FileTypeChoices = [
+                new FilePickerFileType("Text Files") { Patterns = ["*.txt"] },
+                new FilePickerFileType("All Files") { Patterns = ["*"] }
+            ],
+            DefaultExtension = ".txt"
+        });
+
+        if (file != null)
+        {
+            var path = file.Path.LocalPath;
+            await File.WriteAllTextAsync(path, text);
+            StatusMessage = $"Preview saved to {System.IO.Path.GetFileName(path)}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the text content from the current preview.
+    /// </summary>
+    private string? GetPreviewText()
+    {
+        if (EditorContent == null) return null;
+
+        // Extract text based on editor type
+        return EditorContent switch
+        {
+            Views.Editors.StblEditorView stblView => GetStblText(stblView),
+            Views.Editors.NameMapEditorView nameMapView => GetNameMapText(nameMapView),
+            Views.Editors.TextEditorView textView => GetTextEditorText(textView),
+            Views.Editors.SimDataViewerView simDataView => GetSimDataText(simDataView),
+            _ => null
+        };
+    }
+
+    private static string? GetStblText(Views.Editors.StblEditorView view)
+    {
+        if (view.DataContext is not Editors.StblEditorViewModel vm) return null;
+        var sb = new StringBuilder();
+        foreach (var entry in vm.Entries)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"0x{entry.KeyHash:X16}: {entry.Value}");
+        }
+        return sb.ToString();
+    }
+
+    private static string? GetNameMapText(Views.Editors.NameMapEditorView view)
+    {
+        if (view.DataContext is not Editors.NameMapEditorViewModel vm) return null;
+        var sb = new StringBuilder();
+        foreach (var entry in vm.Entries)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"0x{entry.Hash:X16}: {entry.Name}");
+        }
+        return sb.ToString();
+    }
+
+    private static string? GetTextEditorText(Views.Editors.TextEditorView view)
+    {
+        if (view.DataContext is not Editors.TextEditorViewModel vm) return null;
+        return vm.Text;
+    }
+
+    private static string? GetSimDataText(Views.Editors.SimDataViewerView view)
+    {
+        if (view.DataContext is not Editors.SimDataViewerViewModel vm) return null;
+        // SimData viewer has HeaderInfo and HexPreview - combine them
+        return $"{vm.HeaderInfo}\n\n{vm.HexPreview}";
+    }
+
+    #endregion
+
     /// <summary>
     /// Toggles the advanced filter panel visibility.
     /// </summary>

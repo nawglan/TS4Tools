@@ -67,6 +67,11 @@
                     </MenuItem.Styles>
                 </MenuItem>
                 <Separator />
+                <!-- Float and Save Preview -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1107-1163, 2910-2936 -->
+                <MenuItem Header="_Float" Command="{Binding FloatPreviewCommand}" IsEnabled="{Binding CanFloat}" />
+                <MenuItem Header="Save Preview..." Command="{Binding SavePreviewCommand}" IsEnabled="{Binding CanSavePreview}" />
+                <Separator />
                 <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
             </MenuItem>
             <MenuItem Header="_Tools">
