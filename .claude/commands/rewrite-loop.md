@@ -2,19 +2,17 @@
 
 Start an autonomous Ralph Wiggum loop to complete 100% parity with legacy s4pe.
 
----
+## Step 1: Activate the Ralph Loop
 
-## Instructions
+**USE THE BASH TOOL** to run this command immediately (do not just display it):
 
-Read the prompt file at `/mnt/ai/code/TS4Tools/.claude/prompts/rewrite-loop-prompt.md` for the full loop instructions.
-
-Then execute this slash command with a simple prompt:
-
-```
-/ralph-wiggum:ralph-loop "Read .claude/prompts/rewrite-loop-prompt.md and follow those instructions to implement legacy parity features one at a time." --completion-promise "FULL_PARITY_COMPLETE" --max-iterations 30
+```bash
+/home/dez/.claude/plugins/cache/claude-code-plugins/ralph-wiggum/1.0.0/scripts/setup-ralph-loop.sh "Read .claude/prompts/rewrite-loop-prompt.md and follow those instructions to implement legacy parity features one at a time." --completion-promise "FULL_PARITY_COMPLETE" --max-iterations 30
 ```
 
----
+## Step 2: Begin Implementation
+
+After the loop is activated, read `/mnt/ai/code/TS4Tools/.claude/prompts/rewrite-loop-prompt.md` and start implementing features following the priority queue.
 
 ## Control Commands
 
