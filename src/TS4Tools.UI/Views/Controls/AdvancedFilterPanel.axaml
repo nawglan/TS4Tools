@@ -9,11 +9,14 @@
     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
             BorderThickness="1" CornerRadius="4" Padding="8">
         <StackPanel Spacing="8">
-            <!-- Header with clear/apply -->
-            <Grid ColumnDefinitions="*,Auto,Auto">
+            <!-- Header with paste/clear/regex -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs filter context menu -->
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                 <TextBlock Text="Advanced Filter" FontWeight="SemiBold" VerticalAlignment="Center" />
-                <Button Grid.Column="1" x:Name="ClearButton" Content="Clear" Padding="8,2" Margin="4,0" FontSize="11" />
-                <ToggleButton Grid.Column="2" x:Name="RegexToggle" Content=".*" ToolTip.Tip="Use Regular Expressions"
+                <Button Grid.Column="1" x:Name="PasteButton" Content="Paste" ToolTip.Tip="Paste ResourceKey from clipboard (Ctrl+Shift+V)"
+                        Padding="8,2" Margin="4,0" FontSize="11" />
+                <Button Grid.Column="2" x:Name="ClearButton" Content="Clear" Padding="8,2" Margin="4,0" FontSize="11" />
+                <ToggleButton Grid.Column="3" x:Name="RegexToggle" Content=".*" ToolTip.Tip="Use Regular Expressions"
                               Padding="8,2" FontSize="11" />
             </Grid>
 

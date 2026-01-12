@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using TS4Tools.UI.ViewModels;
 
@@ -23,6 +24,7 @@ public partial class AdvancedFilterPanel : UserControl
 
         // Wire up events
         ClearButton.Click += ClearButton_Click;
+        PasteButton.Click += PasteButton_Click;
 
         TypeCheckBox.IsCheckedChanged += OnFilterChanged;
         GroupCheckBox.IsCheckedChanged += OnFilterChanged;
@@ -50,6 +52,91 @@ public partial class AdvancedFilterPanel : UserControl
         QuickFilterTextBox.Text = "";
 
         RaiseFilterChanged();
+    }
+
+    /// <summary>
+    /// Handles paste button click to parse ResourceKey from clipboard.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2593-2601
+    /// Source: legacy_references/Sims4Tools/s4pi/Interfaces/AResourceKey.cs lines 182-212
+    /// Supports two formats:
+    /// - 0x{X8}-0x{X8}-0x{X16} (e.g., "0x220557DA-0x00000000-0x1234567890ABCDEF")
+    /// - {X8}:{X8}:{X16} or key:{X8}:{X8}:{X16}
+    /// </remarks>
+    private async void PasteButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+
+        var text = await clipboard.GetTextAsync();
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        if (TryParseResourceKey(text, out var type, out var group, out var instance))
+        {
+            // Populate filter fields and enable checkboxes
+            TypeTextBox.Text = type.ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+            TypeCheckBox.IsChecked = true;
+
+            GroupTextBox.Text = group.ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+            GroupCheckBox.IsChecked = true;
+
+            InstanceTextBox.Text = instance.ToString("X16", System.Globalization.CultureInfo.InvariantCulture);
+            InstanceCheckBox.IsChecked = true;
+
+            RaiseFilterChanged();
+        }
+    }
+
+    /// <summary>
+    /// Parses a ResourceKey string in TGI format.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi/Interfaces/AResourceKey.cs lines 182-212
+    /// </remarks>
+    private static bool TryParseResourceKey(string value, out uint type, out uint group, out ulong instance)
+    {
+        type = 0;
+        group = 0;
+        instance = 0;
+
+        if (string.IsNullOrWhiteSpace(value)) return false;
+
+        value = value.Trim();
+
+        // Format 1: 0x{X8}-0x{X8}-0x{X16}
+        if (value.Contains('-'))
+        {
+            var tgi = value.ToLowerInvariant().Split('-');
+            if (tgi.Length != 3) return false;
+
+            foreach (var x in tgi)
+                if (!x.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) return false;
+
+            if (!uint.TryParse(tgi[0][2..], System.Globalization.NumberStyles.HexNumber, null, out type)) return false;
+            if (!uint.TryParse(tgi[1][2..], System.Globalization.NumberStyles.HexNumber, null, out group)) return false;
+            if (!ulong.TryParse(tgi[2][2..], System.Globalization.NumberStyles.HexNumber, null, out instance)) return false;
+
+            return true;
+        }
+
+        // Format 2: {X8}:{X8}:{X16} or key:{X8}:{X8}:{X16}
+        var parts = value.ToLowerInvariant().Split(':');
+        if (parts.Length == 4 && parts[0] == "key")
+        {
+            // Shift array to remove "key:" prefix
+            parts = [parts[1], parts[2], parts[3]];
+        }
+        else if (parts.Length != 3)
+        {
+            return false;
+        }
+
+        if (!uint.TryParse(parts[0], System.Globalization.NumberStyles.HexNumber, null, out type)) return false;
+        if (!uint.TryParse(parts[1], System.Globalization.NumberStyles.HexNumber, null, out group)) return false;
+        if (!ulong.TryParse(parts[2], System.Globalization.NumberStyles.HexNumber, null, out instance)) return false;
+
+        return true;
     }
 
     private void OnFilterChanged(object? sender, RoutedEventArgs e)
@@ -87,6 +174,37 @@ public partial class AdvancedFilterPanel : UserControl
     public void SetQuickFilter(string filter)
     {
         QuickFilterTextBox.Text = filter;
+    }
+
+    /// <summary>
+    /// Triggers paste from clipboard programmatically.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2593-2601
+    /// Called by Ctrl+Shift+V keyboard shortcut.
+    /// </remarks>
+    public async Task PasteResourceKeyAsync()
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null) return;
+
+        var text = await clipboard.GetTextAsync();
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        if (TryParseResourceKey(text, out var type, out var group, out var instance))
+        {
+            // Populate filter fields and enable checkboxes
+            TypeTextBox.Text = type.ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+            TypeCheckBox.IsChecked = true;
+
+            GroupTextBox.Text = group.ToString("X8", System.Globalization.CultureInfo.InvariantCulture);
+            GroupCheckBox.IsChecked = true;
+
+            InstanceTextBox.Text = instance.ToString("X16", System.Globalization.CultureInfo.InvariantCulture);
+            InstanceCheckBox.IsChecked = true;
+
+            RaiseFilterChanged();
+        }
     }
 
     /// <summary>

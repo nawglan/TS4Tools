@@ -50,6 +50,15 @@ public partial class MainWindow : Window, IAsyncDisposable
         {
             if (_viewModel == null) return;
 
+            // Ctrl+Shift+V: Paste ResourceKey to filter
+            // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2593-2601
+            if (e.Key == Key.V && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
+            {
+                await FilterPanel.PasteResourceKeyAsync();
+                e.Handled = true;
+                return;
+            }
+
             // Check for digit key (D1-D9)
             if (e.Key >= Key.D1 && e.Key <= Key.D9)
             {
