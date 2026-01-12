@@ -73,6 +73,7 @@ You are implementing remaining features to achieve 100% parity with legacy s4pe.
    - Support DBC (Database Cache) format import
    - Show experimental warning dialog
    - Parse DBC structure into resources
+   - Add "Prompt for DBC autosaving" setting toggle
 
 8. External editor file tracking
    - Source: s4pe/MainForm.cs helper code
@@ -98,32 +99,44 @@ You are implementing remaining features to achieve 100% parity with legacy s4pe.
     - Ctrl+Shift+T → Open in text editor
     - F1 → Help
 
+12. Paste ResourceKey to Filter
+    - Source: s4pe/MainForm.cs filter context menu
+    - Add context menu item to filter panel
+    - Parse clipboard TGI and populate filter fields
+
 ### Phase 9 - Property Grid Enhancements (Low Priority)
-12. TGIBlockSelection control
+13. TGIBlockSelection control
     - Source: s4pe/s4pePropertyGrid/TGIBlockSelection.cs
     - Dropdown selector for TGI blocks in DependentLists
     - Integrate with property grid editor
 
-13. ReaderEditorPanel control
+14. ReaderEditorPanel control
     - Source: s4pe/s4pePropertyGrid/ReaderEditorPanel.cs
     - Import/Export buttons for BinaryReader/TextReader fields
     - Allow importing binary data into property grid fields
 
 ### Phase 10 - Polish (Low Priority)
-14. Set Max Recent/Bookmarks UI
+15. Set Max Recent/Bookmarks UI
     - Source: s4pe/MainForm.cs fileRecentSetMax_Click, fileBookmarkSetMax_Click
     - Add "Set Max..." option to Recent and Bookmarks submenus
     - Use simple number input dialog
 
-15. PackageInfo panel improvements
+16. PackageInfo panel improvements
     - Source: s4pe/PackageInfo/PackageInfoWidget.cs
     - Add package header info tab to PackageStatsWindow
     - Show: Version, flags, index info, timestamps
 
-16. Save Copy As command
+17. Save Copy As command
     - Source: s4pe/MainForm.cs fileSaveCopyAs_Click
     - File → Save Copy As
     - Save copy without changing current file path
+
+18. Check for Updates
+    - Source: s4pe/Settings/UpdateChecker.cs, s4pe/MainForm.cs helpUpdate_Click
+    - Add Help → Check for Updates menu item
+    - Add Settings → Automatic Update Checks toggle
+    - Check GitHub releases for newer versions
+    - Show update available notification
 
 ## Each Iteration
 
@@ -159,16 +172,18 @@ After each iteration, check if ALL Phase 6-10 features are implemented:
 - Open ReadOnly mode
 - Import from Package dialog
 - Export to Package dialog
-- Import as DBC format
+- Import as DBC format (with autosave setting)
 - External editor file tracking
 - Quick recent files shortcuts
 - Quick bookmark shortcuts
 - Additional keyboard shortcuts
+- Paste ResourceKey to Filter
 - TGIBlockSelection control
 - ReaderEditorPanel control
 - Set Max Recent/Bookmarks UI
 - PackageInfo panel improvements
 - Save Copy As command
+- Check for Updates (with auto-check setting)
 
 If ALL are implemented and 'dotnet build' passes, output: <promise>FULL_PARITY_COMPLETE</promise>
 
