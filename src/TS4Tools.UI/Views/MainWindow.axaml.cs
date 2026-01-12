@@ -59,6 +59,18 @@ public partial class MainWindow : Window, IAsyncDisposable
                 return;
             }
 
+            // Insert key: Import resource (alternative to Ctrl+Shift+M)
+            // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs keyboard shortcuts
+            if (e.Key == Key.Insert && e.KeyModifiers == KeyModifiers.None)
+            {
+                if (_viewModel.ImportResourceCommand.CanExecute(null))
+                {
+                    await _viewModel.ImportResourceCommand.ExecuteAsync(null);
+                    e.Handled = true;
+                    return;
+                }
+            }
+
             // Check for digit key (D1-D9)
             if (e.Key >= Key.D1 && e.Key <= Key.D9)
             {
