@@ -2,50 +2,96 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="550" d:DesignHeight="500"
         x:Class="TS4Tools.UI.Views.Dialogs.PackageStatsWindow"
         Title="Package Statistics"
-        Width="500" Height="450"
+        Width="550" Height="500"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs -->
 
-    <Grid Margin="16" RowDefinitions="Auto,Auto,*,Auto">
+    <Grid Margin="16" RowDefinitions="Auto,*,Auto">
         <!-- Package Info -->
         <Border Grid.Row="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="1" CornerRadius="4" Padding="12">
-            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="File:" FontWeight="SemiBold" Margin="0,0,16,4" />
                 <SelectableTextBlock Grid.Row="0" Grid.Column="1" x:Name="FilePathText" Margin="0,0,0,4" />
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,16,4" />
-                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="VersionText" Margin="0,0,0,4" />
-
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Total Resources:" FontWeight="SemiBold" Margin="0,0,16,0" />
-                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TotalResourcesText" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Total Resources:" FontWeight="SemiBold" Margin="0,0,16,0" />
+                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TotalResourcesText" />
             </Grid>
         </Border>
 
-        <!-- Section Header -->
-        <TextBlock Grid.Row="1" Text="Resources by Type" FontWeight="SemiBold" Margin="0,16,0,8" />
+        <!-- Tabbed Content -->
+        <TabControl Grid.Row="1" Margin="0,12,0,0">
+            <!-- Statistics Tab -->
+            <TabItem Header="Statistics">
+                <Grid RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0" Text="Resources by Type" FontWeight="SemiBold" Margin="0,8,0,8" />
 
-        <!-- Type Breakdown -->
-        <Border Grid.Row="2" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="1" CornerRadius="4">
-            <DataGrid x:Name="TypeBreakdownGrid"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      GridLinesVisibility="Horizontal"
-                      BorderThickness="0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Type" Binding="{ReflectionBinding TypeName}" Width="*" />
-                    <DataGridTextColumn Header="Type ID" Binding="{ReflectionBinding TypeHex}" Width="120" />
-                    <DataGridTextColumn Header="Count" Binding="{ReflectionBinding Count}" Width="80" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+                    <Border Grid.Row="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1" CornerRadius="4">
+                        <DataGrid x:Name="TypeBreakdownGrid"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  GridLinesVisibility="Horizontal"
+                                  BorderThickness="0">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Type" Binding="{ReflectionBinding TypeName}" Width="*" />
+                                <DataGridTextColumn Header="Type ID" Binding="{ReflectionBinding TypeHex}" Width="120" />
+                                <DataGridTextColumn Header="Count" Binding="{ReflectionBinding Count}" Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Package Header Tab -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs -->
+            <TabItem Header="Package Header">
+                <ScrollViewer>
+                    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,8,0,0">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                            <!-- Version Info -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Major Version:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="MajorVersionText" Margin="0,0,0,8" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Minor Version:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="MinorVersionText" Margin="0,0,0,8" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="User Version:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="UserVersionText" Margin="0,0,0,8" />
+
+                            <!-- Timestamps -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Creation Time:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="CreationTimeText" Margin="0,0,0,8" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Updated Time:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="UpdatedTimeText" Margin="0,0,0,8" />
+
+                            <!-- Index Info -->
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Index Count:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="5" Grid.Column="1" x:Name="IndexCountText" Margin="0,0,0,8" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Index Position:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" x:Name="IndexPositionText" Margin="0,0,0,8" />
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Index Size:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                            <TextBlock Grid.Row="7" Grid.Column="1" x:Name="IndexSizeText" Margin="0,0,0,8" />
+
+                            <!-- File info -->
+                            <TextBlock Grid.Row="8" Grid.Column="0" Text="Read Only:" FontWeight="SemiBold" Margin="0,0,16,0" />
+                            <TextBlock Grid.Row="8" Grid.Column="1" x:Name="ReadOnlyText" />
+                        </Grid>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
         <!-- Close Button -->
-        <Button Grid.Row="3" Content="Close" Click="CloseButton_Click"
+        <Button Grid.Row="2" Content="Close" Click="CloseButton_Click"
                 HorizontalAlignment="Right" Margin="0,16,0,0" Padding="24,8" />
     </Grid>
 </Window>

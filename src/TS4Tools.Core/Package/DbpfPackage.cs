@@ -36,8 +36,48 @@ public sealed class DbpfPackage : IMutablePackage
     public bool IsDirty { get; private set; }
     public bool IsReadOnly { get; }
 
+    /// <summary>Package major version (usually 2).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 268</remarks>
     public int MajorVersion => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(4));
+
+    /// <summary>Package minor version (usually 1).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 273</remarks>
     public int MinorVersion => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(8));
+
+    /// <summary>User version major (typically 0).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 278</remarks>
+    public int UserVersionMajor => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x0C));
+
+    /// <summary>User version minor (typically 0).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 283</remarks>
+    public int UserVersionMinor => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x10));
+
+    /// <summary>Creation timestamp (typically not set).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 293</remarks>
+    public int CreationTime => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x18));
+
+    /// <summary>Last update timestamp (typically not set).</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 298</remarks>
+    public int UpdatedTime => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x1C));
+
+    /// <summary>Number of entries in the package index.</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 308</remarks>
+    public int HeaderIndexCount => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(36));
+
+    /// <summary>Index size on disk in bytes.</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 318</remarks>
+    public int HeaderIndexSize => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(44));
+
+    /// <summary>Index position in file.</summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 333</remarks>
+    public int HeaderIndexPosition
+    {
+        get
+        {
+            int pos = BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(64));
+            return pos != 0 ? pos : BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(40));
+        }
+    }
 
     private int IndexCount => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(36));
     private int IndexSize => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(44));

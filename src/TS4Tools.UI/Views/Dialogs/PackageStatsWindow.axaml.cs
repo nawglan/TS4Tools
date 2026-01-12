@@ -4,6 +4,12 @@ using TS4Tools.Package;
 
 namespace TS4Tools.UI.Views.Dialogs;
 
+/// <summary>
+/// Window displaying package statistics and header information.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs
+/// </remarks>
 public partial class PackageStatsWindow : Window
 {
     private static readonly Dictionary<uint, string> KnownTypes = new()
@@ -29,10 +35,11 @@ public partial class PackageStatsWindow : Window
         InitializeComponent();
         if (package == null) return;
 
+        // Basic info
         FilePathText.Text = package.FilePath ?? "(No file path)";
-        VersionText.Text = $"{package.MajorVersion}.{package.MinorVersion}";
         TotalResourcesText.Text = package.ResourceCount.ToString("N0", CultureInfo.InvariantCulture);
 
+        // Type breakdown
         var typeBreakdown = package.Resources
             .Where(r => !r.IsDeleted)
             .GroupBy(r => r.Key.ResourceType)
@@ -46,6 +53,42 @@ public partial class PackageStatsWindow : Window
             .ToList();
 
         TypeBreakdownGrid.ItemsSource = typeBreakdown;
+
+        // Package Header info
+        // Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs lines 85-86
+        MajorVersionText.Text = package.MajorVersion.ToString(CultureInfo.InvariantCulture);
+        MinorVersionText.Text = package.MinorVersion.ToString(CultureInfo.InvariantCulture);
+        UserVersionText.Text = $"{package.UserVersionMajor}.{package.UserVersionMinor}";
+
+        // Timestamps - interpret as Unix timestamp if non-zero
+        CreationTimeText.Text = FormatTimestamp(package.CreationTime);
+        UpdatedTimeText.Text = FormatTimestamp(package.UpdatedTime);
+
+        // Index info
+        IndexCountText.Text = package.HeaderIndexCount.ToString("N0", CultureInfo.InvariantCulture);
+        IndexPositionText.Text = $"0x{package.HeaderIndexPosition:X8} ({package.HeaderIndexPosition:N0})";
+        IndexSizeText.Text = $"{package.HeaderIndexSize:N0} bytes";
+
+        // Read-only status
+        ReadOnlyText.Text = package.IsReadOnly ? "Yes" : "No";
+    }
+
+    /// <summary>
+    /// Formats a Unix timestamp, showing "Not set" for 0.
+    /// </summary>
+    private static string FormatTimestamp(int timestamp)
+    {
+        if (timestamp == 0) return "Not set";
+
+        try
+        {
+            var dateTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).LocalDateTime;
+            return dateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            return $"0x{timestamp:X8}";
+        }
     }
 
     private void CloseButton_Click(object? sender, RoutedEventArgs e)

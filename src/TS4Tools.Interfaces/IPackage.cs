@@ -31,6 +31,48 @@ public interface IPackage : IAsyncDisposable, IDisposable
     int MinorVersion { get; }
 
     /// <summary>
+    /// Gets the user version major (typically 0).
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 278</remarks>
+    int UserVersionMajor { get; }
+
+    /// <summary>
+    /// Gets the user version minor (typically 0).
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 283</remarks>
+    int UserVersionMinor { get; }
+
+    /// <summary>
+    /// Gets the creation timestamp (typically not set).
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 293</remarks>
+    int CreationTime { get; }
+
+    /// <summary>
+    /// Gets the last update timestamp (typically not set).
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 298</remarks>
+    int UpdatedTime { get; }
+
+    /// <summary>
+    /// Gets the header index count.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 308</remarks>
+    int HeaderIndexCount { get; }
+
+    /// <summary>
+    /// Gets the header index size in bytes.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 318</remarks>
+    int HeaderIndexSize { get; }
+
+    /// <summary>
+    /// Gets the header index position in the file.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 333</remarks>
+    int HeaderIndexPosition { get; }
+
+    /// <summary>
     /// Gets the number of resources in the package.
     /// </summary>
     int ResourceCount { get; }
