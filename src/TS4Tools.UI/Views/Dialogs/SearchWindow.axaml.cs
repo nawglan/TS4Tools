@@ -83,6 +83,7 @@ public partial class SearchWindow : Window, IDisposable
             var searchMode = SearchModeCombo.SelectedIndex;
             var useRegex = UseRegexCheckBox.IsChecked == true;
             var filterByType = FilterByTypeCheckBox.IsChecked == true;
+            var isBigEndian = EndiannessCombo.SelectedIndex == 1;
             uint? typeFilter = null;
 
             if (filterByType && !string.IsNullOrEmpty(TypeFilterTextBox.Text))
@@ -127,11 +128,14 @@ public partial class SearchWindow : Window, IDisposable
                         continue;
                     }
 
+                    // Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 102-146
                     bool isMatch = searchMode switch
                     {
                         0 => MatchResourceKey(resource, searchText, regex),
                         1 => MatchResourceName(resource, searchText, regex),
-                        2 => await MatchContentAsync(resource, searchText, token),
+                        2 => await MatchHexBytesAsync(resource, searchText, isBigEndian, token), // Hex bytes
+                        3 => await MatchAsciiStringAsync(resource, searchText, token), // ASCII string
+                        4 => await MatchUnicodeStringAsync(resource, searchText, isBigEndian, token), // Unicode string
                         _ => false
                     };
 
@@ -201,13 +205,53 @@ public partial class SearchWindow : Window, IDisposable
         return resource.InstanceName.Contains(searchText, StringComparison.OrdinalIgnoreCase);
     }
 
-    // Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 279-291 (search method)
-    private async Task<bool> MatchContentAsync(ResourceItemViewModel resource, string hexPattern, CancellationToken token)
+    /// <summary>
+    /// Searches for hex byte pattern in resource content.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 119-127, 279-291
+    /// </remarks>
+    private async Task<bool> MatchHexBytesAsync(ResourceItemViewModel resource, string hexPattern, bool bigEndian, CancellationToken token)
     {
-        // Parse hex pattern
-        var pattern = ParseHexPattern(hexPattern);
+        var pattern = ParseHexBytes(hexPattern, bigEndian);
         if (pattern == null || pattern.Length == 0) return false;
 
+        return await SearchBytesAsync(resource, pattern, token);
+    }
+
+    /// <summary>
+    /// Searches for ASCII string in resource content.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 113-118
+    /// </remarks>
+    private async Task<bool> MatchAsciiStringAsync(ResourceItemViewModel resource, string searchText, CancellationToken token)
+    {
+        var pattern = Encoding.ASCII.GetBytes(searchText);
+        return await SearchBytesAsync(resource, pattern, token);
+    }
+
+    /// <summary>
+    /// Searches for Unicode string in resource content.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 103-112
+    /// </remarks>
+    private async Task<bool> MatchUnicodeStringAsync(ResourceItemViewModel resource, string searchText, bool bigEndian, CancellationToken token)
+    {
+        var encoding = bigEndian ? Encoding.BigEndianUnicode : Encoding.Unicode;
+        var pattern = encoding.GetBytes(searchText);
+        return await SearchBytesAsync(resource, pattern, token);
+    }
+
+    /// <summary>
+    /// Searches for byte pattern in resource content.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 279-291 (search method)
+    /// </remarks>
+    private async Task<bool> SearchBytesAsync(ResourceItemViewModel resource, byte[] pattern, CancellationToken token)
+    {
         var entry = _package.Find(resource.Key);
         if (entry == null) return false;
 
@@ -216,7 +260,7 @@ public partial class SearchWindow : Window, IDisposable
             var data = await _package.GetResourceDataAsync(entry, token);
             var bytes = data.Span;
 
-            // Boyer-Moore-like simple search
+            // Simple byte pattern search
             for (int i = 0; i <= bytes.Length - pattern.Length; i++)
             {
                 token.ThrowIfCancellationRequested();
@@ -240,30 +284,41 @@ public partial class SearchWindow : Window, IDisposable
         return false;
     }
 
-    // Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 102-146
-    private static byte[]? ParseHexPattern(string input)
+    /// <summary>
+    /// Parses hex byte input with endianness support.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 119-146
+    /// Supports formats:
+    /// - Space-separated hex: "A0 B1 C2"
+    /// - Hex string: "A0B1C2" or "0xA0B1C2"
+    /// </remarks>
+    private static byte[]? ParseHexBytes(string input, bool bigEndian)
     {
         input = input.Trim();
-
-        // Handle quoted string
-        if (input.StartsWith('"') && input.EndsWith('"'))
-        {
-            var str = input.Trim('"');
-            var bytes = new byte[str.Length];
-            for (int i = 0; i < str.Length; i++)
-                bytes[i] = (byte)str[i];
-            return bytes;
-        }
 
         // Handle space-separated hex bytes
         if (input.Contains(' '))
         {
             var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var bytes = new byte[parts.Length];
-            for (int i = 0; i < parts.Length; i++)
+
+            if (bigEndian)
             {
-                if (!byte.TryParse(parts[i], System.Globalization.NumberStyles.HexNumber, null, out bytes[i]))
-                    return null;
+                // Big endian: reverse the order
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (!byte.TryParse(parts[parts.Length - 1 - i], System.Globalization.NumberStyles.HexNumber, null, out bytes[i]))
+                        return null;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (!byte.TryParse(parts[i], System.Globalization.NumberStyles.HexNumber, null, out bytes[i]))
+                        return null;
+                }
             }
             return bytes;
         }
@@ -279,8 +334,17 @@ public partial class SearchWindow : Window, IDisposable
         try
         {
             var bytes = new byte[hex.Length / 2];
-            for (int i = 0; i < bytes.Length; i++)
-                bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+            if (bigEndian)
+            {
+                // Big endian: reverse byte order
+                for (int i = 0; i < bytes.Length; i++)
+                    bytes[i] = Convert.ToByte(hex.Substring(hex.Length - 2 - (2 * i), 2), 16);
+            }
+            else
+            {
+                for (int i = 0; i < bytes.Length; i++)
+                    bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+            }
             return bytes;
         }
         catch

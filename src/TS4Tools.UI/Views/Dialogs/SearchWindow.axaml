@@ -14,12 +14,15 @@
         <!-- Search Controls -->
         <StackPanel DockPanel.Dock="Top" Spacing="12">
             <!-- Search Mode -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 102-146 -->
             <Grid ColumnDefinitions="120,*">
                 <TextBlock Text="Search in:" VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1" x:Name="SearchModeCombo" SelectedIndex="0" HorizontalAlignment="Stretch">
                     <ComboBoxItem Content="Resource Keys" />
                     <ComboBoxItem Content="Resource Names" />
-                    <ComboBoxItem Content="Resource Content (Hex)" />
+                    <ComboBoxItem Content="Hex Bytes (e.g., A0 B1 C2)" />
+                    <ComboBoxItem Content="ASCII String" />
+                    <ComboBoxItem Content="Unicode String" />
                 </ComboBox>
             </Grid>
 
@@ -34,6 +37,16 @@
                 <CheckBox x:Name="FilterByTypeCheckBox" Content="Filter by type:" VerticalAlignment="Center" />
                 <TextBox Grid.Column="1" x:Name="TypeFilterTextBox" Watermark="e.g., 220557DA" IsEnabled="{Binding #FilterByTypeCheckBox.IsChecked}" />
                 <TextBlock Grid.Column="2" Text="(hex)" Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.6" />
+            </Grid>
+
+            <!-- Endianness (for hex/unicode search) -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 107-111, 123-126 -->
+            <Grid ColumnDefinitions="120,*" x:Name="EndiannessRow">
+                <TextBlock Text="Byte order:" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" x:Name="EndiannessCombo" SelectedIndex="0" Width="200" HorizontalAlignment="Left">
+                    <ComboBoxItem Content="Little Endian (default)" />
+                    <ComboBoxItem Content="Big Endian" />
+                </ComboBox>
             </Grid>
 
             <!-- Regex Option -->
