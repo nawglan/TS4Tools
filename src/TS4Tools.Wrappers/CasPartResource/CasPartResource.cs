@@ -1,4 +1,5 @@
 using TS4Tools.Resources;
+using TS4Tools.Wrappers.Attributes;
 
 namespace TS4Tools.Wrappers.CasPartResource;
 
@@ -96,18 +97,22 @@ public sealed class CasPartResource : TypedResource
     public SwatchColorList SwatchColors { get; set; } = new();
 
     /// <summary>TGI index for buff resource.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte BuffResKey { get; set; }
 
     /// <summary>TGI index for variant thumbnail.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte VariantThumbnailKey { get; set; }
 
     /// <summary>Voice effect hash (v28+).</summary>
     public ulong VoiceEffectHash { get; set; }
 
     /// <summary>TGI index for naked layer.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte NakedKey { get; set; }
 
     /// <summary>TGI index for parent part.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte ParentKey { get; set; }
 
     /// <summary>Sort layer for rendering order.</summary>
@@ -120,24 +125,30 @@ public sealed class CasPartResource : TypedResource
     public List<byte> SlotKeys { get; set; } = [];
 
     /// <summary>TGI index for diffuse shadow.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte DiffuseShadowKey { get; set; }
 
     /// <summary>TGI index for shadow.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte ShadowKey { get; set; }
 
     /// <summary>Composition method.</summary>
     public byte CompositionMethod { get; set; }
 
     /// <summary>TGI index for region map.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte RegionMapKey { get; set; }
 
     /// <summary>TGI index for overrides.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte Overrides { get; set; }
 
     /// <summary>TGI index for normal map.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte NormalMapKey { get; set; }
 
     /// <summary>TGI index for specular map.</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
     public byte SpecularMapKey { get; set; }
 
     /// <summary>Shared UV map space (v27+).</summary>

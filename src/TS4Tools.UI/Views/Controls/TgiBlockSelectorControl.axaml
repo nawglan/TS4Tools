@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="30"
+             x:Class="TS4Tools.UI.Views.Controls.TgiBlockSelectorControl">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/TGIBlockSelection.cs -->
+
+    <ComboBox x:Name="TgiComboBox"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Center"
+              BorderThickness="0"
+              Background="Transparent"
+              Padding="4,2"
+              SelectedIndex="{ReflectionBinding TgiBlockIndex, Mode=TwoWay}">
+        <ComboBox.ItemTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding}" />
+            </DataTemplate>
+        </ComboBox.ItemTemplate>
+    </ComboBox>
+</UserControl>

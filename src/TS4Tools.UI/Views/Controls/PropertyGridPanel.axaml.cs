@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using TS4Tools.Wrappers.Attributes;
 
 namespace TS4Tools.UI.Views.Controls;
 
@@ -126,11 +127,25 @@ public class PropertyItem : INotifyPropertyChanged
 {
     private readonly object _target;
     private readonly PropertyInfo _property;
+    private readonly TgiBlockIndexAttribute? _tgiBlockIndexAttr;
+    private System.Collections.IList? _tgiBlockList;
 
     public PropertyItem(object target, PropertyInfo property)
     {
         _target = target;
         _property = property;
+
+        // Check for TGI block index attribute
+        _tgiBlockIndexAttr = property.GetCustomAttribute<TgiBlockIndexAttribute>();
+        if (_tgiBlockIndexAttr != null)
+        {
+            // Find the TGI block list property
+            var listProp = target.GetType().GetProperty(_tgiBlockIndexAttr.ListPropertyName);
+            if (listProp != null)
+            {
+                _tgiBlockList = listProp.GetValue(target) as System.Collections.IList;
+            }
+        }
     }
 
     /// <summary>
@@ -156,6 +171,100 @@ public class PropertyItem : INotifyPropertyChanged
     /// Gets whether the property is read-only.
     /// </summary>
     public bool IsReadOnly => !_property.CanWrite;
+
+    /// <summary>
+    /// Gets whether this property has a TGI block selector.
+    /// </summary>
+    public bool HasTgiBlockSelector => _tgiBlockIndexAttr != null && _tgiBlockList != null;
+
+    /// <summary>
+    /// Gets the TGI block list for selector UI.
+    /// </summary>
+    public System.Collections.IList? TgiBlockList => _tgiBlockList;
+
+    /// <summary>
+    /// Gets the selected TGI block index.
+    /// </summary>
+    public int TgiBlockIndex
+    {
+        get
+        {
+            if (!HasTgiBlockSelector) return -1;
+            var value = _property.GetValue(_target);
+            return value != null ? Convert.ToInt32(value, CultureInfo.InvariantCulture) : -1;
+        }
+        set
+        {
+            if (!_property.CanWrite) return;
+            try
+            {
+                object? convertedValue = Convert.ChangeType(value, _property.PropertyType, CultureInfo.InvariantCulture);
+                _property.SetValue(_target, convertedValue);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TgiBlockIndex)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
+            }
+            catch
+            {
+                // Ignore conversion errors
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether this property contains binary data.
+    /// </summary>
+    public bool IsBinaryData =>
+        _property.PropertyType == typeof(byte[]) ||
+        _property.PropertyType == typeof(ReadOnlyMemory<byte>) ||
+        _property.PropertyType == typeof(Memory<byte>);
+
+    /// <summary>
+    /// Gets the binary data for this property (if applicable).
+    /// </summary>
+    public byte[]? BinaryData
+    {
+        get
+        {
+            if (!IsBinaryData) return null;
+            var value = _property.GetValue(_target);
+            return value switch
+            {
+                byte[] arr => arr,
+                ReadOnlyMemory<byte> rom => rom.ToArray(),
+                Memory<byte> mem => mem.ToArray(),
+                _ => null
+            };
+        }
+        set
+        {
+            if (!_property.CanWrite || value == null) return;
+            try
+            {
+                object? convertedValue = _property.PropertyType == typeof(byte[])
+                    ? value
+                    : _property.PropertyType == typeof(ReadOnlyMemory<byte>)
+                        ? new ReadOnlyMemory<byte>(value)
+                        : new Memory<byte>(value);
+                _property.SetValue(_target, convertedValue);
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BinaryData)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Value)));
+            }
+            catch
+            {
+                // Ignore errors
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the target object for this property item.
+    /// </summary>
+    public object Target => _target;
+
+    /// <summary>
+    /// Gets the property info.
+    /// </summary>
+    public PropertyInfo PropertyInfo => _property;
 
     /// <summary>
     /// Gets the category for the property.
