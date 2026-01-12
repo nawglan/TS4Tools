@@ -11,6 +11,7 @@ using TS4Tools.UI.Views.Controls;
 using TS4Tools.UI.Views.Dialogs;
 using TS4Tools.UI.Views.Editors;
 using TS4Tools.Wrappers;
+using TS4Tools.Wrappers.CasPartResource;
 using TS4Tools.Wrappers.CatalogResource;
 
 namespace TS4Tools.UI.ViewModels;
@@ -427,6 +428,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                     RcolConstants.Ftpt           // 0xD382BF57 - FTPT
                         => CreateRcolViewerWithWrapper(key, data),
                     0x319E4F1D => CreateCatalogViewerWithWrapper(key, data), // COBJ (Catalog Object)
+                    0xDB43E069 => CreateDeformerMapViewerWithWrapper(key, data), // Deformer Map
                     _ => (CreateHexViewer(data), null) // Default hex viewer, no wrapper
                 };
             }
@@ -596,6 +598,21 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var vm = new CatalogViewerViewModel();
         vm.LoadResource(resource);
         return (new CatalogViewerView { DataContext = vm }, resource);
+    }
+
+    /// <summary>
+    /// Creates a deformer map viewer for DMAP resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 343-425 (DeformerMapControl)
+    /// Type ID: 0xDB43E069
+    /// </remarks>
+    private static (Control View, object? Wrapper) CreateDeformerMapViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new DeformerMapResource(key, data);
+        var vm = new DeformerMapViewerViewModel();
+        vm.LoadResource(resource);
+        return (new DeformerMapViewerView { DataContext = vm }, resource);
     }
 
     [RelayCommand]

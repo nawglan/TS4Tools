@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.DeformerMapViewerView"
+             x:DataType="vm:DeformerMapViewerViewModel">
+
+    <!-- Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 343-425 (DeformerMapControl) -->
+    <Design.DataContext>
+        <vm:DeformerMapViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="Deformer Map" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding Width, StringFormat='Width: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding Height, StringFormat='Height: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding ScanLineCount, StringFormat='Scanlines: {0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                </StackPanel>
+
+                <!-- View toggle -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                    <Separator Width="1" Margin="8,0" />
+                    <RadioButton Content="Skin" IsChecked="{Binding ShowSkin}"
+                                 GroupName="ViewMode" ToolTip.Tip="Show Skin Tight Data" />
+                    <RadioButton Content="Robe" IsChecked="{Binding ShowRobe}"
+                                 GroupName="ViewMode" ToolTip.Tip="Show Robe Channel Data" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Metadata Panel -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeLowBrush}">
+            <WrapPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Version, StringFormat='Version: {0}'}" Margin="0,0,16,0" Opacity="0.8" />
+                <TextBlock Text="{Binding AgeGender, StringFormat='AgeGender: {0}'}" Margin="0,0,16,0" Opacity="0.8" />
+                <TextBlock Text="{Binding Physique, StringFormat='Physique: {0}'}" Margin="0,0,16,0" Opacity="0.8" />
+                <TextBlock Text="{Binding ShapeOrNormals, StringFormat='Type: {0}'}" Margin="0,0,16,0" Opacity="0.8" />
+                <TextBlock Text="{Binding RobeChannel, StringFormat='RobeChannel: {0}'}" Opacity="0.8" />
+            </WrapPanel>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock Text="{Binding StatusMessage}" Opacity="0.7" />
+        </Border>
+
+        <!-- Image Preview or Placeholder -->
+        <Grid Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <!-- Preview image -->
+            <Border IsVisible="{Binding IsPreviewAvailable}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding CurrentImage}"
+                           Stretch="None"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="16" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- Placeholder for unavailable preview -->
+            <StackPanel IsVisible="{Binding !IsPreviewAvailable}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16">
+                <TextBlock Text="Preview Not Available"
+                           FontSize="18"
+                           Opacity="0.5"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="12"
+                           Opacity="0.5"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>
