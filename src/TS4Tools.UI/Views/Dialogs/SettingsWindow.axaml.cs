@@ -18,6 +18,7 @@ public partial class SettingsWindow : Window
     private readonly AppSettings _settings;
     private readonly List<string> _bookmarks = [];
     private readonly List<HelperSettingItem> _helperItems = [];
+    private readonly List<WrapperSettingItem> _wrapperItems = [];
 
     public SettingsWindow()
     {
@@ -26,6 +27,7 @@ public partial class SettingsWindow : Window
 
         LoadSettings();
         LoadHelpers();
+        LoadWrappers();
 
         OkButton.Click += OkButton_Click;
         CancelButton.Click += CancelButton_Click;
@@ -100,6 +102,9 @@ public partial class SettingsWindow : Window
 
         // Helpers
         SaveHelperSettings();
+
+        // Wrappers
+        SaveWrapperSettings();
 
         SettingsService.Instance.Save();
     }
@@ -279,6 +284,62 @@ public partial class SettingsWindow : Window
             }
         }
     }
+
+    /// <summary>
+    /// Loads wrapper definitions and creates UI items.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs lines 45-75
+    /// </remarks>
+    private void LoadWrappers()
+    {
+        _wrapperItems.Clear();
+
+        // Get all wrapper factories from the Wrappers assembly
+        var wrappersAssembly = typeof(TS4Tools.Wrappers.StblResource).Assembly;
+        var factoryTypes = wrappersAssembly.GetTypes()
+            .Where(t => t.Name.EndsWith("Factory", StringComparison.Ordinal) && !t.IsAbstract && t.IsPublic)
+            .OrderBy(t => t.Name)
+            .ToList();
+
+        foreach (var factoryType in factoryTypes)
+        {
+            // Get the associated resource type count (from ResourceTypes property if available)
+            var resourceTypesField = factoryType.GetField("ResourceTypes",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            var typeCount = 1;
+            if (resourceTypesField != null && resourceTypesField.GetValue(null) is uint[] types)
+            {
+                typeCount = types.Length;
+            }
+
+            var wrapperName = factoryType.Name.Replace("Factory", "");
+
+            var item = new WrapperSettingItem
+            {
+                WrapperName = wrapperName,
+                TypeCount = typeCount,
+                IsDisabled = _settings.DisabledWrappers.Contains(wrapperName)
+            };
+            _wrapperItems.Add(item);
+        }
+
+        WrappersItemsControl.ItemsSource = null;
+        WrappersItemsControl.ItemsSource = _wrapperItems;
+        WrapperCountTextBlock.Text = $"{_wrapperItems.Count} wrappers available";
+    }
+
+    private void SaveWrapperSettings()
+    {
+        _settings.DisabledWrappers.Clear();
+        foreach (var item in _wrapperItems)
+        {
+            if (item.IsDisabled)
+            {
+                _settings.DisabledWrappers.Add(item.WrapperName);
+            }
+        }
+    }
 }
 
 /// <summary>
@@ -293,6 +354,23 @@ public partial class HelperSettingItem : ObservableObject
     public required string Label { get; init; }
     public string Description { get; init; } = "";
     public string Command { get; init; } = "";
+
+    [ObservableProperty]
+    private bool _isDisabled;
+}
+
+/// <summary>
+/// View model item for wrapper settings.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs
+/// </remarks>
+public partial class WrapperSettingItem : ObservableObject
+{
+    public required string WrapperName { get; init; }
+    public required int TypeCount { get; init; }
+
+    public string DisplayName => WrapperName;
 
     [ObservableProperty]
     private bool _isDisabled;
