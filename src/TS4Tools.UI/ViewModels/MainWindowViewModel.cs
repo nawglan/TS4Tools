@@ -7,6 +7,7 @@ using TS4Tools;
 using TS4Tools.Package;
 using TS4Tools.UI.Services;
 using TS4Tools.UI.ViewModels.Editors;
+using TS4Tools.UI.Views.Controls;
 using TS4Tools.UI.Views.Dialogs;
 using TS4Tools.UI.Views.Editors;
 using TS4Tools.Wrappers;
@@ -58,6 +59,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasSelectedResource))]
     private ResourceItemViewModel? _selectedResource;
+
+    [ObservableProperty]
+    private bool _showAdvancedFilter;
+
+    // Current advanced filter criteria
+    private FilterChangedEventArgs? _advancedFilterArgs;
 
     public bool HasSelectedResource => SelectedResource != null;
 
@@ -207,13 +214,23 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         FilteredResources.Clear();
 
-        var filter = FilterText.Trim().ToLowerInvariant();
-        var filtered = string.IsNullOrEmpty(filter)
-            ? Resources.AsEnumerable()
-            : Resources.Where(r =>
-                r.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                (r.InstanceName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+        IEnumerable<ResourceItemViewModel> filtered;
+
+        // Use advanced filter if active, otherwise use simple filter
+        if (ShowAdvancedFilter && _advancedFilterArgs != null)
+        {
+            filtered = Resources.Where(r => _advancedFilterArgs.Matches(r));
+        }
+        else
+        {
+            var filter = FilterText.Trim().ToLowerInvariant();
+            filtered = string.IsNullOrEmpty(filter)
+                ? Resources.AsEnumerable()
+                : Resources.Where(r =>
+                    r.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    (r.InstanceName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
 
         // Apply sorting
         filtered = SortMode switch
@@ -228,6 +245,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             FilteredResources.Add(item);
         }
+    }
+
+    /// <summary>
+    /// Applies advanced filter criteria from the filter panel.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Filter/FilterField.cs
+    /// </remarks>
+    public void ApplyAdvancedFilter(FilterChangedEventArgs args)
+    {
+        _advancedFilterArgs = args;
+        ApplyFilter();
     }
 
     private async Task UpdateSelectedResourceDetailsAsync()
@@ -873,6 +902,18 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             _ => ResourceSortMode.TypeName
         };
         StatusMessage = $"Sorting by: {SortMode}";
+    }
+
+    /// <summary>
+    /// Toggles the advanced filter panel visibility.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Filter/FilterField.cs
+    /// </remarks>
+    [RelayCommand]
+    private void ToggleAdvancedFilter()
+    {
+        ShowAdvancedFilter = !ShowAdvancedFilter;
     }
 
     /// <summary>

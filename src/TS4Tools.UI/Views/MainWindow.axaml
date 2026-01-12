@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:TS4Tools.UI.ViewModels"
+        xmlns:ctrl="using:TS4Tools.UI.Views.Controls"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
@@ -88,15 +89,35 @@
             <!-- Resource List Panel -->
             <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
                 <DockPanel>
-                    <!-- Filter Box -->
-                    <Border DockPanel.Dock="Top" Padding="8">
-                        <Grid ColumnDefinitions="*,Auto">
+                    <!-- Advanced Filter Panel -->
+                    <ctrl:AdvancedFilterPanel x:Name="FilterPanel" DockPanel.Dock="Top" Margin="8"
+                                               IsVisible="{Binding ShowAdvancedFilter}" />
+
+                    <!-- Simple Filter Box (when advanced filter is hidden) -->
+                    <Border DockPanel.Dock="Top" Padding="8" IsVisible="{Binding !ShowAdvancedFilter}">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBox Watermark="Filter resources..." Text="{Binding FilterText}" />
-                            <Button Grid.Column="1" Content="{Binding SortMode}"
+                            <Button Grid.Column="1" Content="..." ToolTip.Tip="Show Advanced Filter"
+                                    Command="{Binding ToggleAdvancedFilterCommand}"
+                                    Margin="4,0,0,0" Padding="8,4" FontSize="11" />
+                            <Button Grid.Column="2" Content="{Binding SortMode}"
                                     Command="{Binding CycleSortModeCommand}"
                                     ToolTip.Tip="Toggle sort mode"
                                     Margin="4,0,0,0" Padding="8,4"
                                     FontSize="11" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Sort button when advanced filter is visible -->
+                    <Border DockPanel.Dock="Top" Padding="8,0,8,8" IsVisible="{Binding ShowAdvancedFilter}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Button Grid.Column="0" Content="Hide Advanced Filter"
+                                    Command="{Binding ToggleAdvancedFilterCommand}"
+                                    Padding="8,4" FontSize="11" HorizontalAlignment="Left" />
+                            <Button Grid.Column="1" Content="{Binding SortMode}"
+                                    Command="{Binding CycleSortModeCommand}"
+                                    ToolTip.Tip="Toggle sort mode"
+                                    Padding="8,4" FontSize="11" />
                         </Grid>
                     </Border>
 

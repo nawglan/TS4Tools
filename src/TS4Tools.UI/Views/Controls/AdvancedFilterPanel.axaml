@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="TS4Tools.UI.Views.Controls.AdvancedFilterPanel">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Filter/FilterField.cs -->
+
+    <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+            BorderThickness="1" CornerRadius="4" Padding="8">
+        <StackPanel Spacing="8">
+            <!-- Header with clear/apply -->
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Text="Advanced Filter" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <Button Grid.Column="1" x:Name="ClearButton" Content="Clear" Padding="8,2" Margin="4,0" FontSize="11" />
+                <ToggleButton Grid.Column="2" x:Name="RegexToggle" Content=".*" ToolTip.Tip="Use Regular Expressions"
+                              Padding="8,2" FontSize="11" />
+            </Grid>
+
+            <!-- Type Filter -->
+            <Grid ColumnDefinitions="Auto,*">
+                <CheckBox x:Name="TypeCheckBox" Content="Type:" VerticalAlignment="Center" Width="70" />
+                <TextBox Grid.Column="1" x:Name="TypeTextBox" Watermark="220557DA" IsEnabled="{Binding #TypeCheckBox.IsChecked}" />
+            </Grid>
+
+            <!-- Group Filter -->
+            <Grid ColumnDefinitions="Auto,*">
+                <CheckBox x:Name="GroupCheckBox" Content="Group:" VerticalAlignment="Center" Width="70" />
+                <TextBox Grid.Column="1" x:Name="GroupTextBox" Watermark="00000000" IsEnabled="{Binding #GroupCheckBox.IsChecked}" />
+            </Grid>
+
+            <!-- Instance Filter -->
+            <Grid ColumnDefinitions="Auto,*">
+                <CheckBox x:Name="InstanceCheckBox" Content="Instance:" VerticalAlignment="Center" Width="70" />
+                <TextBox Grid.Column="1" x:Name="InstanceTextBox" Watermark="pattern or hex" IsEnabled="{Binding #InstanceCheckBox.IsChecked}" />
+            </Grid>
+
+            <!-- Name Filter -->
+            <Grid ColumnDefinitions="Auto,*">
+                <CheckBox x:Name="NameCheckBox" Content="Name:" VerticalAlignment="Center" Width="70" />
+                <TextBox Grid.Column="1" x:Name="NameTextBox" Watermark="pattern" IsEnabled="{Binding #NameCheckBox.IsChecked}" />
+            </Grid>
+
+            <!-- Quick filter for basic search -->
+            <TextBox x:Name="QuickFilterTextBox" Watermark="Quick filter..." />
+        </StackPanel>
+    </Border>
+</UserControl>
