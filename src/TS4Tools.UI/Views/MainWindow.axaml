@@ -100,6 +100,8 @@
             </MenuItem>
             <MenuItem Header="_Settings">
                 <MenuItem Header="_Settings..." Command="{Binding SettingsCommand}" />
+                <Separator />
+                <MenuItem Header="_Custom Places..." Command="{Binding CustomPlacesCommand}" />
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" />

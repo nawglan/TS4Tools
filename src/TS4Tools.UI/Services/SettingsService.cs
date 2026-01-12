@@ -113,6 +113,11 @@ public sealed class AppSettings
     public List<string> Bookmarks { get; set; } = [];
     public int BookmarkSize { get; set; } = 4;
 
+    // Custom Places (folder shortcuts in file dialogs)
+    // Source: Settings.settings CustomPlaces/CustomPlacesCount
+    public List<string> CustomPlaces { get; set; } = [];
+    public int CustomPlacesCount { get; set; } = 5;
+
     // Window state
     // Source: Settings.settings lines 17-25
     public int WindowWidth { get; set; } = -1;

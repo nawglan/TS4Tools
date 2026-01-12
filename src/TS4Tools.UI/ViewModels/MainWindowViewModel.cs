@@ -1660,6 +1660,26 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Opens the Custom Places dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseCustomPlacesDialog.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task CustomPlacesAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var dialog = new OrganiseCustomPlacesWindow();
+        await dialog.ShowDialog((Window)topLevel);
+        StatusMessage = "Custom places updated";
+    }
+
+    /// <summary>
     /// Adds the current package to bookmarks.
     /// </summary>
     [RelayCommand]
