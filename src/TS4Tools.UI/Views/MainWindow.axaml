@@ -41,7 +41,11 @@
                 <MenuItem Header="_Undo" InputGesture="Ctrl+Z" IsEnabled="False" />
                 <MenuItem Header="_Redo" InputGesture="Ctrl+Y" IsEnabled="False" />
                 <Separator />
-                <MenuItem Header="_Copy Resource Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="_Copy" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="_Paste" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasClipboardResource}" />
+                <MenuItem Header="D_uplicate" Command="{Binding DuplicateResourceCommand}" InputGesture="Ctrl+D" IsEnabled="{Binding HasSelectedResource}" />
+                <Separator />
+                <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
                 <MenuItem Header="_Import Resource..." Command="{Binding ImportResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
@@ -95,12 +99,16 @@
                              Margin="0,0,0,0">
                         <ListBox.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="_Copy Resource Key" Command="{Binding CopyResourceKeyCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <MenuItem Header="_Copy" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
+                                <MenuItem Header="_Paste" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasClipboardResource}" />
+                                <MenuItem Header="D_uplicate" Command="{Binding DuplicateResourceCommand}" InputGesture="Ctrl+D" IsEnabled="{Binding HasSelectedResource}" />
+                                <Separator />
+                                <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
                                 <Separator />
                                 <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <Separator />
-                                <MenuItem Header="_Delete" Command="{Binding DeleteResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <MenuItem Header="_Delete" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
                             </ContextMenu>
                         </ListBox.ContextMenu>
                         <ListBox.ItemTemplate>

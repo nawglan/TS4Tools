@@ -77,6 +77,12 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     public int ResourceCount => _package?.ResourceCount ?? 0;
 
+    public bool HasClipboardResource => _clipboardData != null;
+
+    // Internal clipboard for resource copy/paste
+    // Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 42-43, 96-100
+    private ClipboardResourceData? _clipboardData;
+
     public ObservableCollection<ResourceItemViewModel> Resources { get; } = [];
 
     public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
@@ -673,6 +679,124 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Copies the selected resource to the internal clipboard.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1495-1529
+    /// </remarks>
+    [RelayCommand]
+    private async Task CopyResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            _clipboardData = new ClipboardResourceData
+            {
+                Key = key,
+                Data = data.ToArray(),
+                ResourceName = SelectedResource.InstanceName
+            };
+
+            // Also copy the key to system clipboard for cross-application use
+            var keyString = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+            var topLevel = GetTopLevel();
+            if (topLevel?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(keyString);
+            }
+
+            OnPropertyChanged(nameof(HasClipboardResource));
+            StatusMessage = $"Copied resource: {SelectedResource.TypeName}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Copy error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Pastes the resource from the internal clipboard into the current package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 513-560 (ResourcePaste)
+    /// </remarks>
+    [RelayCommand]
+    private void PasteResource()
+    {
+        if (_package == null || _clipboardData == null) return;
+
+        try
+        {
+            var key = _clipboardData.Key;
+            var entry = _package.AddResource(key, _clipboardData.Data, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var item = new ResourceItemViewModel(key, entry.FileSize, _clipboardData.ResourceName);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Pasted resource: {item.TypeName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Paste error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Duplicates the selected resource within the current package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1540-1558 (ResourceDuplicate)
+    /// </remarks>
+    [RelayCommand]
+    private async Task DuplicateResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+            if (newEntry != null)
+            {
+                var item = new ResourceItemViewModel(key, newEntry.FileSize, SelectedResource.InstanceName);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Duplicated resource: {item.TypeName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Duplicate error: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private void CycleSortMode()
     {
@@ -818,4 +942,17 @@ public sealed class RecentFileViewModel
     {
         Path = path;
     }
+}
+
+/// <summary>
+/// Internal clipboard data for resource copy/paste operations.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 96-100 (MyDataFormat struct)
+/// </remarks>
+public sealed class ClipboardResourceData
+{
+    public required ResourceKey Key { get; init; }
+    public required byte[] Data { get; init; }
+    public string? ResourceName { get; init; }
 }
