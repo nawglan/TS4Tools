@@ -38,6 +38,7 @@ public partial class SettingsWindow : Window
         RemoveBookmarkButton.Click += RemoveBookmarkButton_Click;
         BookmarksListBox.SelectionChanged += BookmarksListBox_SelectionChanged;
         ReloadHelpersButton.Click += ReloadHelpersButton_Click;
+        LicenseButton.Click += LicenseButton_Click;
 
         // Show settings path
         var settingsPath = Path.Combine(
@@ -199,6 +200,30 @@ public partial class SettingsWindow : Window
     private void BookmarksListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         RemoveBookmarkButton.IsEnabled = BookmarksListBox.SelectedItem != null;
+    }
+
+    /// <summary>
+    /// Opens the GPLv3 license in the default browser.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs HelpLicence() lines 2541-2561
+    /// </remarks>
+    private void LicenseButton_Click(object? sender, RoutedEventArgs e)
+    {
+        const string licenseUrl = "https://www.gnu.org/licenses/gpl-3.0.html";
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = licenseUrl,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
+        }
+        catch
+        {
+            // Ignore errors opening URL - user can navigate manually
+        }
     }
 
     /// <summary>

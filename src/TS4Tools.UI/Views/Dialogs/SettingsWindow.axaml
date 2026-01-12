@@ -150,19 +150,66 @@
             </TabItem>
 
             <!-- About -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs HelpAbout(), HelpWarranty(), HelpLicence() -->
             <TabItem Header="About">
-                <StackPanel Margin="16" Spacing="8">
-                    <TextBlock Text="TS4Tools" FontSize="24" FontWeight="Bold" />
-                    <TextBlock Text="Cross-platform Sims 4 Package Editor" />
-                    <TextBlock Text="Version 0.1.0" Margin="0,8,0,0" />
-                    <TextBlock Text="A modern rewrite of s4pe/s4pi" Opacity="0.7" />
-                    <TextBlock Text="Licensed under GPLv3" Margin="0,16,0,0" Opacity="0.7" />
+                <ScrollViewer>
+                    <StackPanel Margin="16" Spacing="8">
+                        <TextBlock Text="TS4Tools" FontSize="24" FontWeight="Bold" />
+                        <TextBlock Text="Cross-platform Sims 4 Package Editor" />
+                        <TextBlock Text="Version 0.1.0" Margin="0,8,0,0" />
+                        <TextBlock Text="A modern rewrite of s4pe/s4pi" Opacity="0.7" />
 
-                    <Separator Margin="0,16" />
+                        <Separator Margin="0,16" />
 
-                    <TextBlock Text="Settings file location:" FontWeight="SemiBold" />
-                    <TextBox x:Name="SettingsPathTextBox" IsReadOnly="True" />
-                </StackPanel>
+                        <!-- Help -->
+                        <TextBlock Text="Help" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="TS4Tools is a package editor for The Sims 4. It allows you to view, edit, and extract resources from .package files used by the game." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0">
+                            <Run Text="For documentation and support, visit the project repository." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- License -->
+                        <TextBlock Text="License" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version." />
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                            <TextBlock Text="Full license text:" VerticalAlignment="Center" />
+                            <Button x:Name="LicenseButton" Content="View GPLv3 License" Padding="12,4" />
+                        </StackPanel>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- Warranty -->
+                        <TextBlock Text="Warranty Disclaimer" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,8,0,0">
+                            <Run Text="THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- Credits -->
+                        <TextBlock Text="Credits" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="Based on the work of Peter L Jones (s3pe/s3pi) and Keyi Zhang (s4pe/s4pi)." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,4,0,0">
+                            <Run Text="Special thanks to the Sims modding community." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <TextBlock Text="Settings file location:" FontWeight="SemiBold" />
+                        <TextBox x:Name="SettingsPathTextBox" IsReadOnly="True" />
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </DockPanel>

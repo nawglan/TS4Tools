@@ -11,7 +11,7 @@ You are implementing remaining features to achieve 100% parity with legacy s4pe.
 
 ## Already Implemented (DO NOT REIMPLEMENT)
 - Copy/Paste/Duplicate operations
-- Search dialog
+- Search dialog (basic)
 - Resource Details dialog
 - New Package command
 - Settings dialog framework
@@ -20,87 +20,130 @@ You are implementing remaining features to achieve 100% parity with legacy s4pe.
 - Property grid editor
 - Package merge utility
 - All resource editors (Hex, STBL, NameMap, Text, Image, Catalog, RCOL, SimData)
+- Helper file parser and execution system
+- Control panel toolbar (Hex/Value/Grid, Auto mode, UseNames/UseTags)
+- Manage Wrappers dialog
+- Bookmarks menu and Organise Bookmarks dialog
+- Custom Places dialog
+- Floating preview window
+- Save Preview command
+- IFileSystemService abstraction
 
 ## Feature Priority Queue (implement in order)
 
-### Phase 1 - External Programs Integration
-1. Helper file parser (parse .helper config files from Helpers/ folder)
-   - Source: s4pe/Helpers/*.helper, MainForm.cs helper loading
-   - Config format: command, arguments, resource type filters
-2. External Programs settings dialog (Settings → External Programs)
-   - Source: s4pe/Settings/ExternalProgramsDialog.cs
-   - Configure helper programs per resource type
-3. Helper execution system (launch external editors)
-   - Source: s4pe/MainForm.cs EditOte(), helper execution code
-   - Export resource to temp file, launch program, reimport on close
+### Phase 6 - Core Missing Features (High Priority)
+1. Undo/Redo system
+   - Source: s4pe/MainForm.cs editUndo_Click, editRedo_Click
+   - Create UndoRedoService to track resource operations
+   - Track: Add, Delete, Modify, Replace operations
+   - Wire to Edit menu Undo (Ctrl+Z) and Redo (Ctrl+Y)
 
-### Phase 2 - Control Panel Widget
-4. Control panel toolbar (persistent toolbar below menu)
-   - Source: s4pe/ControlPanel/ControlPanel.cs
-   - Buttons: Hex, Value, Grid, Helper1, Helper2, HexEdit, Commit
-   - Checkboxes: Sort, HexOnly, UseNames, UseTags
-   - Radio group: Auto Off/Hex/Preview
-5. Auto mode toggle (Off/Hex/Preview selection)
-   - Source: s4pe/ControlPanel/ControlPanel.cs lines 99-127
-   - Controls automatic preview behavior
-6. UseNames/UseTags display toggles
-   - Source: s4pe/ControlPanel/ControlPanel.cs lines 174-202
-   - Toggle name resolution and tag display in resource list
+2. Select All command (Ctrl+A)
+   - Source: s4pe/MainForm.cs resourceSelectAll_Click
+   - Add to Edit menu with keyboard shortcut
+   - Select all visible resources in filtered list
 
-### Phase 3 - Wrapper Management
-7. Manage Wrappers dialog (Settings → Manage Wrappers)
-   - Source: s4pe/Settings/ManageWrappersDialog.cs
-   - Enable/disable specific resource wrappers
-   - Show wrapper info: type ID, name, assembly
-8. Wrapper enable/disable persistence
-   - Source: s4pe/Settings/ManageWrappersDialog.cs
-   - Save wrapper states to settings
-   - Apply on startup
+3. Advanced hex content search
+   - Source: s4pe/Tools/SearchForm.cs
+   - Add search modes: Hex bytes, Unicode string, ASCII string
+   - Add type filter during search
+   - Multi-threaded search with progress bar
+   - Search cancellation support
 
-### Phase 4 - Bookmarks System
-9. Bookmarks menu (File → Bookmarks)
-   - Source: s4pe/MainForm.cs bookmark handling
-   - Quick access to favorite folders
-10. Organise Bookmarks dialog
-    - Source: s4pe/Settings/OrganiseBookmarksDialog.cs
-    - Add, remove, reorder bookmarks
-11. Custom Places dialog (organize file dialog shortcuts)
-    - Source: s4pe/Settings/OrganiseCustomPlacesDialog.cs
-    - Configure custom places in Open/Save dialogs
+### Phase 7 - Workflow Improvements (Medium Priority)
+4. Open ReadOnly mode
+   - Source: s4pe/MainForm.cs fileOpenReadOnly_Click
+   - Add File → Open ReadOnly menu item
+   - Open package without write permissions
+   - Disable Save, mark window title as [Read Only]
 
-### Phase 5 - Floating Windows
-12. Floating preview window (Edit → Float)
-    - Source: s4pe/MainForm.cs EditFloat()
-    - Undock preview panel to separate window
-13. Save Preview command (Edit → Save Preview)
-    - Source: s4pe/MainForm.cs EditSavePreview()
-    - Save current preview content to file
+5. Import from Package dialog
+   - Source: s4pe/MainForm.cs resourceImportPackage_Click
+   - Browse for source package file
+   - Select resources to import
+   - Handle duplicates (Replace/Skip/Allow)
+
+6. Export to Package dialog
+   - Source: s4pe/MainForm.cs resourceExportPackage_Click
+   - Browse for destination package (or create new)
+   - Export selected resources to another package
+
+7. Import as DBC format
+   - Source: s4pe/Import/ExperimentalDBCWarning.cs
+   - Support DBC (Database Cache) format import
+   - Show experimental warning dialog
+   - Parse DBC structure into resources
+
+8. External editor file tracking
+   - Source: s4pe/MainForm.cs helper code
+   - Track temp file modification time after external edit
+   - Prompt to reimport when file changes
+   - Auto-commit changes back to package
+
+### Phase 8 - Keyboard Shortcuts (Medium Priority)
+9. Quick recent files (Ctrl+1 through Ctrl+9)
+   - Source: s4pe/MainForm.cs recent file handling
+   - Map Ctrl+1-9 to first 9 recent files
+
+10. Quick bookmarks (Ctrl+Shift+1 through Ctrl+Shift+9)
+    - Source: s4pe/MainForm.cs bookmark handling
+    - Map Ctrl+Shift+1-9 to first 9 bookmarks
+
+11. Additional shortcuts
+    - Insert key → Add resource
+    - Ctrl+Shift+B → Bookmark current package
+    - Ctrl+Shift+M → Import from file
+    - Ctrl+Shift+X → Export to file
+    - Ctrl+Shift+H → Open in hex editor
+    - Ctrl+Shift+T → Open in text editor
+    - F1 → Help
+
+### Phase 9 - Property Grid Enhancements (Low Priority)
+12. TGIBlockSelection control
+    - Source: s4pe/s4pePropertyGrid/TGIBlockSelection.cs
+    - Dropdown selector for TGI blocks in DependentLists
+    - Integrate with property grid editor
+
+13. ReaderEditorPanel control
+    - Source: s4pe/s4pePropertyGrid/ReaderEditorPanel.cs
+    - Import/Export buttons for BinaryReader/TextReader fields
+    - Allow importing binary data into property grid fields
+
+### Phase 10 - Polish (Low Priority)
+14. Set Max Recent/Bookmarks UI
+    - Source: s4pe/MainForm.cs fileRecentSetMax_Click, fileBookmarkSetMax_Click
+    - Add "Set Max..." option to Recent and Bookmarks submenus
+    - Use simple number input dialog
+
+15. PackageInfo panel improvements
+    - Source: s4pe/PackageInfo/PackageInfoWidget.cs
+    - Add package header info tab to PackageStatsWindow
+    - Show: Version, flags, index info, timestamps
+
+16. Save Copy As command
+    - Source: s4pe/MainForm.cs fileSaveCopyAs_Click
+    - File → Save Copy As
+    - Save copy without changing current file path
 
 ## Each Iteration
 
 1. **CHECK PROGRESS**: List implemented vs unimplemented features from the queue above.
-   Read MainWindowViewModel.cs and Views/ to see what exists.
-   Check for: HelperManager, ControlPanel, ManageWrappers, Bookmarks, FloatingPreview
-   If ALL Phase 1-5 features are implemented, skip to COMPLETION CHECK.
+   Read MainWindowViewModel.cs and Services/ to see what exists.
+   Check for: UndoRedoService, SelectAll, AdvancedSearch, ReadOnly mode, etc.
+   If ALL Phase 6-10 features are implemented, skip to COMPLETION CHECK.
 
 2. **SELECT NEXT**: Pick the FIRST unimplemented feature from the priority queue.
 
-3. **ANALYZE LEGACY**: Read the corresponding legacy s4pe code:
-   - Helpers/*.helper for helper file format
-   - Settings/ExternalProgramsDialog.cs for external programs UI
-   - Settings/ManageWrappersDialog.cs for wrapper management
-   - Settings/OrganiseBookmarksDialog.cs for bookmarks
-   - ControlPanel/ControlPanel.cs for toolbar
-   - MainForm.cs for integration code
+3. **ANALYZE LEGACY**: Read the corresponding legacy s4pe code.
    Add Source comments referencing legacy file + line numbers.
 
 4. **IMPLEMENT**: Follow Avalonia MVVM patterns:
    - Create View (.axaml) in Views/ or Views/Dialogs/ or Views/Controls/
-   - Create ViewModel in ViewModels/
+   - Create ViewModel in ViewModels/ if needed
    - Wire up in MainWindowViewModel.cs
    - Use CommunityToolkit.Mvvm [RelayCommand] attributes
    - Follow existing code patterns in the project
-   - Add services to Services/ folder if needed (e.g., HelperManager)
+   - Add services to Services/ folder if needed
 
 5. **VERIFY**: Run 'dotnet build'. Fix any errors before proceeding.
 
@@ -109,20 +152,23 @@ You are implementing remaining features to achieve 100% parity with legacy s4pe.
 
 ## Completion Check
 
-After each iteration, check if ALL Phase 1-5 features are implemented:
-- Helper file parser
-- External Programs settings dialog
-- Helper execution system
-- Control panel toolbar
-- Auto mode toggle
-- UseNames/UseTags display toggles
-- Manage Wrappers dialog
-- Wrapper enable/disable persistence
-- Bookmarks menu
-- Organise Bookmarks dialog
-- Custom Places dialog
-- Floating preview window
-- Save Preview command
+After each iteration, check if ALL Phase 6-10 features are implemented:
+- Undo/Redo system
+- Select All command
+- Advanced hex content search
+- Open ReadOnly mode
+- Import from Package dialog
+- Export to Package dialog
+- Import as DBC format
+- External editor file tracking
+- Quick recent files shortcuts
+- Quick bookmark shortcuts
+- Additional keyboard shortcuts
+- TGIBlockSelection control
+- ReaderEditorPanel control
+- Set Max Recent/Bookmarks UI
+- PackageInfo panel improvements
+- Save Copy As command
 
 If ALL are implemented and 'dotnet build' passes, output: <promise>FULL_PARITY_COMPLETE</promise>
 
