@@ -371,6 +371,28 @@ public sealed class HelperDefinition
 }
 
 /// <summary>
+/// Result of executing a helper program.
+/// </summary>
+public sealed class HelperExecutionResult
+{
+    /// <summary>
+    /// Whether the helper executed successfully.
+    /// </summary>
+    public bool Success { get; init; }
+
+    /// <summary>
+    /// Modified resource data if the helper modified the file.
+    /// Null if readonly or no changes detected.
+    /// </summary>
+    public byte[]? ModifiedData { get; init; }
+
+    /// <summary>
+    /// Error message if execution failed.
+    /// </summary>
+    public string? ErrorMessage { get; init; }
+}
+
+/// <summary>
 /// A helper instance bound to a specific resource for execution.
 /// </summary>
 /// <remarks>
@@ -438,5 +460,120 @@ public sealed class HelperInstance
         // For now, just handle the filename substitution
 
         return (cmd, args);
+    }
+
+    /// <summary>
+    /// Executes the helper with the given resource data.
+    /// </summary>
+    /// <param name="resourceData">The resource data to edit.</param>
+    /// <param name="resourceName">Optional resource name for the temp filename.</param>
+    /// <returns>Result containing modified data if changed.</returns>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 176-205, 252-279
+    /// </remarks>
+    public async Task<HelperExecutionResult> ExecuteAsync(ReadOnlyMemory<byte> resourceData, string? resourceName = null)
+    {
+        if (!UsesFileExport)
+        {
+            return new HelperExecutionResult
+            {
+                Success = false,
+                ErrorMessage = "Helper does not use file export (no {} in command/arguments)"
+            };
+        }
+
+        var tempFile = GetTempFilename(resourceName);
+
+        try
+        {
+            // Write resource data to temp file
+            await File.WriteAllBytesAsync(tempFile, resourceData.ToArray());
+            var lastWriteTime = File.GetLastWriteTimeUtc(tempFile);
+
+            // Expand command line
+            var (cmd, args) = ExpandCommandLine(tempFile);
+
+            // Execute the helper
+            var success = await ExecuteProcessAsync(cmd, args);
+
+            if (!success)
+            {
+                return new HelperExecutionResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Helper process exited with non-zero code"
+                };
+            }
+
+            // Check for modifications
+            if (!IsReadOnly)
+            {
+                var newWriteTime = File.GetLastWriteTimeUtc(tempFile);
+
+                if (IgnoreWriteTimestamp || newWriteTime != lastWriteTime)
+                {
+                    var modifiedData = await File.ReadAllBytesAsync(tempFile);
+                    return new HelperExecutionResult
+                    {
+                        Success = true,
+                        ModifiedData = modifiedData
+                    };
+                }
+            }
+
+            return new HelperExecutionResult { Success = true };
+        }
+        catch (Exception ex)
+        {
+            return new HelperExecutionResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
+        }
+        finally
+        {
+            // Clean up temp file
+            try
+            {
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
+        }
+    }
+
+    /// <summary>
+    /// Executes a process and waits for it to exit.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 259-278
+    /// </remarks>
+    private static async Task<bool> ExecuteProcessAsync(string command, string arguments)
+    {
+        using var process = new Process();
+        process.StartInfo.FileName = command;
+        process.StartInfo.Arguments = arguments;
+        process.StartInfo.UseShellExecute = false;
+        process.StartInfo.CreateNoWindow = false;
+
+        try
+        {
+            process.Start();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to start helper: {ex.Message}");
+            throw new InvalidOperationException($"Failed to start '{command}': {ex.Message}", ex);
+        }
+
+        await process.WaitForExitAsync();
+
+        return process.ExitCode == 0;
     }
 }

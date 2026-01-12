@@ -11,6 +11,7 @@
   <ItemGroup>
     <Using Include="System.Collections.ObjectModel" />
     <Using Include="System.ComponentModel" />
+    <Using Include="System.Diagnostics" />
     <Using Include="System.Globalization" />
     <Using Include="System.Reflection" />
     <Using Include="System.Runtime.InteropServices" />

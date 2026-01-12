@@ -104,6 +104,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     // Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 42-43, 96-100
     private ClipboardResourceData? _clipboardData;
 
+    /// <summary>
+    /// Available helpers for the currently selected resource.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<HelperMenuItemViewModel> _availableHelpers = [];
+
+    public bool HasHelpers => AvailableHelpers.Count > 0;
+
     public ObservableCollection<ResourceItemViewModel> Resources { get; } = [];
 
     public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
@@ -333,6 +341,87 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             {
                 UpdatePropertyGrid(_currentResourceWrapper);
             }
+
+            // Update available helpers
+            UpdateAvailableHelpers(key);
+        }
+    }
+
+    /// <summary>
+    /// Updates the list of available helpers for the given resource key.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3134 (SetHelpers)
+    /// </remarks>
+    private void UpdateAvailableHelpers(ResourceKey key)
+    {
+        AvailableHelpers.Clear();
+
+        var wrapperName = _currentResourceWrapper?.GetType().Name;
+        var helpers = HelperManager.Instance.GetHelpersForResource(
+            key.ResourceType,
+            key.ResourceGroup,
+            key.Instance,
+            wrapperName);
+
+        // Filter out disabled helpers
+        var settings = SettingsService.Instance.Settings;
+        var enabledHelpers = helpers.Where(h => !settings.DisabledHelpers.Contains(h.Id));
+
+        foreach (var helper in enabledHelpers)
+        {
+            AvailableHelpers.Add(new HelperMenuItemViewModel(helper, ExecuteHelperAsync));
+        }
+
+        OnPropertyChanged(nameof(HasHelpers));
+    }
+
+    /// <summary>
+    /// Executes a helper program for the currently selected resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3147-3200 (do_HelperClick)
+    /// </remarks>
+    private async Task ExecuteHelperAsync(HelperInstance helper)
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        StatusMessage = $"Running {helper.Label}...";
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var result = await helper.ExecuteAsync(data, SelectedResource.InstanceName);
+
+            if (!result.Success)
+            {
+                StatusMessage = $"Helper error: {result.ErrorMessage}";
+                return;
+            }
+
+            if (result.ModifiedData != null)
+            {
+                // Update the resource with modified data
+                _package.ReplaceResource(entry, result.ModifiedData);
+                await UpdateSelectedResourceDetailsAsync();
+                StatusMessage = $"Resource updated by {helper.Label}";
+            }
+            else
+            {
+                StatusMessage = $"{helper.Label} completed (no changes)";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Helper error: {ex.Message}";
         }
     }
 
@@ -1364,4 +1453,28 @@ public sealed class ClipboardResourceData
     public required ResourceKey Key { get; init; }
     public required byte[] Data { get; init; }
     public string? ResourceName { get; init; }
+}
+
+/// <summary>
+/// View model for a helper menu item.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3134 (helper buttons)
+/// </remarks>
+public sealed class HelperMenuItemViewModel
+{
+    private readonly HelperInstance _helper;
+    private readonly Func<HelperInstance, Task> _executeAction;
+
+    public HelperMenuItemViewModel(HelperInstance helper, Func<HelperInstance, Task> executeAction)
+    {
+        _helper = helper;
+        _executeAction = executeAction;
+    }
+
+    public string Label => _helper.Label;
+    public string Description => _helper.Description;
+    public string Id => _helper.Id;
+
+    public IAsyncRelayCommand ExecuteCommand => new AsyncRelayCommand(async () => await _executeAction(_helper));
 }

@@ -55,6 +55,18 @@
                 <MenuItem Header="_Replace Resource..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
+                <!-- Helper Programs submenu -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3134 -->
+                <MenuItem Header="_Helpers" IsEnabled="{Binding HasHelpers}" ItemsSource="{Binding AvailableHelpers}">
+                    <MenuItem.Styles>
+                        <Style Selector="MenuItem">
+                            <Setter Property="Header" Value="{ReflectionBinding Label}" />
+                            <Setter Property="Command" Value="{ReflectionBinding ExecuteCommand}" />
+                            <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Description}" />
+                        </Style>
+                    </MenuItem.Styles>
+                </MenuItem>
+                <Separator />
                 <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
             </MenuItem>
             <MenuItem Header="_Tools">
@@ -139,6 +151,17 @@
                                 <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                                 <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                                <Separator />
+                                <!-- Helper Programs submenu in context menu -->
+                                <MenuItem Header="_Helpers" IsEnabled="{Binding HasHelpers}" ItemsSource="{Binding AvailableHelpers}">
+                                    <MenuItem.Styles>
+                                        <Style Selector="MenuItem">
+                                            <Setter Property="Header" Value="{ReflectionBinding Label}" />
+                                            <Setter Property="Command" Value="{ReflectionBinding ExecuteCommand}" />
+                                            <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Description}" />
+                                        </Style>
+                                    </MenuItem.Styles>
+                                </MenuItem>
                                 <Separator />
                                 <MenuItem Header="_Delete" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
                             </ContextMenu>
