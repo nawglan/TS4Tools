@@ -84,7 +84,7 @@
             <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs -->
             <MenuItem Header="_Bookmarks">
                 <MenuItem Header="_Add Current Package" Command="{Binding AddCurrentToBookmarksCommand}" IsEnabled="{Binding HasOpenPackage}" />
-                <MenuItem Header="_Manage Bookmarks..." Command="{Binding SettingsCommand}" />
+                <MenuItem Header="_Organise Bookmarks..." Command="{Binding OrganiseBookmarksCommand}" />
                 <Separator IsVisible="{Binding HasBookmarks}" />
                 <MenuItem Header="(No bookmarks)" IsEnabled="False" IsVisible="{Binding !HasBookmarks}" />
                 <MenuItem ItemsSource="{Binding Bookmarks}" IsVisible="{Binding HasBookmarks}">

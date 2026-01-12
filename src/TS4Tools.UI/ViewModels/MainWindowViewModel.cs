@@ -1638,6 +1638,28 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Opens the Organise Bookmarks dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task OrganiseBookmarksAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var dialog = new OrganiseBookmarksWindow();
+        await dialog.ShowDialog((Window)topLevel);
+
+        // Reload bookmarks after dialog closes
+        LoadBookmarks();
+    }
+
+    /// <summary>
     /// Adds the current package to bookmarks.
     /// </summary>
     [RelayCommand]
