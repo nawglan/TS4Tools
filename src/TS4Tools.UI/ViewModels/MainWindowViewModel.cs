@@ -1014,6 +1014,89 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Opens the Import from Package dialog for importing selected resources from another package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 133-162 (ResourceImportPackages)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportFromPackageAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        await using var dialog = new ImportFromPackageWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.SelectedResources.Count > 0 && dialog.SourcePackage != null)
+        {
+            try
+            {
+                var imported = 0;
+                var skipped = 0;
+
+                foreach (var resource in dialog.SelectedResources)
+                {
+                    var key = resource.Key;
+                    var entry = dialog.SourcePackage.Find(key);
+                    if (entry == null) continue;
+
+                    // Skip NameMap if not requested
+                    if (key.ResourceType == 0x0166038C && !dialog.ImportNames)
+                    {
+                        continue;
+                    }
+
+                    // Check for duplicates
+                    var existing = _package.Find(key);
+                    if (existing != null)
+                    {
+                        switch (dialog.DuplicateMode)
+                        {
+                            case DuplicateHandling.Skip:
+                                skipped++;
+                                continue;
+                            case DuplicateHandling.Replace:
+                                _package.DeleteResource(existing);
+                                var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                                if (existingItem != null)
+                                {
+                                    Resources.Remove(existingItem);
+                                }
+                                break;
+                            case DuplicateHandling.Allow:
+                                // Allow duplicate keys
+                                break;
+                        }
+                    }
+
+                    // Get data and add to target package
+                    var data = await dialog.SourcePackage.GetResourceDataAsync(entry);
+                    var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                    if (newEntry != null)
+                    {
+                        var instanceName = _hashNameService.TryGetName(key.Instance);
+                        var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                        Resources.Add(item);
+                        imported++;
+                    }
+                }
+
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Imported {imported} resources" + (skipped > 0 ? $", {skipped} skipped" : "");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Import error: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
     /// Opens the Merge Packages dialog for importing resources from other packages.
     /// </summary>
     /// <remarks>

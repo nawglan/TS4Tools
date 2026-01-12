@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+        x:Class="TS4Tools.UI.Views.Dialogs.ImportFromPackageWindow"
+        Title="Import from Package"
+        Width="700" Height="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 133-162 (ResourceImportPackages) -->
+
+    <DockPanel Margin="16">
+        <!-- Source Package Selection -->
+        <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
+            <TextBlock Text="Source Package:" FontWeight="SemiBold" />
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox x:Name="SourcePathTextBox" IsReadOnly="True" Watermark="Select a package file..." />
+                <Button Grid.Column="1" Content="_Browse..." Click="BrowseButton_Click" Margin="8,0,0,0" Padding="16,8" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Import Options -->
+        <Border DockPanel.Dock="Top" Padding="0,0,0,12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Options:" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" Margin="16,0,0,0">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Duplicates:" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DuplicateModeCombo" SelectedIndex="1" Margin="8,0,0,0" Width="200" HorizontalAlignment="Left">
+                        <ComboBoxItem Content="Skip duplicates" />
+                        <ComboBoxItem Content="Replace existing" />
+                        <ComboBoxItem Content="Allow duplicates" />
+                    </ComboBox>
+
+                    <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ImportNamesCheckBox" Content="Import NameMap entries" IsChecked="True" Margin="0,8,0,0" />
+                    <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="SelectAllCheckBox" Content="Select all resources" IsChecked="True" Margin="0,4,0,0" Click="SelectAllCheckBox_Click" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Separator DockPanel.Dock="Top" Margin="0,0,0,12" />
+
+        <!-- Resource List -->
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top" x:Name="ResourcesHeader" Text="Resources to import:" FontWeight="SemiBold" Margin="0,0,0,8" />
+
+            <!-- Bottom Buttons -->
+            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto" Margin="0,12,0,0">
+                <TextBlock x:Name="StatusText" Text="Select a package to import from" VerticalAlignment="Center" Opacity="0.7" />
+                <Button Grid.Column="1" x:Name="ImportButton" Content="_Import" Padding="24,8" Margin="8,0" Click="ImportButton_Click" IsEnabled="False" />
+                <Button Grid.Column="2" Content="_Cancel" Padding="16,8" Click="CancelButton_Click" />
+            </Grid>
+
+            <!-- Resource Selection List -->
+            <ListBox x:Name="ResourceListBox" SelectionMode="Multiple,Toggle">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{ReflectionBinding TypeName}" FontWeight="SemiBold" />
+                            <TextBlock Text="{ReflectionBinding DisplayKey}" Opacity="0.7" />
+                            <TextBlock Text="{ReflectionBinding FileSize, StringFormat='({0:N0} bytes)'}" Opacity="0.5" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+    </DockPanel>
+</Window>
