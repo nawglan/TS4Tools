@@ -17,7 +17,7 @@
 
     <DockPanel>
         <!-- Menu Bar -->
-        <Menu DockPanel.Dock="Top">
+        <Menu DockPanel.Dock="Top" x:Name="MainMenu">
             <MenuItem Header="_File">
                 <MenuItem Header="_New Package" Command="{Binding NewPackageCommand}" InputGesture="Ctrl+N" />
                 <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
@@ -87,6 +87,10 @@
                 <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" />
             </MenuItem>
         </Menu>
+
+        <!-- Control Panel Toolbar -->
+        <!-- Source: legacy_references/Sims4Tools/s4pe/ControlPanel/ControlPanel.cs -->
+        <ctrl:ControlPanelToolbar x:Name="ControlPanel" DockPanel.Dock="Top" />
 
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="8,4">
