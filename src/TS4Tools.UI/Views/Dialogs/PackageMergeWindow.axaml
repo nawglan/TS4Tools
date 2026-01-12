@@ -1,0 +1,88 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
+        x:Class="TS4Tools.UI.Views.Dialogs.PackageMergeWindow"
+        Title="Merge Packages"
+        Width="700" Height="600"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 350-500 -->
+
+    <DockPanel Margin="16">
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+            <Button x:Name="MergeButton" Content="_Merge" Padding="24,8" IsDefault="True" IsEnabled="False" />
+            <Button x:Name="CancelButton" Content="_Cancel" Padding="24,8" IsCancel="True" />
+        </StackPanel>
+
+        <!-- Progress bar -->
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <TextBlock x:Name="ProgressLabel" Text="Ready" Margin="0,0,0,4" />
+            <ProgressBar x:Name="MergeProgress" Minimum="0" Maximum="100" Value="0" Height="8" />
+        </StackPanel>
+
+        <Grid RowDefinitions="Auto,*,Auto,Auto">
+            <!-- Package Selection -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,16">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Source Packages" FontWeight="SemiBold" FontSize="14" />
+                    <TextBlock Text="Select one or more packages to merge into the current package." Opacity="0.7" FontSize="12" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <Button x:Name="AddPackagesButton" Content="Add Packages..." Padding="12,4" />
+                        <Button x:Name="RemovePackageButton" Content="Remove Selected" Padding="12,4" IsEnabled="False" />
+                        <Button x:Name="ClearPackagesButton" Content="Clear All" Padding="12,4" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Package List -->
+            <Border Grid.Row="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="1" CornerRadius="4" Margin="0,0,0,16">
+                <ListBox x:Name="PackageListBox" SelectionMode="Multiple">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="4,2">
+                                <TextBlock Text="{ReflectionBinding FileName}" FontWeight="SemiBold" />
+                                <TextBlock Text="{ReflectionBinding ResourceCount, StringFormat='Resources: {0}'}" FontSize="11" Opacity="0.7" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Merge Options -->
+            <Border Grid.Row="2" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,16">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Merge Options" FontWeight="SemiBold" FontSize="14" />
+
+                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4,0,0">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Duplicates:" VerticalAlignment="Center" Margin="0,0,8,8" />
+                        <ComboBox Grid.Row="0" Grid.Column="1" x:Name="DuplicateHandlingCombo" SelectedIndex="0" Margin="0,0,0,8">
+                            <ComboBoxItem Content="Replace existing" />
+                            <ComboBoxItem Content="Skip duplicates" />
+                            <ComboBoxItem Content="Allow duplicates" />
+                        </ComboBox>
+
+                        <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="CompressCheckBox"
+                                  Content="Compress resources" IsChecked="True" Margin="0,0,0,4" />
+
+                        <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="MergeNameMapsCheckBox"
+                                  Content="Merge NameMap entries" IsChecked="True" Margin="0,0,0,4" />
+
+                        <CheckBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" x:Name="SkipNameMapsCheckBox"
+                                  Content="Skip NameMap resources (use only for merging entries)" IsChecked="False" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Summary -->
+            <Border Grid.Row="3" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" CornerRadius="4">
+                <TextBlock x:Name="SummaryLabel" Text="No packages selected" />
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -838,6 +838,103 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Opens the Merge Packages dialog for importing resources from other packages.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 350-500
+    /// </remarks>
+    [RelayCommand]
+    private async Task MergePackagesAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new PackageMergeWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.Packages.Count > 0)
+        {
+            try
+            {
+                var totalMerged = 0;
+                var totalSkipped = 0;
+                var packageCount = dialog.Packages.Count;
+
+                foreach (var pkgInfo in dialog.Packages)
+                {
+                    if (pkgInfo.Package == null) continue;
+
+                    dialog.ProgressText = $"Merging {pkgInfo.FileName}...";
+                    var entries = pkgInfo.Package.Resources.ToList();
+                    var processed = 0;
+
+                    foreach (var entry in entries)
+                    {
+                        var key = entry.Key;
+
+                        // Skip NameMap if requested
+                        if (key.ResourceType == 0x0166038C && dialog.SkipNameMaps)
+                        {
+                            continue;
+                        }
+
+                        // Check for duplicates
+                        var existing = _package.Find(key);
+
+                        if (existing != null)
+                        {
+                            switch (dialog.DuplicateMode)
+                            {
+                                case DuplicateHandling.Skip:
+                                    totalSkipped++;
+                                    continue;
+                                case DuplicateHandling.Replace:
+                                    _package.DeleteResource(existing);
+                                    break;
+                                case DuplicateHandling.Allow:
+                                    // Allow duplicate keys
+                                    break;
+                            }
+                        }
+
+                        // Get data and add to target package
+                        var data = await pkgInfo.Package.GetResourceDataAsync(entry);
+                        var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                        if (newEntry != null)
+                        {
+                            var instanceName = _hashNameService.TryGetName(key.Instance);
+                            var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                            Resources.Add(item);
+                            totalMerged++;
+                        }
+
+                        processed++;
+                        dialog.Progress = (processed * 100.0) / entries.Count;
+                    }
+                }
+
+                dialog.DisposePackages();
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Merged {totalMerged} resources from {packageCount} package(s)" +
+                    (totalSkipped > 0 ? $", {totalSkipped} skipped" : "");
+            }
+            catch (Exception ex)
+            {
+                dialog.DisposePackages();
+                StatusMessage = $"Merge error: {ex.Message}";
+            }
+        }
+        else
+        {
+            dialog.DisposePackages();
+        }
+    }
+
+    /// <summary>
     /// Opens the Search dialog to find resources.
     /// </summary>
     /// <remarks>
