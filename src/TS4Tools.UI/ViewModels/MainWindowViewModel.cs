@@ -1,0 +1,2988 @@
+using Avalonia.Controls;
+using Avalonia.Input.Platform;
+using Avalonia.Platform.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using TS4Tools;
+using TS4Tools.Package;
+using TS4Tools.UI.Services;
+using TS4Tools.UI.ViewModels.Editors;
+using TS4Tools.UI.Views.Controls;
+using TS4Tools.UI.Views.Dialogs;
+using TS4Tools.UI.Views.Editors;
+using TS4Tools.Wrappers;
+using TS4Tools.Wrappers.CasPartResource;
+using TS4Tools.Wrappers.CatalogResource;
+
+namespace TS4Tools.UI.ViewModels;
+
+/// <summary>
+/// Sort modes for the resource list.
+/// </summary>
+public enum ResourceSortMode
+{
+    TypeName,
+    Instance,
+    Size
+}
+
+public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
+{
+    private bool _disposed;
+    private readonly HashNameService _hashNameService = new();
+    private readonly IFileSystemService _fileSystem;
+    private readonly PropertyChangedEventHandler _propertyChangedHandler;
+    // Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings DBPFFilesAndAll
+    private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package", "*.dbc", "*.world", "*.nhd"] };
+    private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
+    private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
+
+    private string RecentFilesPath => _fileSystem.CombinePath(
+        _fileSystem.GetApplicationDataPath(),
+        "TS4Tools", "recent.json");
+
+    private static int MaxRecentFiles => SettingsService.Instance.Settings.MaxRecentFiles;
+
+    private DbpfPackage? _package;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasOpenPackage))]
+    [NotifyPropertyChangedFor(nameof(ResourceCount))]
+    private string _packagePath = string.Empty;
+
+    /// <summary>
+    /// Whether the current package is opened in read-only mode.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 566-572 (ReadWrite property)
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
+    private bool _isReadOnly;
+
+    /// <summary>
+    /// Whether saving is allowed (package open and not read-only).
+    /// </summary>
+    public bool CanSave => HasOpenPackage && !IsReadOnly;
+
+    [ObservableProperty]
+    private string _title = "TS4Tools";
+
+    [ObservableProperty]
+    private string _statusMessage = "Ready";
+
+    [ObservableProperty]
+    private string _filterText = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelectedResource))]
+    private ResourceItemViewModel? _selectedResource;
+
+    [ObservableProperty]
+    private bool _showAdvancedFilter;
+
+    // Current advanced filter criteria
+    private FilterChangedEventArgs? _advancedFilterArgs;
+
+    public bool HasSelectedResource => SelectedResource != null;
+
+    [ObservableProperty]
+    private string _selectedResourceTypeName = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedResourceKey = string.Empty;
+
+    [ObservableProperty]
+    private string _selectedResourceInfo = string.Empty;
+
+    [ObservableProperty]
+    private Control? _editorContent;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PropertyGridButtonText))]
+    private bool _showPropertyGrid;
+
+    [ObservableProperty]
+    private Control? _propertyGridContent;
+
+    /// <summary>
+    /// The current resource wrapper for property grid display.
+    /// </summary>
+    private object? _currentResourceWrapper;
+
+    public string PropertyGridButtonText => ShowPropertyGrid ? "Hide Properties" : "Show Properties";
+
+    public bool HasOpenPackage => _package != null;
+
+    public int ResourceCount => _package?.ResourceCount ?? 0;
+
+    public bool HasClipboardResource => _clipboardData != null;
+
+    // Internal clipboard for resource copy/paste
+    // Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 42-43, 96-100
+    private ClipboardResourceData? _clipboardData;
+
+    /// <summary>
+    /// Available helpers for the currently selected resource.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<HelperMenuItemViewModel> _availableHelpers = [];
+
+    public bool HasHelpers => AvailableHelpers.Count > 0;
+
+    /// <summary>
+    /// Bookmarked package files for quick access.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+    /// Format: "0:path" for read-only, "1:path" for read-write
+    /// </remarks>
+    public ObservableCollection<BookmarkItemViewModel> Bookmarks { get; } = [];
+
+    public bool HasBookmarks => Bookmarks.Count > 0;
+
+    public ObservableCollection<ResourceItemViewModel> Resources { get; } = [];
+
+    public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
+
+    /// <summary>
+    /// The currently selected resources (for multi-select operations).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs
+    /// </remarks>
+    public ObservableCollection<ResourceItemViewModel> SelectedResources { get; } = [];
+
+    public ObservableCollection<RecentFileViewModel> RecentFiles { get; } = [];
+
+    [ObservableProperty]
+    private ResourceSortMode _sortMode = ResourceSortMode.TypeName;
+
+    /// <summary>
+    /// Creates a new instance of the MainWindowViewModel.
+    /// </summary>
+    /// <param name="fileSystem">File system service for I/O operations. Uses default if null.</param>
+    public MainWindowViewModel(IFileSystemService? fileSystem = null)
+    {
+        _fileSystem = fileSystem ?? FileSystemService.Instance;
+
+        _propertyChangedHandler = (_, e) =>
+        {
+            if (e.PropertyName == nameof(FilterText) || e.PropertyName == nameof(SortMode))
+            {
+                ApplyFilter();
+            }
+            else if (e.PropertyName == nameof(SelectedResource))
+            {
+                ExecuteAsync(UpdateSelectedResourceDetailsAsync, "Error loading resource");
+            }
+        };
+        PropertyChanged += _propertyChangedHandler;
+
+        LoadRecentFiles();
+        LoadBookmarks();
+    }
+
+    /// <summary>
+    /// Creates a new empty package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 787-792 (FileNew method)
+    /// </remarks>
+    [RelayCommand]
+    private async Task NewPackageAsync()
+    {
+        await CloseCurrentPackageAsync();
+
+        _package = DbpfPackage.CreateNew();
+        PackagePath = "";
+        Title = "TS4Tools - [New Package]";
+
+        _hashNameService.Clear();
+        PopulateResourceList();
+
+        StatusMessage = "New package created";
+        OnPropertyChanged(nameof(HasOpenPackage));
+        OnPropertyChanged(nameof(ResourceCount));
+    }
+
+    [RelayCommand]
+    private async Task OpenPackageAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Open Package",
+            AllowMultiple = false,
+            FileTypeFilter = [PackageFileType, AllFilesType]
+        });
+
+        if (files.Count == 1)
+        {
+            var path = files[0].Path.LocalPath;
+            await LoadPackageAsync(path, readOnly: false);
+        }
+    }
+
+    /// <summary>
+    /// Opens a package in read-only mode.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 794-797 (FileOpenReadOnly)
+    /// </remarks>
+    [RelayCommand]
+    private async Task OpenPackageReadOnlyAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Open Package (Read Only)",
+            AllowMultiple = false,
+            FileTypeFilter = [PackageFileType, AllFilesType]
+        });
+
+        if (files.Count == 1)
+        {
+            var path = files[0].Path.LocalPath;
+            await LoadPackageAsync(path, readOnly: true);
+        }
+    }
+
+    /// <summary>
+    /// Loads a package from disk.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 799-839 (FileOpen)
+    /// </remarks>
+    private async Task LoadPackageAsync(string path, bool readOnly = false)
+    {
+        try
+        {
+            StatusMessage = $"Loading {_fileSystem.GetFileName(path)}...";
+
+            await CloseCurrentPackageAsync();
+
+            _package = await DbpfPackage.OpenAsync(path);
+            PackagePath = path;
+            IsReadOnly = readOnly;
+
+            // Update title with read-only indicator
+            var fileName = _fileSystem.GetFileName(path);
+            Title = readOnly
+                ? $"TS4Tools - {fileName} [Read Only]"
+                : $"TS4Tools - {fileName}";
+
+            // Load hash-to-name mappings from NameMap resources
+            await _hashNameService.LoadFromPackageAsync(_package);
+
+            PopulateResourceList();
+            AddToRecentFiles(path);
+
+            var nameCount = _hashNameService.Count;
+            StatusMessage = nameCount > 0
+                ? $"Loaded {ResourceCount} resources ({nameCount} named)" + (readOnly ? " [Read Only]" : "")
+                : $"Loaded {ResourceCount} resources" + (readOnly ? " [Read Only]" : "");
+            OnPropertyChanged(nameof(HasOpenPackage));
+            OnPropertyChanged(nameof(ResourceCount));
+            OnPropertyChanged(nameof(CanSave));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    private void PopulateResourceList()
+    {
+        Resources.Clear();
+        FilteredResources.Clear();
+
+        if (_package == null) return;
+
+        foreach (var entry in _package.Resources)
+        {
+            var instanceName = _hashNameService.TryGetName(entry.Key.Instance);
+            var item = new ResourceItemViewModel(entry.Key, entry.FileSize, instanceName);
+            Resources.Add(item);
+            FilteredResources.Add(item);
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        FilteredResources.Clear();
+
+        IEnumerable<ResourceItemViewModel> filtered;
+
+        // Use advanced filter if active, otherwise use simple filter
+        if (ShowAdvancedFilter && _advancedFilterArgs != null)
+        {
+            filtered = Resources.Where(r => _advancedFilterArgs.Matches(r));
+        }
+        else
+        {
+            var filter = FilterText.Trim().ToLowerInvariant();
+            filtered = string.IsNullOrEmpty(filter)
+                ? Resources.AsEnumerable()
+                : Resources.Where(r =>
+                    r.TypeName.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    r.DisplayKey.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    (r.InstanceName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        // Apply sorting
+        filtered = SortMode switch
+        {
+            ResourceSortMode.TypeName => filtered.OrderBy(r => r.TypeName).ThenBy(r => r.Key.Instance),
+            ResourceSortMode.Instance => filtered.OrderBy(r => r.Key.Instance),
+            ResourceSortMode.Size => filtered.OrderByDescending(r => r.FileSize),
+            _ => filtered
+        };
+
+        foreach (var item in filtered)
+        {
+            FilteredResources.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Applies advanced filter criteria from the filter panel.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Filter/FilterField.cs
+    /// </remarks>
+    public void ApplyAdvancedFilter(FilterChangedEventArgs args)
+    {
+        _advancedFilterArgs = args;
+        ApplyFilter();
+    }
+
+    private async Task UpdateSelectedResourceDetailsAsync()
+    {
+        if (SelectedResource == null || _package == null)
+        {
+            SelectedResourceTypeName = string.Empty;
+            SelectedResourceKey = string.Empty;
+            SelectedResourceInfo = string.Empty;
+            EditorContent = null;
+            _currentResourceWrapper = null;
+            PropertyGridContent = null;
+            return;
+        }
+
+        var key = SelectedResource.Key;
+        SelectedResourceTypeName = SelectedResource.TypeName;
+        SelectedResourceKey = SelectedResource.DisplayKey;
+
+        var entry = _package.Find(key);
+        if (entry != null)
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var info = $"Type: 0x{key.ResourceType:X8}\n";
+            info += $"Group: 0x{key.ResourceGroup:X8}\n";
+            info += $"Instance: 0x{key.Instance:X16}\n";
+            info += $"\nData Size: {data.Length:N0} bytes\n";
+            info += $"Compressed: {entry.IsCompressed}";
+
+            SelectedResourceInfo = info;
+
+            // Check if ForceHexView setting is enabled
+            // Source: legacy_references/Sims4Tools/s4pe Settings - hex viewing mode
+            if (SettingsService.Instance.Settings.ForceHexView)
+            {
+                EditorContent = CreateHexViewer(data);
+                _currentResourceWrapper = null;
+            }
+            else
+            {
+                // Create appropriate editor based on resource type and track wrapper for property grid
+                (EditorContent, _currentResourceWrapper) = key.ResourceType switch
+                {
+                    0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
+                    0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
+                    0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
+                    0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                    0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
+                    0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
+                    // RCOL resource types (standalone)
+                    RcolConstants.Modl or        // 0x01661233 - MODL
+                    RcolConstants.Matd or        // 0x01D0E75D - MATD
+                    RcolConstants.Mlod or        // 0x01D10F34 - MLOD
+                    RcolConstants.Mtst or        // 0x02019972 - MTST
+                    RcolConstants.Tree or        // 0x021D7E8C - TREE
+                    RcolConstants.TkMk or        // 0x033260E3 - TkMk
+                    RcolConstants.SlotAdjusts or // 0x0355E0A6 - Slot Adjusts
+                    RcolConstants.Lite or        // 0x03B4C61D - LITE
+                    RcolConstants.Anim or        // 0x63A33EA7 - ANIM
+                    RcolConstants.Vpxy or        // 0x736884F1 - VPXY
+                    RcolConstants.Rslt or        // 0xD3044521 - RSLT
+                    RcolConstants.Ftpt           // 0xD382BF57 - FTPT
+                        => CreateRcolViewerWithWrapper(key, data),
+                    0x319E4F1D => CreateCatalogViewerWithWrapper(key, data), // COBJ (Catalog Object)
+                    0xDB43E069 => CreateDeformerMapViewerWithWrapper(key, data), // Deformer Map
+                    _ => (CreateHexViewer(data), null) // Default hex viewer, no wrapper
+                };
+            }
+
+            // Update property grid if visible
+            if (ShowPropertyGrid)
+            {
+                UpdatePropertyGrid(_currentResourceWrapper);
+            }
+
+            // Update available helpers
+            UpdateAvailableHelpers(key);
+        }
+    }
+
+    /// <summary>
+    /// Updates the list of available helpers for the given resource key.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3134 (SetHelpers)
+    /// </remarks>
+    private void UpdateAvailableHelpers(ResourceKey key)
+    {
+        AvailableHelpers.Clear();
+
+        var wrapperName = _currentResourceWrapper?.GetType().Name;
+        var helpers = HelperManager.Instance.GetHelpersForResource(
+            key.ResourceType,
+            key.ResourceGroup,
+            key.Instance,
+            wrapperName);
+
+        // Filter out disabled helpers
+        var settings = SettingsService.Instance.Settings;
+        var enabledHelpers = helpers.Where(h => !settings.DisabledHelpers.Contains(h.Id));
+
+        foreach (var helper in enabledHelpers)
+        {
+            AvailableHelpers.Add(new HelperMenuItemViewModel(helper, ExecuteHelperAsync));
+        }
+
+        OnPropertyChanged(nameof(HasHelpers));
+    }
+
+    /// <summary>
+    /// Executes a helper program for the currently selected resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3147-3200 (do_HelperClick)
+    /// </remarks>
+    private async Task ExecuteHelperAsync(HelperInstance helper)
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        StatusMessage = $"Running {helper.Label}...";
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var result = await helper.ExecuteAsync(data, SelectedResource.InstanceName);
+
+            if (!result.Success)
+            {
+                StatusMessage = $"Helper error: {result.ErrorMessage}";
+                return;
+            }
+
+            if (result.ModifiedData != null)
+            {
+                // Update the resource with modified data
+                _package.ReplaceResource(entry, result.ModifiedData);
+                await UpdateSelectedResourceDetailsAsync();
+                StatusMessage = $"Resource updated by {helper.Label}";
+            }
+            else
+            {
+                StatusMessage = $"{helper.Label} completed (no changes)";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Helper error: {ex.Message}";
+        }
+    }
+
+    private static HexViewerView CreateHexViewer(ReadOnlyMemory<byte> data)
+    {
+        var vm = new HexViewerViewModel();
+        vm.LoadData(data);
+        return new HexViewerView { DataContext = vm };
+    }
+
+    private static (Control View, object? Wrapper) CreateStblEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new StblResource(key, data);
+        var vm = new StblEditorViewModel();
+        vm.LoadResource(resource);
+        return (new StblEditorView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateNameMapEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new NameMapResource(key, data);
+        var vm = new NameMapEditorViewModel();
+        vm.LoadResource(resource);
+        return (new NameMapEditorView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateTextEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new TextResource(key, data);
+        var vm = new TextEditorViewModel();
+        vm.LoadResource(resource);
+        return (new TextEditorView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateImageViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new ImageResource(key, data);
+        var vm = new ImageViewerViewModel();
+        vm.LoadResource(resource);
+        return (new ImageViewerView { DataContext = vm }, resource);
+    }
+
+    /// <summary>
+    /// Creates an image viewer for RLE texture resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 218-261 (RLEControl)
+    /// Type IDs: 0x3453CF95, 0xBA856C78
+    /// </remarks>
+    private static (Control View, object? Wrapper) CreateRleViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new RleResource(key, data);
+        var vm = new ImageViewerViewModel();
+        vm.LoadRleResource(resource);
+        return (new ImageViewerView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateSimDataViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new SimDataResource(key, data);
+        var vm = new SimDataViewerViewModel();
+        vm.LoadResource(resource);
+        return (new SimDataViewerView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateRcolViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new RcolResource(key, data);
+        var vm = new RcolViewerViewModel();
+        vm.LoadResource(resource);
+        return (new RcolViewerView { DataContext = vm }, resource);
+    }
+
+    private static (Control View, object? Wrapper) CreateCatalogViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new CobjResource(key, data);
+        var vm = new CatalogViewerViewModel();
+        vm.LoadResource(resource);
+        return (new CatalogViewerView { DataContext = vm }, resource);
+    }
+
+    /// <summary>
+    /// Creates a deformer map viewer for DMAP resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 343-425 (DeformerMapControl)
+    /// Type ID: 0xDB43E069
+    /// </remarks>
+    private static (Control View, object? Wrapper) CreateDeformerMapViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new DeformerMapResource(key, data);
+        var vm = new DeformerMapViewerViewModel();
+        vm.LoadResource(resource);
+        return (new DeformerMapViewerView { DataContext = vm }, resource);
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        if (_package == null || string.IsNullOrEmpty(PackagePath)) return;
+
+        try
+        {
+            await _package.SaveAsync();
+            StatusMessage = "Package saved";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Save error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveAsAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Package As",
+            DefaultExtension = "package",
+            FileTypeChoices = [PackageFileType]
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var path = file.Path.LocalPath;
+                await _package.SaveAsAsync(path);
+                PackagePath = path;
+                Title = $"TS4Tools - {_fileSystem.GetFileName(path)}";
+                StatusMessage = "Package saved";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Save error: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Saves a copy of the package without changing the current file path.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 903-928 (FileSaveCopyAs)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SaveCopyAsAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Copy As",
+            DefaultExtension = "package",
+            FileTypeChoices = [PackageFileType],
+            SuggestedFileName = !string.IsNullOrEmpty(PackagePath)
+                ? $"{Path.GetFileNameWithoutExtension(PackagePath)}_copy.package"
+                : "copy.package"
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var copyPath = file.Path.LocalPath;
+                await _package.SaveAsAsync(copyPath);
+                // Don't update PackagePath or Title - this is a copy
+                StatusMessage = $"Copy saved to {_fileSystem.GetFileName(copyPath)}";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Save error: {ex.Message}";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ClosePackageAsync()
+    {
+        await CloseCurrentPackageAsync();
+        StatusMessage = "Ready";
+    }
+
+    private async ValueTask CloseCurrentPackageAsync()
+    {
+        if (_package != null)
+        {
+            await _package.DisposeAsync();
+            _package = null;
+        }
+        _hashNameService.Clear();
+        PackagePath = string.Empty;
+        IsReadOnly = false;
+        Title = "TS4Tools";
+        Resources.Clear();
+        FilteredResources.Clear();
+        SelectedResource = null;
+        OnPropertyChanged(nameof(HasOpenPackage));
+        OnPropertyChanged(nameof(ResourceCount));
+        OnPropertyChanged(nameof(CanSave));
+    }
+
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        if (!string.IsNullOrEmpty(PackagePath))
+        {
+            var wasReadOnly = IsReadOnly;
+            await LoadPackageAsync(PackagePath, wasReadOnly);
+        }
+    }
+
+    [RelayCommand]
+    private static void Exit()
+    {
+        if (App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.Shutdown();
+        }
+    }
+
+    [RelayCommand]
+    private static async Task AboutAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel is Window window)
+        {
+            var dialog = new Window
+            {
+                Title = "About TS4Tools",
+                Width = 400,
+                Height = 250,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(24),
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "TS4Tools", FontSize = 24, FontWeight = Avalonia.Media.FontWeight.Bold },
+                        new TextBlock { Text = "Cross-platform Sims 4 Package Editor" },
+                        new TextBlock { Text = $"Version {UpdateCheckerService.CurrentVersion}", Margin = new Avalonia.Thickness(0, 8, 0, 0) },
+                        new TextBlock { Text = "A modern rewrite of s4pe/s4pi", Opacity = 0.7 },
+                        new TextBlock { Text = "Licensed under GPLv3", Margin = new Avalonia.Thickness(0, 16, 0, 0), Opacity = 0.7 }
+                    }
+                }
+            };
+
+            await dialog.ShowDialog(window);
+        }
+    }
+
+    /// <summary>
+    /// Checks for application updates.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs lines 82-129
+    /// </remarks>
+    [RelayCommand]
+    private static async Task CheckForUpdatesAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel is not Window window) return;
+
+        var result = await UpdateCheckerService.Instance.CheckForUpdatesAsync();
+
+        if (!result.Success)
+        {
+            var errorDialog = new Window
+            {
+                Title = "Update Check Failed",
+                Width = 400,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(24),
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "Failed to check for updates", FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                        new TextBlock { Text = result.ErrorMessage ?? "Unknown error", TextWrapping = Avalonia.Media.TextWrapping.Wrap }
+                    }
+                }
+            };
+            await errorDialog.ShowDialog(window);
+            return;
+        }
+
+        if (result.UpdateAvailable)
+        {
+            var updateDialog = new Window
+            {
+                Title = "Update Available",
+                Width = 450,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false
+            };
+
+            var yesButton = new Button { Content = "Visit Download Page", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+            var noButton = new Button { Content = "Later", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+
+            yesButton.Click += (_, _) =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(result.DownloadUrl) { UseShellExecute = true });
+                }
+                catch { /* Ignore */ }
+                updateDialog.Close();
+            };
+            noButton.Click += (_, _) => updateDialog.Close();
+
+            updateDialog.Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(24),
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock { Text = "A new version is available!", FontSize = 16, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = $"Current version: {result.CurrentVersion}" },
+                    new TextBlock { Text = $"Latest version: {result.LatestVersion}" },
+                    new StackPanel
+                    {
+                        Orientation = Avalonia.Layout.Orientation.Horizontal,
+                        Spacing = 8,
+                        Margin = new Avalonia.Thickness(0, 8, 0, 0),
+                        Children = { yesButton, noButton }
+                    }
+                }
+            };
+
+            await updateDialog.ShowDialog(window);
+        }
+        else
+        {
+            var upToDateDialog = new Window
+            {
+                Title = "No Updates",
+                Width = 350,
+                Height = 130,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(24),
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "You're up to date!", FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                        new TextBlock { Text = $"Version {result.CurrentVersion} is the latest version." }
+                    }
+                }
+            };
+            await upToDateDialog.ShowDialog(window);
+        }
+    }
+
+    /// <summary>
+    /// Opens the Settings dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings
+    /// </remarks>
+    [RelayCommand]
+    private async Task SettingsAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new SettingsWindow();
+        await dialog.ShowDialog(window);
+        StatusMessage = "Settings updated";
+    }
+
+    [RelayCommand]
+    private async Task ExportResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var key = SelectedResource.Key;
+        var defaultName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}.bin";
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Resource",
+            SuggestedFileName = defaultName,
+            FileTypeChoices = [BinaryFileType, AllFilesType]
+        });
+
+        if (file != null)
+        {
+            try
+            {
+                var entry = _package.Find(key);
+                if (entry == null)
+                {
+                    StatusMessage = "Resource not found";
+                    return;
+                }
+
+                var data = await _package.GetResourceDataAsync(entry);
+                await using var stream = await file.OpenWriteAsync();
+                await stream.WriteAsync(data);
+                StatusMessage = $"Exported {data.Length:N0} bytes";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Export error: {ex.Message}";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportResourceAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Resource",
+            AllowMultiple = false,
+            FileTypeFilter = [BinaryFileType, AllFilesType]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+            // Try to parse S4_Type_Group_Instance format
+            ResourceKey key;
+            if (TryParseS4FileName(fileName, out var parsedKey))
+            {
+                key = parsedKey;
+            }
+            else
+            {
+                // Use a default key - user should edit later
+                key = new ResourceKey(0x00000000, 0x00000000, (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            }
+
+            var data = await _fileSystem.ReadAllBytesAsync(filePath);
+            var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var instanceName = _hashNameService.TryGetName(key.Instance);
+                var item = new ResourceItemViewModel(key, entry.FileSize, instanceName);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                StatusMessage = $"Imported {data.Length:N0} bytes";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Import error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private void DeleteResource()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+
+        if (entry != null)
+        {
+            _package.DeleteResource(entry);
+            var item = SelectedResource;
+            Resources.Remove(item);
+            FilteredResources.Remove(item);
+            SelectedResource = null;
+            OnPropertyChanged(nameof(ResourceCount));
+            StatusMessage = "Resource deleted";
+        }
+    }
+
+    /// <summary>
+    /// Opens the Batch Import dialog for importing multiple files.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task BatchImportAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new BatchImportWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.Files.Count > 0)
+        {
+            var imported = 0;
+            var errors = 0;
+
+            foreach (var filePath in dialog.Files)
+            {
+                try
+                {
+                    if (!_fileSystem.FileExists(filePath)) continue;
+
+                    var fileName = _fileSystem.GetFileName(filePath);
+                    ResourceKey key;
+
+                    if (TryParseS4FileName(fileName, out var parsedKey))
+                    {
+                        key = parsedKey;
+                    }
+                    else
+                    {
+                        // Generate a unique key
+                        key = new ResourceKey(0x00000000, 0x00000000, (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (ulong)imported);
+                    }
+
+                    // Check for existing resource
+                    var existing = _package.Find(key);
+                    if (existing != null && !dialog.Replace)
+                    {
+                        // Skip duplicate
+                        continue;
+                    }
+
+                    if (existing != null)
+                    {
+                        // Remove existing for replacement
+                        _package.DeleteResource(existing);
+                        var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                        if (existingItem != null)
+                        {
+                            Resources.Remove(existingItem);
+                        }
+                    }
+
+                    var data = await _fileSystem.ReadAllBytesAsync(filePath);
+                    var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+                    if (entry != null)
+                    {
+                        var instanceName = dialog.UseNames ? Path.GetFileNameWithoutExtension(fileName) : _hashNameService.TryGetName(key.Instance);
+                        var item = new ResourceItemViewModel(key, entry.FileSize, instanceName);
+                        Resources.Add(item);
+                        imported++;
+                    }
+                }
+                catch
+                {
+                    errors++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+            StatusMessage = $"Imported {imported} file(s)" + (errors > 0 ? $", {errors} error(s)" : "");
+        }
+    }
+
+    /// <summary>
+    /// Imports a DDS file as a DST resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe Helpers/DDSHelper/Import.cs
+    /// Converts DDS (DXT1/DXT5) to DST (DST1/DST5) format for Sims 4 texture resources.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportDdsAsDstAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import DDS as DST",
+            AllowMultiple = false,
+            FileTypeFilter = [
+                new FilePickerFileType("DDS Files") { Patterns = ["*.dds"] },
+                AllFilesType
+            ]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            var ddsData = await _fileSystem.ReadAllBytesAsync(filePath);
+
+            // Verify it's a valid DDS file
+            if (ddsData.Length < 128 || ddsData[0] != 'D' || ddsData[1] != 'D' || ddsData[2] != 'S' || ddsData[3] != ' ')
+            {
+                StatusMessage = "Invalid DDS file";
+                return;
+            }
+
+            // Convert DDS to DST
+            var dstData = DstDecoder.ShuffleToDst(ddsData);
+            if (dstData == null)
+            {
+                StatusMessage = "DDS format not supported (only DXT1/DXT5)";
+                return;
+            }
+
+            // Generate a resource key for DST texture type
+            const uint dstTypeId = 0x00B2D882;
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            var instanceId = Wrappers.Hashing.FnvHash.Fnv64(fileName);
+            var key = new ResourceKey(dstTypeId, 0x00000000, instanceId);
+
+            // Check for existing resource
+            var existing = _package.Find(key);
+            if (existing != null)
+            {
+                _package.DeleteResource(existing);
+                var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                if (existingItem != null)
+                {
+                    Resources.Remove(existingItem);
+                }
+            }
+
+            var entry = _package.AddResource(key, dstData, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var item = new ResourceItemViewModel(key, entry.FileSize, fileName);
+                Resources.Add(item);
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+
+                // Select the new resource
+                SelectedResource = item;
+
+                StatusMessage = $"Imported DDS as DST: {fileName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Import error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Imports PNG files as thumbnail resources (JFIF+ALFA format).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe Helpers/ThumbnailHelper/ImportThumb.cs
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/ThumbnailResource.cs
+    /// Converts PNG images with alpha to JFIF+ALFA format used by Sims 4 thumbnails.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportThumbnailAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        if (topLevel is not Window window) return;
+
+        var dialog = new ThumbnailHelperWindow();
+        var result = await dialog.ShowDialog<bool?>(window);
+
+        if (result != true || dialog.ConvertedFiles.Count == 0) return;
+
+        try
+        {
+            int importedCount = 0;
+
+            foreach (var (fileName, data) in dialog.ConvertedFiles)
+            {
+                // Default thumbnail type ID (0x3C2A8647 is a common THUM type)
+                const uint thumbnailTypeId = 0x3C2A8647;
+                var baseName = Path.GetFileNameWithoutExtension(fileName);
+                var instanceId = Wrappers.Hashing.FnvHash.Fnv64(baseName);
+                var key = new ResourceKey(thumbnailTypeId, 0x00000000, instanceId);
+
+                // Check for existing resource
+                var existing = _package.Find(key);
+                if (existing != null)
+                {
+                    _package.DeleteResource(existing);
+                    var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                    if (existingItem != null)
+                    {
+                        Resources.Remove(existingItem);
+                    }
+                }
+
+                var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+                if (entry != null)
+                {
+                    var item = new ResourceItemViewModel(key, entry.FileSize, baseName);
+                    Resources.Add(item);
+                    importedCount++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+
+            StatusMessage = $"Imported {importedCount} thumbnail{(importedCount != 1 ? "s" : "")}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Thumbnail import error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Imports resources from a DBC (Database Cache) file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 205-240
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/ExperimentalDBCWarning.cs
+    /// DBC files are DBPF packages with a .dbc extension used by the game for caching.
+    /// This feature shows a warning dialog before import due to experimental nature.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportDbcAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        // Show experimental warning dialog
+        // Source: ExperimentalDBCWarning.cs
+        var warningDialog = new DbcWarningWindow();
+        var warningResult = await warningDialog.ShowDialog<bool?>(window);
+
+        if (warningResult != true || !warningDialog.Confirmed) return;
+
+        // Open file picker for DBC files
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import DBC File",
+            AllowMultiple = false,
+            FileTypeFilter = [
+                new FilePickerFileType("DBC Files") { Patterns = ["*.dbc"] },
+                PackageFileType,
+                AllFilesType
+            ]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            StatusMessage = $"Importing DBC: {Path.GetFileName(filePath)}...";
+
+            // Open the DBC file as a package (it uses DBPF format)
+            // readWrite=false means read-only mode
+            await using var dbcPackage = await DbpfPackage.OpenAsync(filePath, readWrite: false);
+
+            if (dbcPackage.Resources.Count == 0)
+            {
+                StatusMessage = "DBC file contains no resources";
+                return;
+            }
+
+            // Import all resources from DBC
+            int importedCount = 0;
+            int skippedCount = 0;
+
+            foreach (var entry in dbcPackage.Resources)
+            {
+                var key = entry.Key;
+
+                // Check for duplicates
+                var existing = _package.Find(key);
+                if (existing != null)
+                {
+                    // Skip duplicates in DBC import (safer for cache files)
+                    skippedCount++;
+                    continue;
+                }
+
+                var data = await dbcPackage.GetResourceDataAsync(entry);
+                var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                if (newEntry != null)
+                {
+                    var instanceName = _hashNameService.TryGetName(key.Instance);
+                    var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                    Resources.Add(item);
+                    importedCount++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+
+            StatusMessage = $"Imported {importedCount} resources from DBC" +
+                (skippedCount > 0 ? $", {skippedCount} duplicates skipped" : "");
+
+            // Prompt for autosave if setting is enabled
+            // Source: Settings.settings AskDBCAutoSave
+            if (SettingsService.Instance.Settings.PromptDbcAutosave && importedCount > 0)
+            {
+                // Recommend saving after DBC import
+                StatusMessage += " - Consider saving your package";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"DBC import error: {ex.Message}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ReplaceResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Replace Resource",
+            AllowMultiple = false,
+            FileTypeFilter = [BinaryFileType, AllFilesType]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var key = SelectedResource.Key;
+            var entry = _package.Find(key);
+
+            if (entry == null)
+            {
+                StatusMessage = "Resource not found";
+                return;
+            }
+
+            var data = await _fileSystem.ReadAllBytesAsync(files[0].Path.LocalPath);
+            _package.ReplaceResource(entry, data);
+            await UpdateSelectedResourceDetailsAsync();
+            StatusMessage = $"Replaced with {data.Length:N0} bytes";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Replace error: {ex.Message}";
+        }
+    }
+
+    private static TopLevel? GetTopLevel()
+    {
+        return TopLevel.GetTopLevel(
+            App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null);
+    }
+
+    private static bool TryParseS4FileName(string fileName, out ResourceKey key)
+    {
+        key = default;
+
+        // Expected format: S4_XXXXXXXX_XXXXXXXX_XXXXXXXXXXXXXXXX
+        if (!fileName.StartsWith("S4_", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var parts = fileName[3..].Split('_');
+        if (parts.Length != 3)
+            return false;
+
+        try
+        {
+            var type = Convert.ToUInt32(parts[0], 16);
+            var group = Convert.ToUInt32(parts[1], 16);
+            var instance = Convert.ToUInt64(parts[2], 16);
+            key = new ResourceKey(type, group, instance);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task HashCalculatorAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new HashCalculatorWindow();
+        await dialog.ShowDialog(window);
+        StatusMessage = "Hash calculator closed";
+    }
+
+    [RelayCommand]
+    private async Task PackageStatsAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new PackageStatsWindow(_package);
+        await dialog.ShowDialog(window);
+    }
+
+    /// <summary>
+    /// Exports selected resources to a new or existing package file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 (ResourceExportToPackage)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ExportToPackageAsync()
+    {
+        if (_package == null || SelectedResources.Count == 0 && SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        // Get resources to export
+        List<ResourceItemViewModel> resourcesToExport = SelectedResources.Count > 0
+            ? SelectedResources.ToList()
+            : SelectedResource != null
+                ? [SelectedResource]
+                : [];
+
+        if (resourcesToExport.Count == 0)
+        {
+            StatusMessage = "No resources selected";
+            return;
+        }
+
+        // Show save dialog
+        var files = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export to Package",
+            DefaultExtension = "package",
+            FileTypeChoices = [PackageFileType, AllFilesType],
+            SuggestedFileName = "exported.package"
+        });
+
+        if (files == null) return;
+
+        var targetPath = files.Path.LocalPath;
+
+        // Prevent exporting to same file
+        if (!string.IsNullOrEmpty(PackagePath) &&
+            Path.GetFullPath(PackagePath).Equals(Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = "Cannot export to the same file";
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Exporting to package...";
+
+            // Create or open target package
+            DbpfPackage targetPackage;
+            var isNewPackage = !_fileSystem.FileExists(targetPath);
+
+            if (isNewPackage)
+            {
+                targetPackage = DbpfPackage.CreateNew();
+            }
+            else
+            {
+                targetPackage = await DbpfPackage.OpenAsync(targetPath);
+            }
+
+            try
+            {
+                var exported = 0;
+                var replaced = 0;
+
+                foreach (var resource in resourcesToExport)
+                {
+                    var key = resource.Key;
+                    var entry = _package.Find(key);
+                    if (entry == null) continue;
+
+                    // Check for duplicate in target
+                    var existing = targetPackage.Find(key);
+                    if (existing != null)
+                    {
+                        // Replace existing
+                        targetPackage.DeleteResource(existing);
+                        replaced++;
+                    }
+
+                    // Get data and add to target package
+                    var data = await _package.GetResourceDataAsync(entry);
+                    targetPackage.AddResource(key, data.ToArray(), rejectDuplicates: false);
+                    exported++;
+                }
+
+                // Save the target package
+                await targetPackage.SaveAsAsync(targetPath);
+
+                StatusMessage = replaced > 0
+                    ? $"Exported {exported} resources ({replaced} replaced)"
+                    : $"Exported {exported} resources";
+            }
+            finally
+            {
+                await targetPackage.DisposeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Export error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Exports selected resources to a folder as individual files.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs resourceExportToFolder_Click
+    /// Uses TGIN format: S4_{Type:X8}_{Group:X8}_{Instance:X16}[_Name].ext
+    /// </remarks>
+    [RelayCommand]
+    private async Task ExportToFolderAsync()
+    {
+        if (_package == null || SelectedResources.Count == 0 && SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        // Get resources to export
+        List<ResourceItemViewModel> resourcesToExport = SelectedResources.Count > 0
+            ? SelectedResources.ToList()
+            : SelectedResource != null
+                ? [SelectedResource]
+                : [];
+
+        if (resourcesToExport.Count == 0)
+        {
+            StatusMessage = "No resources selected";
+            return;
+        }
+
+        // Show folder picker
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Export Folder",
+            AllowMultiple = false
+        });
+
+        if (folders.Count == 0) return;
+
+        var targetFolder = folders[0].Path.LocalPath;
+
+        try
+        {
+            StatusMessage = "Exporting to folder...";
+
+            var exported = 0;
+            var errors = 0;
+
+            foreach (var resource in resourcesToExport)
+            {
+                try
+                {
+                    var key = resource.Key;
+                    var entry = _package.Find(key);
+                    if (entry == null) continue;
+
+                    // Generate TGIN format filename: S4_Type_Group_Instance[_Name].ext
+                    var baseName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+
+                    // Add resource name if available
+                    if (!string.IsNullOrEmpty(resource.InstanceName))
+                    {
+                        // Sanitize name for filename
+                        var safeName = SanitizeFileName(resource.InstanceName);
+                        baseName += $"_{safeName}";
+                    }
+
+                    // Get file extension based on resource type
+                    var extension = GetResourceExtension(key.ResourceType);
+                    var fileName = baseName + extension;
+
+                    var targetPath = Path.Combine(targetFolder, fileName);
+
+                    // Get data and write to file
+                    var data = await _package.GetResourceDataAsync(entry);
+                    await _fileSystem.WriteAllBytesAsync(targetPath, data.ToArray());
+
+                    exported++;
+                }
+                catch
+                {
+                    errors++;
+                }
+            }
+
+            StatusMessage = errors > 0
+                ? $"Exported {exported} resources ({errors} errors)"
+                : $"Exported {exported} resources to folder";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Export error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Sanitizes a string for use in a file name.
+    /// </summary>
+    private static string SanitizeFileName(string name)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var result = new StringBuilder(name.Length);
+
+        foreach (var c in name)
+        {
+            result.Append(Array.IndexOf(invalidChars, c) >= 0 ? '_' : c);
+        }
+
+        // Limit length to prevent overly long filenames
+        var sanitized = result.ToString();
+        return sanitized.Length > 64 ? sanitized[..64] : sanitized;
+    }
+
+    /// <summary>
+    /// Gets the file extension for a resource type.
+    /// </summary>
+    private static string GetResourceExtension(uint resourceType)
+    {
+        return resourceType switch
+        {
+            0x220557DA => ".stbl",     // String Table
+            0x0166038C => ".nmap",     // Name Map
+            0x00B00000 => ".png",      // PNG Image
+            0x00B2D882 => ".dds",      // DDS/DST Texture
+            0x3453CF95 => ".rle",      // RLE Texture
+            0xBA856C78 => ".rle",      // RLE Texture (alt)
+            0x03B33DDF => ".xml",      // Tuning XML
+            0x6017E896 => ".xml",      // Tuning (alt)
+            0x545AC67A => ".data",     // SimData
+            0x319E4F1D => ".cobj",     // Catalog Object
+            0x01661233 => ".modl",     // MODL
+            0x01D0E75D => ".matd",     // MATD
+            0x01D10F34 => ".mlod",     // MLOD
+            0x736884F1 => ".vpxy",     // VPXY
+            0xD3044521 => ".rslt",     // RSLT
+            0xD382BF57 => ".ftpt",     // FTPT
+            0xDB43E069 => ".dmap",     // Deformer Map
+            _ => ".bin"                 // Unknown - binary
+        };
+    }
+
+    /// <summary>
+    /// Opens the Import from Package dialog for importing selected resources from another package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 133-162 (ResourceImportPackages)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportFromPackageAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        await using var dialog = new ImportFromPackageWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.SelectedResources.Count > 0 && dialog.SourcePackage != null)
+        {
+            try
+            {
+                var imported = 0;
+                var skipped = 0;
+
+                foreach (var resource in dialog.SelectedResources)
+                {
+                    var key = resource.Key;
+                    var entry = dialog.SourcePackage.Find(key);
+                    if (entry == null) continue;
+
+                    // Skip NameMap if not requested
+                    if (key.ResourceType == 0x0166038C && !dialog.ImportNames)
+                    {
+                        continue;
+                    }
+
+                    // Check for duplicates
+                    var existing = _package.Find(key);
+                    if (existing != null)
+                    {
+                        switch (dialog.DuplicateMode)
+                        {
+                            case DuplicateHandling.Skip:
+                                skipped++;
+                                continue;
+                            case DuplicateHandling.Replace:
+                                _package.DeleteResource(existing);
+                                var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                                if (existingItem != null)
+                                {
+                                    Resources.Remove(existingItem);
+                                }
+                                break;
+                            case DuplicateHandling.Allow:
+                                // Allow duplicate keys
+                                break;
+                        }
+                    }
+
+                    // Get data and add to target package
+                    var data = await dialog.SourcePackage.GetResourceDataAsync(entry);
+                    var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                    if (newEntry != null)
+                    {
+                        var instanceName = _hashNameService.TryGetName(key.Instance);
+                        var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                        Resources.Add(item);
+                        imported++;
+                    }
+                }
+
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Imported {imported} resources" + (skipped > 0 ? $", {skipped} skipped" : "");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Import error: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Opens the Merge Packages dialog for importing resources from other packages.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 350-500
+    /// </remarks>
+    [RelayCommand]
+    private async Task MergePackagesAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new PackageMergeWindow();
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.Packages.Count > 0)
+        {
+            try
+            {
+                var totalMerged = 0;
+                var totalSkipped = 0;
+                var packageCount = dialog.Packages.Count;
+
+                foreach (var pkgInfo in dialog.Packages)
+                {
+                    if (pkgInfo.Package == null) continue;
+
+                    dialog.ProgressText = $"Merging {pkgInfo.FileName}...";
+                    var entries = pkgInfo.Package.Resources.ToList();
+                    var processed = 0;
+
+                    foreach (var entry in entries)
+                    {
+                        var key = entry.Key;
+
+                        // Skip NameMap if requested
+                        if (key.ResourceType == 0x0166038C && dialog.SkipNameMaps)
+                        {
+                            continue;
+                        }
+
+                        // Check for duplicates
+                        var existing = _package.Find(key);
+
+                        if (existing != null)
+                        {
+                            switch (dialog.DuplicateMode)
+                            {
+                                case DuplicateHandling.Skip:
+                                    totalSkipped++;
+                                    continue;
+                                case DuplicateHandling.Replace:
+                                    _package.DeleteResource(existing);
+                                    break;
+                                case DuplicateHandling.Allow:
+                                    // Allow duplicate keys
+                                    break;
+                            }
+                        }
+
+                        // Get data and add to target package
+                        var data = await pkgInfo.Package.GetResourceDataAsync(entry);
+                        var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                        if (newEntry != null)
+                        {
+                            var instanceName = _hashNameService.TryGetName(key.Instance);
+                            var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                            Resources.Add(item);
+                            totalMerged++;
+                        }
+
+                        processed++;
+                        dialog.Progress = (processed * 100.0) / entries.Count;
+                    }
+                }
+
+                dialog.DisposePackages();
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Merged {totalMerged} resources from {packageCount} package(s)" +
+                    (totalSkipped > 0 ? $", {totalSkipped} skipped" : "");
+            }
+            catch (Exception ex)
+            {
+                dialog.DisposePackages();
+                StatusMessage = $"Merge error: {ex.Message}";
+            }
+        }
+        else
+        {
+            dialog.DisposePackages();
+        }
+    }
+
+    /// <summary>
+    /// Opens the Search dialog to find resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task SearchAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new SearchWindow(_package, FilteredResources);
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.SelectedResult != null)
+        {
+            // Navigate to the selected resource
+            SelectedResource = dialog.SelectedResult;
+            StatusMessage = $"Found: {dialog.SelectedResult.TypeName}";
+        }
+    }
+
+    [RelayCommand]
+    private async Task CopyResourceKeyAsync()
+    {
+        if (SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var keyString = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+
+        var topLevel = GetTopLevel();
+        if (topLevel?.Clipboard is { } clipboard)
+        {
+            await clipboard.SetTextAsync(keyString);
+            StatusMessage = $"Copied: {keyString}";
+        }
+    }
+
+    /// <summary>
+    /// Copies the selected resource to the internal clipboard.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1495-1529
+    /// </remarks>
+    [RelayCommand]
+    private async Task CopyResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            _clipboardData = new ClipboardResourceData
+            {
+                Key = key,
+                Data = data.ToArray(),
+                ResourceName = SelectedResource.InstanceName
+            };
+
+            // Also copy the key to system clipboard for cross-application use
+            var keyString = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+            var topLevel = GetTopLevel();
+            if (topLevel?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(keyString);
+            }
+
+            OnPropertyChanged(nameof(HasClipboardResource));
+            StatusMessage = $"Copied resource: {SelectedResource.TypeName}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Copy error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Pastes the resource from the internal clipboard into the current package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 513-560 (ResourcePaste)
+    /// </remarks>
+    [RelayCommand]
+    private void PasteResource()
+    {
+        if (_package == null || _clipboardData == null) return;
+
+        try
+        {
+            var key = _clipboardData.Key;
+            var entry = _package.AddResource(key, _clipboardData.Data, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var item = new ResourceItemViewModel(key, entry.FileSize, _clipboardData.ResourceName);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Pasted resource: {item.TypeName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Paste error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Duplicates the selected resource within the current package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1540-1558 (ResourceDuplicate)
+    /// </remarks>
+    [RelayCommand]
+    private async Task DuplicateResourceAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+            if (newEntry != null)
+            {
+                var item = new ResourceItemViewModel(key, newEntry.FileSize, SelectedResource.InstanceName);
+                Resources.Add(item);
+                ApplyFilter();
+                SelectedResource = item;
+                OnPropertyChanged(nameof(ResourceCount));
+                StatusMessage = $"Duplicated resource: {item.TypeName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Duplicate error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Selects all resources in the filtered list.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 236-285 (SelectAll)
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1619-1622 (ResourceSelectAll)
+    /// </remarks>
+    [RelayCommand]
+    private void SelectAll()
+    {
+        if (_package == null || FilteredResources.Count == 0) return;
+
+        SelectedResources.Clear();
+        foreach (var resource in FilteredResources)
+        {
+            SelectedResources.Add(resource);
+        }
+
+        // Set first as the "active" selection for preview purposes
+        if (FilteredResources.Count > 0)
+        {
+            SelectedResource = FilteredResources[0];
+        }
+
+        StatusMessage = $"Selected {SelectedResources.Count} resources";
+        OnPropertyChanged(nameof(SelectedResources));
+    }
+
+    [RelayCommand]
+    private void CycleSortMode()
+    {
+        SortMode = SortMode switch
+        {
+            ResourceSortMode.TypeName => ResourceSortMode.Instance,
+            ResourceSortMode.Instance => ResourceSortMode.Size,
+            ResourceSortMode.Size => ResourceSortMode.TypeName,
+            _ => ResourceSortMode.TypeName
+        };
+        StatusMessage = $"Sorting by: {SortMode}";
+    }
+
+    #region Control Panel Support
+    // Source: legacy_references/Sims4Tools/s4pe/ControlPanel/ControlPanel.cs
+
+    /// <summary>
+    /// Shows the hex view for the selected resource.
+    /// </summary>
+    public void ShowHexView()
+    {
+        if (SelectedResource == null || _package == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null) return;
+
+        try
+        {
+            var dataTask = _package.GetResourceDataAsync(entry);
+            dataTask.AsTask().ContinueWith(t =>
+            {
+                if (t.IsCompletedSuccessfully)
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        EditorContent = CreateHexViewer(t.Result);
+                        _currentResourceWrapper = null;
+                        StatusMessage = "Hex view";
+                    });
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Shows the value/preview view for the selected resource.
+    /// </summary>
+    public async void ShowValueView()
+    {
+        if (SelectedResource == null) return;
+        await UpdateSelectedResourceDetailsAsync();
+        StatusMessage = "Preview view";
+    }
+
+    /// <summary>
+    /// Executes the configured hex editor for the selected resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3176-3200 (EditOte hex editor)
+    /// </remarks>
+    public async Task ExecuteHexEditorAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var settings = SettingsService.Instance.Settings;
+        if (string.IsNullOrEmpty(settings.HexEditorCommand))
+        {
+            StatusMessage = "No hex editor configured. Set it in Settings > External Programs.";
+            return;
+        }
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        StatusMessage = "Opening hex editor...";
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+            var tempFile = _fileSystem.CombinePath(_fileSystem.GetTempPath(), $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}.bin");
+
+            // Write to temp file
+            await _fileSystem.WriteAllBytesAsync(tempFile, data.ToArray());
+            var lastWriteTime = _fileSystem.GetLastWriteTimeUtc(tempFile);
+
+            // Build command line
+            var quote = settings.HexEditorWantsQuotes ? "\"" : "";
+            var args = quote + tempFile + quote;
+
+            // Execute editor
+            using var process = new Process();
+            process.StartInfo.FileName = settings.HexEditorCommand;
+            process.StartInfo.Arguments = args;
+            process.StartInfo.UseShellExecute = false;
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            // Check for modifications
+            var newWriteTime = _fileSystem.GetLastWriteTimeUtc(tempFile);
+            if (settings.HexEditorIgnoreTimestamp || newWriteTime != lastWriteTime)
+            {
+                var modifiedData = await _fileSystem.ReadAllBytesAsync(tempFile);
+                _package.ReplaceResource(entry, modifiedData);
+                await UpdateSelectedResourceDetailsAsync();
+                StatusMessage = "Resource updated from hex editor";
+            }
+            else
+            {
+                StatusMessage = "Hex editor closed (no changes)";
+            }
+
+            // Cleanup
+            _fileSystem.DeleteFile(tempFile);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Hex editor error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Called when the Sort option changes in the control panel.
+    /// </summary>
+    public void OnSortOptionChanged(bool sort)
+    {
+        // The Sort option enables/disables sorting - we can use TypeName sort as default
+        if (sort && SortMode == ResourceSortMode.TypeName)
+        {
+            ApplyFilter();
+        }
+        StatusMessage = sort ? "Sorting enabled" : "Sorting disabled";
+    }
+
+    /// <summary>
+    /// Called when the HexOnly option changes in the control panel.
+    /// </summary>
+    public void OnHexOnlyOptionChanged(bool hexOnly)
+    {
+        // This would affect how type names are displayed - hex IDs vs friendly names
+        // For now, just update status
+        StatusMessage = hexOnly ? "Showing hex type IDs only" : "Showing type names";
+        // Would need to refresh the resource list display here
+    }
+
+    /// <summary>
+    /// Called when the UseNames option changes in the control panel.
+    /// </summary>
+    public void OnUseNamesOptionChanged(bool useNames)
+    {
+        StatusMessage = useNames ? "Using resource names from NameMap" : "Not using resource names";
+        // Would need to refresh the resource list display here
+    }
+
+    /// <summary>
+    /// Called when the UseTags option changes in the control panel.
+    /// </summary>
+    public void OnUseTagsOptionChanged(bool useTags)
+    {
+        StatusMessage = useTags ? "Showing type tags" : "Not showing type tags";
+        // Would need to refresh the resource list display here
+    }
+
+    /// <summary>
+    /// Called when the Auto mode changes in the control panel.
+    /// </summary>
+    public void OnAutoModeChanged(int autoChoice)
+    {
+        var mode = autoChoice switch
+        {
+            1 => "Hex",
+            2 => "Preview",
+            _ => "Off"
+        };
+        StatusMessage = $"Auto mode: {mode}";
+    }
+
+    #endregion
+
+    #region Float and Save Preview
+    // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1148-1163, 2910-2936
+
+    /// <summary>
+    /// Indicates whether the current editor content can be floated.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1148-1151 (CanFloat)
+    /// </remarks>
+    public bool CanFloat => HasSelectedResource && EditorContent != null;
+
+    /// <summary>
+    /// Indicates whether the current preview can be saved.
+    /// Save is available when the preview content is text-based.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1089-1105 (CanSavePreview)
+    /// </remarks>
+    public bool CanSavePreview => HasSelectedResource && IsTextBasedPreview;
+
+    /// <summary>
+    /// Whether the current editor is text-based (for Save Preview feature).
+    /// </summary>
+    private bool IsTextBasedPreview
+    {
+        get
+        {
+            if (EditorContent == null) return false;
+            // Check if editor is text-based (STBL, NameMap, XML/Tuning, SimData, or text viewer)
+            return EditorContent is Views.Editors.StblEditorView
+                or Views.Editors.NameMapEditorView
+                or Views.Editors.TextEditorView
+                or Views.Editors.SimDataViewerView;
+        }
+    }
+
+    /// <summary>
+    /// Opens the current editor content in a floating window.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1153-1163 (EditFloat),
+    ///         lines 2910-2936 (f_FloatControl)
+    /// </remarks>
+    [RelayCommand]
+    private async Task FloatPreviewAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null) return;
+
+        try
+        {
+            var data = await _package.GetResourceDataAsync(entry);
+
+            // Create a new editor control for the floating window
+            var (content, _) = key.ResourceType switch
+            {
+                0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
+                0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
+                0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
+                0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
+                0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
+                _ => (CreateHexViewer(data), null)
+            };
+
+            var window = new Views.Dialogs.FloatingPreviewWindow();
+            window.SetContent(content, SelectedResource.InstanceName ?? SelectedResource.DisplayKey);
+
+            // Get the main window to set as owner
+            var mainWindow = App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (mainWindow != null)
+            {
+                window.Show(mainWindow);
+            }
+            else
+            {
+                window.Show();
+            }
+
+            StatusMessage = "Preview opened in floating window";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error opening floating preview: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Saves the current preview content to a file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1107-1146 (EditSavePreview)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SavePreviewAsync()
+    {
+        if (SelectedResource == null || EditorContent == null) return;
+
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        // Get preview text content
+        var text = GetPreviewText();
+        if (string.IsNullOrEmpty(text))
+        {
+            StatusMessage = "No text content to save";
+            return;
+        }
+
+        // Build default filename from resource key
+        var key = SelectedResource.Key;
+        var baseName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+        if (!string.IsNullOrEmpty(SelectedResource.InstanceName))
+        {
+            baseName = SelectedResource.InstanceName;
+        }
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Save Preview Content",
+            SuggestedFileName = baseName + ".txt",
+            FileTypeChoices = [
+                new FilePickerFileType("Text Files") { Patterns = ["*.txt"] },
+                new FilePickerFileType("All Files") { Patterns = ["*"] }
+            ],
+            DefaultExtension = ".txt"
+        });
+
+        if (file != null)
+        {
+            var path = file.Path.LocalPath;
+            await _fileSystem.WriteAllTextAsync(path, text);
+            StatusMessage = $"Preview saved to {_fileSystem.GetFileName(path)}";
+        }
+    }
+
+    /// <summary>
+    /// Gets the text content from the current preview.
+    /// </summary>
+    private string? GetPreviewText()
+    {
+        if (EditorContent == null) return null;
+
+        // Extract text based on editor type
+        return EditorContent switch
+        {
+            Views.Editors.StblEditorView stblView => GetStblText(stblView),
+            Views.Editors.NameMapEditorView nameMapView => GetNameMapText(nameMapView),
+            Views.Editors.TextEditorView textView => GetTextEditorText(textView),
+            Views.Editors.SimDataViewerView simDataView => GetSimDataText(simDataView),
+            _ => null
+        };
+    }
+
+    private static string? GetStblText(Views.Editors.StblEditorView view)
+    {
+        if (view.DataContext is not Editors.StblEditorViewModel vm) return null;
+        var sb = new StringBuilder();
+        foreach (var entry in vm.Entries)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"0x{entry.KeyHash:X16}: {entry.Value}");
+        }
+        return sb.ToString();
+    }
+
+    private static string? GetNameMapText(Views.Editors.NameMapEditorView view)
+    {
+        if (view.DataContext is not Editors.NameMapEditorViewModel vm) return null;
+        var sb = new StringBuilder();
+        foreach (var entry in vm.Entries)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"0x{entry.Hash:X16}: {entry.Name}");
+        }
+        return sb.ToString();
+    }
+
+    private static string? GetTextEditorText(Views.Editors.TextEditorView view)
+    {
+        if (view.DataContext is not Editors.TextEditorViewModel vm) return null;
+        return vm.Text;
+    }
+
+    private static string? GetSimDataText(Views.Editors.SimDataViewerView view)
+    {
+        if (view.DataContext is not Editors.SimDataViewerViewModel vm) return null;
+        // SimData viewer has HeaderInfo and HexPreview - combine them
+        return $"{vm.HeaderInfo}\n\n{vm.HexPreview}";
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Toggles the advanced filter panel visibility.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Filter/FilterField.cs
+    /// </remarks>
+    [RelayCommand]
+    private void ToggleAdvancedFilter()
+    {
+        ShowAdvancedFilter = !ShowAdvancedFilter;
+    }
+
+    /// <summary>
+    /// Toggles the property grid panel visibility.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs
+    /// </remarks>
+    [RelayCommand]
+    private void TogglePropertyGrid()
+    {
+        ShowPropertyGrid = !ShowPropertyGrid;
+
+        if (ShowPropertyGrid && _currentResourceWrapper != null)
+        {
+            UpdatePropertyGrid(_currentResourceWrapper);
+        }
+    }
+
+    private void UpdatePropertyGrid(object? resource)
+    {
+        if (resource == null)
+        {
+            PropertyGridContent = null;
+            return;
+        }
+
+        var vm = new PropertyGridViewModel();
+        vm.LoadResource(resource);
+        PropertyGridContent = new PropertyGridEditorView { DataContext = vm };
+    }
+
+    /// <summary>
+    /// Opens the Resource Details dialog for viewing/editing resource TGI.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1584-1617 (ResourceDetails method)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ResourceDetailsAsync()
+    {
+        if (_package == null || SelectedResource == null) return;
+
+        var key = SelectedResource.Key;
+        var entry = _package.Find(key);
+        if (entry == null)
+        {
+            StatusMessage = "Resource not found";
+            return;
+        }
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new ResourceDetailsWindow();
+        dialog.Initialize(
+            key,
+            SelectedResource.InstanceName,
+            entry.IsCompressed,
+            entry.FileSize,
+            entry.MemorySize);
+
+        var result = await dialog.ShowDialog<bool>(window);
+
+        if (result && dialog.WasModified)
+        {
+            try
+            {
+                // Update the resource key if changed
+                var newKey = dialog.ResourceKey;
+                if (newKey != key)
+                {
+                    // Get data, delete old, add new
+                    var data = await _package.GetResourceDataAsync(entry);
+                    _package.DeleteResource(entry);
+
+                    var newEntry = _package.AddResource(newKey, data.ToArray(), rejectDuplicates: false);
+                    if (newEntry != null)
+                    {
+                        // Note: compression setting requires re-adding with new data
+                        // This is a simplified implementation - full implementation would
+                        // need to actually compress/decompress the data
+
+                        // Update the list
+                        Resources.Remove(SelectedResource);
+                        FilteredResources.Remove(SelectedResource);
+
+                        var newItem = new ResourceItemViewModel(newKey, newEntry.FileSize, dialog.ResourceName);
+                        Resources.Add(newItem);
+                        ApplyFilter();
+                        SelectedResource = newItem;
+                    }
+                }
+
+                StatusMessage = "Resource details updated";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Update error: {ex.Message}";
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenRecentFileAsync(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        if (_fileSystem.FileExists(path))
+        {
+            await LoadPackageAsync(path);
+        }
+        else
+        {
+            StatusMessage = $"File not found: {path}";
+            // Remove from recent files
+            var item = RecentFiles.FirstOrDefault(r => r.Path == path);
+            if (item != null)
+            {
+                RecentFiles.Remove(item);
+                SaveRecentFiles();
+            }
+        }
+    }
+
+    private void LoadRecentFiles()
+    {
+        RecentFiles.Clear();
+
+        try
+        {
+            if (_fileSystem.FileExists(RecentFilesPath))
+            {
+                var json = _fileSystem.ReadAllText(RecentFilesPath);
+                var paths = JsonSerializer.Deserialize<string[]>(json) ?? [];
+
+                foreach (var path in paths.Take(MaxRecentFiles))
+                {
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        RecentFiles.Add(new RecentFileViewModel(path));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to load recent files: {ex.Message}");
+        }
+    }
+
+    private void SaveRecentFiles()
+    {
+        try
+        {
+            var dir = _fileSystem.GetDirectoryName(RecentFilesPath);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                _fileSystem.CreateDirectory(dir);
+            }
+
+            var paths = RecentFiles.Select(r => r.Path).ToArray();
+            var json = JsonSerializer.Serialize(paths);
+            _fileSystem.WriteAllText(RecentFilesPath, json);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to save recent files: {ex.Message}");
+        }
+    }
+
+    private void AddToRecentFiles(string path)
+    {
+        // Remove if already exists
+        var existing = RecentFiles.FirstOrDefault(r => r.Path == path);
+        if (existing != null)
+        {
+            RecentFiles.Remove(existing);
+        }
+
+        // Add to front
+        RecentFiles.Insert(0, new RecentFileViewModel(path));
+
+        // Trim to max
+        while (RecentFiles.Count > MaxRecentFiles)
+        {
+            RecentFiles.RemoveAt(RecentFiles.Count - 1);
+        }
+
+        SaveRecentFiles();
+    }
+
+    #region Bookmarks
+    // Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+
+    /// <summary>
+    /// Loads bookmarks from settings.
+    /// </summary>
+    private void LoadBookmarks()
+    {
+        Bookmarks.Clear();
+        var settings = SettingsService.Instance.Settings;
+
+        foreach (var bookmark in settings.Bookmarks)
+        {
+            if (!string.IsNullOrEmpty(bookmark))
+            {
+                Bookmarks.Add(new BookmarkItemViewModel(bookmark));
+            }
+        }
+
+        OnPropertyChanged(nameof(HasBookmarks));
+    }
+
+    /// <summary>
+    /// Opens a bookmarked package.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenBookmarkAsync(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        // Parse bookmark format: "0:path" for read-only, "1:path" for read-write
+        var isReadOnly = false;
+        var actualPath = path;
+        if (path.Length > 2 && path[1] == ':' && (path[0] == '0' || path[0] == '1'))
+        {
+            isReadOnly = path[0] == '0';
+            actualPath = path[2..];
+        }
+
+        if (!_fileSystem.FileExists(actualPath))
+        {
+            StatusMessage = $"Bookmark not found: {actualPath}";
+            return;
+        }
+
+        await LoadPackageAsync(actualPath);
+        if (isReadOnly)
+        {
+            StatusMessage = $"Opened (read-only): {_fileSystem.GetFileName(actualPath)}";
+        }
+    }
+
+    /// <summary>
+    /// Opens the Organise Bookmarks dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task OrganiseBookmarksAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var dialog = new OrganiseBookmarksWindow();
+        await dialog.ShowDialog((Window)topLevel);
+
+        // Reload bookmarks after dialog closes
+        LoadBookmarks();
+    }
+
+    /// <summary>
+    /// Opens the Custom Places dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseCustomPlacesDialog.cs
+    /// </remarks>
+    [RelayCommand]
+    private async Task CustomPlacesAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel == null) return;
+
+        var dialog = new OrganiseCustomPlacesWindow();
+        await dialog.ShowDialog((Window)topLevel);
+        StatusMessage = "Custom places updated";
+    }
+
+    /// <summary>
+    /// Adds the current package to bookmarks.
+    /// </summary>
+    [RelayCommand]
+    private void AddCurrentToBookmarks()
+    {
+        if (string.IsNullOrEmpty(PackagePath)) return;
+
+        var settings = SettingsService.Instance.Settings;
+        if (settings.Bookmarks.Count >= settings.MaxBookmarks)
+        {
+            StatusMessage = $"Cannot add bookmark: maximum of {settings.MaxBookmarks} bookmarks reached";
+            return;
+        }
+
+        var bookmarkEntry = "1:" + PackagePath; // 1 = read-write
+        if (settings.Bookmarks.Contains(bookmarkEntry) || settings.Bookmarks.Contains("0:" + PackagePath))
+        {
+            StatusMessage = "Package is already bookmarked";
+            return;
+        }
+
+        settings.Bookmarks.Add(bookmarkEntry);
+        SettingsService.Instance.Save();
+        LoadBookmarks();
+        StatusMessage = $"Added bookmark: {_fileSystem.GetFileName(PackagePath)}";
+    }
+
+    /// <summary>
+    /// Sets the maximum number of recent files to keep.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 940-952 (FileSetMaxRecent)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SetMaxRecentFilesAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var settings = SettingsService.Instance.Settings;
+        var dialog = new GetNumberWindow(
+            "Max number of recent files:",
+            "Recent Files",
+            1, 20, settings.MaxRecentFiles);
+
+        var result = await dialog.ShowDialog<bool>(window);
+        if (result)
+        {
+            settings.MaxRecentFiles = dialog.Value;
+            SettingsService.Instance.Save();
+
+            // Trim recent files if needed
+            while (RecentFiles.Count > settings.MaxRecentFiles)
+            {
+                RecentFiles.RemoveAt(RecentFiles.Count - 1);
+            }
+            SaveRecentFiles();
+
+            StatusMessage = $"Max recent files set to {settings.MaxRecentFiles}";
+        }
+    }
+
+    /// <summary>
+    /// Sets the maximum number of bookmarks to keep.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 965-978 (FileSetMaxBookmarks)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SetMaxBookmarksAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var settings = SettingsService.Instance.Settings;
+        var dialog = new GetNumberWindow(
+            "Max number of bookmarks:",
+            "Bookmarks",
+            1, 20, settings.MaxBookmarks);
+
+        var result = await dialog.ShowDialog<bool>(window);
+        if (result)
+        {
+            settings.MaxBookmarks = dialog.Value;
+            SettingsService.Instance.Save();
+
+            // Trim bookmarks if needed
+            while (settings.Bookmarks.Count > settings.MaxBookmarks)
+            {
+                settings.Bookmarks.RemoveAt(settings.Bookmarks.Count - 1);
+            }
+            SettingsService.Instance.Save();
+            LoadBookmarks();
+
+            StatusMessage = $"Max bookmarks set to {settings.MaxBookmarks}";
+        }
+    }
+
+    #endregion
+
+    /// <summary>
+    /// Executes an async task with error handling, updating StatusMessage on failure.
+    /// </summary>
+    private async void ExecuteAsync(Func<Task> asyncAction, string errorPrefix = "Error")
+    {
+        try
+        {
+            await asyncAction().ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"{errorPrefix}: {ex}");
+            StatusMessage = $"{errorPrefix}: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Disposes the package when the window closes without explicit ClosePackage.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        PropertyChanged -= _propertyChangedHandler;
+        await CloseCurrentPackageAsync().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
+    }
+}
+
+/// <summary>
+/// View model for a recent file entry.
+/// </summary>
+public sealed class RecentFileViewModel
+{
+    public string Path { get; }
+    public string FileName => System.IO.Path.GetFileName(Path);
+    public string Directory => System.IO.Path.GetDirectoryName(Path) ?? "";
+
+    public RecentFileViewModel(string path)
+    {
+        Path = path;
+    }
+}
+
+/// <summary>
+/// Internal clipboard data for resource copy/paste operations.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 96-100 (MyDataFormat struct)
+/// </remarks>
+public sealed class ClipboardResourceData
+{
+    public required ResourceKey Key { get; init; }
+    public required byte[] Data { get; init; }
+    public string? ResourceName { get; init; }
+}
+
+/// <summary>
+/// View model for a helper menu item.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3134 (helper buttons)
+/// </remarks>
+public sealed class HelperMenuItemViewModel
+{
+    private readonly HelperInstance _helper;
+    private readonly Func<HelperInstance, Task> _executeAction;
+
+    public HelperMenuItemViewModel(HelperInstance helper, Func<HelperInstance, Task> executeAction)
+    {
+        _helper = helper;
+        _executeAction = executeAction;
+    }
+
+    public string Label => _helper.Label;
+    public string Description => _helper.Description;
+    public string Id => _helper.Id;
+
+    public IAsyncRelayCommand ExecuteCommand => new AsyncRelayCommand(async () => await _executeAction(_helper));
+}
+
+/// <summary>
+/// View model for a bookmark menu item.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+/// Format: "0:path" for read-only, "1:path" for read-write
+/// </remarks>
+public sealed class BookmarkItemViewModel
+{
+    public BookmarkItemViewModel(string bookmarkEntry)
+    {
+        RawEntry = bookmarkEntry;
+
+        // Parse format: "0:path" for read-only, "1:path" for read-write
+        if (bookmarkEntry.Length > 2 && bookmarkEntry[1] == ':')
+        {
+            IsReadOnly = bookmarkEntry[0] == '0';
+            FilePath = bookmarkEntry[2..];
+        }
+        else
+        {
+            IsReadOnly = false;
+            FilePath = bookmarkEntry;
+        }
+
+        FileName = Path.GetFileName(FilePath);
+    }
+
+    public string RawEntry { get; }
+    public string FilePath { get; }
+    public string FileName { get; }
+    public bool IsReadOnly { get; }
+
+    public string DisplayName => IsReadOnly ? $"[RO] {FileName}" : FileName;
+    public string ToolTip => FilePath;
+}

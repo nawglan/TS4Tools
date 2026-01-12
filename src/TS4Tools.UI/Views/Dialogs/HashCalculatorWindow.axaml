@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="350"
+        x:Class="TS4Tools.UI.Views.Dialogs.HashCalculatorWindow"
+        Title="FNV Hash Calculator"
+        Width="450" Height="350"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <Grid Margin="16" RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Input -->
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="Input String:" FontWeight="SemiBold" />
+            <TextBox x:Name="InputTextBox" Watermark="Enter text to hash..." />
+        </StackPanel>
+
+        <!-- Options -->
+        <StackPanel Grid.Row="1" Margin="0,16,0,0" Spacing="8">
+            <CheckBox x:Name="LowercaseCheckBox" Content="Convert to lowercase before hashing" IsChecked="True" />
+        </StackPanel>
+
+        <!-- Results -->
+        <Border Grid.Row="2" Margin="0,16,0,0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1" CornerRadius="4" Padding="12">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="FNV-32:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                <SelectableTextBlock Grid.Row="0" Grid.Column="1" x:Name="Fnv32Result" Margin="0,0,0,8" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="FNV-32 (hex):" FontWeight="SemiBold" Margin="0,0,16,8" />
+                <SelectableTextBlock Grid.Row="1" Grid.Column="1" x:Name="Fnv32HexResult" Margin="0,0,0,8" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="FNV-64:" FontWeight="SemiBold" Margin="0,0,16,8" />
+                <SelectableTextBlock Grid.Row="2" Grid.Column="1" x:Name="Fnv64Result" Margin="0,0,0,8" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="FNV-64 (hex):" FontWeight="SemiBold" Margin="0,0,16,8" />
+                <SelectableTextBlock Grid.Row="3" Grid.Column="1" x:Name="Fnv64HexResult" Margin="0,0,0,8" />
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="FNV-24 (CLIP):" FontWeight="SemiBold" Margin="0,0,16,8" />
+                <SelectableTextBlock Grid.Row="4" Grid.Column="1" x:Name="Fnv24Result" Margin="0,0,0,8" />
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="FNV-24 (hex):" FontWeight="SemiBold" Margin="0,0,16,0" />
+                <SelectableTextBlock Grid.Row="5" Grid.Column="1" x:Name="Fnv24HexResult" />
+            </Grid>
+        </Border>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="3" Margin="0,16,0,0" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Calculate" x:Name="CalculateButton" Click="CalculateButton_Click" />
+            <Button Content="Close" Click="CloseButton_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

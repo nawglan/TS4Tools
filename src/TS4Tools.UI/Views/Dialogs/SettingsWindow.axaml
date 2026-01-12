@@ -1,0 +1,225 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogs="clr-namespace:TS4Tools.UI.Views.Dialogs"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="TS4Tools.UI.Views.Dialogs.SettingsWindow"
+        Title="Settings"
+        Width="600" Height="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings -->
+
+    <DockPanel Margin="16">
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+            <Button x:Name="ResetButton" Content="_Reset to Defaults" Padding="16,8" />
+            <Button x:Name="OkButton" Content="_OK" Padding="24,8" IsDefault="True" />
+            <Button x:Name="CancelButton" Content="_Cancel" Padding="24,8" IsCancel="True" />
+        </StackPanel>
+
+        <TabControl>
+            <!-- Display Settings -->
+            <TabItem Header="Display">
+                <StackPanel Margin="16" Spacing="16">
+                    <TextBlock Text="Display Options" FontWeight="SemiBold" FontSize="14" />
+
+                    <CheckBox x:Name="UseNamesCheckBox" Content="Use resource names from NameMap" />
+                    <CheckBox x:Name="UseTagsCheckBox" Content="Use resource type tags" />
+                    <CheckBox x:Name="HexOnlyCheckBox" Content="Show hex values only (no type names)" />
+
+                    <Separator Margin="0,8" />
+
+                    <TextBlock Text="Preview Options" FontWeight="SemiBold" FontSize="14" />
+
+                    <!-- Source: legacy_references/Sims4Tools/s4pe Settings - hex viewing mode -->
+                    <CheckBox x:Name="ForceHexViewCheckBox" Content="Force hex view for all resources (disable automatic preview)" />
+                    <CheckBox x:Name="EnableDDSPreviewCheckBox" Content="Enable DDS image preview" />
+                    <CheckBox x:Name="EnableTextPreviewCheckBox" Content="Enable fallback text preview" />
+                    <CheckBox x:Name="EnableHexPreviewCheckBox" Content="Enable fallback hex preview" />
+
+                    <Grid ColumnDefinitions="200,*" Margin="0,8,0,0">
+                        <TextBlock Text="Hex row size:" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="HexRowSizeNumeric"
+                                       Minimum="8" Maximum="64" Increment="8"
+                                       Width="100" HorizontalAlignment="Left" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="200,*">
+                        <TextBlock Text="Preview zoom factor:" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Column="1" x:Name="PreviewZoomNumeric"
+                                       Minimum="0.25" Maximum="4" Increment="0.25"
+                                       FormatString="0.00" Width="100" HorizontalAlignment="Left" />
+                    </Grid>
+
+                    <Separator Margin="0,8" />
+
+                    <TextBlock Text="Import Options" FontWeight="SemiBold" FontSize="14" />
+
+                    <!-- Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings AskDBCAutoSave -->
+                    <CheckBox x:Name="PromptDbcAutosaveCheckBox" Content="Prompt for DBC autosaving (recommend saving after DBC import)" />
+                </StackPanel>
+            </TabItem>
+
+            <!-- External Editors -->
+            <TabItem Header="External Programs">
+                <ScrollViewer>
+                    <StackPanel Margin="16" Spacing="16">
+                        <TextBlock Text="Hex Editor" FontWeight="SemiBold" FontSize="14" />
+
+                        <Grid ColumnDefinitions="100,*,Auto">
+                            <TextBlock Text="Command:" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" x:Name="HexEditorCommandTextBox" Watermark="e.g., C:\Program Files\HxD\HxD.exe" />
+                            <Button Grid.Column="2" x:Name="BrowseHexEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
+                        </Grid>
+                        <CheckBox x:Name="HexEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
+                        <CheckBox x:Name="HexEditorQuotesCheckBox" Content="Wrap filename in quotes" />
+
+                        <Separator Margin="0,8" />
+
+                        <TextBlock Text="Text Editor" FontWeight="SemiBold" FontSize="14" />
+
+                        <Grid ColumnDefinitions="100,*,Auto">
+                            <TextBlock Text="Command:" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" x:Name="TextEditorCommandTextBox" Watermark="e.g., notepad.exe" />
+                            <Button Grid.Column="2" x:Name="BrowseTextEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
+                        </Grid>
+                        <CheckBox x:Name="TextEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
+                        <CheckBox x:Name="TextEditorQuotesCheckBox" Content="Wrap filename in quotes" />
+
+                        <Separator Margin="0,8" />
+
+                        <!-- Helper Programs -->
+                        <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs -->
+                        <TextBlock Text="Helper Programs" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="Helper programs are defined in *.helper files in the Helpers folder. Check to disable a helper."
+                                   TextWrapping="Wrap" Opacity="0.7" />
+
+                        <ItemsControl x:Name="HelpersItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="dialogs:HelperSettingItem">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsDisabled}" Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Content="Info" Padding="8,2" x:Name="InfoButton"
+                                                Tag="{Binding}" Click="HelperInfoButton_Click" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button x:Name="ReloadHelpersButton" Content="Reload Helpers" Padding="12,4" HorizontalAlignment="Left" />
+
+                        <TextBlock x:Name="HelpersLocationTextBlock" Opacity="0.5" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Bookmarks -->
+            <TabItem Header="Bookmarks">
+                <DockPanel Margin="16">
+                    <TextBlock DockPanel.Dock="Top" Text="Bookmark Folders" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
+                    <TextBlock DockPanel.Dock="Top" Text="Add frequently used folders for quick access." Opacity="0.7" Margin="0,0,0,16" />
+
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                        <Button x:Name="AddBookmarkButton" Content="Add Folder..." Padding="12,4" />
+                        <Button x:Name="RemoveBookmarkButton" Content="Remove" Padding="12,4" IsEnabled="False" />
+                    </StackPanel>
+
+                    <ListBox x:Name="BookmarksListBox" />
+                </DockPanel>
+            </TabItem>
+
+            <!-- Wrappers -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs -->
+            <TabItem Header="Wrappers">
+                <DockPanel Margin="16">
+                    <TextBlock DockPanel.Dock="Top" Text="Resource Wrappers" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8" />
+                    <TextBlock DockPanel.Dock="Top" Text="Check to disable a wrapper. Disabled wrappers will show resources as hex data."
+                               TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,16" />
+
+                    <TextBlock DockPanel.Dock="Bottom" x:Name="WrapperCountTextBlock" Opacity="0.5" FontSize="11" Margin="0,8,0,0" />
+
+                    <ScrollViewer>
+                        <ItemsControl x:Name="WrappersItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="dialogs:WrapperSettingItem">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsDisabled}" Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1" Text="{Binding DisplayName}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding TypeCount}" Opacity="0.5" FontSize="11"
+                                                   VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <!-- About -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs HelpAbout(), HelpWarranty(), HelpLicence() -->
+            <TabItem Header="About">
+                <ScrollViewer>
+                    <StackPanel Margin="16" Spacing="8">
+                        <TextBlock Text="TS4Tools" FontSize="24" FontWeight="Bold" />
+                        <TextBlock Text="Cross-platform Sims 4 Package Editor" />
+                        <TextBlock Text="Version 0.1.0" Margin="0,8,0,0" />
+                        <TextBlock Text="A modern rewrite of s4pe/s4pi" Opacity="0.7" />
+
+                        <Separator Margin="0,16" />
+
+                        <!-- Help -->
+                        <TextBlock Text="Help" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="TS4Tools is a package editor for The Sims 4. It allows you to view, edit, and extract resources from .package files used by the game." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,4,0,0">
+                            <Run Text="For documentation and support, visit the project repository." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- License -->
+                        <TextBlock Text="License" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version." />
+                        </TextBlock>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                            <TextBlock Text="Full license text:" VerticalAlignment="Center" />
+                            <Button x:Name="LicenseButton" Content="View GPLv3 License" Padding="12,4" />
+                        </StackPanel>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- Warranty -->
+                        <TextBlock Text="Warranty Disclaimer" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8" Margin="0,8,0,0">
+                            <Run Text="THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <!-- Credits -->
+                        <TextBlock Text="Credits" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                            <Run Text="Based on the work of Peter L Jones (s3pe/s3pi) and Keyi Zhang (s4pe/s4pi)." />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" Opacity="0.7" Margin="0,4,0,0">
+                            <Run Text="Special thanks to the Sims modding community." />
+                        </TextBlock>
+
+                        <Separator Margin="0,16" />
+
+                        <TextBlock Text="Settings file location:" FontWeight="SemiBold" />
+                        <TextBox x:Name="SettingsPathTextBox" IsReadOnly="True" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

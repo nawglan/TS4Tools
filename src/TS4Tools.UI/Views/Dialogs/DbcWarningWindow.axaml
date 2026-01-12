@@ -1,0 +1,45 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="450" d:DesignHeight="250"
+        x:Class="TS4Tools.UI.Views.Dialogs.DbcWarningWindow"
+        Title="DBC Import Warning"
+        Width="450" Height="250"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ExperimentalDBCWarning.cs -->
+
+    <DockPanel Margin="16">
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+            <Button x:Name="OkButton" Content="_OK" Padding="24,8" IsDefault="True" IsEnabled="False" />
+            <Button x:Name="CancelButton" Content="_Cancel" Padding="24,8" IsCancel="True" />
+        </StackPanel>
+
+        <!-- Warning Content -->
+        <StackPanel Spacing="12">
+            <TextBlock Text="DBC Import is Experimental" FontWeight="SemiBold" FontSize="16" Foreground="Orange" />
+
+            <TextBlock TextWrapping="Wrap">
+                DBC (Database Cache) files are cache files used internally by The Sims 4.
+                Importing resources from DBC files is experimental and may produce unexpected results.
+            </TextBlock>
+
+            <TextBlock TextWrapping="Wrap" Opacity="0.8">
+                It is recommended to save frequently when working with DBC files.
+            </TextBlock>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                <TextBlock Text="I understand the risks:" VerticalAlignment="Center" />
+                <ComboBox x:Name="UnderstandComboBox" Width="200" SelectedIndex="0">
+                    <ComboBoxItem Content="No" />
+                    <ComboBoxItem Content="Mostly" />
+                    <ComboBoxItem Content="Yes, proceed" />
+                </ComboBox>
+            </StackPanel>
+
+            <CheckBox x:Name="PromptAutosaveCheckBox" Content="Prompt for autosave during DBC operations" />
+        </StackPanel>
+    </DockPanel>
+</Window>

@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.ImageViewerView"
+             x:DataType="vm:ImageViewerViewModel">
+
+    <Design.DataContext>
+        <vm:ImageViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="Image Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding FormatName, StringFormat='Format: {0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding Width, StringFormat='Width: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding Height, StringFormat='Height: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding DataSize, StringFormat='Size: {0:N0} bytes'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                </StackPanel>
+
+                <!-- Channel toggles for DDS/DST textures -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 119-133 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                            IsVisible="{Binding HasChannelControls}">
+                    <Separator Width="1" Margin="8,0" />
+                    <CheckBox Content="R" IsChecked="{Binding ShowRedChannel}"
+                              ToolTip.Tip="Show Red Channel" Foreground="IndianRed" />
+                    <CheckBox Content="G" IsChecked="{Binding ShowGreenChannel}"
+                              ToolTip.Tip="Show Green Channel" Foreground="LimeGreen" />
+                    <CheckBox Content="B" IsChecked="{Binding ShowBlueChannel}"
+                              ToolTip.Tip="Show Blue Channel" Foreground="CornflowerBlue" />
+                    <CheckBox Content="A" IsChecked="{Binding ShowAlphaChannel}"
+                              ToolTip.Tip="Show Alpha Channel" />
+                    <CheckBox Content="Invert A" IsChecked="{Binding InvertAlpha}"
+                              ToolTip.Tip="Invert Alpha Channel" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock Text="{Binding StatusMessage}" Opacity="0.7" />
+        </Border>
+
+        <!-- Image Preview or Placeholder -->
+        <Grid Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+            <!-- Checkerboard pattern for transparency -->
+            <Border IsVisible="{Binding IsPreviewAvailable}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <Image Source="{Binding Image}"
+                           Stretch="None"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Margin="16" />
+                </ScrollViewer>
+            </Border>
+
+            <!-- Placeholder for unsupported formats -->
+            <StackPanel IsVisible="{Binding !IsPreviewAvailable}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="16">
+                <TextBlock Text="Preview Not Available"
+                           FontSize="18"
+                           Opacity="0.5"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding StatusMessage}"
+                           FontSize="12"
+                           Opacity="0.5"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Use Edit > Export Resource to save the image file"
+                           FontSize="12"
+                           Opacity="0.3"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,197 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="TS4Tools.UI.Views.Editors.SimDataViewerView"
+             x:DataType="vm:SimDataViewerViewModel">
+
+    <Design.DataContext>
+        <vm:SimDataViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="SimData Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding VersionHex, StringFormat='Version: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding SchemaCount, StringFormat='Schemas: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding TableCount, StringFormat='Tables: {0}'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="{Binding DataSize, StringFormat='Size: {0:N0} bytes'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+                <TextBlock Text="(Invalid)" IsVisible="{Binding !IsValid}"
+                           VerticalAlignment="Center" Foreground="Red" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content - Three Columns -->
+        <Grid ColumnDefinitions="*,Auto,*,Auto,*">
+
+            <!-- Left Panel: Schemas and Fields -->
+            <DockPanel Grid.Column="0">
+                <!-- Header Info -->
+                <Border DockPanel.Dock="Top" Padding="8" BorderThickness="0,0,0,1"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+                    <TextBox Text="{Binding HeaderInfo}"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                             FontSize="11"
+                             MinHeight="100"
+                             MaxHeight="140" />
+                </Border>
+
+                <!-- Schemas Section -->
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Schemas (Structures)" FontWeight="SemiBold"
+                               Margin="8,8,8,4" />
+
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Schema List -->
+                        <ListBox Grid.Row="0"
+                                 ItemsSource="{Binding Schemas}"
+                                 SelectedItem="{Binding SelectedSchema}"
+                                 MaxHeight="150"
+                                 Margin="0,0,0,4">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:SimDataSchemaViewModel">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Index, StringFormat='[{0}]'}" Opacity="0.5" />
+                                        <TextBlock Text="{Binding DisplayName}" />
+                                        <TextBlock Text="{Binding ColumnCount, StringFormat='({0} fields)'}"
+                                                   Opacity="0.5" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <!-- Fields for Selected Schema -->
+                        <DockPanel Grid.Row="1">
+                            <TextBlock DockPanel.Dock="Top" Text="Fields (Columns)" FontWeight="SemiBold"
+                                       Margin="8,8,8,4" Opacity="0.8" />
+                            <DataGrid ItemsSource="{Binding SelectedSchema.Fields}"
+                                      IsReadOnly="True"
+                                      CanUserReorderColumns="False"
+                                      CanUserResizeColumns="True"
+                                      CanUserSortColumns="False"
+                                      GridLinesVisibility="Horizontal"
+                                      FontSize="11"
+                                      Margin="4,0,4,4">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="30" />
+                                    <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="*" />
+                                    <DataGridTextColumn Header="Type" Binding="{Binding TypeName}" Width="100" />
+                                    <DataGridTextColumn Header="Offset" Binding="{Binding DataOffset}" Width="60" />
+                                    <DataGridTextColumn Header="Size" Binding="{Binding DataSize}" Width="40" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
+            </DockPanel>
+
+            <!-- Splitter 1 -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
+
+            <!-- Center Panel: Tables -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="Tables (Records)" FontWeight="SemiBold"
+                           Margin="8,8,8,4" />
+
+                <DataGrid ItemsSource="{Binding Tables}"
+                          SelectedItem="{Binding SelectedTable}"
+                          IsReadOnly="True"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="True"
+                          CanUserSortColumns="False"
+                          GridLinesVisibility="Horizontal"
+                          FontSize="11"
+                          Margin="4,0,4,8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="30" />
+                        <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="*" />
+                        <DataGridTextColumn Header="Schema" Binding="{Binding SchemaName}" Width="100" />
+                        <DataGridTextColumn Header="Rows" Binding="{Binding RowCount}" Width="50" />
+                        <DataGridTextColumn Header="Data" Binding="{Binding DataLength}" Width="70" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <!-- Splitter 2 -->
+            <GridSplitter Grid.Column="3" Width="4" Background="Transparent" />
+
+            <!-- Right Panel: Row Data and Hex Preview -->
+            <DockPanel Grid.Column="4">
+                <TextBlock DockPanel.Dock="Top" Text="Table Rows" FontWeight="SemiBold"
+                           Margin="8,8,8,4" />
+
+                <!-- Row List with Values -->
+                <Grid RowDefinitions="*,4,Auto">
+                    <ListBox Grid.Row="0"
+                             ItemsSource="{Binding SelectedTable.Rows}"
+                             Margin="4,0,4,4">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:SimDataRowViewModel">
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Text="{Binding RowIndex, StringFormat='Row {0}'}"
+                                               FontWeight="SemiBold"
+                                               Margin="0,0,8,0"
+                                               MinWidth="60" />
+                                    <ItemsControl ItemsSource="{Binding Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:SimDataCellViewModel">
+                                                <Border Margin="2" Padding="4,2"
+                                                        BorderThickness="1"
+                                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                                        CornerRadius="3">
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding FieldName}"
+                                                                   FontSize="10"
+                                                                   Opacity="0.7" />
+                                                        <TextBox Text="{Binding EditValue}"
+                                                                 IsReadOnly="{Binding !IsEditable}"
+                                                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                                                 FontSize="11"
+                                                                 MinWidth="80"
+                                                                 Padding="2" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <GridSplitter Grid.Row="1" Height="4" Background="Transparent"
+                                  ResizeDirection="Rows" />
+
+                    <!-- Hex Preview -->
+                    <DockPanel Grid.Row="2">
+                        <TextBlock DockPanel.Dock="Top" Text="Raw Data Preview" FontWeight="SemiBold"
+                                   Margin="8,4,8,4" Opacity="0.8" />
+                        <TextBox Text="{Binding HexPreview}"
+                                 IsReadOnly="True"
+                                 TextWrapping="NoWrap"
+                                 FontFamily="Consolas, Monaco, 'Courier New', monospace"
+                                 FontSize="11"
+                                 MaxHeight="200"
+                                 Margin="4,0,4,8" />
+                    </DockPanel>
+                </Grid>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

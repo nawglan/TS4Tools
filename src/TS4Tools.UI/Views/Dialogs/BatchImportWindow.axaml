@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="TS4Tools.UI.Views.Dialogs.BatchImportWindow"
+        Title="Batch Import"
+        Width="600" Height="500"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs -->
+
+    <DockPanel Margin="16">
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+            <Button x:Name="ImportButton" Content="_Import" Padding="24,8" IsDefault="True" />
+            <Button x:Name="CancelButton" Content="_Cancel" Padding="24,8" IsCancel="True" />
+        </StackPanel>
+
+        <!-- Import Settings -->
+        <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,16,0,0">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Import Settings" FontWeight="SemiBold" FontSize="14" />
+                <CheckBox x:Name="ReplaceCheckBox" Content="Replace existing resources with same key" />
+                <CheckBox x:Name="CompressCheckBox" Content="Compress resources" IsChecked="True" />
+                <CheckBox x:Name="UseNamesCheckBox" Content="Use resource names from filenames" />
+            </StackPanel>
+        </Border>
+
+        <!-- File List -->
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
+                <TextBlock Text="Files to Import" FontWeight="SemiBold" FontSize="14" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="AddFilesButton" Content="Add Files..." Padding="12,4" />
+                    <Button x:Name="AddFolderButton" Content="Add Folder..." Padding="12,4" />
+                    <Button x:Name="RemoveButton" Content="Remove Selected" Padding="12,4" IsEnabled="False" />
+                    <Button x:Name="ClearButton" Content="Clear All" Padding="12,4" />
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock DockPanel.Dock="Bottom" x:Name="FileCountLabel" Text="0 files" Margin="0,8,0,0" Opacity="0.7" />
+
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                    BorderThickness="1" CornerRadius="4">
+                <ListBox x:Name="FilesListBox" SelectionMode="Multiple" />
+            </Border>
+        </DockPanel>
+    </DockPanel>
+</Window>

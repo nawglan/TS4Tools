@@ -1,0 +1,53 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.StblEditorView"
+             x:DataType="vm:StblEditorViewModel">
+
+    <Design.DataContext>
+        <vm:StblEditorViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="String Table Editor" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding EntryCount, StringFormat='Entries: {0:N0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                </StackPanel>
+                <TextBox Grid.Column="1" Width="200" Watermark="Filter strings..."
+                         Text="{Binding FilterText}" />
+            </Grid>
+        </Border>
+
+        <!-- Add New Entry -->
+        <Border DockPanel.Dock="Bottom" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <Grid ColumnDefinitions="Auto,150,*,Auto,Auto" RowDefinitions="Auto">
+                <TextBlock Grid.Column="0" Text="Key:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox Grid.Column="1" Text="{Binding NewKeyText}" Watermark="0x... or text" />
+                <TextBox Grid.Column="2" Text="{Binding NewValueText}" Watermark="String value..." Margin="8,0" />
+                <Button Grid.Column="3" Content="Add" Command="{Binding AddEntryCommand}" Margin="0,0,8,0" />
+                <Button Grid.Column="4" Content="Delete" Command="{Binding DeleteEntryCommand}"
+                        IsEnabled="{Binding SelectedEntry, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            </Grid>
+        </Border>
+
+        <!-- Entries DataGrid -->
+        <DataGrid ItemsSource="{Binding FilteredEntries}"
+                  SelectedItem="{Binding SelectedEntry}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="False"
+                  GridLinesVisibility="Horizontal"
+                  Margin="0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Key Hash" Binding="{Binding KeyHex}" Width="120" IsReadOnly="True" />
+                <DataGridTextColumn Header="String Value" Binding="{Binding Value}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

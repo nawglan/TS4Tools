@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Editors.HexViewerView"
+             x:DataType="vm:HexViewerViewModel">
+
+    <Design.DataContext>
+        <vm:HexViewerViewModel />
+    </Design.DataContext>
+
+    <DockPanel>
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="Hex Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding DataLength, StringFormat='Size: {0:N0} bytes'}"
+                           VerticalAlignment="Center" Opacity="0.7" />
+            </StackPanel>
+        </Border>
+
+        <!-- Hex Content -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <SelectableTextBlock Text="{Binding HexContent}"
+                                 FontFamily="Cascadia Mono, Consolas, Courier New, monospace"
+                                 FontSize="12"
+                                 Margin="8" />
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
