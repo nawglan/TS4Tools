@@ -12,6 +12,7 @@
     <Using Include="System.Collections.ObjectModel" />
     <Using Include="System.ComponentModel" />
     <Using Include="System.Globalization" />
+    <Using Include="System.Reflection" />
     <Using Include="System.Runtime.InteropServices" />
     <Using Include="System.Text" />
     <Using Include="System.Text.Json" />

@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Globalization;
-using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using TS4Tools.UI.Views.Controls;
