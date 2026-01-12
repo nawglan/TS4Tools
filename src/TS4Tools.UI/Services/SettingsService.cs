@@ -147,7 +147,18 @@ public sealed class AppSettings
     public List<string> DisabledHelpers { get; set; } = [];
     public List<string> DisabledWrappers { get; set; } = [];
 
-    // Auto update (not implemented in modern UI)
+    // Auto display mode (0=Off, 1=Hex, 2=Preview)
+    // Note: Legacy s4pe used AutoUpdateChoice for this, but we renamed it for clarity
+    public int AutoDisplayMode { get; set; }
+
+    // Legacy property for backward compatibility (renamed to AutoDisplayMode)
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Obsolete("Use AutoDisplayMode instead")]
+    public int AutoUpdateChoice { get => AutoDisplayMode; set => AutoDisplayMode = value; }
+
+    // Auto update checking
     // Source: Settings.settings lines 95-103
-    public int AutoUpdateChoice { get; set; }
+    // Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs
+    public bool AutoCheckForUpdates { get; set; } = true;
+    public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
 }

@@ -129,6 +129,9 @@
                 <MenuItem Header="_Custom Places..." Command="{Binding CustomPlacesCommand}" />
             </MenuItem>
             <MenuItem Header="_Help">
+                <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs -->
+                <MenuItem Header="Check for _Updates..." Command="{Binding CheckForUpdatesCommand}" />
+                <Separator />
                 <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" InputGesture="F1" />
             </MenuItem>
         </Menu>

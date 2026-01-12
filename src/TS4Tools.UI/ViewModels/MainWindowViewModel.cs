@@ -735,7 +735,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                     {
                         new TextBlock { Text = "TS4Tools", FontSize = 24, FontWeight = Avalonia.Media.FontWeight.Bold },
                         new TextBlock { Text = "Cross-platform Sims 4 Package Editor" },
-                        new TextBlock { Text = "Version 0.1.0", Margin = new Avalonia.Thickness(0, 8, 0, 0) },
+                        new TextBlock { Text = $"Version {UpdateCheckerService.CurrentVersion}", Margin = new Avalonia.Thickness(0, 8, 0, 0) },
                         new TextBlock { Text = "A modern rewrite of s4pe/s4pi", Opacity = 0.7 },
                         new TextBlock { Text = "Licensed under GPLv3", Margin = new Avalonia.Thickness(0, 16, 0, 0), Opacity = 0.7 }
                     }
@@ -743,6 +743,117 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             };
 
             await dialog.ShowDialog(window);
+        }
+    }
+
+    /// <summary>
+    /// Checks for application updates.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs lines 82-129
+    /// </remarks>
+    [RelayCommand]
+    private static async Task CheckForUpdatesAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(App.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
+            ? desktop.MainWindow
+            : null);
+
+        if (topLevel is not Window window) return;
+
+        var result = await UpdateCheckerService.Instance.CheckForUpdatesAsync();
+
+        if (!result.Success)
+        {
+            var errorDialog = new Window
+            {
+                Title = "Update Check Failed",
+                Width = 400,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(24),
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "Failed to check for updates", FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                        new TextBlock { Text = result.ErrorMessage ?? "Unknown error", TextWrapping = Avalonia.Media.TextWrapping.Wrap }
+                    }
+                }
+            };
+            await errorDialog.ShowDialog(window);
+            return;
+        }
+
+        if (result.UpdateAvailable)
+        {
+            var updateDialog = new Window
+            {
+                Title = "Update Available",
+                Width = 450,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false
+            };
+
+            var yesButton = new Button { Content = "Visit Download Page", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left };
+            var noButton = new Button { Content = "Later", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+
+            yesButton.Click += (_, _) =>
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(result.DownloadUrl) { UseShellExecute = true });
+                }
+                catch { /* Ignore */ }
+                updateDialog.Close();
+            };
+            noButton.Click += (_, _) => updateDialog.Close();
+
+            updateDialog.Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(24),
+                Spacing = 12,
+                Children =
+                {
+                    new TextBlock { Text = "A new version is available!", FontSize = 16, FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                    new TextBlock { Text = $"Current version: {result.CurrentVersion}" },
+                    new TextBlock { Text = $"Latest version: {result.LatestVersion}" },
+                    new StackPanel
+                    {
+                        Orientation = Avalonia.Layout.Orientation.Horizontal,
+                        Spacing = 8,
+                        Margin = new Avalonia.Thickness(0, 8, 0, 0),
+                        Children = { yesButton, noButton }
+                    }
+                }
+            };
+
+            await updateDialog.ShowDialog(window);
+        }
+        else
+        {
+            var upToDateDialog = new Window
+            {
+                Title = "No Updates",
+                Width = 350,
+                Height = 130,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Avalonia.Thickness(24),
+                    Spacing = 8,
+                    Children =
+                    {
+                        new TextBlock { Text = "You're up to date!", FontWeight = Avalonia.Media.FontWeight.SemiBold },
+                        new TextBlock { Text = $"Version {result.CurrentVersion} is the latest version." }
+                    }
+                }
+            };
+            await upToDateDialog.ShowDialog(window);
         }
     }
 

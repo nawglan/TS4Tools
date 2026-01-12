@@ -54,7 +54,7 @@ public partial class ControlPanelToolbar : UserControl
         UseTagsCheckBox.IsChecked = _settings.UseTags;
 
         // Auto mode: 0=Off, 1=Hex, 2=Preview
-        switch (_settings.AutoUpdateChoice)
+        switch (_settings.AutoDisplayMode)
         {
             case 0: AutoOffRadio.IsChecked = true; break;
             case 1: AutoHexRadio.IsChecked = true; break;
@@ -78,7 +78,7 @@ public partial class ControlPanelToolbar : UserControl
         _settings.HexOnly = HexOnlyCheckBox.IsChecked == true;
         _settings.UseNames = UseNamesCheckBox.IsChecked == true;
         _settings.UseTags = UseTagsCheckBox.IsChecked == true;
-        _settings.AutoUpdateChoice = AutoHexRadio.IsChecked == true ? 1 : AutoPreviewRadio.IsChecked == true ? 2 : 0;
+        _settings.AutoDisplayMode = AutoHexRadio.IsChecked == true ? 1 : AutoPreviewRadio.IsChecked == true ? 2 : 0;
 
         SettingsService.Instance.Save();
     }
