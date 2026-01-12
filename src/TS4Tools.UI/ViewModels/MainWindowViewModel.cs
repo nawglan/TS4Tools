@@ -1014,6 +1014,115 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Exports selected resources to a new or existing package file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 (ResourceExportToPackage)
+    /// </remarks>
+    [RelayCommand]
+    private async Task ExportToPackageAsync()
+    {
+        if (_package == null || SelectedResources.Count == 0 && SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        // Get resources to export
+        List<ResourceItemViewModel> resourcesToExport = SelectedResources.Count > 0
+            ? SelectedResources.ToList()
+            : SelectedResource != null
+                ? [SelectedResource]
+                : [];
+
+        if (resourcesToExport.Count == 0)
+        {
+            StatusMessage = "No resources selected";
+            return;
+        }
+
+        // Show save dialog
+        var files = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export to Package",
+            DefaultExtension = "package",
+            FileTypeChoices = [PackageFileType, AllFilesType],
+            SuggestedFileName = "exported.package"
+        });
+
+        if (files == null) return;
+
+        var targetPath = files.Path.LocalPath;
+
+        // Prevent exporting to same file
+        if (!string.IsNullOrEmpty(PackagePath) &&
+            Path.GetFullPath(PackagePath).Equals(Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = "Cannot export to the same file";
+            return;
+        }
+
+        try
+        {
+            StatusMessage = "Exporting to package...";
+
+            // Create or open target package
+            DbpfPackage targetPackage;
+            var isNewPackage = !_fileSystem.FileExists(targetPath);
+
+            if (isNewPackage)
+            {
+                targetPackage = DbpfPackage.CreateNew();
+            }
+            else
+            {
+                targetPackage = await DbpfPackage.OpenAsync(targetPath);
+            }
+
+            try
+            {
+                var exported = 0;
+                var replaced = 0;
+
+                foreach (var resource in resourcesToExport)
+                {
+                    var key = resource.Key;
+                    var entry = _package.Find(key);
+                    if (entry == null) continue;
+
+                    // Check for duplicate in target
+                    var existing = targetPackage.Find(key);
+                    if (existing != null)
+                    {
+                        // Replace existing
+                        targetPackage.DeleteResource(existing);
+                        replaced++;
+                    }
+
+                    // Get data and add to target package
+                    var data = await _package.GetResourceDataAsync(entry);
+                    targetPackage.AddResource(key, data.ToArray(), rejectDuplicates: false);
+                    exported++;
+                }
+
+                // Save the target package
+                await targetPackage.SaveAsAsync(targetPath);
+
+                StatusMessage = replaced > 0
+                    ? $"Exported {exported} resources ({replaced} replaced)"
+                    : $"Exported {exported} resources";
+            }
+            finally
+            {
+                await targetPackage.DisposeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Export error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Opens the Import from Package dialog for importing selected resources from another package.
     /// </summary>
     /// <remarks>
