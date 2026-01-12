@@ -112,6 +112,17 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     public bool HasHelpers => AvailableHelpers.Count > 0;
 
+    /// <summary>
+    /// Bookmarked package files for quick access.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+    /// Format: "0:path" for read-only, "1:path" for read-write
+    /// </remarks>
+    public ObservableCollection<BookmarkItemViewModel> Bookmarks { get; } = [];
+
+    public bool HasBookmarks => Bookmarks.Count > 0;
+
     public ObservableCollection<ResourceItemViewModel> Resources { get; } = [];
 
     public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
@@ -137,6 +148,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         PropertyChanged += _propertyChangedHandler;
 
         LoadRecentFiles();
+        LoadBookmarks();
     }
 
     /// <summary>
@@ -1573,6 +1585,88 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SaveRecentFiles();
     }
 
+    #region Bookmarks
+    // Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+
+    /// <summary>
+    /// Loads bookmarks from settings.
+    /// </summary>
+    private void LoadBookmarks()
+    {
+        Bookmarks.Clear();
+        var settings = SettingsService.Instance.Settings;
+
+        foreach (var bookmark in settings.Bookmarks)
+        {
+            if (!string.IsNullOrEmpty(bookmark))
+            {
+                Bookmarks.Add(new BookmarkItemViewModel(bookmark));
+            }
+        }
+
+        OnPropertyChanged(nameof(HasBookmarks));
+    }
+
+    /// <summary>
+    /// Opens a bookmarked package.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenBookmarkAsync(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return;
+
+        // Parse bookmark format: "0:path" for read-only, "1:path" for read-write
+        var isReadOnly = false;
+        var actualPath = path;
+        if (path.Length > 2 && path[1] == ':' && (path[0] == '0' || path[0] == '1'))
+        {
+            isReadOnly = path[0] == '0';
+            actualPath = path[2..];
+        }
+
+        if (!File.Exists(actualPath))
+        {
+            StatusMessage = $"Bookmark not found: {actualPath}";
+            return;
+        }
+
+        await LoadPackageAsync(actualPath);
+        if (isReadOnly)
+        {
+            StatusMessage = $"Opened (read-only): {Path.GetFileName(actualPath)}";
+        }
+    }
+
+    /// <summary>
+    /// Adds the current package to bookmarks.
+    /// </summary>
+    [RelayCommand]
+    private void AddCurrentToBookmarks()
+    {
+        if (string.IsNullOrEmpty(PackagePath)) return;
+
+        var settings = SettingsService.Instance.Settings;
+        if (settings.Bookmarks.Count >= settings.BookmarkSize)
+        {
+            StatusMessage = $"Cannot add bookmark: maximum of {settings.BookmarkSize} bookmarks reached";
+            return;
+        }
+
+        var bookmarkEntry = "1:" + PackagePath; // 1 = read-write
+        if (settings.Bookmarks.Contains(bookmarkEntry) || settings.Bookmarks.Contains("0:" + PackagePath))
+        {
+            StatusMessage = "Package is already bookmarked";
+            return;
+        }
+
+        settings.Bookmarks.Add(bookmarkEntry);
+        SettingsService.Instance.Save();
+        LoadBookmarks();
+        StatusMessage = $"Added bookmark: {Path.GetFileName(PackagePath)}";
+    }
+
+    #endregion
+
     /// <summary>
     /// Executes an async task with error handling, updating StatusMessage on failure.
     /// </summary>
@@ -1653,4 +1747,41 @@ public sealed class HelperMenuItemViewModel
     public string Id => _helper.Id;
 
     public IAsyncRelayCommand ExecuteCommand => new AsyncRelayCommand(async () => await _executeAction(_helper));
+}
+
+/// <summary>
+/// View model for a bookmark menu item.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs
+/// Format: "0:path" for read-only, "1:path" for read-write
+/// </remarks>
+public sealed class BookmarkItemViewModel
+{
+    public BookmarkItemViewModel(string bookmarkEntry)
+    {
+        RawEntry = bookmarkEntry;
+
+        // Parse format: "0:path" for read-only, "1:path" for read-write
+        if (bookmarkEntry.Length > 2 && bookmarkEntry[1] == ':')
+        {
+            IsReadOnly = bookmarkEntry[0] == '0';
+            FilePath = bookmarkEntry[2..];
+        }
+        else
+        {
+            IsReadOnly = false;
+            FilePath = bookmarkEntry;
+        }
+
+        FileName = Path.GetFileName(FilePath);
+    }
+
+    public string RawEntry { get; }
+    public string FilePath { get; }
+    public string FileName { get; }
+    public bool IsReadOnly { get; }
+
+    public string DisplayName => IsReadOnly ? $"[RO] {FileName}" : FileName;
+    public string ToolTip => FilePath;
 }
