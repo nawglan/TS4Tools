@@ -1200,6 +1200,74 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Imports PNG files as thumbnail resources (JFIF+ALFA format).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe Helpers/ThumbnailHelper/ImportThumb.cs
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/ThumbnailResource.cs
+    /// Converts PNG images with alpha to JFIF+ALFA format used by Sims 4 thumbnails.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportThumbnailAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        if (topLevel is not Window window) return;
+
+        var dialog = new ThumbnailHelperWindow();
+        var result = await dialog.ShowDialog<bool?>(window);
+
+        if (result != true || dialog.ConvertedFiles.Count == 0) return;
+
+        try
+        {
+            int importedCount = 0;
+
+            foreach (var (fileName, data) in dialog.ConvertedFiles)
+            {
+                // Default thumbnail type ID (0x3C2A8647 is a common THUM type)
+                const uint thumbnailTypeId = 0x3C2A8647;
+                var baseName = Path.GetFileNameWithoutExtension(fileName);
+                var instanceId = Wrappers.Hashing.FnvHash.Fnv64(baseName);
+                var key = new ResourceKey(thumbnailTypeId, 0x00000000, instanceId);
+
+                // Check for existing resource
+                var existing = _package.Find(key);
+                if (existing != null)
+                {
+                    _package.DeleteResource(existing);
+                    var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                    if (existingItem != null)
+                    {
+                        Resources.Remove(existingItem);
+                    }
+                }
+
+                var entry = _package.AddResource(key, data, rejectDuplicates: false);
+
+                if (entry != null)
+                {
+                    var item = new ResourceItemViewModel(key, entry.FileSize, baseName);
+                    Resources.Add(item);
+                    importedCount++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+
+            StatusMessage = $"Imported {importedCount} thumbnail{(importedCount != 1 ? "s" : "")}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Thumbnail import error: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private async Task ReplaceResourceAsync()
     {
