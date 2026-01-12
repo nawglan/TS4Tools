@@ -391,8 +391,9 @@ FodyWeavers.xsd
 
 # Claude Code configuration (ignore contents, not directory)
 .claude/*
-# But allow shared commands to be committed
+# But allow shared commands and prompts to be committed
 !.claude/commands/
+!.claude/prompts/
 
 # Avalonia specific
 *.avalonia
