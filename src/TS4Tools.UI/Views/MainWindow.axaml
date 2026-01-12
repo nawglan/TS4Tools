@@ -66,6 +66,8 @@
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" InputGesture="Ctrl+Shift+X" IsEnabled="{Binding HasSelectedResource}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 -->
                 <MenuItem Header="Export to P_ackage..." Command="{Binding ExportToPackageCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs resourceExportToFolder_Click -->
+                <MenuItem Header="Export to _Folder..." Command="{Binding ExportToFolderCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="_Replace Resource..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />

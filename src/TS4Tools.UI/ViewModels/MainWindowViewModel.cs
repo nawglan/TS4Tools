@@ -1293,6 +1293,145 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Exports selected resources to a folder as individual files.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs resourceExportToFolder_Click
+    /// Uses TGIN format: S4_{Type:X8}_{Group:X8}_{Instance:X16}[_Name].ext
+    /// </remarks>
+    [RelayCommand]
+    private async Task ExportToFolderAsync()
+    {
+        if (_package == null || SelectedResources.Count == 0 && SelectedResource == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        // Get resources to export
+        List<ResourceItemViewModel> resourcesToExport = SelectedResources.Count > 0
+            ? SelectedResources.ToList()
+            : SelectedResource != null
+                ? [SelectedResource]
+                : [];
+
+        if (resourcesToExport.Count == 0)
+        {
+            StatusMessage = "No resources selected";
+            return;
+        }
+
+        // Show folder picker
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Export Folder",
+            AllowMultiple = false
+        });
+
+        if (folders.Count == 0) return;
+
+        var targetFolder = folders[0].Path.LocalPath;
+
+        try
+        {
+            StatusMessage = "Exporting to folder...";
+
+            var exported = 0;
+            var errors = 0;
+
+            foreach (var resource in resourcesToExport)
+            {
+                try
+                {
+                    var key = resource.Key;
+                    var entry = _package.Find(key);
+                    if (entry == null) continue;
+
+                    // Generate TGIN format filename: S4_Type_Group_Instance[_Name].ext
+                    var baseName = $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}";
+
+                    // Add resource name if available
+                    if (!string.IsNullOrEmpty(resource.InstanceName))
+                    {
+                        // Sanitize name for filename
+                        var safeName = SanitizeFileName(resource.InstanceName);
+                        baseName += $"_{safeName}";
+                    }
+
+                    // Get file extension based on resource type
+                    var extension = GetResourceExtension(key.ResourceType);
+                    var fileName = baseName + extension;
+
+                    var targetPath = Path.Combine(targetFolder, fileName);
+
+                    // Get data and write to file
+                    var data = await _package.GetResourceDataAsync(entry);
+                    await _fileSystem.WriteAllBytesAsync(targetPath, data.ToArray());
+
+                    exported++;
+                }
+                catch
+                {
+                    errors++;
+                }
+            }
+
+            StatusMessage = errors > 0
+                ? $"Exported {exported} resources ({errors} errors)"
+                : $"Exported {exported} resources to folder";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Export error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Sanitizes a string for use in a file name.
+    /// </summary>
+    private static string SanitizeFileName(string name)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var result = new StringBuilder(name.Length);
+
+        foreach (var c in name)
+        {
+            result.Append(Array.IndexOf(invalidChars, c) >= 0 ? '_' : c);
+        }
+
+        // Limit length to prevent overly long filenames
+        var sanitized = result.ToString();
+        return sanitized.Length > 64 ? sanitized[..64] : sanitized;
+    }
+
+    /// <summary>
+    /// Gets the file extension for a resource type.
+    /// </summary>
+    private static string GetResourceExtension(uint resourceType)
+    {
+        return resourceType switch
+        {
+            0x220557DA => ".stbl",     // String Table
+            0x0166038C => ".nmap",     // Name Map
+            0x00B00000 => ".png",      // PNG Image
+            0x00B2D882 => ".dds",      // DDS/DST Texture
+            0x3453CF95 => ".rle",      // RLE Texture
+            0xBA856C78 => ".rle",      // RLE Texture (alt)
+            0x03B33DDF => ".xml",      // Tuning XML
+            0x6017E896 => ".xml",      // Tuning (alt)
+            0x545AC67A => ".data",     // SimData
+            0x319E4F1D => ".cobj",     // Catalog Object
+            0x01661233 => ".modl",     // MODL
+            0x01D0E75D => ".matd",     // MATD
+            0x01D10F34 => ".mlod",     // MLOD
+            0x736884F1 => ".vpxy",     // VPXY
+            0xD3044521 => ".rslt",     // RSLT
+            0xD382BF57 => ".ftpt",     // FTPT
+            0xDB43E069 => ".dmap",     // Deformer Map
+            _ => ".bin"                 // Unknown - binary
+        };
+    }
+
+    /// <summary>
     /// Opens the Import from Package dialog for importing selected resources from another package.
     /// </summary>
     /// <remarks>
