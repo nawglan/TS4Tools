@@ -32,7 +32,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private readonly HashNameService _hashNameService = new();
     private readonly IFileSystemService _fileSystem;
     private readonly PropertyChangedEventHandler _propertyChangedHandler;
-    private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
+    // Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings DBPFFilesAndAll
+    private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package", "*.dbc", "*.world", "*.nhd"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
 
@@ -1265,6 +1266,108 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         catch (Exception ex)
         {
             StatusMessage = $"Thumbnail import error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Imports resources from a DBC (Database Cache) file.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 205-240
+    /// Source: legacy_references/Sims4Tools/s4pe/Import/ExperimentalDBCWarning.cs
+    /// DBC files are DBPF packages with a .dbc extension used by the game for caching.
+    /// This feature shows a warning dialog before import due to experimental nature.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportDbcAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        // Show experimental warning dialog
+        // Source: ExperimentalDBCWarning.cs
+        var warningDialog = new DbcWarningWindow();
+        var warningResult = await warningDialog.ShowDialog<bool?>(window);
+
+        if (warningResult != true || !warningDialog.Confirmed) return;
+
+        // Open file picker for DBC files
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import DBC File",
+            AllowMultiple = false,
+            FileTypeFilter = [
+                new FilePickerFileType("DBC Files") { Patterns = ["*.dbc"] },
+                PackageFileType,
+                AllFilesType
+            ]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            StatusMessage = $"Importing DBC: {Path.GetFileName(filePath)}...";
+
+            // Open the DBC file as a package (it uses DBPF format)
+            // readWrite=false means read-only mode
+            await using var dbcPackage = await DbpfPackage.OpenAsync(filePath, readWrite: false);
+
+            if (dbcPackage.Resources.Count == 0)
+            {
+                StatusMessage = "DBC file contains no resources";
+                return;
+            }
+
+            // Import all resources from DBC
+            int importedCount = 0;
+            int skippedCount = 0;
+
+            foreach (var entry in dbcPackage.Resources)
+            {
+                var key = entry.Key;
+
+                // Check for duplicates
+                var existing = _package.Find(key);
+                if (existing != null)
+                {
+                    // Skip duplicates in DBC import (safer for cache files)
+                    skippedCount++;
+                    continue;
+                }
+
+                var data = await dbcPackage.GetResourceDataAsync(entry);
+                var newEntry = _package.AddResource(key, data.ToArray(), rejectDuplicates: false);
+
+                if (newEntry != null)
+                {
+                    var instanceName = _hashNameService.TryGetName(key.Instance);
+                    var item = new ResourceItemViewModel(key, newEntry.FileSize, instanceName);
+                    Resources.Add(item);
+                    importedCount++;
+                }
+            }
+
+            ApplyFilter();
+            OnPropertyChanged(nameof(ResourceCount));
+
+            StatusMessage = $"Imported {importedCount} resources from DBC" +
+                (skippedCount > 0 ? $", {skippedCount} duplicates skipped" : "");
+
+            // Prompt for autosave if setting is enabled
+            // Source: Settings.settings AskDBCAutoSave
+            if (SettingsService.Instance.Settings.PromptDbcAutosave && importedCount > 0)
+            {
+                // Recommend saving after DBC import
+                StatusMessage += " - Consider saving your package";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"DBC import error: {ex.Message}";
         }
     }
 

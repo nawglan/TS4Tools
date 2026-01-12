@@ -169,4 +169,9 @@ public sealed class AppSettings
     // Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs
     public bool AutoCheckForUpdates { get; set; } = true;
     public DateTime LastUpdateCheck { get; set; } = DateTime.MinValue;
+
+    // DBC import settings
+    // Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings AskDBCAutoSave
+    // When true, prompts for autosave during DBC package import
+    public bool PromptDbcAutosave { get; set; }
 }

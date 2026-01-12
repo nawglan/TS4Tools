@@ -64,6 +64,10 @@ public partial class SettingsWindow : Window
         HexRowSizeNumeric.Value = _settings.HexRowSize;
         PreviewZoomNumeric.Value = (decimal)_settings.PreviewZoomFactor;
 
+        // Import options
+        // Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings AskDBCAutoSave
+        PromptDbcAutosaveCheckBox.IsChecked = _settings.PromptDbcAutosave;
+
         // External editors
         HexEditorCommandTextBox.Text = _settings.HexEditorCommand ?? "";
         HexEditorIgnoreTSCheckBox.IsChecked = _settings.HexEditorIgnoreTimestamp;
@@ -91,6 +95,9 @@ public partial class SettingsWindow : Window
         _settings.EnableFallbackHexPreview = EnableHexPreviewCheckBox.IsChecked == true;
         _settings.HexRowSize = (int)(HexRowSizeNumeric.Value ?? 16);
         _settings.PreviewZoomFactor = (float)(PreviewZoomNumeric.Value ?? 1.0m);
+
+        // Import options
+        _settings.PromptDbcAutosave = PromptDbcAutosaveCheckBox.IsChecked == true;
 
         // External editors
         _settings.HexEditorCommand = string.IsNullOrWhiteSpace(HexEditorCommandTextBox.Text) ? null : HexEditorCommandTextBox.Text;

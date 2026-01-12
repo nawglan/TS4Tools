@@ -52,6 +52,13 @@
                                        Minimum="0.25" Maximum="4" Increment="0.25"
                                        FormatString="0.00" Width="100" HorizontalAlignment="Left" />
                     </Grid>
+
+                    <Separator Margin="0,8" />
+
+                    <TextBlock Text="Import Options" FontWeight="SemiBold" FontSize="14" />
+
+                    <!-- Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings AskDBCAutoSave -->
+                    <CheckBox x:Name="PromptDbcAutosaveCheckBox" Content="Prompt for DBC autosaving (recommend saving after DBC import)" />
                 </StackPanel>
             </TabItem>
 
