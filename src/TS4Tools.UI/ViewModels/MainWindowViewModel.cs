@@ -401,6 +401,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
                 0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
                 0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
                 0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
                 // RCOL resource types (standalone)
                 RcolConstants.Modl or        // 0x01661233 - MODL
@@ -545,6 +546,21 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var resource = new ImageResource(key, data);
         var vm = new ImageViewerViewModel();
         vm.LoadResource(resource);
+        return (new ImageViewerView { DataContext = vm }, resource);
+    }
+
+    /// <summary>
+    /// Creates an image viewer for RLE texture resources.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 218-261 (RLEControl)
+    /// Type IDs: 0x3453CF95, 0xBA856C78
+    /// </remarks>
+    private static (Control View, object? Wrapper) CreateRleViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
+    {
+        var resource = new RleResource(key, data);
+        var vm = new ImageViewerViewModel();
+        vm.LoadRleResource(resource);
         return (new ImageViewerView { DataContext = vm }, resource);
     }
 
@@ -1895,6 +1911,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
                 0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
                 0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                0x3453CF95 or 0xBA856C78 => CreateRleViewerWithWrapper(key, data), // RLE texture
                 0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
                 _ => (CreateHexViewer(data), null)
             };

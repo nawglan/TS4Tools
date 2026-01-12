@@ -11,12 +11,15 @@ namespace TS4Tools.UI.ViewModels.Editors;
 /// </summary>
 /// <remarks>
 /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 90-216 (DDSControl)
-/// The legacy DDSControl provides R/G/B/A channel toggles and alpha inversion.
+/// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 218-261 (RLEControl)
+/// The legacy DDSControl and RLEControl provide R/G/B/A channel toggles and alpha inversion.
 /// </remarks>
 public partial class ImageViewerViewModel : ViewModelBase
 {
     private ImageResource? _resource;
+    private RleResource? _rleResource;
     private byte[]? _decodedPixels;
+    private bool _isRleFormat;
 
     [ObservableProperty]
     private Bitmap? _image;
@@ -62,9 +65,9 @@ public partial class ImageViewerViewModel : ViewModelBase
     private bool _invertAlpha;
 
     /// <summary>
-    /// Whether channel controls should be shown (only for DDS/DST formats).
+    /// Whether channel controls should be shown (for DDS/DST/RLE formats).
     /// </summary>
-    public bool HasChannelControls => _resource?.Format is ImageFormat.Dds or ImageFormat.Dst;
+    public bool HasChannelControls => _isRleFormat || _resource?.Format is ImageFormat.Dds or ImageFormat.Dst;
 
     partial void OnShowRedChannelChanged(bool value) => RefreshImage();
     partial void OnShowGreenChannelChanged(bool value) => RefreshImage();
@@ -75,12 +78,88 @@ public partial class ImageViewerViewModel : ViewModelBase
     public void LoadResource(ImageResource resource)
     {
         _resource = resource;
+        _rleResource = null;
+        _isRleFormat = false;
         FormatName = GetFormatDisplayName(resource);
         Width = resource.Width;
         Height = resource.Height;
         DataSize = resource.DataLength;
 
         LoadImage(resource);
+        OnPropertyChanged(nameof(HasChannelControls));
+    }
+
+    /// <summary>
+    /// Loads an RLE texture resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 218-261 (RLEControl)
+    /// RLE textures are DXT5-compressed with additional run-length encoding.
+    /// </remarks>
+    public void LoadRleResource(RleResource resource)
+    {
+        _resource = null;
+        _rleResource = resource;
+        _isRleFormat = true;
+        FormatName = $"RLE ({resource.Version})";
+        Width = resource.Width;
+        Height = resource.Height;
+        DataSize = resource.RawData.Length;
+
+        LoadRleImage(resource);
+        OnPropertyChanged(nameof(HasChannelControls));
+    }
+
+    private void LoadRleImage(RleResource resource)
+    {
+        try
+        {
+            // Convert RLE to DDS, then decode
+            var ddsData = resource.ToDds();
+            if (ddsData == null || ddsData.Length == 0)
+            {
+                Image = null;
+                _decodedPixels = null;
+                IsPreviewAvailable = false;
+                StatusMessage = "Failed to decompress RLE texture";
+                return;
+            }
+
+            // Decode the DDS data
+            _decodedPixels = DxtDecoder.DecompressDds(ddsData);
+            if (_decodedPixels == null)
+            {
+                Image = null;
+                IsPreviewAvailable = false;
+                StatusMessage = "Failed to decode RLE texture";
+                return;
+            }
+
+            // Ensure we have valid dimensions
+            if (Width <= 0 || Height <= 0)
+            {
+                Image = null;
+                IsPreviewAvailable = false;
+                StatusMessage = "Invalid image dimensions";
+                return;
+            }
+
+            // Create bitmap with current channel settings
+            RefreshImage();
+
+            if (Image != null)
+            {
+                IsPreviewAvailable = true;
+                StatusMessage = $"RLE image loaded ({Width}x{Height}, {resource.Version})";
+            }
+        }
+        catch (Exception ex)
+        {
+            Image = null;
+            _decodedPixels = null;
+            IsPreviewAvailable = false;
+            StatusMessage = $"Failed to decode RLE: {ex.Message}";
+        }
     }
 
     private static string GetFormatDisplayName(ImageResource resource)
@@ -283,5 +362,12 @@ public partial class ImageViewerViewModel : ViewModelBase
         return bitmap;
     }
 
-    public ReadOnlyMemory<byte> GetData() => _resource?.Data ?? ReadOnlyMemory<byte>.Empty;
+    public ReadOnlyMemory<byte> GetData()
+    {
+        if (_resource != null)
+            return _resource.Data;
+        if (_rleResource != null)
+            return _rleResource.Data;
+        return ReadOnlyMemory<byte>.Empty;
+    }
 }
