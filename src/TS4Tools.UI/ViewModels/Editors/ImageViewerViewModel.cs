@@ -6,9 +6,17 @@ using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels.Editors;
 
+/// <summary>
+/// ViewModel for image preview with channel toggle support.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 90-216 (DDSControl)
+/// The legacy DDSControl provides R/G/B/A channel toggles and alpha inversion.
+/// </remarks>
 public partial class ImageViewerViewModel : ViewModelBase
 {
     private ImageResource? _resource;
+    private byte[]? _decodedPixels;
 
     [ObservableProperty]
     private Bitmap? _image;
@@ -30,6 +38,39 @@ public partial class ImageViewerViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _statusMessage = string.Empty;
+
+    // Channel toggles - Source: s4pe/BuiltInValueControl.cs line 97
+    // static bool channel1 = true, channel2 = true, channel3 = true, channel4 = true, invertch4 = false;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChannelControls))]
+    private bool _showRedChannel = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChannelControls))]
+    private bool _showGreenChannel = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChannelControls))]
+    private bool _showBlueChannel = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChannelControls))]
+    private bool _showAlphaChannel = true;
+
+    [ObservableProperty]
+    private bool _invertAlpha;
+
+    /// <summary>
+    /// Whether channel controls should be shown (only for DDS/DST formats).
+    /// </summary>
+    public bool HasChannelControls => _resource?.Format is ImageFormat.Dds or ImageFormat.Dst;
+
+    partial void OnShowRedChannelChanged(bool value) => RefreshImage();
+    partial void OnShowGreenChannelChanged(bool value) => RefreshImage();
+    partial void OnShowBlueChannelChanged(bool value) => RefreshImage();
+    partial void OnShowAlphaChannelChanged(bool value) => RefreshImage();
+    partial void OnInvertAlphaChanged(bool value) => RefreshImage();
 
     public void LoadResource(ImageResource resource)
     {
@@ -105,8 +146,8 @@ public partial class ImageViewerViewModel : ViewModelBase
     {
         try
         {
-            var pixels = resource.GetDecodedPixels();
-            if (pixels == null)
+            _decodedPixels = resource.GetDecodedPixels();
+            if (_decodedPixels == null)
             {
                 Image = null;
                 IsPreviewAvailable = false;
@@ -123,26 +164,83 @@ public partial class ImageViewerViewModel : ViewModelBase
                 return;
             }
 
-            // Create WriteableBitmap from RGBA pixels
-            var bitmap = CreateBitmapFromRgba(pixels, Width, Height);
-            if (bitmap == null)
-            {
-                Image = null;
-                IsPreviewAvailable = false;
-                StatusMessage = "Failed to create bitmap from decoded pixels";
-                return;
-            }
+            // Create bitmap with current channel settings
+            RefreshImage();
 
-            Image = bitmap;
-            IsPreviewAvailable = true;
-            StatusMessage = $"{resource.Format} image loaded ({Width}x{Height}, {resource.DxtFormat})";
+            if (Image != null)
+            {
+                IsPreviewAvailable = true;
+                StatusMessage = $"{resource.Format} image loaded ({Width}x{Height}, {resource.DxtFormat})";
+            }
         }
         catch (Exception ex)
         {
             Image = null;
+            _decodedPixels = null;
             IsPreviewAvailable = false;
             StatusMessage = $"Failed to decode {resource.Format}: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Refreshes the displayed image with current channel settings.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 119-134
+    /// The DDSPanel in legacy code has Channel1-4 properties that filter the display.
+    /// </remarks>
+    private void RefreshImage()
+    {
+        if (_decodedPixels == null || Width <= 0 || Height <= 0)
+            return;
+
+        // Apply channel filtering
+        var filteredPixels = ApplyChannelFilter(_decodedPixels);
+
+        // Create WriteableBitmap from filtered RGBA pixels
+        var bitmap = CreateBitmapFromRgba(filteredPixels, Width, Height);
+        if (bitmap == null)
+        {
+            Image = null;
+            IsPreviewAvailable = false;
+            StatusMessage = "Failed to create bitmap from decoded pixels";
+            return;
+        }
+
+        Image = bitmap;
+    }
+
+    /// <summary>
+    /// Applies channel filtering to RGBA pixel data.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs
+    /// When a channel is disabled, its value is set to 0 (for RGB) or 255 (for alpha).
+    /// InvertCh4 inverts the alpha channel values.
+    /// </remarks>
+    private byte[] ApplyChannelFilter(byte[] sourcePixels)
+    {
+        // If all channels enabled and no inversion, return original
+        if (ShowRedChannel && ShowGreenChannel && ShowBlueChannel && ShowAlphaChannel && !InvertAlpha)
+            return sourcePixels;
+
+        var result = new byte[sourcePixels.Length];
+
+        for (var i = 0; i < sourcePixels.Length; i += 4)
+        {
+            // RGBA order
+            result[i] = ShowRedChannel ? sourcePixels[i] : (byte)0;           // R
+            result[i + 1] = ShowGreenChannel ? sourcePixels[i + 1] : (byte)0; // G
+            result[i + 2] = ShowBlueChannel ? sourcePixels[i + 2] : (byte)0;  // B
+
+            // Alpha channel with optional inversion
+            byte alpha = sourcePixels[i + 3];
+            if (InvertAlpha)
+                alpha = (byte)(255 - alpha);
+            result[i + 3] = ShowAlphaChannel ? alpha : (byte)255;             // A
+        }
+
+        return result;
     }
 
     /// <summary>

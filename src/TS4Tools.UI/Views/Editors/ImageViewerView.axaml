@@ -14,17 +14,36 @@
     <DockPanel>
         <!-- Header -->
         <Border DockPanel.Dock="Top" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-            <StackPanel Orientation="Horizontal" Spacing="16">
-                <TextBlock Text="Image Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding FormatName, StringFormat='Format: {0}'}"
-                           VerticalAlignment="Center" Opacity="0.7" />
-                <TextBlock Text="{Binding Width, StringFormat='Width: {0}px'}"
-                           VerticalAlignment="Center" Opacity="0.7" />
-                <TextBlock Text="{Binding Height, StringFormat='Height: {0}px'}"
-                           VerticalAlignment="Center" Opacity="0.7" />
-                <TextBlock Text="{Binding DataSize, StringFormat='Size: {0:N0} bytes'}"
-                           VerticalAlignment="Center" Opacity="0.7" />
-            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="Image Viewer" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding FormatName, StringFormat='Format: {0}'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding Width, StringFormat='Width: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding Height, StringFormat='Height: {0}px'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock Text="{Binding DataSize, StringFormat='Size: {0:N0} bytes'}"
+                               VerticalAlignment="Center" Opacity="0.7" />
+                </StackPanel>
+
+                <!-- Channel toggles for DDS/DST textures -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 119-133 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                            IsVisible="{Binding HasChannelControls}">
+                    <Separator Width="1" Margin="8,0" />
+                    <CheckBox Content="R" IsChecked="{Binding ShowRedChannel}"
+                              ToolTip.Tip="Show Red Channel" Foreground="IndianRed" />
+                    <CheckBox Content="G" IsChecked="{Binding ShowGreenChannel}"
+                              ToolTip.Tip="Show Green Channel" Foreground="LimeGreen" />
+                    <CheckBox Content="B" IsChecked="{Binding ShowBlueChannel}"
+                              ToolTip.Tip="Show Blue Channel" Foreground="CornflowerBlue" />
+                    <CheckBox Content="A" IsChecked="{Binding ShowAlphaChannel}"
+                              ToolTip.Tip="Show Alpha Channel" />
+                    <CheckBox Content="Invert A" IsChecked="{Binding InvertAlpha}"
+                              ToolTip.Tip="Invert Alpha Channel" />
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Status Bar -->
