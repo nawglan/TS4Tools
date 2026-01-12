@@ -18,6 +18,7 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
+                <MenuItem Header="_New Package" Command="{Binding NewPackageCommand}" InputGesture="Ctrl+N" />
                 <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
                 <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
                     <MenuItem.Styles>

@@ -110,6 +110,29 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         LoadRecentFiles();
     }
 
+    /// <summary>
+    /// Creates a new empty package.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 787-792 (FileNew method)
+    /// </remarks>
+    [RelayCommand]
+    private async Task NewPackageAsync()
+    {
+        await CloseCurrentPackageAsync();
+
+        _package = DbpfPackage.CreateNew();
+        PackagePath = "";
+        Title = "TS4Tools - [New Package]";
+
+        _hashNameService.Clear();
+        PopulateResourceList();
+
+        StatusMessage = "New package created";
+        OnPropertyChanged(nameof(HasOpenPackage));
+        OnPropertyChanged(nameof(ResourceCount));
+    }
+
     [RelayCommand]
     private async Task OpenPackageAsync()
     {
