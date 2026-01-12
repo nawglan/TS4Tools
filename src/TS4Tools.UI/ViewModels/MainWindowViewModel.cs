@@ -476,6 +476,23 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Opens the Settings dialog.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings
+    /// </remarks>
+    [RelayCommand]
+    private async Task SettingsAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var dialog = new SettingsWindow();
+        await dialog.ShowDialog(window);
+        StatusMessage = "Settings updated";
+    }
+
     [RelayCommand]
     private async Task ExportResourceAsync()
     {
