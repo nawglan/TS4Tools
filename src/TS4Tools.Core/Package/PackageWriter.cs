@@ -119,6 +119,9 @@ internal sealed class PackageWriter
         long indexPosition = output.Position;
         int indexSize = await WriteIndexAsync(output, indexType, newEntries.Select(x => x.Entry).ToList(), buffer, cancellationToken).ConfigureAwait(false);
 
+        // Record final file length before seeking back to update header
+        long finalLength = output.Position;
+
         // Update header with final values
         output.Position = 36; // Index count
         BinaryPrimitives.WriteInt32LittleEndian(buffer, newEntries.Count);
@@ -138,6 +141,15 @@ internal sealed class PackageWriter
                 $"Index position ({indexPosition:N0}) exceeds 32-bit limit. DBPF format is limited to 4GB.");
         BinaryPrimitives.WriteInt32LittleEndian(buffer, (int)indexPosition);
         await output.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+
+        // Truncate stream to prevent trailing garbage when re-saved package is smaller
+        // Source: s4pi/Package/Package.cs line 75
+        // Note: Only truncate if the stream supports seeking (FileStream, MemoryStream)
+        // Use finalLength (recorded after index write) not current position (which is in header area)
+        if (output.CanSeek)
+        {
+            output.SetLength(finalLength);
+        }
 
         await output.FlushAsync(cancellationToken).ConfigureAwait(false);
     }

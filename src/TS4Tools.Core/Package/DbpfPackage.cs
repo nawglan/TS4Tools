@@ -443,14 +443,97 @@ public sealed class DbpfPackage : IMutablePackage
         }
     }
 
-    public ValueTask SaveAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Saves the package to its original file using atomic temp file pattern.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 54-88
+    ///
+    /// Safety measures:
+    /// - Save to temp file first (line 64, 67)
+    /// - Lock header bytes on original stream (line 69)
+    /// - Copy temp contents to original (lines 71-74)
+    /// - Truncate stream to new length (line 75)
+    /// - Delete temp file and unlock (line 79)
+    /// </remarks>
+    public async ValueTask SaveAsync(CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(FilePath))
             throw new InvalidOperationException("Package was not opened from a file. Use SaveAsAsync instead.");
 
-        return SaveAsAsync(FilePath, cancellationToken);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        if (_stream == null)
+            throw new InvalidOperationException("Package has no stream to save to.");
+
+        if (!_stream.CanWrite)
+            throw new InvalidOperationException("Package is read-only.");
+
+        // Use atomic save pattern: write to temp file first, then copy back
+        // Source: s4pi/Package/Package.cs lines 64-79
+        string tmpFile = Path.GetTempFileName();
+        FileStream? fs = _stream as FileStream;
+        bool locked = false;
+
+        try
+        {
+            // Write to temp file first
+            await using (var tempStream = new FileStream(tmpFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
+            {
+                await SaveToStreamAsync(tempStream, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Lock the header on original stream to prevent concurrent modification
+            // Source: s4pi/Package/Package.cs line 69
+            // Note: File locking is not supported on macOS, so we only lock on Windows/Linux
+            if (fs != null && OperatingSystem.IsWindows())
+            {
+                fs.Lock(0, PackageLimits.HeaderSize);
+                locked = true;
+            }
+
+            // Copy temp file contents back to original stream
+            // Source: s4pi/Package/Package.cs lines 71-74
+            _stream.Position = 0;
+            await using (var tempReadStream = new FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                await tempReadStream.CopyToAsync(_stream, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Truncate to new length to prevent trailing garbage
+            // Source: s4pi/Package/Package.cs line 75
+            _stream.SetLength(_stream.Position);
+            await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+            // Re-read header to sync internal state
+            // Source: s4pi/Package/Package.cs lines 81-82
+            _stream.Position = 0;
+            int bytesRead = await _stream.ReadAsync(_header, cancellationToken).ConfigureAwait(false);
+            if (bytesRead != PackageLimits.HeaderSize)
+                throw new PackageFormatException("Failed to re-read header after save.");
+
+            IsDirty = false;
+            OnResourceIndexInvalidated();
+        }
+        finally
+        {
+            // Always unlock and delete temp file
+            // Source: s4pi/Package/Package.cs line 79
+            if (locked && fs != null && OperatingSystem.IsWindows())
+            {
+                fs.Unlock(0, PackageLimits.HeaderSize);
+            }
+
+            try { File.Delete(tmpFile); } catch { /* Ignore cleanup errors */ }
+        }
     }
 
+    /// <summary>
+    /// Saves the package to a new file path.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 155-160
+    /// </remarks>
     public async ValueTask SaveAsAsync(string path, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
