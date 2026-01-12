@@ -80,6 +80,20 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private Control? _editorContent;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PropertyGridButtonText))]
+    private bool _showPropertyGrid;
+
+    [ObservableProperty]
+    private Control? _propertyGridContent;
+
+    /// <summary>
+    /// The current resource wrapper for property grid display.
+    /// </summary>
+    private object? _currentResourceWrapper;
+
+    public string PropertyGridButtonText => ShowPropertyGrid ? "Hide Properties" : "Show Properties";
+
     public bool HasOpenPackage => _package != null;
 
     public int ResourceCount => _package?.ResourceCount ?? 0;
@@ -267,6 +281,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             SelectedResourceKey = string.Empty;
             SelectedResourceInfo = string.Empty;
             EditorContent = null;
+            _currentResourceWrapper = null;
+            PropertyGridContent = null;
             return;
         }
 
@@ -286,14 +302,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
             SelectedResourceInfo = info;
 
-            // Create appropriate editor based on resource type
-            EditorContent = key.ResourceType switch
+            // Create appropriate editor based on resource type and track wrapper for property grid
+            (EditorContent, _currentResourceWrapper) = key.ResourceType switch
             {
-                0x220557DA => CreateStblEditor(key, data), // STBL
-                0x0166038C => CreateNameMapEditor(key, data), // NameMap
-                0x03B33DDF or 0x6017E896 => CreateTextEditor(key, data), // Tuning XML
-                0x00B00000 or 0x00B2D882 => CreateImageViewer(key, data), // PNG, DDS
-                0x545AC67A => CreateSimDataViewer(key, data), // SimData
+                0x220557DA => CreateStblEditorWithWrapper(key, data), // STBL
+                0x0166038C => CreateNameMapEditorWithWrapper(key, data), // NameMap
+                0x03B33DDF or 0x6017E896 => CreateTextEditorWithWrapper(key, data), // Tuning XML
+                0x00B00000 or 0x00B2D882 => CreateImageViewerWithWrapper(key, data), // PNG, DDS
+                0x545AC67A => CreateSimDataViewerWithWrapper(key, data), // SimData
                 // RCOL resource types (standalone)
                 RcolConstants.Modl or        // 0x01661233 - MODL
                 RcolConstants.Matd or        // 0x01D0E75D - MATD
@@ -307,10 +323,16 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 RcolConstants.Vpxy or        // 0x736884F1 - VPXY
                 RcolConstants.Rslt or        // 0xD3044521 - RSLT
                 RcolConstants.Ftpt           // 0xD382BF57 - FTPT
-                    => CreateRcolViewer(key, data),
-                0x319E4F1D => CreateCatalogViewer(key, data), // COBJ (Catalog Object)
-                _ => CreateHexViewer(data) // Default hex viewer
+                    => CreateRcolViewerWithWrapper(key, data),
+                0x319E4F1D => CreateCatalogViewerWithWrapper(key, data), // COBJ (Catalog Object)
+                _ => (CreateHexViewer(data), null) // Default hex viewer, no wrapper
             };
+
+            // Update property grid if visible
+            if (ShowPropertyGrid)
+            {
+                UpdatePropertyGrid(_currentResourceWrapper);
+            }
         }
     }
 
@@ -321,60 +343,60 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         return new HexViewerView { DataContext = vm };
     }
 
-    private static StblEditorView CreateStblEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateStblEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new StblResource(key, data);
         var vm = new StblEditorViewModel();
         vm.LoadResource(resource);
-        return new StblEditorView { DataContext = vm };
+        return (new StblEditorView { DataContext = vm }, resource);
     }
 
-    private static NameMapEditorView CreateNameMapEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateNameMapEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new NameMapResource(key, data);
         var vm = new NameMapEditorViewModel();
         vm.LoadResource(resource);
-        return new NameMapEditorView { DataContext = vm };
+        return (new NameMapEditorView { DataContext = vm }, resource);
     }
 
-    private static TextEditorView CreateTextEditor(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateTextEditorWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new TextResource(key, data);
         var vm = new TextEditorViewModel();
         vm.LoadResource(resource);
-        return new TextEditorView { DataContext = vm };
+        return (new TextEditorView { DataContext = vm }, resource);
     }
 
-    private static ImageViewerView CreateImageViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateImageViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new ImageResource(key, data);
         var vm = new ImageViewerViewModel();
         vm.LoadResource(resource);
-        return new ImageViewerView { DataContext = vm };
+        return (new ImageViewerView { DataContext = vm }, resource);
     }
 
-    private static SimDataViewerView CreateSimDataViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateSimDataViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new SimDataResource(key, data);
         var vm = new SimDataViewerViewModel();
         vm.LoadResource(resource);
-        return new SimDataViewerView { DataContext = vm };
+        return (new SimDataViewerView { DataContext = vm }, resource);
     }
 
-    private static RcolViewerView CreateRcolViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateRcolViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new RcolResource(key, data);
         var vm = new RcolViewerViewModel();
         vm.LoadResource(resource);
-        return new RcolViewerView { DataContext = vm };
+        return (new RcolViewerView { DataContext = vm }, resource);
     }
 
-    private static CatalogViewerView CreateCatalogViewer(ResourceKey key, ReadOnlyMemory<byte> data)
+    private static (Control View, object? Wrapper) CreateCatalogViewerWithWrapper(ResourceKey key, ReadOnlyMemory<byte> data)
     {
         var resource = new CobjResource(key, data);
         var vm = new CatalogViewerViewModel();
         vm.LoadResource(resource);
-        return new CatalogViewerView { DataContext = vm };
+        return (new CatalogViewerView { DataContext = vm }, resource);
     }
 
     [RelayCommand]
@@ -997,6 +1019,36 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private void ToggleAdvancedFilter()
     {
         ShowAdvancedFilter = !ShowAdvancedFilter;
+    }
+
+    /// <summary>
+    /// Toggles the property grid panel visibility.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs
+    /// </remarks>
+    [RelayCommand]
+    private void TogglePropertyGrid()
+    {
+        ShowPropertyGrid = !ShowPropertyGrid;
+
+        if (ShowPropertyGrid && _currentResourceWrapper != null)
+        {
+            UpdatePropertyGrid(_currentResourceWrapper);
+        }
+    }
+
+    private void UpdatePropertyGrid(object? resource)
+    {
+        if (resource == null)
+        {
+            PropertyGridContent = null;
+            return;
+        }
+
+        var vm = new PropertyGridViewModel();
+        vm.LoadResource(resource);
+        PropertyGridContent = new PropertyGridEditorView { DataContext = vm };
     }
 
     /// <summary>

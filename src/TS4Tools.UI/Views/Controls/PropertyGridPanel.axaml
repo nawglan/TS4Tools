@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="TS4Tools.UI.Views.Controls.PropertyGridPanel">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs -->
+
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+            <TextBlock Text="Resource Properties" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <TextBlock x:Name="TypeLabel" Opacity="0.7" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <DataGrid x:Name="PropertiesGrid"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="False"
+                  CanUserReorderColumns="False"
+                  CanUserResizeColumns="True"
+                  GridLinesVisibility="Horizontal">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Property" Binding="{ReflectionBinding Name}" Width="150" IsReadOnly="True" />
+                <DataGridTextColumn Header="Type" Binding="{ReflectionBinding TypeName}" Width="100" IsReadOnly="True" />
+                <DataGridTextColumn Header="Value" Binding="{ReflectionBinding Value, Mode=TwoWay}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
