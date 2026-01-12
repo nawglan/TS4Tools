@@ -23,15 +23,20 @@
                 <MenuItem Header="_Open Package..." Command="{Binding OpenPackageCommand}" InputGesture="Ctrl+O" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 794-797 -->
                 <MenuItem Header="Open _Read Only..." Command="{Binding OpenPackageReadOnlyCommand}" />
-                <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
-                    <MenuItem.Styles>
-                        <Style Selector="MenuItem">
-                            <Setter Property="Header" Value="{ReflectionBinding FileName}" />
-                            <Setter Property="Command" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentFileCommand}" />
-                            <Setter Property="CommandParameter" Value="{ReflectionBinding Path}" />
-                            <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Path}" />
-                        </Style>
-                    </MenuItem.Styles>
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 940-952 -->
+                <MenuItem Header="Open _Recent">
+                    <MenuItem ItemsSource="{Binding RecentFiles}">
+                        <MenuItem.Styles>
+                            <Style Selector="MenuItem">
+                                <Setter Property="Header" Value="{ReflectionBinding FileName}" />
+                                <Setter Property="Command" Value="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenRecentFileCommand}" />
+                                <Setter Property="CommandParameter" Value="{ReflectionBinding Path}" />
+                                <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Path}" />
+                            </Style>
+                        </MenuItem.Styles>
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem Header="Set _Max Recent..." Command="{Binding SetMaxRecentFilesCommand}" />
                 </MenuItem>
                 <Separator />
                 <MenuItem Header="_Save" Command="{Binding SaveCommand}" InputGesture="Ctrl+S" IsEnabled="{Binding CanSave}" />
@@ -99,9 +104,11 @@
             </MenuItem>
             <!-- Bookmarks Menu -->
             <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/OrganiseBookmarksDialog.cs -->
+            <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 965-978 -->
             <MenuItem Header="_Bookmarks">
                 <MenuItem Header="_Add Current Package" Command="{Binding AddCurrentToBookmarksCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Organise Bookmarks..." Command="{Binding OrganiseBookmarksCommand}" />
+                <MenuItem Header="Set _Max Bookmarks..." Command="{Binding SetMaxBookmarksCommand}" />
                 <Separator IsVisible="{Binding HasBookmarks}" />
                 <MenuItem Header="(No bookmarks)" IsEnabled="False" IsVisible="{Binding !HasBookmarks}" />
                 <MenuItem ItemsSource="{Binding Bookmarks}" IsVisible="{Binding HasBookmarks}">

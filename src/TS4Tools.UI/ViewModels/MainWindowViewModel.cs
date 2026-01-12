@@ -39,7 +39,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         _fileSystem.GetApplicationDataPath(),
         "TS4Tools", "recent.json");
 
-    private const int MaxRecentFiles = 10;
+    private static int MaxRecentFiles => SettingsService.Instance.Settings.MaxRecentFiles;
 
     private DbpfPackage? _package;
 
@@ -2225,9 +2225,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (string.IsNullOrEmpty(PackagePath)) return;
 
         var settings = SettingsService.Instance.Settings;
-        if (settings.Bookmarks.Count >= settings.BookmarkSize)
+        if (settings.Bookmarks.Count >= settings.MaxBookmarks)
         {
-            StatusMessage = $"Cannot add bookmark: maximum of {settings.BookmarkSize} bookmarks reached";
+            StatusMessage = $"Cannot add bookmark: maximum of {settings.MaxBookmarks} bookmarks reached";
             return;
         }
 
@@ -2242,6 +2242,77 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         SettingsService.Instance.Save();
         LoadBookmarks();
         StatusMessage = $"Added bookmark: {_fileSystem.GetFileName(PackagePath)}";
+    }
+
+    /// <summary>
+    /// Sets the maximum number of recent files to keep.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 940-952 (FileSetMaxRecent)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SetMaxRecentFilesAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var settings = SettingsService.Instance.Settings;
+        var dialog = new GetNumberWindow(
+            "Max number of recent files:",
+            "Recent Files",
+            1, 20, settings.MaxRecentFiles);
+
+        var result = await dialog.ShowDialog<bool>(window);
+        if (result)
+        {
+            settings.MaxRecentFiles = dialog.Value;
+            SettingsService.Instance.Save();
+
+            // Trim recent files if needed
+            while (RecentFiles.Count > settings.MaxRecentFiles)
+            {
+                RecentFiles.RemoveAt(RecentFiles.Count - 1);
+            }
+            SaveRecentFiles();
+
+            StatusMessage = $"Max recent files set to {settings.MaxRecentFiles}";
+        }
+    }
+
+    /// <summary>
+    /// Sets the maximum number of bookmarks to keep.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 965-978 (FileSetMaxBookmarks)
+    /// </remarks>
+    [RelayCommand]
+    private async Task SetMaxBookmarksAsync()
+    {
+        var topLevel = GetTopLevel();
+        if (topLevel is not Window window) return;
+
+        var settings = SettingsService.Instance.Settings;
+        var dialog = new GetNumberWindow(
+            "Max number of bookmarks:",
+            "Bookmarks",
+            1, 20, settings.MaxBookmarks);
+
+        var result = await dialog.ShowDialog<bool>(window);
+        if (result)
+        {
+            settings.MaxBookmarks = dialog.Value;
+            SettingsService.Instance.Save();
+
+            // Trim bookmarks if needed
+            while (settings.Bookmarks.Count > settings.MaxBookmarks)
+            {
+                settings.Bookmarks.RemoveAt(settings.Bookmarks.Count - 1);
+            }
+            SettingsService.Instance.Save();
+            LoadBookmarks();
+
+            StatusMessage = $"Max bookmarks set to {settings.MaxBookmarks}";
+        }
     }
 
     #endregion

@@ -110,8 +110,15 @@ public sealed class AppSettings
 
     // MRU/Bookmarks
     // Source: Settings.settings lines 50-55
+    public List<string> RecentFiles { get; set; } = [];
+    public int MaxRecentFiles { get; set; } = 10;
     public List<string> Bookmarks { get; set; } = [];
-    public int BookmarkSize { get; set; } = 4;
+    public int MaxBookmarks { get; set; } = 10;
+
+    // Legacy property for backward compatibility (renamed to MaxBookmarks)
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Obsolete("Use MaxBookmarks instead")]
+    public int BookmarkSize { get => MaxBookmarks; set => MaxBookmarks = value; }
 
     // Custom Places (folder shortcuts in file dialogs)
     // Source: Settings.settings CustomPlaces/CustomPlacesCount

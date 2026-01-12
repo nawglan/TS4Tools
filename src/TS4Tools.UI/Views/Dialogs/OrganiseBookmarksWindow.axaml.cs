@@ -23,7 +23,7 @@ public partial class OrganiseBookmarksWindow : Window
 
         LoadBookmarks();
 
-        MaxBookmarksNumeric.Value = _settings.BookmarkSize;
+        MaxBookmarksNumeric.Value = _settings.MaxBookmarks;
 
         OkButton.Click += OkButton_Click;
         CancelButton.Click += CancelButton_Click;
@@ -218,7 +218,7 @@ public partial class OrganiseBookmarksWindow : Window
         {
             _settings.Bookmarks.Add(item.RawEntry);
         }
-        _settings.BookmarkSize = (int)(MaxBookmarksNumeric.Value ?? 10);
+        _settings.MaxBookmarks = (int)(MaxBookmarksNumeric.Value ?? 10);
         SettingsService.Instance.Save();
     }
 }
