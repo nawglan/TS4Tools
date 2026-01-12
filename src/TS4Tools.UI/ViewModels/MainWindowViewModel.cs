@@ -128,6 +128,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
     public ObservableCollection<ResourceItemViewModel> FilteredResources { get; } = [];
 
+    /// <summary>
+    /// The currently selected resources (for multi-select operations).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs
+    /// </remarks>
+    public ObservableCollection<ResourceItemViewModel> SelectedResources { get; } = [];
+
     public ObservableCollection<RecentFileViewModel> RecentFiles { get; } = [];
 
     [ObservableProperty]
@@ -1199,6 +1207,34 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         {
             StatusMessage = $"Duplicate error: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Selects all resources in the filtered list.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 236-285 (SelectAll)
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1619-1622 (ResourceSelectAll)
+    /// </remarks>
+    [RelayCommand]
+    private void SelectAll()
+    {
+        if (_package == null || FilteredResources.Count == 0) return;
+
+        SelectedResources.Clear();
+        foreach (var resource in FilteredResources)
+        {
+            SelectedResources.Add(resource);
+        }
+
+        // Set first as the "active" selection for preview purposes
+        if (FilteredResources.Count > 0)
+        {
+            SelectedResource = FilteredResources[0];
+        }
+
+        StatusMessage = $"Selected {SelectedResources.Count} resources";
+        OnPropertyChanged(nameof(SelectedResources));
     }
 
     [RelayCommand]

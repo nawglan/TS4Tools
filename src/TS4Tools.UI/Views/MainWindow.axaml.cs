@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Selection;
 using TS4Tools.UI.ViewModels;
 using TS4Tools.UI.Views.Controls;
 
@@ -24,6 +25,10 @@ public partial class MainWindow : Window, IAsyncDisposable
         // Wire up control panel events
         // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs control panel event handlers
         WireControlPanelEvents();
+
+        // Wire up selection sync for Select All functionality
+        // Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs
+        WireSelectionSync();
 
         Closed += OnWindowClosed;
     }
@@ -100,6 +105,63 @@ public partial class MainWindow : Window, IAsyncDisposable
         {
             await _viewModel.AvailableHelpers[index].ExecuteCommand.ExecuteAsync(null);
         }
+    }
+
+    /// <summary>
+    /// Wires up selection synchronization between ListBox and ViewModel.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 236-285
+    /// </remarks>
+    private void WireSelectionSync()
+    {
+        if (_viewModel == null) return;
+
+        // Subscribe to SelectedResources changes from ViewModel (for SelectAll command)
+        _viewModel.SelectedResources.CollectionChanged += (_, args) =>
+        {
+            if (args.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+            {
+                // When items are added programmatically, select them in the ListBox
+                foreach (var item in args.NewItems ?? Array.Empty<object>())
+                {
+                    if (item is ResourceItemViewModel resource &&
+                        !ResourceListBox.Selection.SelectedItems.Contains(resource))
+                    {
+                        var index = ResourceListBox.ItemsSource?.Cast<ResourceItemViewModel>()
+                            .ToList().IndexOf(resource) ?? -1;
+                        if (index >= 0)
+                        {
+                            ResourceListBox.Selection.Select(index);
+                        }
+                    }
+                }
+            }
+            else if (args.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+            {
+                // Clear was called - don't clear UI selection as new items will be added
+            }
+        };
+
+        // Subscribe to ListBox selection changes
+        ResourceListBox.SelectionChanged += (_, args) =>
+        {
+            // Update ViewModel's SelectedResources from ListBox selection
+            // (but avoid recursion when ViewModel is updating ListBox)
+            var selectedItems = ResourceListBox.Selection.SelectedItems
+                .OfType<ResourceItemViewModel>()
+                .ToList();
+
+            // Only sync if different from current SelectedResources
+            if (!selectedItems.SequenceEqual(_viewModel.SelectedResources))
+            {
+                _viewModel.SelectedResources.Clear();
+                foreach (var item in selectedItems)
+                {
+                    _viewModel.SelectedResources.Add(item);
+                }
+            }
+        };
     }
 
     private async void OnWindowClosed(object? sender, EventArgs e)

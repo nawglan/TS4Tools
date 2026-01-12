@@ -73,6 +73,10 @@
                 <MenuItem Header="Save Preview..." Command="{Binding SavePreviewCommand}" IsEnabled="{Binding CanSavePreview}" />
                 <Separator />
                 <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
+                <Separator />
+                <!-- Select All command -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 236-285 -->
+                <MenuItem Header="Select _All" Command="{Binding SelectAllCommand}" InputGesture="Ctrl+A" IsEnabled="{Binding HasOpenPackage}" />
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="_Search..." Command="{Binding SearchCommand}" InputGesture="Ctrl+F" IsEnabled="{Binding HasOpenPackage}" />
@@ -166,8 +170,11 @@
                     </Border>
 
                     <!-- Resource List -->
-                    <ListBox ItemsSource="{Binding FilteredResources}"
+                    <!-- Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs -->
+                    <ListBox x:Name="ResourceListBox"
+                             ItemsSource="{Binding FilteredResources}"
                              SelectedItem="{Binding SelectedResource}"
+                             SelectionMode="Multiple"
                              Margin="0,0,0,0">
                         <ListBox.ContextMenu>
                             <ContextMenu>
