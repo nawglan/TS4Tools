@@ -191,4 +191,110 @@ public static class DstDecoder
         data[86] = (byte)((fourCc >> 16) & 0xFF);
         data[87] = (byte)((fourCc >> 24) & 0xFF);
     }
+
+    /// <summary>
+    /// Converts standard DDS data to DST format by shuffling the blocks.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs (Shuffle method)
+    /// This is the reverse of UnshuffleToDds.
+    /// </remarks>
+    /// <param name="ddsData">The DDS file data including header.</param>
+    /// <returns>Shuffled DST data, or null if format is not recognized.</returns>
+    public static byte[]? ShuffleToDst(ReadOnlySpan<byte> ddsData)
+    {
+        if (ddsData.Length < DdsHeaderSize)
+            return null;
+
+        var fourCc = GetFourCc(ddsData);
+
+        return fourCc switch
+        {
+            FourCcDxt1 => ShuffleToDst1(ddsData),
+            FourCcDxt5 => ShuffleToDst5(ddsData),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Shuffles DXT1 data to DST1 format.
+    /// Reverse of UnshuffleDst1.
+    /// </summary>
+    private static byte[] ShuffleToDst1(ReadOnlySpan<byte> data)
+    {
+        var dataSize = data.Length - DdsHeaderSize;
+        if (dataSize <= 0 || dataSize % 8 != 0)
+            return data.ToArray();
+
+        var result = new byte[data.Length];
+
+        // Copy header and update FourCC from DXT1 to DST1
+        data[..DdsHeaderSize].CopyTo(result);
+        SetFourCc(result, FourCcDst1);
+
+        var blockData = data[DdsHeaderSize..];
+        var halfSize = dataSize / 2;
+        var blockCount = dataSize / 8;
+
+        var firstHalfOffset = DdsHeaderSize;
+        var secondHalfOffset = DdsHeaderSize + halfSize;
+
+        // De-interleave: first halves, then second halves
+        for (var i = 0; i < blockCount; i++)
+        {
+            var srcOffset = i * 8;
+            blockData.Slice(srcOffset, 4).CopyTo(result.AsSpan(firstHalfOffset));
+            blockData.Slice(srcOffset + 4, 4).CopyTo(result.AsSpan(secondHalfOffset));
+
+            firstHalfOffset += 4;
+            secondHalfOffset += 4;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Shuffles DXT5 data to DST5 format.
+    /// Reverse of UnshuffleDst5.
+    /// </summary>
+    private static byte[] ShuffleToDst5(ReadOnlySpan<byte> data)
+    {
+        var dataSize = data.Length - DdsHeaderSize;
+        if (dataSize <= 0 || dataSize % 16 != 0)
+            return data.ToArray();
+
+        var result = new byte[data.Length];
+
+        // Copy header and update FourCC from DXT5 to DST5
+        data[..DdsHeaderSize].CopyTo(result);
+        SetFourCc(result, FourCcDst5);
+
+        var blockData = data[DdsHeaderSize..];
+
+        // Calculate section offsets (matching legacy algorithm)
+        var offset0 = DdsHeaderSize;                                    // Alpha endpoints: 2 bytes per block
+        var offset2 = DdsHeaderSize + (dataSize >> 3);                  // Color endpoints
+        var offset1 = offset2 + (dataSize >> 2);                        // Alpha indices
+        var offset3 = offset1 + (6 * dataSize >> 4);                    // Color indices
+
+        var blockCount = dataSize / 16;
+
+        for (var i = 0; i < blockCount; i++)
+        {
+            var srcOffset = i * 16;
+
+            // Read: 2 bytes alpha endpoints, 6 bytes alpha indices, 4 bytes color endpoints, 4 bytes color indices
+            blockData.Slice(srcOffset, 2).CopyTo(result.AsSpan(offset0));
+            blockData.Slice(srcOffset + 2, 6).CopyTo(result.AsSpan(offset1));
+            blockData.Slice(srcOffset + 8, 4).CopyTo(result.AsSpan(offset2));
+            blockData.Slice(srcOffset + 12, 4).CopyTo(result.AsSpan(offset3));
+
+            offset0 += 2;
+            offset1 += 6;
+            offset2 += 4;
+            offset3 += 4;
+        }
+
+        return result;
+    }
 }

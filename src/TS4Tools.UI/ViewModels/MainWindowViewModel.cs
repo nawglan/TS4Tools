@@ -1087,6 +1087,92 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Imports a DDS file as a DST resource.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe Helpers/DDSHelper/Import.cs
+    /// Converts DDS (DXT1/DXT5) to DST (DST1/DST5) format for Sims 4 texture resources.
+    /// </remarks>
+    [RelayCommand]
+    private async Task ImportDdsAsDstAsync()
+    {
+        if (_package == null) return;
+
+        var topLevel = GetTopLevel();
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import DDS as DST",
+            AllowMultiple = false,
+            FileTypeFilter = [
+                new FilePickerFileType("DDS Files") { Patterns = ["*.dds"] },
+                AllFilesType
+            ]
+        });
+
+        if (files.Count != 1) return;
+
+        try
+        {
+            var filePath = files[0].Path.LocalPath;
+            var ddsData = await _fileSystem.ReadAllBytesAsync(filePath);
+
+            // Verify it's a valid DDS file
+            if (ddsData.Length < 128 || ddsData[0] != 'D' || ddsData[1] != 'D' || ddsData[2] != 'S' || ddsData[3] != ' ')
+            {
+                StatusMessage = "Invalid DDS file";
+                return;
+            }
+
+            // Convert DDS to DST
+            var dstData = DstDecoder.ShuffleToDst(ddsData);
+            if (dstData == null)
+            {
+                StatusMessage = "DDS format not supported (only DXT1/DXT5)";
+                return;
+            }
+
+            // Generate a resource key for DST texture type
+            const uint dstTypeId = 0x00B2D882;
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            var instanceId = Wrappers.Hashing.FnvHash.Fnv64(fileName);
+            var key = new ResourceKey(dstTypeId, 0x00000000, instanceId);
+
+            // Check for existing resource
+            var existing = _package.Find(key);
+            if (existing != null)
+            {
+                _package.DeleteResource(existing);
+                var existingItem = Resources.FirstOrDefault(r => r.Key == key);
+                if (existingItem != null)
+                {
+                    Resources.Remove(existingItem);
+                }
+            }
+
+            var entry = _package.AddResource(key, dstData, rejectDuplicates: false);
+
+            if (entry != null)
+            {
+                var item = new ResourceItemViewModel(key, entry.FileSize, fileName);
+                Resources.Add(item);
+                ApplyFilter();
+                OnPropertyChanged(nameof(ResourceCount));
+
+                // Select the new resource
+                SelectedResource = item;
+
+                StatusMessage = $"Imported DDS as DST: {fileName}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Import error: {ex.Message}";
+        }
+    }
+
     [RelayCommand]
     private async Task ReplaceResourceAsync()
     {

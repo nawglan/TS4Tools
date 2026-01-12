@@ -63,6 +63,8 @@
                 <MenuItem Header="_Batch Import..." Command="{Binding BatchImportCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 133-162 -->
                 <MenuItem Header="Import from _Package..." Command="{Binding ImportFromPackageCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe Helpers/DDSHelper/Import.cs -->
+                <MenuItem Header="Import _DDS as DST..." Command="{Binding ImportDdsAsDstCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" InputGesture="Ctrl+Shift+X" IsEnabled="{Binding HasSelectedResource}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 -->
                 <MenuItem Header="Export to P_ackage..." Command="{Binding ExportToPackageCommand}" IsEnabled="{Binding HasSelectedResource}" />
