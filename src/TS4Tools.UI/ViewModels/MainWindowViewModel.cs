@@ -29,13 +29,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 {
     private bool _disposed;
     private readonly HashNameService _hashNameService = new();
+    private readonly IFileSystemService _fileSystem;
     private readonly PropertyChangedEventHandler _propertyChangedHandler;
     private static readonly FilePickerFileType PackageFileType = new("Sims 4 Package") { Patterns = ["*.package"] };
     private static readonly FilePickerFileType BinaryFileType = new("Binary File") { Patterns = ["*.bin", "*.dat"] };
     private static readonly FilePickerFileType AllFilesType = new("All Files") { Patterns = ["*"] };
 
-    private static readonly string RecentFilesPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+    private string RecentFilesPath => _fileSystem.CombinePath(
+        _fileSystem.GetApplicationDataPath(),
         "TS4Tools", "recent.json");
 
     private const int MaxRecentFiles = 10;
@@ -132,8 +133,14 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     [ObservableProperty]
     private ResourceSortMode _sortMode = ResourceSortMode.TypeName;
 
-    public MainWindowViewModel()
+    /// <summary>
+    /// Creates a new instance of the MainWindowViewModel.
+    /// </summary>
+    /// <param name="fileSystem">File system service for I/O operations. Uses default if null.</param>
+    public MainWindowViewModel(IFileSystemService? fileSystem = null)
     {
+        _fileSystem = fileSystem ?? FileSystemService.Instance;
+
         _propertyChangedHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(FilterText) || e.PropertyName == nameof(SortMode))
@@ -201,13 +208,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         try
         {
-            StatusMessage = $"Loading {System.IO.Path.GetFileName(path)}...";
+            StatusMessage = $"Loading {_fileSystem.GetFileName(path)}...";
 
             await CloseCurrentPackageAsync();
 
             _package = await DbpfPackage.OpenAsync(path);
             PackagePath = path;
-            Title = $"TS4Tools - {System.IO.Path.GetFileName(path)}";
+            Title = $"TS4Tools - {_fileSystem.GetFileName(path)}";
 
             // Load hash-to-name mappings from NameMap resources
             await _hashNameService.LoadFromPackageAsync(_package);
@@ -541,7 +548,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 var path = file.Path.LocalPath;
                 await _package.SaveAsAsync(path);
                 PackagePath = path;
-                Title = $"TS4Tools - {System.IO.Path.GetFileName(path)}";
+                Title = $"TS4Tools - {_fileSystem.GetFileName(path)}";
                 StatusMessage = "Package saved";
             }
             catch (Exception ex)
@@ -720,7 +727,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 key = new ResourceKey(0x00000000, 0x00000000, (ulong)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
 
-            var data = await File.ReadAllBytesAsync(filePath);
+            var data = await _fileSystem.ReadAllBytesAsync(filePath);
             var entry = _package.AddResource(key, data, rejectDuplicates: false);
 
             if (entry != null)
@@ -785,9 +792,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             {
                 try
                 {
-                    if (!File.Exists(filePath)) continue;
+                    if (!_fileSystem.FileExists(filePath)) continue;
 
-                    var fileName = Path.GetFileName(filePath);
+                    var fileName = _fileSystem.GetFileName(filePath);
                     ResourceKey key;
 
                     if (TryParseS4FileName(fileName, out var parsedKey))
@@ -819,7 +826,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                         }
                     }
 
-                    var data = await File.ReadAllBytesAsync(filePath);
+                    var data = await _fileSystem.ReadAllBytesAsync(filePath);
                     var entry = _package.AddResource(key, data, rejectDuplicates: false);
 
                     if (entry != null)
@@ -870,7 +877,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 return;
             }
 
-            var data = await File.ReadAllBytesAsync(files[0].Path.LocalPath);
+            var data = await _fileSystem.ReadAllBytesAsync(files[0].Path.LocalPath);
             _package.ReplaceResource(entry, data);
             await UpdateSelectedResourceDetailsAsync();
             StatusMessage = $"Replaced with {data.Length:N0} bytes";
@@ -1283,11 +1290,11 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         try
         {
             var data = await _package.GetResourceDataAsync(entry);
-            var tempFile = Path.Combine(Path.GetTempPath(), $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}.bin");
+            var tempFile = _fileSystem.CombinePath(_fileSystem.GetTempPath(), $"S4_{key.ResourceType:X8}_{key.ResourceGroup:X8}_{key.Instance:X16}.bin");
 
             // Write to temp file
-            await File.WriteAllBytesAsync(tempFile, data.ToArray());
-            var lastWriteTime = File.GetLastWriteTimeUtc(tempFile);
+            await _fileSystem.WriteAllBytesAsync(tempFile, data.ToArray());
+            var lastWriteTime = _fileSystem.GetLastWriteTimeUtc(tempFile);
 
             // Build command line
             var quote = settings.HexEditorWantsQuotes ? "\"" : "";
@@ -1303,10 +1310,10 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             await process.WaitForExitAsync();
 
             // Check for modifications
-            var newWriteTime = File.GetLastWriteTimeUtc(tempFile);
+            var newWriteTime = _fileSystem.GetLastWriteTimeUtc(tempFile);
             if (settings.HexEditorIgnoreTimestamp || newWriteTime != lastWriteTime)
             {
-                var modifiedData = await File.ReadAllBytesAsync(tempFile);
+                var modifiedData = await _fileSystem.ReadAllBytesAsync(tempFile);
                 _package.ReplaceResource(entry, modifiedData);
                 await UpdateSelectedResourceDetailsAsync();
                 StatusMessage = "Resource updated from hex editor";
@@ -1317,7 +1324,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             }
 
             // Cleanup
-            try { File.Delete(tempFile); } catch { }
+            _fileSystem.DeleteFile(tempFile);
         }
         catch (Exception ex)
         {
@@ -1522,8 +1529,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (file != null)
         {
             var path = file.Path.LocalPath;
-            await File.WriteAllTextAsync(path, text);
-            StatusMessage = $"Preview saved to {System.IO.Path.GetFileName(path)}";
+            await _fileSystem.WriteAllTextAsync(path, text);
+            StatusMessage = $"Preview saved to {_fileSystem.GetFileName(path)}";
         }
     }
 
@@ -1700,7 +1707,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         if (string.IsNullOrEmpty(path)) return;
 
-        if (File.Exists(path))
+        if (_fileSystem.FileExists(path))
         {
             await LoadPackageAsync(path);
         }
@@ -1723,9 +1730,9 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         try
         {
-            if (File.Exists(RecentFilesPath))
+            if (_fileSystem.FileExists(RecentFilesPath))
             {
-                var json = File.ReadAllText(RecentFilesPath);
+                var json = _fileSystem.ReadAllText(RecentFilesPath);
                 var paths = JsonSerializer.Deserialize<string[]>(json) ?? [];
 
                 foreach (var path in paths.Take(MaxRecentFiles))
@@ -1747,15 +1754,15 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     {
         try
         {
-            var dir = Path.GetDirectoryName(RecentFilesPath);
+            var dir = _fileSystem.GetDirectoryName(RecentFilesPath);
             if (!string.IsNullOrEmpty(dir))
             {
-                Directory.CreateDirectory(dir);
+                _fileSystem.CreateDirectory(dir);
             }
 
             var paths = RecentFiles.Select(r => r.Path).ToArray();
             var json = JsonSerializer.Serialize(paths);
-            File.WriteAllText(RecentFilesPath, json);
+            _fileSystem.WriteAllText(RecentFilesPath, json);
         }
         catch (Exception ex)
         {
@@ -1823,7 +1830,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
             actualPath = path[2..];
         }
 
-        if (!File.Exists(actualPath))
+        if (!_fileSystem.FileExists(actualPath))
         {
             StatusMessage = $"Bookmark not found: {actualPath}";
             return;
@@ -1832,7 +1839,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         await LoadPackageAsync(actualPath);
         if (isReadOnly)
         {
-            StatusMessage = $"Opened (read-only): {Path.GetFileName(actualPath)}";
+            StatusMessage = $"Opened (read-only): {_fileSystem.GetFileName(actualPath)}";
         }
     }
 
@@ -1903,7 +1910,7 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         settings.Bookmarks.Add(bookmarkEntry);
         SettingsService.Instance.Save();
         LoadBookmarks();
-        StatusMessage = $"Added bookmark: {Path.GetFileName(PackagePath)}";
+        StatusMessage = $"Added bookmark: {_fileSystem.GetFileName(PackagePath)}";
     }
 
     #endregion
