@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:dialogs="clr-namespace:TS4Tools.UI.Views.Dialogs"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="TS4Tools.UI.Views.Dialogs.SettingsWindow"
         Title="Settings"
@@ -54,29 +55,56 @@
 
             <!-- External Editors -->
             <TabItem Header="External Programs">
-                <StackPanel Margin="16" Spacing="16">
-                    <TextBlock Text="Hex Editor" FontWeight="SemiBold" FontSize="14" />
+                <ScrollViewer>
+                    <StackPanel Margin="16" Spacing="16">
+                        <TextBlock Text="Hex Editor" FontWeight="SemiBold" FontSize="14" />
 
-                    <Grid ColumnDefinitions="100,*,Auto">
-                        <TextBlock Text="Command:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="HexEditorCommandTextBox" Watermark="e.g., C:\Program Files\HxD\HxD.exe" />
-                        <Button Grid.Column="2" x:Name="BrowseHexEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
-                    </Grid>
-                    <CheckBox x:Name="HexEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
-                    <CheckBox x:Name="HexEditorQuotesCheckBox" Content="Wrap filename in quotes" />
+                        <Grid ColumnDefinitions="100,*,Auto">
+                            <TextBlock Text="Command:" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" x:Name="HexEditorCommandTextBox" Watermark="e.g., C:\Program Files\HxD\HxD.exe" />
+                            <Button Grid.Column="2" x:Name="BrowseHexEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
+                        </Grid>
+                        <CheckBox x:Name="HexEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
+                        <CheckBox x:Name="HexEditorQuotesCheckBox" Content="Wrap filename in quotes" />
 
-                    <Separator Margin="0,8" />
+                        <Separator Margin="0,8" />
 
-                    <TextBlock Text="Text Editor" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="Text Editor" FontWeight="SemiBold" FontSize="14" />
 
-                    <Grid ColumnDefinitions="100,*,Auto">
-                        <TextBlock Text="Command:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="TextEditorCommandTextBox" Watermark="e.g., notepad.exe" />
-                        <Button Grid.Column="2" x:Name="BrowseTextEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
-                    </Grid>
-                    <CheckBox x:Name="TextEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
-                    <CheckBox x:Name="TextEditorQuotesCheckBox" Content="Wrap filename in quotes" />
-                </StackPanel>
+                        <Grid ColumnDefinitions="100,*,Auto">
+                            <TextBlock Text="Command:" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" x:Name="TextEditorCommandTextBox" Watermark="e.g., notepad.exe" />
+                            <Button Grid.Column="2" x:Name="BrowseTextEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
+                        </Grid>
+                        <CheckBox x:Name="TextEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
+                        <CheckBox x:Name="TextEditorQuotesCheckBox" Content="Wrap filename in quotes" />
+
+                        <Separator Margin="0,8" />
+
+                        <!-- Helper Programs -->
+                        <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs -->
+                        <TextBlock Text="Helper Programs" FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="Helper programs are defined in *.helper files in the Helpers folder. Check to disable a helper."
+                                   TextWrapping="Wrap" Opacity="0.7" />
+
+                        <ItemsControl x:Name="HelpersItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="dialogs:HelperSettingItem">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsDisabled}" Margin="0,0,8,0" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Content="Info" Padding="8,2" x:Name="InfoButton"
+                                                Tag="{Binding}" Click="HelperInfoButton_Click" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Button x:Name="ReloadHelpersButton" Content="Reload Helpers" Padding="12,4" HorizontalAlignment="Left" />
+
+                        <TextBlock x:Name="HelpersLocationTextBlock" Opacity="0.5" FontSize="11" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <!-- Bookmarks -->

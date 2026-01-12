@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
 using TS4Tools.UI.Services;
 
 namespace TS4Tools.UI.Views.Dialogs;
@@ -10,11 +11,13 @@ namespace TS4Tools.UI.Views.Dialogs;
 /// </summary>
 /// <remarks>
 /// Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings
+/// Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs
 /// </remarks>
 public partial class SettingsWindow : Window
 {
     private readonly AppSettings _settings;
     private readonly List<string> _bookmarks = [];
+    private readonly List<HelperSettingItem> _helperItems = [];
 
     public SettingsWindow()
     {
@@ -22,6 +25,7 @@ public partial class SettingsWindow : Window
         _settings = SettingsService.Instance.Settings;
 
         LoadSettings();
+        LoadHelpers();
 
         OkButton.Click += OkButton_Click;
         CancelButton.Click += CancelButton_Click;
@@ -31,12 +35,17 @@ public partial class SettingsWindow : Window
         AddBookmarkButton.Click += AddBookmarkButton_Click;
         RemoveBookmarkButton.Click += RemoveBookmarkButton_Click;
         BookmarksListBox.SelectionChanged += BookmarksListBox_SelectionChanged;
+        ReloadHelpersButton.Click += ReloadHelpersButton_Click;
 
         // Show settings path
         var settingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "TS4Tools", "settings.json");
         SettingsPathTextBox.Text = settingsPath;
+
+        // Show helpers folder location
+        var helpersPath = Path.Combine(AppContext.BaseDirectory, "Helpers");
+        HelpersLocationTextBlock.Text = $"Helpers folder: {helpersPath}";
     }
 
     private void LoadSettings()
@@ -88,6 +97,9 @@ public partial class SettingsWindow : Window
 
         // Bookmarks
         _settings.Bookmarks = [.._bookmarks];
+
+        // Helpers
+        SaveHelperSettings();
 
         SettingsService.Instance.Save();
     }
@@ -183,4 +195,105 @@ public partial class SettingsWindow : Window
     {
         RemoveBookmarkButton.IsEnabled = BookmarksListBox.SelectedItem != null;
     }
+
+    /// <summary>
+    /// Loads helper definitions and creates UI items.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs lines 76-96
+    /// </remarks>
+    private void LoadHelpers()
+    {
+        _helperItems.Clear();
+
+        foreach (var helper in HelperManager.Instance.AllHelpers)
+        {
+            var item = new HelperSettingItem
+            {
+                Id = helper.Id,
+                Label = !string.IsNullOrEmpty(helper.Label) ? helper.Label : helper.Id,
+                Description = helper.Description,
+                Command = helper.Command,
+                IsDisabled = _settings.DisabledHelpers.Contains(helper.Id)
+            };
+            _helperItems.Add(item);
+        }
+
+        HelpersItemsControl.ItemsSource = null;
+        HelpersItemsControl.ItemsSource = _helperItems;
+    }
+
+    private void ReloadHelpersButton_Click(object? sender, RoutedEventArgs e)
+    {
+        HelperManager.Instance.Reload();
+        LoadHelpers();
+    }
+
+    private void HelperInfoButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: HelperSettingItem item })
+        {
+            ShowHelperInfo(item);
+        }
+    }
+
+    /// <summary>
+    /// Shows information about a helper program.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs lines 117-131
+    /// </remarks>
+    private async void ShowHelperInfo(HelperSettingItem item)
+    {
+        var info = $"ID: {item.Id}\n";
+        info += $"Label: {item.Label}\n";
+        info += $"Description: {item.Description}\n";
+        info += $"Command: {item.Command}";
+
+        var dialog = new Window
+        {
+            Title = $"Helper: {item.Label}",
+            Width = 400,
+            Height = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = false,
+            Content = new TextBlock
+            {
+                Text = info,
+                Margin = new Avalonia.Thickness(16),
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+            }
+        };
+
+        await dialog.ShowDialog(this);
+    }
+
+    private void SaveHelperSettings()
+    {
+        _settings.DisabledHelpers.Clear();
+        foreach (var item in _helperItems)
+        {
+            if (item.IsDisabled)
+            {
+                _settings.DisabledHelpers.Add(item.Id);
+            }
+        }
+    }
+}
+
+/// <summary>
+/// View model item for helper settings.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pe/Settings/ExternalProgramsDialog.cs lines 37-73
+/// </remarks>
+public partial class HelperSettingItem : ObservableObject
+{
+    public required string Id { get; init; }
+    public required string Label { get; init; }
+    public string Description { get; init; } = "";
+    public string Command { get; init; } = "";
+
+    [ObservableProperty]
+    private bool _isDisabled;
 }
