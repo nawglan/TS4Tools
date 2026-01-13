@@ -32,8 +32,11 @@ public sealed class DbpfPackage : IMutablePackage
     // Header data
     private byte[] _header = new byte[PackageLimits.HeaderSize];
 
+    /// <summary>The file path this package was loaded from, if any.</summary>
     public string? FilePath { get; }
+    /// <summary>Whether the package has unsaved changes.</summary>
     public bool IsDirty { get; private set; }
+    /// <summary>Whether the package is read-only.</summary>
     public bool IsReadOnly { get; }
 
     /// <summary>Package major version (usually 2).</summary>
@@ -90,9 +93,12 @@ public sealed class DbpfPackage : IMutablePackage
         }
     }
 
+    /// <summary>The number of resources in the package.</summary>
     public int ResourceCount => _resources.Count;
+    /// <summary>The resource index entries in the package.</summary>
     public IReadOnlyList<IResourceIndexEntry> Resources => _resources;
 
+    /// <summary>Raised when the resource index is invalidated.</summary>
     public event EventHandler? ResourceIndexInvalidated;
 
     /// <summary>
@@ -304,21 +310,34 @@ public sealed class DbpfPackage : IMutablePackage
         BinaryPrimitives.WriteInt32LittleEndian(_header.AsSpan(60), 3);
     }
 
+    /// <summary>Finds a resource by its key.</summary>
+    /// <param name="key">The resource key to find.</param>
+    /// <returns>The resource entry, or null if not found.</returns>
     public IResourceIndexEntry? Find(ResourceKey key)
     {
         return _resources.Find(e => !e.IsDeleted && e.Key == key);
     }
 
+    /// <summary>Finds a resource matching the predicate.</summary>
+    /// <param name="predicate">The predicate to match.</param>
+    /// <returns>The first matching resource entry, or null if not found.</returns>
     public IResourceIndexEntry? Find(Func<IResourceIndexEntry, bool> predicate)
     {
         return _resources.Find(e => !e.IsDeleted && predicate(e));
     }
 
+    /// <summary>Finds all resources matching the predicate.</summary>
+    /// <param name="predicate">The predicate to match.</param>
+    /// <returns>All matching resource entries.</returns>
     public IEnumerable<IResourceIndexEntry> FindAll(Func<IResourceIndexEntry, bool> predicate)
     {
         return _resources.Where(e => !e.IsDeleted && predicate(e));
     }
 
+    /// <summary>Gets the raw data for a resource.</summary>
+    /// <param name="entry">The resource entry.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The resource data.</returns>
     public async ValueTask<ReadOnlyMemory<byte>> GetResourceDataAsync(
         IResourceIndexEntry entry,
         CancellationToken cancellationToken = default)
@@ -386,6 +405,10 @@ public sealed class DbpfPackage : IMutablePackage
         return data;
     }
 
+    /// <summary>Gets a resource as an IResource instance.</summary>
+    /// <param name="entry">The resource entry.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The resource.</returns>
     public async ValueTask<IResource> GetResourceAsync(
         IResourceIndexEntry entry,
         CancellationToken cancellationToken = default)
@@ -394,6 +417,11 @@ public sealed class DbpfPackage : IMutablePackage
         return new DefaultResource(entry.Key, data);
     }
 
+    /// <summary>Adds a resource to the package.</summary>
+    /// <param name="key">The resource key.</param>
+    /// <param name="data">The resource data.</param>
+    /// <param name="rejectDuplicates">Whether to reject duplicate keys.</param>
+    /// <returns>The new resource entry, or null if rejected as duplicate.</returns>
     public IResourceIndexEntry? AddResource(ResourceKey key, ReadOnlyMemory<byte> data, bool rejectDuplicates = true)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -414,6 +442,9 @@ public sealed class DbpfPackage : IMutablePackage
         return entry;
     }
 
+    /// <summary>Replaces the data for an existing resource.</summary>
+    /// <param name="entry">The resource entry to replace.</param>
+    /// <param name="data">The new resource data.</param>
     public void ReplaceResource(IResourceIndexEntry entry, ReadOnlyMemory<byte> data)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -428,6 +459,8 @@ public sealed class DbpfPackage : IMutablePackage
         IsDirty = true;
     }
 
+    /// <summary>Deletes a resource from the package.</summary>
+    /// <param name="entry">The resource entry to delete.</param>
     public void DeleteResource(IResourceIndexEntry entry)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -543,6 +576,9 @@ public sealed class DbpfPackage : IMutablePackage
         await SaveToStreamAsync(fs, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Saves the package to a stream.</summary>
+    /// <param name="stream">The stream to write to.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async ValueTask SaveToStreamAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -553,6 +589,7 @@ public sealed class DbpfPackage : IMutablePackage
         IsDirty = false;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if (_disposed) return;
@@ -564,6 +601,7 @@ public sealed class DbpfPackage : IMutablePackage
         }
     }
 
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;

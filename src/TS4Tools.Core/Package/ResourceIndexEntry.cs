@@ -10,7 +10,7 @@ namespace TS4Tools.Package;
 /// Entry layout (32 bytes when fully expanded):
 /// - Type (4 bytes) - lines 51-55
 /// - Group (4 bytes) - lines 61-65
-/// - Instance (8 bytes: high << 32 | low) - lines 71-80
+/// - Instance (8 bytes: high shifted left 32 bits OR low) - lines 71-80
 /// - ChunkOffset (4 bytes) - lines 86-90
 /// - FileSize (4 bytes, bit 31 always set, mask with 0x7FFFFFFF) - lines 96-100
 /// - MemSize (4 bytes) - lines 106-110

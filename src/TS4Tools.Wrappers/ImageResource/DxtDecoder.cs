@@ -86,8 +86,8 @@ public static class DxtDecoder
     /// - Bytes 4-7: 16 x 2-bit color indices
     ///
     /// Color interpolation:
-    /// - If color0 > color1: 4 colors (c0, c1, 2/3*c0+1/3*c1, 1/3*c0+2/3*c1)
-    /// - If color0 <= color1: 3 colors + transparent (c0, c1, 1/2*c0+1/2*c1, transparent)
+    /// - If color0 greater than color1: 4 colors (c0, c1, 2/3*c0+1/3*c1, 1/3*c0+2/3*c1)
+    /// - If color0 less than or equal to color1: 3 colors + transparent (c0, c1, 1/2*c0+1/2*c1, transparent)
     /// </summary>
     public static byte[] DecompressDxt1(ReadOnlySpan<byte> blockData, int width, int height)
     {
@@ -123,8 +123,8 @@ public static class DxtDecoder
     /// - Bytes 8-15: DXT1 color block
     ///
     /// Alpha interpolation:
-    /// - If alpha0 > alpha1: 8 alphas (a0, a1, then 6 interpolated)
-    /// - If alpha0 <= alpha1: 6 alphas + 0 + 255
+    /// - If alpha0 greater than alpha1: 8 alphas (a0, a1, then 6 interpolated)
+    /// - If alpha0 less than or equal to alpha1: 6 alphas + 0 + 255
     /// </summary>
     public static byte[] DecompressDxt5(ReadOnlySpan<byte> blockData, int width, int height)
     {

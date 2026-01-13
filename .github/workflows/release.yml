@@ -4,7 +4,51 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
+  publish-nuget:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build -p:PackageVersion=${{ steps.version.outputs.version }} --output ./nupkgs
+
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget push ./nupkgs/*.nupkg \
+            --source "https://nuget.pkg.github.com/nawglan/index.json" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --skip-duplicate
+
+      - name: Upload NuGet packages as release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./nupkgs/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build:
     strategy:
       matrix:
