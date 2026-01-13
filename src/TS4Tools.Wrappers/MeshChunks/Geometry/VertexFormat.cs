@@ -143,7 +143,7 @@ public sealed class GeomVertexFormat : IEquatable<GeomVertexFormat>
     }
 
     /// <summary>
-    /// Gets the expected element size for a usage type and version.
+    /// Gets the expected element size in bytes for a usage type and GEOM version.
     /// Source: GEOM.cs lines 270-282 (v5) and 298-310 (v12)
     /// </summary>
     public static byte GetExpectedElementSize(GeomUsageType usage, uint version)
@@ -153,7 +153,7 @@ public sealed class GeomVertexFormat : IEquatable<GeomVertexFormat>
     }
 
     /// <summary>
-    /// Writes the vertex format to the span.
+    /// Writes the vertex format to a span at the specified position.
     /// Source: GEOM.cs lines 365-390
     /// </summary>
     public void Write(Span<byte> data, ref int position)
@@ -180,15 +180,28 @@ public sealed class GeomVertexFormat : IEquatable<GeomVertexFormat>
         writer.Write(GetExpectedElementSize(Usage, Version));
     }
 
+    /// <summary>
+    /// Compares this vertex format with another for equality.
+    /// </summary>
     public bool Equals(GeomVertexFormat? other)
     {
         if (other is null) return false;
         return Usage == other.Usage;
     }
 
+    /// <summary>
+    /// Compares this vertex format with an object for equality.
+    /// </summary>
     public override bool Equals(object? obj) => obj is GeomVertexFormat other && Equals(other);
+
+    /// <summary>
+    /// Gets a hash code for this vertex format.
+    /// </summary>
     public override int GetHashCode() => Usage.GetHashCode();
 
+    /// <summary>
+    /// Returns a string representation of this vertex format.
+    /// </summary>
     public override string ToString() => Usage.ToString();
 }
 
@@ -257,7 +270,7 @@ public sealed class GeomVertexFormatList
     }
 
     /// <summary>
-    /// Calculates the total byte size of one vertex based on this format list.
+    /// Calculates the total size in bytes of a single vertex based on this format list.
     /// </summary>
     public int CalculateVertexSize()
     {

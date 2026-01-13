@@ -85,12 +85,22 @@ public sealed class JazzPlayAnimationNodeBlock : RcolBlock
     /// <summary>Timing priority.</summary>
     public JazzAnimationPriority TimingPriority { get; set; } = JazzAnimationPriority.Unset;
 
-    /// <summary>Unknown fields 13-18.</summary>
+    /// <summary>Unknown field 13.</summary>
     public uint Unknown13 { get; set; }
+
+    /// <summary>Unknown field 14.</summary>
     public uint Unknown14 { get; set; }
+
+    /// <summary>Unknown field 15.</summary>
     public uint Unknown15 { get; set; }
+
+    /// <summary>Unknown field 16.</summary>
     public uint Unknown16 { get; set; }
+
+    /// <summary>Unknown field 17.</summary>
     public uint Unknown17 { get; set; }
+
+    /// <summary>Unknown field 18.</summary>
     public uint Unknown18 { get; set; }
 
     /// <summary>Decision graph chunk indexes.</summary>

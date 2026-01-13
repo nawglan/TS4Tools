@@ -24,15 +24,43 @@ public sealed class SimOutfitResource : TypedResource
     public uint Version { get; set; }
 
     /// <summary>
-    /// Unknown float values 1-8.
+    /// Unknown float value 1.
     /// </summary>
     public float Unknown1 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 2.
+    /// </summary>
     public float Unknown2 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 3.
+    /// </summary>
     public float Unknown3 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 4.
+    /// </summary>
     public float Unknown4 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 5.
+    /// </summary>
     public float Unknown5 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 6.
+    /// </summary>
     public float Unknown6 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 7.
+    /// </summary>
     public float Unknown7 { get; set; }
+
+    /// <summary>
+    /// Unknown float value 8.
+    /// </summary>
     public float Unknown8 { get; set; }
 
     /// <summary>

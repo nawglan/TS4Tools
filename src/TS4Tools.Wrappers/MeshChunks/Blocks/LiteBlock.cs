@@ -7,17 +7,29 @@ namespace TS4Tools.Wrappers.MeshChunks;
 /// </summary>
 public enum LightSourceType : uint
 {
+    /// <summary>Unknown light type.</summary>
     Unknown = 0x00,
+    /// <summary>Ambient light.</summary>
     Ambient = 0x01,
+    /// <summary>Directional light.</summary>
     Directional = 0x02,
+    /// <summary>Point light.</summary>
     Point = 0x03,
+    /// <summary>Spot light.</summary>
     Spot = 0x04,
+    /// <summary>Lamp shade light.</summary>
     LampShade = 0x05,
+    /// <summary>Tube light.</summary>
     TubeLight = 0x06,
+    /// <summary>Square window light.</summary>
     SquareWindow = 0x07,
+    /// <summary>Circular window light.</summary>
     CircularWindow = 0x08,
+    /// <summary>Square area light.</summary>
     SquareAreaLight = 0x09,
+    /// <summary>Disc area light.</summary>
     DiscAreaLight = 0x0A,
+    /// <summary>World light.</summary>
     WorldLight = 0x0B,
 }
 
@@ -27,7 +39,9 @@ public enum LightSourceType : uint
 /// </summary>
 public enum OccluderType : uint
 {
+    /// <summary>Disc-shaped occluder.</summary>
     Disc = 0x00,
+    /// <summary>Rectangle-shaped occluder.</summary>
     Rectangle = 0x01,
 }
 
@@ -269,6 +283,9 @@ public sealed class LiteLightSource
     /// <summary>Type-specific light data (24 floats).</summary>
     public float[] LightData { get; }
 
+    /// <summary>
+    /// Creates a light source.
+    /// </summary>
     public LiteLightSource(LightSourceType lightType, MeshVector3 transform, MeshVector3 color,
         float intensity, float[] lightData)
     {
@@ -307,6 +324,9 @@ public sealed class LiteOccluder
     /// <summary>Pair offset distance.</summary>
     public float PairOffset { get; }
 
+    /// <summary>
+    /// Creates a shadow occluder.
+    /// </summary>
     public LiteOccluder(OccluderType occluderType, MeshVector3 origin, MeshVector3 normal,
         MeshVector3 xAxis, MeshVector3 yAxis, float pairOffset)
     {

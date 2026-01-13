@@ -198,6 +198,12 @@ public sealed class Ibuf2Block : IbufBlock
     /// <inheritdoc/>
     public override uint ResourceType => TypeId;
 
+    /// <summary>
+    /// Creates an empty IBUF2 block.
+    /// </summary>
     public Ibuf2Block() : base() { }
+    /// <summary>
+    /// Creates an IBUF2 block from raw data.
+    /// </summary>
     public Ibuf2Block(ReadOnlySpan<byte> data) : base(data) { }
 }

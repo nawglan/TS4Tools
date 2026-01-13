@@ -54,6 +54,9 @@ public readonly struct GeomFace : IEquatable<GeomFace>
         writer.Write(VertexIndex2);
     }
 
+    /// <summary>
+    /// Compares this face with another for equality.
+    /// </summary>
     public bool Equals(GeomFace other)
     {
         return VertexIndex0 == other.VertexIndex0
@@ -61,14 +64,30 @@ public readonly struct GeomFace : IEquatable<GeomFace>
             && VertexIndex2 == other.VertexIndex2;
     }
 
+    /// <summary>
+    /// Compares this face with an object for equality.
+    /// </summary>
     public override bool Equals(object? obj) => obj is GeomFace other && Equals(other);
 
+    /// <summary>
+    /// Gets a hash code for this face.
+    /// </summary>
     public override int GetHashCode() =>
         HashCode.Combine(VertexIndex0, VertexIndex1, VertexIndex2);
 
+    /// <summary>
+    /// Compares two faces for equality.
+    /// </summary>
     public static bool operator ==(GeomFace left, GeomFace right) => left.Equals(right);
+
+    /// <summary>
+    /// Compares two faces for inequality.
+    /// </summary>
     public static bool operator !=(GeomFace left, GeomFace right) => !left.Equals(right);
 
+    /// <summary>
+    /// Returns a string representation of this face.
+    /// </summary>
     public override string ToString() => $"Face({VertexIndex0}, {VertexIndex1}, {VertexIndex2})";
 }
 

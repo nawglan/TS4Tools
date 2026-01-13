@@ -399,21 +399,84 @@ public sealed class ObjKeyResource : TypedResource
 /// </summary>
 public enum ObjKeyComponent : uint
 {
+    /// <summary>
+    /// Animation component.
+    /// </summary>
     Animation = 0xee17c6ad,
+
+    /// <summary>
+    /// Effect component.
+    /// </summary>
     Effect = 0x80d91e9e,
+
+    /// <summary>
+    /// Footprint component.
+    /// </summary>
     Footprint = 0xc807312a,
+
+    /// <summary>
+    /// Lighting component.
+    /// </summary>
     Lighting = 0xda6c50fd,
+
+    /// <summary>
+    /// Location component.
+    /// </summary>
     Location = 0x461922c8,
+
+    /// <summary>
+    /// Lot object component.
+    /// </summary>
     LotObject = 0x6693c8b3,
+
+    /// <summary>
+    /// Model component.
+    /// </summary>
     Model = 0x2954e734,
+
+    /// <summary>
+    /// Physics component.
+    /// </summary>
     Physics = 0x1a8feb14,
+
+    /// <summary>
+    /// SACS component.
+    /// </summary>
     Sacs = 0x3ae9a8e7,
+
+    /// <summary>
+    /// Script component.
+    /// </summary>
     Script = 0x23177498,
+
+    /// <summary>
+    /// Sim component.
+    /// </summary>
     Sim = 0x22706efa,
+
+    /// <summary>
+    /// Slot component.
+    /// </summary>
     Slot = 0x2ef1e401,
+
+    /// <summary>
+    /// Steering component.
+    /// </summary>
     Steering = 0x61bd317c,
+
+    /// <summary>
+    /// Transform component.
+    /// </summary>
     Transform = 0x54cb7ebb,
+
+    /// <summary>
+    /// Tree component.
+    /// </summary>
     Tree = 0xc602cd31,
+
+    /// <summary>
+    /// Visual state component.
+    /// </summary>
     VisualState = 0x50b3d17c,
 }
 

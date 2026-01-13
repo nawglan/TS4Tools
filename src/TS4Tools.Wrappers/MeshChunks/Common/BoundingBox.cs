@@ -16,6 +16,9 @@ public readonly struct BoundingBox : IEquatable<BoundingBox>
     /// <summary>Maximum corner of the bounding box.</summary>
     public MeshVector3 Max { get; }
 
+    /// <summary>
+    /// Initializes a new bounding box with the specified minimum and maximum corners.
+    /// </summary>
     public BoundingBox(MeshVector3 min, MeshVector3 max)
     {
         Min = min;
@@ -54,11 +57,17 @@ public readonly struct BoundingBox : IEquatable<BoundingBox>
     /// </summary>
     public static BoundingBox Empty => new(MeshVector3.Zero, MeshVector3.Zero);
 
+    /// <inheritdoc/>
     public bool Equals(BoundingBox other) => Min == other.Min && Max == other.Max;
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is BoundingBox other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(Min, Max);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(BoundingBox left, BoundingBox right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(BoundingBox left, BoundingBox right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() => $"[ Min: {Min} | Max: {Max} ]";
 }

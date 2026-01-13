@@ -160,6 +160,13 @@ public sealed class Vbuf2Block : VbufBlock
     /// <inheritdoc/>
     public override uint ResourceType => TypeId;
 
+    /// <summary>
+    /// Creates an empty VBUF2 block.
+    /// </summary>
     public Vbuf2Block() : base() { }
+
+    /// <summary>
+    /// Creates a VBUF2 block from raw data.
+    /// </summary>
     public Vbuf2Block(ReadOnlySpan<byte> data) : base(data) { }
 }

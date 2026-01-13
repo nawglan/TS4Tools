@@ -146,6 +146,7 @@ public sealed class IkChain : IEquatable<IkChain>
     /// Calculates the serialized size of this IK chain.
     /// </summary>
     /// <param name="majorVersion">The rig major version.</param>
+    /// <returns>The total size in bytes when serialized.</returns>
     public int GetSerializedSize(uint majorVersion)
     {
         int size = 4 + (Bones.Count * 4); // Bone list
@@ -163,6 +164,11 @@ public sealed class IkChain : IEquatable<IkChain>
         return size;
     }
 
+    /// <summary>
+    /// Determines whether this IK chain is equal to another IK chain.
+    /// </summary>
+    /// <param name="other">The IK chain to compare with.</param>
+    /// <returns>True if the IK chains are equal; otherwise, false.</returns>
     public bool Equals(IkChain? other)
     {
         if (other is null) return false;
@@ -181,8 +187,17 @@ public sealed class IkChain : IEquatable<IkChain>
             && RootIndex == other.RootIndex;
     }
 
+    /// <summary>
+    /// Determines whether this IK chain is equal to the specified object.
+    /// </summary>
+    /// <param name="obj">The object to compare with.</param>
+    /// <returns>True if the objects are equal; otherwise, false.</returns>
     public override bool Equals(object? obj) => obj is IkChain other && Equals(other);
 
+    /// <summary>
+    /// Returns a hash code for this IK chain.
+    /// </summary>
+    /// <returns>A hash code for the current IK chain.</returns>
     public override int GetHashCode()
     {
         var hash = new HashCode();
@@ -196,5 +211,9 @@ public sealed class IkChain : IEquatable<IkChain>
         return hash.ToHashCode();
     }
 
+    /// <summary>
+    /// Returns a string representation of this IK chain.
+    /// </summary>
+    /// <returns>A string describing the IK chain.</returns>
     public override string ToString() => $"IkChain ({Bones.Count} bones)";
 }

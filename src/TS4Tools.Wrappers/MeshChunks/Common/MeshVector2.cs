@@ -10,9 +10,14 @@ public readonly struct MeshVector2 : IEquatable<MeshVector2>
     /// <summary>Size in bytes when serialized.</summary>
     public const int Size = 8;
 
+    /// <summary>The X component.</summary>
     public float X { get; }
+    /// <summary>The Y component.</summary>
     public float Y { get; }
 
+    /// <summary>
+    /// Initializes a new 2D vector with the specified components.
+    /// </summary>
     public MeshVector2(float x, float y)
     {
         X = x;
@@ -40,14 +45,22 @@ public readonly struct MeshVector2 : IEquatable<MeshVector2>
         position += Size;
     }
 
+    /// <summary>Returns a zero vector (0, 0).</summary>
     public static MeshVector2 Zero => new(0, 0);
+    /// <summary>Returns a vector with all components set to one (1, 1).</summary>
     public static MeshVector2 One => new(1, 1);
 
+    /// <inheritdoc/>
     public bool Equals(MeshVector2 other) => X == other.X && Y == other.Y;
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is MeshVector2 other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(X, Y);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(MeshVector2 left, MeshVector2 right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(MeshVector2 left, MeshVector2 right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() => $"[{X,8:0.00000},{Y,8:0.00000}]";
 }

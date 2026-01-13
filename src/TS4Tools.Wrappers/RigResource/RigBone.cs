@@ -48,6 +48,9 @@ public sealed class RigBone : IEquatable<RigBone>
     /// Reads a bone from the data span.
     /// Source: RigResource.cs Bone.Parse() lines 207-218
     /// </summary>
+    /// <param name="data">The data span to read from.</param>
+    /// <param name="position">Current position, updated after reading.</param>
+    /// <returns>The parsed bone.</returns>
     public static RigBone Read(ReadOnlySpan<byte> data, ref int position)
     {
         var bone = new RigBone
@@ -89,6 +92,8 @@ public sealed class RigBone : IEquatable<RigBone>
     /// Writes the bone to the buffer.
     /// Source: RigResource.cs Bone.UnParse() lines 220-236
     /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="position">Current position, updated after writing.</param>
     public void Write(Span<byte> buffer, ref int position)
     {
         Position.Write(buffer, ref position);
@@ -122,6 +127,7 @@ public sealed class RigBone : IEquatable<RigBone>
     /// <summary>
     /// Calculates the serialized size of this bone.
     /// </summary>
+    /// <returns>The total size in bytes when serialized.</returns>
     public int GetSerializedSize()
     {
         // Position(12) + Orientation(16) + Scaling(12) + NameLength(4) + Name + indices(16)
@@ -129,6 +135,11 @@ public sealed class RigBone : IEquatable<RigBone>
         return 12 + 16 + 12 + 4 + nameBytes + 16;
     }
 
+    /// <summary>
+    /// Determines whether this bone is equal to another bone.
+    /// </summary>
+    /// <param name="other">The bone to compare with.</param>
+    /// <returns>True if the bones are equal; otherwise, false.</returns>
     public bool Equals(RigBone? other)
     {
         if (other is null) return false;
@@ -142,10 +153,23 @@ public sealed class RigBone : IEquatable<RigBone>
             && Unknown2 == other.Unknown2;
     }
 
+    /// <summary>
+    /// Determines whether this bone is equal to the specified object.
+    /// </summary>
+    /// <param name="obj">The object to compare with.</param>
+    /// <returns>True if the objects are equal; otherwise, false.</returns>
     public override bool Equals(object? obj) => obj is RigBone other && Equals(other);
 
+    /// <summary>
+    /// Returns a hash code for this bone.
+    /// </summary>
+    /// <returns>A hash code for the current bone.</returns>
     public override int GetHashCode() =>
         HashCode.Combine(Position, Orientation, Scaling, Name, OpposingBoneIndex, ParentBoneIndex, Hash, Unknown2);
 
+    /// <summary>
+    /// Returns a string representation of this bone.
+    /// </summary>
+    /// <returns>A string describing the bone.</returns>
     public override string ToString() => $"Bone '{Name}' (0x{Hash:X8})";
 }

@@ -507,7 +507,14 @@ public sealed class TxtcResource : TypedResource
 /// </summary>
 public enum TxtcPatternSize : uint
 {
+    /// <summary>
+    /// Default pattern size.
+    /// </summary>
     Default = 0x00,
+
+    /// <summary>
+    /// Large pattern size.
+    /// </summary>
     Large = 0x01,
 }
 
@@ -517,16 +524,40 @@ public enum TxtcPatternSize : uint
 [Flags]
 public enum TxtcDataType : uint
 {
+    /// <summary>
+    /// Hair data type.
+    /// </summary>
     Hair = 0x00000001,
+
+    /// <summary>
+    /// Scalp data type.
+    /// </summary>
     Scalp = 0x00000002,
+
+    /// <summary>
+    /// Face overlay data type.
+    /// </summary>
     FaceOverlay = 0x00000004,
+
+    /// <summary>
+    /// Body data type.
+    /// </summary>
     Body = 0x00000008,
+
+    /// <summary>
+    /// Accessory data type.
+    /// </summary>
     Accessory = 0x00000010,
 }
 
 /// <summary>
 /// Super block for version 7+ TXTC resources.
 /// </summary>
+/// <param name="TgiIndex">TGI block index.</param>
+/// <param name="FabricData">Fabric content data.</param>
+/// <param name="Unknown1">Unknown field 1.</param>
+/// <param name="Unknown2">Unknown field 2.</param>
+/// <param name="Unknown3">Unknown field 3.</param>
 public sealed record TxtcSuperBlock(
     byte TgiIndex,
     byte[] FabricData,
@@ -537,79 +568,130 @@ public sealed record TxtcSuperBlock(
 /// <summary>
 /// Entry block containing multiple entries terminated by null.
 /// </summary>
+/// <param name="Entries">List of entries in this block.</param>
 public sealed record TxtcEntryBlock(IReadOnlyList<TxtcEntry> Entries);
 
 /// <summary>
 /// Base class for TXTC entries.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
 public abstract record TxtcEntry(uint Property, byte Unknown);
 
 /// <summary>
 /// Boolean entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Boolean value.</param>
 public sealed record TxtcEntryBoolean(uint Property, byte Unknown, bool Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Signed byte entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Signed byte value.</param>
 public sealed record TxtcEntrySByte(uint Property, byte Unknown, sbyte Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Unsigned byte entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Unsigned byte value.</param>
 public sealed record TxtcEntryByte(uint Property, byte Unknown, byte Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// TGI index entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">TGI block index value.</param>
 public sealed record TxtcEntryTgiIndex(uint Property, byte Unknown, byte Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Int16 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Int16 value.</param>
 public sealed record TxtcEntryInt16(uint Property, byte Unknown, short Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// UInt16 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">UInt16 value.</param>
 public sealed record TxtcEntryUInt16(uint Property, byte Unknown, ushort Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Int32 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Int32 value.</param>
 public sealed record TxtcEntryInt32(uint Property, byte Unknown, int Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// UInt32 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">UInt32 value.</param>
 public sealed record TxtcEntryUInt32(uint Property, byte Unknown, uint Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Int64 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Int64 value.</param>
 public sealed record TxtcEntryInt64(uint Property, byte Unknown, long Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// UInt64 entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">UInt64 value.</param>
 public sealed record TxtcEntryUInt64(uint Property, byte Unknown, ulong Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Single (float) entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">Single (float) value.</param>
 public sealed record TxtcEntrySingle(uint Property, byte Unknown, float Value) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Rectangle entry (4 floats).
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="X">X coordinate.</param>
+/// <param name="Y">Y coordinate.</param>
+/// <param name="Width">Width dimension.</param>
+/// <param name="Height">Height dimension.</param>
 public sealed record TxtcEntryRectangle(uint Property, byte Unknown, float X, float Y, float Width, float Height) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// Vector entry (4 floats).
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="X">X component.</param>
+/// <param name="Y">Y component.</param>
+/// <param name="Z">Z component.</param>
+/// <param name="W">W component.</param>
 public sealed record TxtcEntryVector(uint Property, byte Unknown, float X, float Y, float Z, float W) : TxtcEntry(Property, Unknown);
 
 /// <summary>
 /// String entry.
 /// </summary>
+/// <param name="Property">Property identifier.</param>
+/// <param name="Unknown">Unknown field.</param>
+/// <param name="Value">String value.</param>
 public sealed record TxtcEntryString(uint Property, byte Unknown, string Value) : TxtcEntry(Property, Unknown);
