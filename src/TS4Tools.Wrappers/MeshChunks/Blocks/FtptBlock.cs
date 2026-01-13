@@ -280,9 +280,14 @@ public sealed class FtptBlock : RcolBlock
 /// </summary>
 public readonly struct FtptPolygonHeightOverride
 {
+    /// <summary>FNV32 hash of the polygon name.</summary>
     public uint NameHash { get; }
+    /// <summary>Height override value.</summary>
     public float Height { get; }
 
+    /// <summary>
+    /// Creates a polygon height override.
+    /// </summary>
     public FtptPolygonHeightOverride(uint nameHash, float height)
     {
         NameHash = nameHash;
@@ -296,9 +301,14 @@ public readonly struct FtptPolygonHeightOverride
 /// </summary>
 public readonly struct FtptPolygonPoint
 {
+    /// <summary>X coordinate.</summary>
     public float X { get; }
+    /// <summary>Z coordinate.</summary>
     public float Z { get; }
 
+    /// <summary>
+    /// Creates a polygon point.
+    /// </summary>
     public FtptPolygonPoint(float x, float z)
     {
         X = x;
@@ -312,16 +322,28 @@ public readonly struct FtptPolygonPoint
 /// </summary>
 public sealed class FtptArea
 {
+    /// <summary>FNV32 hash of the area name.</summary>
     public uint NameHash { get; }
+    /// <summary>Area priority value.</summary>
     public byte Priority { get; }
+    /// <summary>Type of area.</summary>
     public uint AreaType { get; }
+    /// <summary>List of polygon points defining the area boundary.</summary>
     public IReadOnlyList<FtptPolygonPoint> Points { get; }
+    /// <summary>List of surface type flags.</summary>
     public IReadOnlyList<uint> SurfaceTypes { get; }
+    /// <summary>Minimum X coordinate of bounding box.</summary>
     public float MinX { get; }
+    /// <summary>Minimum Z coordinate of bounding box.</summary>
     public float MinZ { get; }
+    /// <summary>Maximum X coordinate of bounding box.</summary>
     public float MaxX { get; }
+    /// <summary>Maximum Z coordinate of bounding box.</summary>
     public float MaxZ { get; }
 
+    /// <summary>
+    /// Creates a footprint/slot area.
+    /// </summary>
     public FtptArea(uint nameHash, byte priority, uint areaType,
         IReadOnlyList<FtptPolygonPoint> points, IReadOnlyList<uint> surfaceTypes,
         float minX, float minZ, float maxX, float maxZ)

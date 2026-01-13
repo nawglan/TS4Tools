@@ -13,23 +13,33 @@ public sealed class Bone : IEquatable<Bone>
     /// <summary>Inverse bind pose transformation matrix.</summary>
     public Matrix43 InverseBindPose { get; set; }
 
+    /// <summary>
+    /// Creates a new bone with identity transform.
+    /// </summary>
     public Bone()
     {
         InverseBindPose = Matrix43.Identity;
     }
 
+    /// <summary>
+    /// Creates a new bone with specified properties.
+    /// </summary>
     public Bone(uint nameHash, Matrix43 inverseBindPose)
     {
         NameHash = nameHash;
         InverseBindPose = inverseBindPose;
     }
 
+    /// <inheritdoc/>
     public bool Equals(Bone? other) =>
         other is not null && NameHash == other.NameHash && InverseBindPose == other.InverseBindPose;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is Bone other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(NameHash, InverseBindPose);
 
+    /// <inheritdoc/>
     public override string ToString() => $"Bone 0x{NameHash:X8}";
 }
 

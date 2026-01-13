@@ -124,8 +124,19 @@ public sealed class CwalResource : SimpleCatalogResource
 /// </summary>
 public enum MainWallHeight : byte
 {
+    /// <summary>
+    /// Short wall height.
+    /// </summary>
     ShortWall = 0x03,
+
+    /// <summary>
+    /// Medium wall height.
+    /// </summary>
     MediumWall = 0x04,
+
+    /// <summary>
+    /// Tall wall height.
+    /// </summary>
     TallWall = 0x05,
 }
 
@@ -135,8 +146,19 @@ public enum MainWallHeight : byte
 /// </summary>
 public enum CornerWallHeight : byte
 {
+    /// <summary>
+    /// Short corner wall height.
+    /// </summary>
     ShortWall = 0xC3,
+
+    /// <summary>
+    /// Medium corner wall height.
+    /// </summary>
     MediumWall = 0xC4,
+
+    /// <summary>
+    /// Tall corner wall height.
+    /// </summary>
     TallWall = 0xC5,
 }
 

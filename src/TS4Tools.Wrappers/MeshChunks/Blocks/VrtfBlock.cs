@@ -22,6 +22,9 @@ public readonly struct ElementLayout : IEquatable<ElementLayout>
     /// <summary>Byte offset within the vertex stride.</summary>
     public byte Offset { get; }
 
+    /// <summary>
+    /// Creates a new element layout.
+    /// </summary>
     public ElementLayout(ElementUsage usage, byte usageIndex, ElementFormat format, byte offset)
     {
         Usage = usage;
@@ -55,15 +58,21 @@ public readonly struct ElementLayout : IEquatable<ElementLayout>
         position += Size;
     }
 
+    /// <inheritdoc/>
     public bool Equals(ElementLayout other) =>
         Usage == other.Usage && UsageIndex == other.UsageIndex &&
         Format == other.Format && Offset == other.Offset;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is ElementLayout other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(Usage, UsageIndex, Format, Offset);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(ElementLayout left, ElementLayout right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(ElementLayout left, ElementLayout right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() =>
         $"{Usage}[{UsageIndex}]: {Format} @ offset 0x{Offset:X2}";
 }

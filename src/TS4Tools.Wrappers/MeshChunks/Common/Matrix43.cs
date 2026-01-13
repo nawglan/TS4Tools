@@ -25,6 +25,9 @@ public readonly struct Matrix43 : IEquatable<Matrix43>
     /// <summary>The translation column vector.</summary>
     public MeshVector3 Translate { get; }
 
+    /// <summary>
+    /// Initializes a new 4x3 transformation matrix with the specified column vectors.
+    /// </summary>
     public Matrix43(MeshVector3 right, MeshVector3 up, MeshVector3 back, MeshVector3 translate)
     {
         Right = right;
@@ -109,13 +112,19 @@ public readonly struct Matrix43 : IEquatable<Matrix43>
         position += Size;
     }
 
+    /// <inheritdoc/>
     public bool Equals(Matrix43 other) =>
         Right == other.Right && Up == other.Up && Back == other.Back && Translate == other.Translate;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is Matrix43 other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(Right, Up, Back, Translate);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(Matrix43 left, Matrix43 right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(Matrix43 left, Matrix43 right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() => $"{Right},{Up},{Back},{Translate}";
 }

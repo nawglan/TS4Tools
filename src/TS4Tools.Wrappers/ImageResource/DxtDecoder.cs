@@ -21,9 +21,13 @@ public static class DxtDecoder
     private const int DdsHeaderSize = 128;
 
     /// <summary>
-    /// FourCC values for DXT formats.
+    /// FourCC value for DXT1 format (BC1 compression).
     /// </summary>
     public const uint FourCcDxt1 = 0x31545844; // "DXT1"
+
+    /// <summary>
+    /// FourCC value for DXT5 format (BC3 compression).
+    /// </summary>
     public const uint FourCcDxt5 = 0x35545844; // "DXT5"
 
     /// <summary>

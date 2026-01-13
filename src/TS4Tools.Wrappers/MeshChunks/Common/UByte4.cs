@@ -9,11 +9,18 @@ public readonly struct UByte4 : IEquatable<UByte4>
     /// <summary>Size in bytes when serialized.</summary>
     public const int Size = 4;
 
+    /// <summary>The first byte component.</summary>
     public byte A { get; }
+    /// <summary>The second byte component.</summary>
     public byte B { get; }
+    /// <summary>The third byte component.</summary>
     public byte C { get; }
+    /// <summary>The fourth byte component.</summary>
     public byte D { get; }
 
+    /// <summary>
+    /// Initializes a new UByte4 with the specified byte components.
+    /// </summary>
     public UByte4(byte a, byte b, byte c, byte d)
     {
         A = a;
@@ -60,13 +67,20 @@ public readonly struct UByte4 : IEquatable<UByte4>
     /// </summary>
     public uint ToPacked() => A | ((uint)B << 8) | ((uint)C << 16) | ((uint)D << 24);
 
+    /// <summary>Returns a zero value (0, 0, 0, 0).</summary>
     public static UByte4 Zero => new(0, 0, 0, 0);
 
+    /// <inheritdoc/>
     public bool Equals(UByte4 other) => A == other.A && B == other.B && C == other.C && D == other.D;
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is UByte4 other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(A, B, C, D);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(UByte4 left, UByte4 right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(UByte4 left, UByte4 right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() => $"[{A:X2},{B:X2},{C:X2},{D:X2}]";
 }

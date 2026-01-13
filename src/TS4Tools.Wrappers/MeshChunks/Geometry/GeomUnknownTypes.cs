@@ -133,23 +133,58 @@ public sealed class GeomUnknownThing2
     /// <summary>Size in bytes when serialized (4+2+2+2+13*4+1 = 63 bytes).</summary>
     public const int Size = 63;
 
+    /// <summary>Unknown field 1 (uint).</summary>
     public uint Unknown1 { get; set; }
+
+    /// <summary>Unknown field 2 (ushort).</summary>
     public ushort Unknown2 { get; set; }
+
+    /// <summary>Unknown field 3 (ushort).</summary>
     public ushort Unknown3 { get; set; }
+
+    /// <summary>Unknown field 4 (ushort).</summary>
     public ushort Unknown4 { get; set; }
+
+    /// <summary>Unknown field 5 (float).</summary>
     public float Unknown5 { get; set; }
+
+    /// <summary>Unknown field 6 (float).</summary>
     public float Unknown6 { get; set; }
+
+    /// <summary>Unknown field 7 (float).</summary>
     public float Unknown7 { get; set; }
+
+    /// <summary>Unknown field 8 (float).</summary>
     public float Unknown8 { get; set; }
+
+    /// <summary>Unknown field 9 (float).</summary>
     public float Unknown9 { get; set; }
+
+    /// <summary>Unknown field 10 (float).</summary>
     public float Unknown10 { get; set; }
+
+    /// <summary>Unknown field 11 (float).</summary>
     public float Unknown11 { get; set; }
+
+    /// <summary>Unknown field 12 (float).</summary>
     public float Unknown12 { get; set; }
+
+    /// <summary>Unknown field 13 (float).</summary>
     public float Unknown13 { get; set; }
+
+    /// <summary>Unknown field 14 (float).</summary>
     public float Unknown14 { get; set; }
+
+    /// <summary>Unknown field 15 (float).</summary>
     public float Unknown15 { get; set; }
+
+    /// <summary>Unknown field 16 (float).</summary>
     public float Unknown16 { get; set; }
+
+    /// <summary>Unknown field 17 (float).</summary>
     public float Unknown17 { get; set; }
+
+    /// <summary>Unknown field 18 (byte).</summary>
     public byte Unknown18 { get; set; }
 
     /// <summary>

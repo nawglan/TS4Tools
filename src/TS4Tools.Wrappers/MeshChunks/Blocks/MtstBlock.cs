@@ -7,11 +7,17 @@ namespace TS4Tools.Wrappers.MeshChunks;
 /// </summary>
 public enum MaterialState : uint
 {
+    /// <summary>Default material state.</summary>
     Default = 0x2EA8FB98,
+    /// <summary>Dirty material state.</summary>
     Dirty = 0xEEAB4327,
+    /// <summary>Very dirty material state.</summary>
     VeryDirty = 0x2E5DF9BB,
+    /// <summary>Burnt material state.</summary>
     Burnt = 0xC3867C32,
+    /// <summary>Clogged material state.</summary>
     Clogged = 0x257FB026,
+    /// <summary>Car lights off state.</summary>
     CarLightsOff = 0xE4AF52C1,
 }
 
@@ -203,20 +209,29 @@ public readonly struct MtstEntry200 : IEquatable<MtstEntry200>
     /// <summary>Material state (Default, Dirty, etc.).</summary>
     public MaterialState MaterialState { get; }
 
+    /// <summary>
+    /// Creates a new MTST entry.
+    /// </summary>
     public MtstEntry200(RcolChunkReference matdIndex, MaterialState materialState)
     {
         MatdIndex = matdIndex;
         MaterialState = materialState;
     }
 
+    /// <inheritdoc/>
     public bool Equals(MtstEntry200 other) =>
         MatdIndex == other.MatdIndex && MaterialState == other.MaterialState;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is MtstEntry200 other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(MatdIndex, MaterialState);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(MtstEntry200 left, MtstEntry200 right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(MtstEntry200 left, MtstEntry200 right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() => $"Index={MatdIndex}, State={MaterialState}";
 }
 
@@ -239,6 +254,9 @@ public readonly struct MtstEntry300 : IEquatable<MtstEntry300>
     /// <summary>Material variant identifier.</summary>
     public uint MaterialVariant { get; }
 
+    /// <summary>
+    /// Creates a new MTST entry with variant.
+    /// </summary>
     public MtstEntry300(RcolChunkReference matdIndex, MaterialState materialState, uint materialVariant)
     {
         MatdIndex = matdIndex;
@@ -246,16 +264,22 @@ public readonly struct MtstEntry300 : IEquatable<MtstEntry300>
         MaterialVariant = materialVariant;
     }
 
+    /// <inheritdoc/>
     public bool Equals(MtstEntry300 other) =>
         MatdIndex == other.MatdIndex &&
         MaterialState == other.MaterialState &&
         MaterialVariant == other.MaterialVariant;
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is MtstEntry300 other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(MatdIndex, MaterialState, MaterialVariant);
+    /// <summary>Equality operator.</summary>
     public static bool operator ==(MtstEntry300 left, MtstEntry300 right) => left.Equals(right);
+    /// <summary>Inequality operator.</summary>
     public static bool operator !=(MtstEntry300 left, MtstEntry300 right) => !left.Equals(right);
 
+    /// <inheritdoc/>
     public override string ToString() =>
         $"Index={MatdIndex}, State={MaterialState}, Variant=0x{MaterialVariant:X8}";
 }

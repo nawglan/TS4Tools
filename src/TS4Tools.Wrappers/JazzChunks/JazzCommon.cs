@@ -182,6 +182,7 @@ public sealed class JazzAnimation
     /// <summary>Second actor hash.</summary>
     public uint Actor2Hash { get; set; }
 
+    /// <summary>Parses an animation entry from binary data.</summary>
     public static JazzAnimation Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var anim = new JazzAnimation
@@ -196,6 +197,7 @@ public sealed class JazzAnimation
         return anim;
     }
 
+    /// <summary>Writes the animation entry to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(NameHash);
@@ -210,11 +212,19 @@ public sealed class JazzAnimation
 /// </summary>
 public sealed class JazzActorSlot
 {
+    /// <summary>Chain identifier.</summary>
     public uint ChainId { get; set; }
+
+    /// <summary>Slot identifier.</summary>
     public uint SlotId { get; set; }
+
+    /// <summary>Actor name hash.</summary>
     public uint ActorNameHash { get; set; }
+
+    /// <summary>Slot name hash.</summary>
     public uint SlotNameHash { get; set; }
 
+    /// <summary>Parses an actor slot from binary data.</summary>
     public static JazzActorSlot Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var slot = new JazzActorSlot
@@ -231,6 +241,7 @@ public sealed class JazzActorSlot
         return slot;
     }
 
+    /// <summary>Writes the actor slot to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(ChainId);
@@ -246,9 +257,13 @@ public sealed class JazzActorSlot
 /// </summary>
 public sealed class JazzActorSuffix
 {
+    /// <summary>Actor name hash.</summary>
     public uint ActorNameHash { get; set; }
+
+    /// <summary>Suffix hash.</summary>
     public uint SuffixHash { get; set; }
 
+    /// <summary>Parses an actor suffix from binary data.</summary>
     public static JazzActorSuffix Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var suffix = new JazzActorSuffix
@@ -261,6 +276,7 @@ public sealed class JazzActorSuffix
         return suffix;
     }
 
+    /// <summary>Writes the actor suffix to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(ActorNameHash);
@@ -274,9 +290,13 @@ public sealed class JazzActorSuffix
 /// </summary>
 public sealed class JazzOutcome
 {
+    /// <summary>Outcome weight for random selection.</summary>
     public float Weight { get; set; }
+
+    /// <summary>Decision graph chunk indexes for this outcome.</summary>
     public List<uint> DecisionGraphIndexes { get; set; } = [];
 
+    /// <summary>Parses an outcome entry from binary data.</summary>
     public static JazzOutcome Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var outcome = new JazzOutcome
@@ -288,6 +308,7 @@ public sealed class JazzOutcome
         return outcome;
     }
 
+    /// <summary>Writes the outcome entry to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(Weight);
@@ -301,9 +322,13 @@ public sealed class JazzOutcome
 /// </summary>
 public sealed class JazzParameterMatch
 {
+    /// <summary>Test value for parameter matching.</summary>
     public uint TestValue { get; set; }
+
+    /// <summary>Decision graph chunk indexes for this match.</summary>
     public List<uint> DecisionGraphIndexes { get; set; } = [];
 
+    /// <summary>Parses a parameter match from binary data.</summary>
     public static JazzParameterMatch Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var match = new JazzParameterMatch
@@ -315,6 +340,7 @@ public sealed class JazzParameterMatch
         return match;
     }
 
+    /// <summary>Writes the parameter match to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(TestValue);
@@ -328,9 +354,13 @@ public sealed class JazzParameterMatch
 /// </summary>
 public sealed class JazzDestinationMatch
 {
+    /// <summary>State index for destination matching.</summary>
     public uint StateIndex { get; set; }
+
+    /// <summary>Decision graph chunk indexes for this match.</summary>
     public List<uint> DecisionGraphIndexes { get; set; } = [];
 
+    /// <summary>Parses a destination match from binary data.</summary>
     public static JazzDestinationMatch Parse(ReadOnlySpan<byte> data, ref int offset)
     {
         var match = new JazzDestinationMatch
@@ -342,6 +372,7 @@ public sealed class JazzDestinationMatch
         return match;
     }
 
+    /// <summary>Writes the destination match to binary format.</summary>
     public void Write(BinaryWriter writer)
     {
         writer.Write(StateIndex);

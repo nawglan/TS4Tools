@@ -8,7 +8,14 @@ namespace TS4Tools.Wrappers.CatalogResource;
 [Flags]
 public enum PackDisplayOption : byte
 {
+    /// <summary>
+    /// No special display options.
+    /// </summary>
     None = 0,
+
+    /// <summary>
+    /// Hide the pack icon in the catalog UI.
+    /// </summary>
     HidePackIcon = 1
 }
 
