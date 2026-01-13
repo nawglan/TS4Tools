@@ -84,7 +84,7 @@ public readonly struct RcolChunkReference : IEquatable<RcolChunkReference>
     /// <summary>
     /// The 0-based index into the appropriate list.
     /// Returns -1 if the reference is null.
-    /// Source: GenericRCOLResource.cs line 638 - "(chunkReference & 0x0FFFFFFF) - 1"
+    /// Source: GenericRCOLResource.cs line 638 - "(chunkReference AND 0x0FFFFFFF) - 1"
     /// </summary>
     public int Index => _value == 0 ? -1 : (int)(_value & 0x0FFFFFFF) - 1;
 

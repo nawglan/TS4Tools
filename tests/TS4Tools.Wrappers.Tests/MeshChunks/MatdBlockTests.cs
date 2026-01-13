@@ -44,7 +44,7 @@ public class MatdBlockTests
     }
 
     /// <summary>
-    /// Creates a minimal MATD block with old format (version < 0x103).
+    /// Creates a minimal MATD block with old format (version less than 0x103).
     /// </summary>
     private static byte[] CreateMatdOldFormat()
     {

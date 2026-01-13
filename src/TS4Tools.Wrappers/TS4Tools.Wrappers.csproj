@@ -3,6 +3,8 @@
   <PropertyGroup>
     <RootNamespace>TS4Tools.Wrappers</RootNamespace>
     <Description>Resource type wrappers for TS4Tools - STBL, NameMap, and more</Description>
+    <!-- Suppress missing XML docs until wrapper documentation is complete -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +21,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="TS4Tools.Wrappers.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
 </Project>

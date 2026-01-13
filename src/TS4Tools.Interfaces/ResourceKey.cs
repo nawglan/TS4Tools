@@ -25,9 +25,13 @@ public readonly record struct ResourceKey(
         return Instance.CompareTo(other.Instance);
     }
 
+    /// <summary>Determines whether one key is less than another.</summary>
     public static bool operator <(ResourceKey left, ResourceKey right) => left.CompareTo(right) < 0;
+    /// <summary>Determines whether one key is greater than another.</summary>
     public static bool operator >(ResourceKey left, ResourceKey right) => left.CompareTo(right) > 0;
+    /// <summary>Determines whether one key is less than or equal to another.</summary>
     public static bool operator <=(ResourceKey left, ResourceKey right) => left.CompareTo(right) <= 0;
+    /// <summary>Determines whether one key is greater than or equal to another.</summary>
     public static bool operator >=(ResourceKey left, ResourceKey right) => left.CompareTo(right) >= 0;
 
     /// <summary>
