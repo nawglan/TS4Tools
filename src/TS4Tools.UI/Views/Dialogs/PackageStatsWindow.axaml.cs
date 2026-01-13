@@ -52,7 +52,7 @@ public partial class PackageStatsWindow : Window
             .OrderByDescending(x => x.Count)
             .ToList();
 
-        TypeBreakdownGrid.ItemsSource = typeBreakdown;
+        this.FindControl<DataGrid>("TypeBreakdownGrid")!.ItemsSource = typeBreakdown;
 
         // Package Header info
         // Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs lines 85-86
