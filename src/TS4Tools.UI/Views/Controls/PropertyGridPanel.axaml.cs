@@ -36,20 +36,21 @@ public partial class PropertyGridPanel : UserControl
     public PropertyGridPanel()
     {
         InitializeComponent();
-        PropertiesGrid.ItemsSource = Properties;
+        this.FindControl<DataGrid>("PropertiesGrid")!.ItemsSource = Properties;
     }
 
     private void RefreshProperties()
     {
         Properties.Clear();
 
+        var typeLabel = this.FindControl<TextBlock>("TypeLabel")!;
         if (_target == null)
         {
-            TypeLabel.Text = "";
+            typeLabel.Text = "";
             return;
         }
 
-        TypeLabel.Text = $"({_target.GetType().Name})";
+        typeLabel.Text = $"({_target.GetType().Name})";
 
         // Get all public instance properties
         var type = _target.GetType();

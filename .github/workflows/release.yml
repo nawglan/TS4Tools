@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            artifact: TS4Tools.UI
+          - os: windows-latest
+            rid: win-x64
+            artifact: TS4Tools.UI.exe
+          - os: macos-latest
+            rid: osx-x64
+            artifact: TS4Tools.UI
+          - os: macos-latest
+            rid: osx-arm64
+            artifact: TS4Tools.UI
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        run: dotnet publish src/TS4Tools.UI -p:PublishProfile=${{ matrix.rid }}
+
+      - name: Rename artifact
+        shell: bash
+        run: |
+          cd src/TS4Tools.UI/bin/publish/${{ matrix.rid }}
+          if [ "${{ matrix.rid }}" = "win-x64" ]; then
+            mv TS4Tools.UI.exe TS4Tools-${{ matrix.rid }}.exe
+          else
+            mv TS4Tools.UI TS4Tools-${{ matrix.rid }}
+          fi
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            src/TS4Tools.UI/bin/publish/${{ matrix.rid }}/TS4Tools-${{ matrix.rid }}*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
