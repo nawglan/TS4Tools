@@ -315,6 +315,9 @@ public sealed class VpxyEntry00 : VpxyEntry
     /// <summary>List of TGI indices (each stored as a byte in legacy).</summary>
     public IReadOnlyList<int> TgiIndices { get; }
 
+    /// <summary>
+    /// Creates a new entry with ID and TGI indices.
+    /// </summary>
     public VpxyEntry00(byte entryId, IReadOnlyList<int> tgiIndices)
     {
         EntryId = entryId;
@@ -346,6 +349,9 @@ public sealed class VpxyEntry01 : VpxyEntry
     /// <summary>TGI index reference.</summary>
     public int TgiIndex { get; }
 
+    /// <summary>
+    /// Creates a new entry with a TGI index.
+    /// </summary>
     public VpxyEntry01(int tgiIndex)
     {
         TgiIndex = tgiIndex;

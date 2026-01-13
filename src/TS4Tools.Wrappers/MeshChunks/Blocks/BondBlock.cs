@@ -69,6 +69,7 @@ public sealed class SlotAdjustment : IEquatable<SlotAdjustment>
     /// <summary>Size in bytes when serialized.</summary>
     public const int Size = 4 + MeshVector3.Size + MeshVector3.Size + MeshVector4.Size; // 4 + 12 + 12 + 16 = 44
 
+    /// <inheritdoc/>
     public bool Equals(SlotAdjustment? other)
     {
         if (other is null) return false;
@@ -78,8 +79,11 @@ public sealed class SlotAdjustment : IEquatable<SlotAdjustment>
             && Quaternion == other.Quaternion;
     }
 
+    /// <inheritdoc/>
     public override bool Equals(object? obj) => obj is SlotAdjustment other && Equals(other);
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(SlotNameHash, Offset, Scale, Quaternion);
+    /// <inheritdoc/>
     public override string ToString() => $"SlotAdjustment 0x{SlotNameHash:X8}";
 }
 

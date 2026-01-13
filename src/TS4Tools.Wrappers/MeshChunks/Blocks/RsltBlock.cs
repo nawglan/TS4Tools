@@ -524,10 +524,16 @@ public sealed class RsltBlock : RcolBlock
 /// </summary>
 public readonly struct RsltMatrixRow
 {
+    /// <summary>First component.</summary>
     public float R1 { get; }
+    /// <summary>Second component.</summary>
     public float R2 { get; }
+    /// <summary>Third component.</summary>
     public float R3 { get; }
 
+    /// <summary>
+    /// Creates a new matrix row.
+    /// </summary>
     public RsltMatrixRow(float r1, float r2, float r3)
     {
         R1 = r1;
@@ -542,10 +548,16 @@ public readonly struct RsltMatrixRow
 /// </summary>
 public sealed class RsltSlotOffset
 {
+    /// <summary>Index of the slot.</summary>
     public int SlotIndex { get; }
+    /// <summary>Position offset.</summary>
     public MeshVector3 Position { get; }
+    /// <summary>Rotation offset.</summary>
     public MeshVector3 Rotation { get; }
 
+    /// <summary>
+    /// Creates a new slot offset.
+    /// </summary>
     public RsltSlotOffset(int slotIndex, MeshVector3 position, MeshVector3 rotation)
     {
         SlotIndex = slotIndex;
@@ -560,13 +572,22 @@ public sealed class RsltSlotOffset
 /// </summary>
 public class RsltPart
 {
+    /// <summary>FNV32 hash of the slot name.</summary>
     public uint SlotNameHash { get; }
+    /// <summary>FNV32 hash of the bone name.</summary>
     public uint BoneNameHash { get; }
+    /// <summary>X-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixX { get; }
+    /// <summary>Y-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixY { get; }
+    /// <summary>Z-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixZ { get; }
+    /// <summary>Position coordinates.</summary>
     public MeshVector3 Coordinates { get; }
 
+    /// <summary>
+    /// Creates a new slot part.
+    /// </summary>
     public RsltPart(uint slotNameHash, uint boneNameHash,
         RsltMatrixRow matrixX, RsltMatrixRow matrixY, RsltMatrixRow matrixZ,
         MeshVector3 coordinates)
@@ -586,11 +607,18 @@ public class RsltPart
 /// </summary>
 public sealed class RsltSlottedPart : RsltPart
 {
+    /// <summary>Size category of the slot.</summary>
     public byte SlotSize { get; }
+    /// <summary>Bitfield indicating allowed object types.</summary>
     public ulong SlotTypeSet { get; }
+    /// <summary>Whether slot direction is locked.</summary>
     public bool SlotDirectionLocked { get; }
+    /// <summary>Legacy slot hash for compatibility.</summary>
     public uint SlotLegacyHash { get; }
 
+    /// <summary>
+    /// Creates a new slotted part.
+    /// </summary>
     public RsltSlottedPart(uint slotNameHash, uint boneNameHash,
         RsltMatrixRow matrixX, RsltMatrixRow matrixY, RsltMatrixRow matrixZ,
         MeshVector3 coordinates,
@@ -610,9 +638,14 @@ public sealed class RsltSlottedPart : RsltPart
 /// </summary>
 public readonly struct RsltConeElement
 {
+    /// <summary>Radius of the cone.</summary>
     public float Radius { get; }
+    /// <summary>Angle of the cone in radians.</summary>
     public float Angle { get; }
 
+    /// <summary>
+    /// Creates a new cone element.
+    /// </summary>
     public RsltConeElement(float radius, float angle)
     {
         Radius = radius;
@@ -626,13 +659,22 @@ public readonly struct RsltConeElement
 /// </summary>
 public sealed class RsltConePart
 {
+    /// <summary>FNV32 hash of the slot name.</summary>
     public uint SlotNameHash { get; }
+    /// <summary>FNV32 hash of the bone name.</summary>
     public uint BoneNameHash { get; }
+    /// <summary>X-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixX { get; }
+    /// <summary>Y-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixY { get; }
+    /// <summary>Z-axis rotation matrix row.</summary>
     public RsltMatrixRow MatrixZ { get; }
+    /// <summary>Cone definition with radius and angle.</summary>
     public RsltConeElement Cone { get; }
 
+    /// <summary>
+    /// Creates a new cone part.
+    /// </summary>
     public RsltConePart(uint slotNameHash, uint boneNameHash,
         RsltMatrixRow matrixX, RsltMatrixRow matrixY, RsltMatrixRow matrixZ,
         RsltConeElement cone)
