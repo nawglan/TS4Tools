@@ -31,7 +31,7 @@ public class PackageWriterTests
         await package.SaveToStreamAsync(stream);
 
         // Assert
-        stream.Length.Should().BeGreaterOrEqualTo(96); // Header is 96 bytes
+        stream.Length.Should().BeGreaterThanOrEqualTo(96); // Header is 96 bytes
         stream.Position = 0;
         var magic = new byte[4];
         await stream.ReadExactlyAsync(magic);

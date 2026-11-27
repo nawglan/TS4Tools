@@ -54,7 +54,7 @@ public class RealPackageTests
             await using var package = await DbpfPackage.OpenAsync(path);
 
             package.MajorVersion.Should().Be(2);
-            package.ResourceCount.Should().BeGreaterOrEqualTo(0);
+            package.ResourceCount.Should().BeGreaterThanOrEqualTo(0);
         }
     }
 

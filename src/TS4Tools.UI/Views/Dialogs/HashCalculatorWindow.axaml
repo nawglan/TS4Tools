@@ -13,7 +13,7 @@
         <!-- Input -->
         <StackPanel Grid.Row="0" Spacing="8">
             <TextBlock Text="Input String:" FontWeight="SemiBold" />
-            <TextBox x:Name="InputTextBox" Watermark="Enter text to hash..." />
+            <TextBox x:Name="InputTextBox" PlaceholderText="Enter text to hash..." />
         </StackPanel>
 
         <!-- Options -->

@@ -1,3 +1,4 @@
+using Avalonia.Input.Platform;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using TS4Tools;
@@ -187,7 +188,7 @@ public partial class ResourceDetailsWindow : Window
     {
         if (TopLevel.GetTopLevel(this)?.Clipboard is { } clipboard)
         {
-            var text = await clipboard.GetTextAsync();
+            var text = await clipboard.TryGetTextAsync();
             if (TryParseResourceKey(text, out var type, out var group, out var instance))
             {
                 _internalChange = true;

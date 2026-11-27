@@ -77,6 +77,10 @@ Without Peter Jones' work on s3pe/s3pi, this project would not exist. His philos
 
 This project is licensed under GPLv3, consistent with the original s4pe/s4pi project.
 
+### Non-Commercial Use
+
+TS4Tools is a free, open-source, non-commercial community project intended for individual use by Sims 4 players and modders. It is not sold, monetized, or offered as a commercial product or service, and it is not affiliated with or endorsed by Electronic Arts or Maxis.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit pull requests.

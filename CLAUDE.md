@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TS4Tools is a greenfield rewrite of legacy Sims4Tools (s4pe/s4pi), providing cross-platform (Windows, macOS, Linux) manipulation of Sims 4 `.package` files using .NET 9 and Avalonia UI.
+TS4Tools is a greenfield rewrite of legacy Sims4Tools (s4pe/s4pi), providing cross-platform (Windows, macOS, Linux) manipulation of Sims 4 `.package` files using .NET 10 and Avalonia UI 12.
 
 ## Build Commands
 
@@ -26,7 +26,7 @@ dotnet run --project src/TS4Tools.UI  # Run the application
 
 ### Technology Stack
 
-- .NET 9, C# 12+
+- .NET 10, C# 12+ (LangVersion preview)
 - Avalonia UI with MVVM (ReactiveUI/CommunityToolkit.Mvvm)
 - xUnit, FluentAssertions, BenchmarkDotNet
 - MSBuild with centralized package management (`Directory.Build.props`, `Directory.Packages.props`)
