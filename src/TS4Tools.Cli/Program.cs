@@ -22,9 +22,23 @@ internal static class Program
         }
         finally
         {
-            await stdout.FlushAsync(CancellationToken.None).ConfigureAwait(false);
-            await stdout.DisposeAsync().ConfigureAwait(false);
-            await stderr.DisposeAsync().ConfigureAwait(false);
+            // A reader that closed the pipe early (`ts4tools list x | head`) makes the flush fail with EPIPE.
+            // That is not an error of the command: keep its exit code instead of crashing with a stack trace.
+            try
+            {
+                await stdout.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                await stdout.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (IOException)
+            {
+            }
+            try
+            {
+                await stderr.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (IOException)
+            {
+            }
         }
     }
 }

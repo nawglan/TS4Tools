@@ -432,4 +432,15 @@ public class RsltBlockTests
         FluentActions.Invoking(() => new RsltBlock(withTail)).Should().Throw<UnsupportedResourceVersionException>();
         FluentActions.Invoking(() => new RsltBlock(truncated)).Should().Throw<UnsupportedResourceVersionException>();
     }
+
+    [Fact]
+    public void Parse_RouteCountLargerThanData_ThrowsBeforeAllocating()
+    {
+        var data = CreateMinimalRslt();
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(8), 0x7FFFFFFF); // routes
+
+        var act = () => new RsltBlock(data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*RSLT part*");
+    }
 }

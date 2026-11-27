@@ -380,7 +380,8 @@ public sealed class ObjectDefinitionResource : TypedResource
         // So the value stored is actually count * 4, not byte size
         int countValue = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
-        int count = countValue / 4;
+        // Each TGI is 16 bytes; a negative or oversized count must not size the list.
+        int count = CountGuard.Check(countValue / 4, data.Length - offset, 16, "OBJD TGI");
 
         var list = new List<TgiReference>(count);
         for (int i = 0; i < count; i++)

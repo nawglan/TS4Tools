@@ -190,6 +190,10 @@ public sealed class GeomBlock : RcolBlock
 
         // Read vertex data
         // Source: GEOM.cs line 152
+        // The count comes from the data: every vertex element is at least 4 bytes, so a count larger than the
+        // remaining data allows is invalid. With no formats a vertex reads nothing; bound the count by the data
+        // length anyway so a huge count cannot spin allocating empty vertices.
+        CountGuard.Check(numVertices, data.Length - pos, Math.Max(1, 4 * VertexFormats.Formats.Count), "GEOM vertex");
         Vertices = GeomVertexList.Read(data, ref pos, numVertices, VertexFormats);
 
         // Read face point sizes validation

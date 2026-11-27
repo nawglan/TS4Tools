@@ -67,7 +67,8 @@ internal static class ResourceCommands
         string target = source;
         if (output != null)
         {
-            if (string.Equals(Path.GetFullPath(output), Path.GetFullPath(source), StringComparison.Ordinal))
+            if (string.Equals(Path.GetFullPath(output), Path.GetFullPath(source),
+                    OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
                 throw new UsageException("--output is the same file as <package>; omit --output to replace in place");
             if (File.Exists(output) && !args.Has("--force"))
                 throw new CliException($"output package exists: {output} (use --force to overwrite)");

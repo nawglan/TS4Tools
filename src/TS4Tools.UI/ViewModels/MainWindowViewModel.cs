@@ -941,7 +941,8 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         if (string.IsNullOrEmpty(path)) return false;
 
         if (!string.IsNullOrEmpty(PackagePath) && !IsReadOnly &&
-            string.Equals(Path.GetFullPath(path), Path.GetFullPath(PackagePath), StringComparison.Ordinal))
+            string.Equals(Path.GetFullPath(path), Path.GetFullPath(PackagePath),
+                OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
         {
             return await SavePackageAsync();
         }

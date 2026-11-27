@@ -191,6 +191,21 @@ public class UnpackPackTests
     }
 
     [Fact]
+    public async Task Unpack_ForceWithInvalidPackage_KeepsPreviousUnpack()
+    {
+        using var scratch = new Scratch();
+        var (_, dir) = await UnpackSampleAsync(scratch);
+        string bad = scratch.PathOf("bad.package");
+        await File.WriteAllTextAsync(bad, "not a package");
+
+        var run = await CliRunner.RunAsync("unpack", bad, dir, "--force");
+
+        run.ExitCode.Should().Be(1);
+        File.Exists(Path.Combine(dir, "manifest.json")).Should().BeTrue("a bad input must not delete the previous unpack");
+        Directory.EnumerateFiles(Path.Combine(dir, "resources")).Should().NotBeEmpty();
+    }
+
+    [Fact]
     public async Task Unpack_NonEmptyOutDir_RefusedUnlessForce()
     {
         using var scratch = new Scratch();

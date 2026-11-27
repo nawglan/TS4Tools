@@ -140,6 +140,43 @@ public sealed class PackageSaveFidelityTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsAsync_OntoOwnFile_ThenSave_KeepsLaterEdits()
+    {
+        // Saving "as" the package's own file must not detach the package from it (on Linux/macOS a rename would
+        // leave the package writing to the unlinked old file).
+        var (path, data) = await CreatePackageFileAsync();
+        var added1 = new ResourceKey(TypeA, 0, 10);
+        var added2 = new ResourceKey(TypeA, 0, 11);
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.AddResource(added1, Compressible(4, 500));
+            await package.SaveAsAsync(path);
+            package.AddResource(added2, Compressible(5, 500));
+            await package.SaveAsync();
+        }
+
+        await using var reloaded = await DbpfPackage.OpenAsync(path);
+        reloaded.ResourceCount.Should().Be(data.Count + 2);
+        reloaded.Find(added2).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task SaveAsAsync_OntoOwnFile_ReadOnly_Throws()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+        var before = await File.ReadAllBytesAsync(path);
+
+        await using (var package = await DbpfPackage.OpenAsync(path))
+        {
+            var act = async () => await package.SaveAsAsync(path);
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        (await File.ReadAllBytesAsync(path)).Should().Equal(before);
+    }
+
+    [Fact]
     public async Task SaveAsync_Twice_ProducesValidPackage()
     {
         var (path, data) = await CreatePackageFileAsync();

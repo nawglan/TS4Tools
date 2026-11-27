@@ -945,7 +945,8 @@ public sealed class DbpfPackage : IMutablePackage
 
     /// <summary>
     /// Saves the package to a new file path. The package keeps its original backing file and stays dirty
-    /// (legacy SaveAs does not reset any state).
+    /// (legacy SaveAs does not reset any state). Saving onto the package's own file is an in-place
+    /// <see cref="SaveAsync"/> (which does clear <see cref="IsDirty"/>).
     /// </summary>
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 155-160
@@ -955,9 +956,24 @@ public sealed class DbpfPackage : IMutablePackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(path);
 
+        ThrowIfBackingDamaged();
+
+        // Saving onto the package's own file: writing a new file there would either truncate the file this package
+        // still reads from or (on Linux/macOS, where the move is a rename) leave this package attached to the old,
+        // unlinked file so that later saves never reach disk. Save in place instead.
+        string fullPath = Path.GetFullPath(path);
+        if (FilePath != null && _stream != null && string.Equals(fullPath, Path.GetFullPath(FilePath),
+                OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_stream.CanWrite)
+                throw new InvalidOperationException(
+                    $"Cannot save over {fullPath}: the package is open read-only from that file.");
+            await SaveAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // Write next to the target and move into place, so a failure or cancel never destroys an existing file
         // (legacy Package.cs lines 155-160 truncates the target first).
-        string fullPath = Path.GetFullPath(path);
         string tmpFile = fullPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
         FileStream tempStream;
         try

@@ -85,7 +85,9 @@ public sealed class RsltBlock : RcolBlock
         {
             end = ParseBody(data);
         }
-        catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException && Version > MaxLegacyCompatibleVersion)
+        // A count guard (CountGuard) reports the same overrun as a ResourceFormatException before reading past the end.
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException or ResourceFormatException
+                                   && Version > MaxLegacyCompatibleVersion)
         {
             throw new UnsupportedResourceVersionException("RSLT", Version, MaxLegacyCompatibleVersion);
         }
@@ -175,6 +177,9 @@ public sealed class RsltBlock : RcolBlock
     private static void ParsePartList(ReadOnlySpan<byte> data, ref int pos, int count, List<RsltPart> list)
     {
         if (count == 0) return;
+        // Counts come from the data: every part needs at least its slot and bone names (8 bytes), so a count
+        // larger than the remaining data allows is invalid and must not size the arrays below.
+        CountGuard.Check(count, data.Length - pos, 8, "RSLT part");
 
         // Read all slot names
         var slotNames = new uint[count];
@@ -220,6 +225,9 @@ public sealed class RsltBlock : RcolBlock
     private static void ParseSlottedPartList(ReadOnlySpan<byte> data, ref int pos, int count, List<RsltSlottedPart> list)
     {
         if (count == 0) return;
+        // Counts come from the data: every part needs at least its slot and bone names (8 bytes), so a count
+        // larger than the remaining data allows is invalid and must not size the arrays below.
+        CountGuard.Check(count, data.Length - pos, 8, "RSLT slotted part");
 
         // Read all slot names
         var slotNames = new uint[count];
@@ -295,6 +303,9 @@ public sealed class RsltBlock : RcolBlock
     private static void ParseConePartList(ReadOnlySpan<byte> data, ref int pos, int count, List<RsltConePart> list)
     {
         if (count == 0) return;
+        // Counts come from the data: every part needs at least its slot and bone names (8 bytes), so a count
+        // larger than the remaining data allows is invalid and must not size the arrays below.
+        CountGuard.Check(count, data.Length - pos, 8, "RSLT cone part");
 
         // Read all slot names
         var slotNames = new uint[count];
@@ -344,6 +355,7 @@ public sealed class RsltBlock : RcolBlock
     {
         int count = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(count, data.Length - pos, 4, "RSLT slot offset");
 
         for (int i = 0; i < count; i++)
         {

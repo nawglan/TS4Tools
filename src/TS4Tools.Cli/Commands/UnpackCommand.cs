@@ -38,17 +38,23 @@ internal static class UnpackCommand
 
         string manifestPath = Path.Combine(outDir, PackageManifest.FileName);
         string resourcesDir = Path.Combine(outDir, PackageManifest.ResourcesDirectory);
+        bool clearOutput = false;
         if (Directory.Exists(outDir) && Directory.EnumerateFileSystemEntries(outDir).Any())
         {
             if (!args.Has("--force"))
                 throw new CliException($"output directory is not empty: {outDir} (use --force to replace its contents)");
+            clearOutput = true;
+        }
+
+        var sw = Stopwatch.StartNew();
+        // Open (and so validate) the package before removing a previous unpack, so a bad input keeps it.
+        await using var package = await PackageFiles.OpenReadAsync(packagePath, ct).ConfigureAwait(false);
+        if (clearOutput)
+        {
             // Only remove what unpack itself writes, never anything else in the directory.
             if (Directory.Exists(resourcesDir)) Directory.Delete(resourcesDir, recursive: true);
             if (File.Exists(manifestPath)) File.Delete(manifestPath);
         }
-
-        var sw = Stopwatch.StartNew();
-        await using var package = await PackageFiles.OpenReadAsync(packagePath, ct).ConfigureAwait(false);
         Directory.CreateDirectory(resourcesDir);
 
         // File names are assigned in index order so duplicate suffixes are deterministic.

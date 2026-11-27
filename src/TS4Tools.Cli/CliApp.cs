@@ -88,6 +88,12 @@ internal static class CliApp
             stderr.WriteLine("error: " + ex.Message);
             return ExitCodes.Failure;
         }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Anything else (e.g. from a wrapper on malformed data) still honours the documented exit codes.
+            stderr.WriteLine($"error: {ex.GetType().Name}: {ex.Message}");
+            return ExitCodes.Failure;
+        }
     }
 
     private static (CommandSpec Spec, CommandHandler Handler)? Find(string name)
