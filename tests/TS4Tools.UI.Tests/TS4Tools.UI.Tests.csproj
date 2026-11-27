@@ -3,8 +3,9 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!-- Allow underscores in test method names -->
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
+    <!-- Allow underscores in test method names; no XML docs for tests -->
+    <NoWarn>$(NoWarn);CA1707;CS1591</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
