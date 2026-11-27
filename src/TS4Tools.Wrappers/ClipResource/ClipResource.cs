@@ -239,14 +239,17 @@ public sealed class ClipResource : TypedResource
             int codecDataLength = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
             offset += 4;
 
-            if (codecDataLength > 0 && offset + codecDataLength <= data.Length)
+            if (codecDataLength < 0 || codecDataLength > data.Length - offset)
+                return; // Codec data runs past the end: keep the raw bytes (IsValid stays false)
+
+            if (codecDataLength > 0)
             {
                 CodecData = ClipCodecData.Parse(data[offset..], codecDataLength);
             }
 
             IsValid = true;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             IsValid = false;
         }
@@ -255,6 +258,10 @@ public sealed class ClipResource : TypedResource
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
+        // Data that did not parse is kept verbatim rather than replaced by the (empty) parsed state.
+        if (!IsValid && _rawData.Length > 0)
+            return _rawData;
+
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
 

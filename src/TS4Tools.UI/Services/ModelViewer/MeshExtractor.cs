@@ -97,7 +97,7 @@ public static class MeshExtractor
                 var indices = ibuf.GetIndices(m.PrimitiveType, m.StartIndex, m.PrimitiveCount);
                 meshes.Add(FromVertices($"0x{m.Name:X8}", vertices, indices));
             }
-            catch (Exception ex) when (ex is InvalidDataException or ArgumentException or IndexOutOfRangeException or InvalidOperationException or NotSupportedException)
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException or IndexOutOfRangeException or InvalidOperationException or NotSupportedException or OverflowException)
             {
                 // Source: MainWindow.xaml.cs lines 328-331 ("Unable to load mesh id 0x{0:X8}")
                 warnings.Add($"Unable to load mesh id 0x{m.Name:X8}: {ex.Message}");

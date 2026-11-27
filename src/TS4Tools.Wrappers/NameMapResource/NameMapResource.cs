@@ -82,36 +82,8 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
             if (stringLength < 0 || stringLength > data.Length - offset)
                 throw new ResourceFormatException($"Invalid string length at entry {i}: {stringLength}");
 
-            _entries[hash] = ReadChars(data, ref offset, stringLength, i);
+            _entries[hash] = LegacyChars.ReadUtf8Chars(data, ref offset, stringLength, $"name of NameMap entry {i}");
         }
-    }
-
-    /// <summary>
-    /// Reads <paramref name="charCount"/> UTF-8 encoded chars, like legacy <c>BinaryReader.ReadChars</c>
-    /// (NameMapResource.cs line 61).
-    /// </summary>
-    private static string ReadChars(ReadOnlySpan<byte> data, ref int offset, int charCount, int entry)
-    {
-        if (charCount == 0)
-            return string.Empty;
-
-        var decoder = Encoding.UTF8.GetDecoder();
-        var chars = new char[charCount];
-        int produced = 0;
-        Span<char> one = stackalloc char[2];
-        while (produced < charCount)
-        {
-            if (offset >= data.Length)
-                throw new ResourceFormatException($"Unexpected end of NameMap data in name of entry {entry}");
-
-            int n = decoder.GetChars(data.Slice(offset++, 1), one, flush: false);
-            if (produced + n > charCount)
-                throw new ResourceFormatException($"Name of entry {entry} ends inside a surrogate pair");
-            one[..n].CopyTo(chars.AsSpan(produced));
-            produced += n;
-        }
-
-        return new string(chars);
     }
 
     /// <inheritdoc/>

@@ -118,6 +118,28 @@ public sealed class PackageSaveFidelityTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsAsync_Cancelled_LeavesExistingTargetIntact()
+    {
+        var (source, _) = await CreatePackageFileAsync();
+        var target = Path.Combine(_tempDir, "existing.package");
+        byte[] existing = [1, 2, 3, 4];
+        await File.WriteAllBytesAsync(target, existing);
+
+        await using (var package = await DbpfPackage.OpenAsync(source))
+        {
+            using var cts = new CancellationTokenSource();
+            await cts.CancelAsync();
+
+            var act = async () => await package.SaveAsAsync(target, cts.Token);
+
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+
+        (await File.ReadAllBytesAsync(target)).Should().Equal(existing);
+        Directory.GetFiles(_tempDir).Should().BeEquivalentTo([source, target]);
+    }
+
+    [Fact]
     public async Task SaveAsync_Twice_ProducesValidPackage()
     {
         var (path, data) = await CreatePackageFileAsync();

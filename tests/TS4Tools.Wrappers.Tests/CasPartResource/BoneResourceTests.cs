@@ -345,4 +345,16 @@ public class BoneResourceTests
         // Write the bytes
         s.Write(bytes, 0, bytes.Length);
     }
+
+    [Fact]
+    public void InvalidData_IsWrittenBackUnchanged()
+    {
+        // version 1, one name ("A" as UTF-16BE, 7-bit length 2), then a matrix count of 2 that does not match.
+        byte[] data = [0x01, 0, 0, 0, 0x01, 0, 0, 0, 0x02, 0x00, 0x41, 0x02, 0, 0, 0];
+
+        var resource = new BoneResource(TestKey, data);
+
+        resource.IsValid.Should().BeFalse();
+        resource.Data.ToArray().Should().Equal(data, "data that did not parse must not be replaced by an empty bone list");
+    }
 }

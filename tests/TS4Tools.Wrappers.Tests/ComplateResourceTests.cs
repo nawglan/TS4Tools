@@ -222,4 +222,16 @@ public class ComplateResourceTests
         resource.Text.Should().BeEmpty();
         resource.Unknown2.Should().Be(0x00000000);
     }
+
+    [Fact]
+    public void Parse_CharCountThatOverflowsSizeCheck_Throws()
+    {
+        // 8 + 0x7FFFFFFF * 2 + 4 overflows int to 10, which used to pass the length check.
+        var data = new byte[12];
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(4), 0x7FFFFFFF);
+
+        var act = () => new ComplateResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*too short*");
+    }
 }

@@ -98,7 +98,7 @@ public sealed class BoneResource : TypedResource
 
             IsValid = true;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             IsValid = false;
         }
@@ -116,6 +116,9 @@ public sealed class BoneResource : TypedResource
         byte b;
         do
         {
+            // At most five 7-bit groups encode an Int32 (legacy BinaryReader.Read7BitEncodedInt).
+            if (shift > 28)
+                throw new InvalidDataException("Invalid 7-bit encoded string length.");
             int read = s.ReadByte();
             if (read == -1)
                 throw new EndOfStreamException();
@@ -126,6 +129,8 @@ public sealed class BoneResource : TypedResource
 
         if (length == 0)
             return string.Empty;
+        if (length < 0 || length > s.Length - s.Position)
+            throw new EndOfStreamException();
 
         // Read the bytes and decode as BigEndianUnicode (UTF-16BE)
         byte[] bytes = new byte[length];
@@ -153,6 +158,10 @@ public sealed class BoneResource : TypedResource
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
+        // Data that did not parse is kept verbatim rather than replaced by the (empty) parsed state.
+        if (!IsValid && _rawData.Length > 0)
+            return _rawData;
+
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms, Encoding.BigEndianUnicode);
 

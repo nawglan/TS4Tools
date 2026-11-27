@@ -190,7 +190,7 @@ public sealed class GeomListResource : TypedResource
 
             IsValid = true;
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             IsValid = false;
         }
@@ -262,6 +262,10 @@ public sealed class GeomListResource : TypedResource
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
+        // Data that did not parse is kept verbatim rather than replaced by the (empty) parsed state.
+        if (!IsValid && _rawData.Length > 0)
+            return _rawData;
+
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
 

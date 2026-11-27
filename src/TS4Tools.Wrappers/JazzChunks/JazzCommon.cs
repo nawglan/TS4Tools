@@ -80,6 +80,7 @@ public static class JazzHelper
         if (charCount == 0)
             return string.Empty;
 
+        CountGuard.Check(charCount, data.Length - offset, 2, "Unicode string char");
         int byteCount = charCount * 2;
         string result = Encoding.Unicode.GetString(data.Slice(offset, byteCount));
         offset += byteCount;

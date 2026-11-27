@@ -157,10 +157,9 @@ public sealed class ScriptResource : TypedResource
         _md5Table = data.Slice(offset, md5TableSize).ToArray();
         offset += md5TableSize;
 
-        // Read md5data (encrypted)
-        int md5DataSize = count * BlockSize;
-        if (offset + md5DataSize > data.Length)
-            throw new ResourceFormatException("ScriptResource data too short for md5data.");
+        // Read md5data (encrypted). Legacy reads up to count * 512 bytes and accepts fewer
+        // (BinaryReader.ReadBytes, ScriptResource.cs line 70): skipped blocks are not stored.
+        int md5DataSize = Math.Min(count * BlockSize, data.Length - offset);
         var md5Data = data.Slice(offset, md5DataSize);
 
         // Decrypt the data
@@ -191,12 +190,14 @@ public sealed class ScriptResource : TypedResource
         {
             var buffer = new byte[BlockSize];
 
-            // Check if this block is encrypted (first byte of table entry is even)
+            // Check if this block is encrypted (first byte of table entry is even). Only encrypted blocks consume
+            // stored data; a short final block reads what remains, leaving the rest zero (legacy r.Read).
+            // Source: ScriptResource.cs lines 84-97
             if ((md5Table[i] & 1) == 0)
             {
-                // Copy encrypted block
-                md5Data.Slice(dataOffset, BlockSize).CopyTo(buffer);
-                dataOffset += BlockSize;
+                int available = Math.Clamp(md5Data.Length - dataOffset, 0, BlockSize);
+                md5Data.Slice(dataOffset, available).CopyTo(buffer);
+                dataOffset += available;
 
                 // Decrypt using XOR
                 for (int j = 0; j < BlockSize; j++)
@@ -206,11 +207,7 @@ public sealed class ScriptResource : TypedResource
                     seed = (ulong)((seed + value) % (ulong)md5Table.Length);
                 }
             }
-            else
-            {
-                // Block is all zeros (skipped during encryption)
-                dataOffset += BlockSize;
-            }
+            // else: the block is all zeros and was not stored (legacy does not advance the data stream)
 
             result.Write(buffer, 0, buffer.Length);
         }

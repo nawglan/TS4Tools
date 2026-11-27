@@ -200,9 +200,19 @@ public class IbufBlock : RcolBlock
     /// <summary>
     /// Gets indices for a mesh's primitive range.
     /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi Wrappers/MeshChunks/IBUF.cs lines 77-85. The range comes from the
+    /// MLOD/GEOM data, so it is checked against the buffer (in long arithmetic) before allocating; legacy relied on
+    /// Array.Copy failing after allocating.
+    /// </remarks>
+    /// <exception cref="InvalidDataException">The range does not lie inside the index buffer.</exception>
     public int[] GetIndices(ModelPrimitiveType primitiveType, int startIndex, int primitiveCount)
     {
-        int indexCount = primitiveCount * primitiveType.IndexCountPerPrimitive();
+        long indexCountLong = (long)primitiveCount * primitiveType.IndexCountPerPrimitive();
+        if (startIndex < 0 || indexCountLong < 0 || startIndex + indexCountLong > Buffer.Length)
+            throw new InvalidDataException(
+                $"Index range {startIndex}+{indexCountLong} is outside the index buffer ({Buffer.Length} indices).");
+        int indexCount = (int)indexCountLong;
         int[] result = new int[indexCount];
         Array.Copy(Buffer, startIndex, result, 0, indexCount);
         return result;

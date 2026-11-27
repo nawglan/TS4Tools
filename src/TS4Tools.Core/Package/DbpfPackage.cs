@@ -41,6 +41,10 @@ public sealed class DbpfPackage : IMutablePackage
     private uint _indexType;
     private bool _disposed;
 
+    // Set when an in-place save failed after it started overwriting the backing file: the file then no longer
+    // matches the in-memory index, so reading or saving from it would produce garbage. Holds the recovery copy.
+    private string? _damagedRecoveryPath;
+
     // Header data
     private byte[] _header = new byte[PackageLimits.HeaderSize];
 
@@ -591,6 +595,8 @@ public sealed class DbpfPackage : IMutablePackage
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 649-673</remarks>
     internal async ValueTask<ReadOnlyMemory<byte>> ReadResourceDataAsync(ResourceIndexEntry rie, CancellationToken cancellationToken)
     {
+        ThrowIfBackingDamaged();
+
         // Check for invalid offset (new resource not yet written)
         if (rie.ChunkOffset == 0xFFFFFFFF)
             return ReadOnlyMemory<byte>.Empty;
@@ -832,6 +838,8 @@ public sealed class DbpfPackage : IMutablePackage
         if (!_stream.CanWrite)
             throw new InvalidOperationException("Package is read-only.");
 
+        ThrowIfBackingDamaged();
+
         // Write to a temp file first, then copy back
         // Source: s4pi/Package/Package.cs lines 64-79
         string fullPath = Path.GetFullPath(FilePath);
@@ -894,6 +902,7 @@ public sealed class DbpfPackage : IMutablePackage
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
             {
                 keepTemp = true;
+                _damagedRecoveryPath = tmpFile;
                 throw new IOException(
                     $"Saving {fullPath} failed while overwriting it ({ex.Message}); the file may be damaged. " +
                     $"The complete saved package was kept at {tmpFile}.", ex);
@@ -946,8 +955,36 @@ public sealed class DbpfPackage : IMutablePackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(path);
 
-        await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-        await SaveToStreamAsync(fs, cancellationToken).ConfigureAwait(false);
+        // Write next to the target and move into place, so a failure or cancel never destroys an existing file
+        // (legacy Package.cs lines 155-160 truncates the target first).
+        string fullPath = Path.GetFullPath(path);
+        string tmpFile = fullPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
+        FileStream tempStream;
+        try
+        {
+            tempStream = new FileStream(tmpFile, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+        }
+        catch (UnauthorizedAccessException) when (File.Exists(fullPath))
+        {
+            // The folder does not allow new files but the existing target may be writable: write it directly.
+            await using var direct = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+            await SaveToStreamAsync(direct, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        try
+        {
+            await using (tempStream)
+            {
+                await SaveToStreamAsync(tempStream, cancellationToken).ConfigureAwait(false);
+            }
+            File.Move(tmpFile, fullPath, overwrite: true);
+        }
+        finally
+        {
+            try { if (File.Exists(tmpFile)) File.Delete(tmpFile); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Ignore cleanup errors */ }
+        }
     }
 
     /// <summary>Saves the package to a stream. Does not change <see cref="IsDirty"/> (legacy SaveAs(Stream)).</summary>
@@ -960,9 +997,18 @@ public sealed class DbpfPackage : IMutablePackage
         ArgumentNullException.ThrowIfNull(stream);
         if (ReferenceEquals(stream, _stream))
             throw new ArgumentException("Cannot save a package onto its own backing stream; use SaveAsync.", nameof(stream));
+        ThrowIfBackingDamaged();
 
         var writer = new PackageWriter(this, _resources, _stream, _streamLock);
         await writer.WriteAsync(stream, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void ThrowIfBackingDamaged()
+    {
+        if (_damagedRecoveryPath != null)
+            throw new IOException(
+                $"An earlier save of {FilePath} failed while overwriting it, so the file may be damaged and this " +
+                $"package can no longer read from it. Close it and recover from {_damagedRecoveryPath}.");
     }
 
     /// <inheritdoc />
