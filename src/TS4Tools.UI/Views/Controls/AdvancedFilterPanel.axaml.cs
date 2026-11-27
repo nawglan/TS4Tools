@@ -69,7 +69,7 @@ public partial class AdvancedFilterPanel : UserControl
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null) return;
 
-        var text = await clipboard.GetTextAsync();
+        var text = await clipboard.TryGetTextAsync();
         if (string.IsNullOrWhiteSpace(text)) return;
 
         if (TryParseResourceKey(text, out var type, out var group, out var instance))
@@ -188,7 +188,7 @@ public partial class AdvancedFilterPanel : UserControl
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null) return;
 
-        var text = await clipboard.GetTextAsync();
+        var text = await clipboard.TryGetTextAsync();
         if (string.IsNullOrWhiteSpace(text)) return;
 
         if (TryParseResourceKey(text, out var type, out var group, out var instance))

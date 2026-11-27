@@ -70,7 +70,7 @@
 
                         <Grid ColumnDefinitions="100,*,Auto">
                             <TextBlock Text="Command:" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="1" x:Name="HexEditorCommandTextBox" Watermark="e.g., C:\Program Files\HxD\HxD.exe" />
+                            <TextBox Grid.Column="1" x:Name="HexEditorCommandTextBox" PlaceholderText="e.g., C:\Program Files\HxD\HxD.exe" />
                             <Button Grid.Column="2" x:Name="BrowseHexEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
                         </Grid>
                         <CheckBox x:Name="HexEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />
@@ -82,7 +82,7 @@
 
                         <Grid ColumnDefinitions="100,*,Auto">
                             <TextBlock Text="Command:" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="1" x:Name="TextEditorCommandTextBox" Watermark="e.g., notepad.exe" />
+                            <TextBox Grid.Column="1" x:Name="TextEditorCommandTextBox" PlaceholderText="e.g., notepad.exe" />
                             <Button Grid.Column="2" x:Name="BrowseTextEditorButton" Content="..." Padding="12,4" Margin="4,0,0,0" />
                         </Grid>
                         <CheckBox x:Name="TextEditorIgnoreTSCheckBox" Content="Ignore timestamp changes" />

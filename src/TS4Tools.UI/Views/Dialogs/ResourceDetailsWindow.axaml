@@ -26,26 +26,26 @@
                     <!-- Type -->
                     <Grid ColumnDefinitions="100,*,Auto">
                         <TextBlock Text="Type:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="TypeTextBox" Watermark="e.g., 220557DA" />
+                        <TextBox Grid.Column="1" x:Name="TypeTextBox" PlaceholderText="e.g., 220557DA" />
                         <TextBlock Grid.Column="2" x:Name="TypeNameLabel" Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.7" />
                     </Grid>
 
                     <!-- Group -->
                     <Grid ColumnDefinitions="100,*">
                         <TextBlock Text="Group:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="GroupTextBox" Watermark="e.g., 00000000" />
+                        <TextBox Grid.Column="1" x:Name="GroupTextBox" PlaceholderText="e.g., 00000000" />
                     </Grid>
 
                     <!-- Instance -->
                     <Grid ColumnDefinitions="100,*">
                         <TextBlock Text="Instance:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="InstanceTextBox" Watermark="e.g., 0000000000000000" />
+                        <TextBox Grid.Column="1" x:Name="InstanceTextBox" PlaceholderText="e.g., 0000000000000000" />
                     </Grid>
 
                     <!-- Name (optional) -->
                     <Grid ColumnDefinitions="100,*" x:Name="NameRow">
                         <TextBlock Text="Name:" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" x:Name="NameTextBox" Watermark="Resource name (optional)" />
+                        <TextBox Grid.Column="1" x:Name="NameTextBox" PlaceholderText="Resource name (optional)" />
                     </Grid>
 
                     <!-- Hash buttons -->

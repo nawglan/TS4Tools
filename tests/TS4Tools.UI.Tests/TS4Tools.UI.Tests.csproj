@@ -21,8 +21,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <!-- Avalonia headless testing -->
-    <PackageReference Include="Avalonia.Headless.XUnit" />
   </ItemGroup>
 
   <ItemGroup>
