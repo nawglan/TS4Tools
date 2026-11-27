@@ -30,9 +30,19 @@ public static class DstDecoder
     public const uint FourCcDst5 = 0x35545344; // "DST5"
 
     /// <summary>
+    /// DST3 FourCC value (declared by legacy but has no known samples; passes through unchanged).
+    /// </summary>
+    public const uint FourCcDst3 = 0x33545344; // "DST3"
+
+    /// <summary>
     /// DXT1 FourCC value.
     /// </summary>
     public const uint FourCcDxt1 = 0x31545844; // "DXT1"
+
+    /// <summary>
+    /// DXT3 FourCC value.
+    /// </summary>
+    public const uint FourCcDxt3 = 0x33545844; // "DXT3"
 
     /// <summary>
     /// DXT5 FourCC value.
@@ -214,6 +224,46 @@ public static class DstDecoder
             FourCcDxt5 => ShuffleToDst5(ddsData),
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Imports a DDS for storage as a DST resource: DXT1 and DXT5 are shuffled, DST1/DST3/DST5 pass through unchanged.
+    /// </summary>
+    /// <param name="ddsData">A complete DDS file.</param>
+    /// <returns>DST data ready to store in a 0x00B2D882 resource.</returns>
+    /// <exception cref="NotSupportedException">DXT3 (legacy: "No sample yet") or any other format.</exception>
+    /// <exception cref="InvalidDataException">The data is not a DDS file or its block data is not a whole number of blocks.</exception>
+    /// <remarks>
+    /// Source: DSTResource.cs lines 82-134 (ImportToDST) and 138-196 (Shuffle). DXT3 has no known DST3 sample so, as in legacy,
+    /// it is rejected. The shuffle is the exact inverse of <see cref="UnshuffleToDds"/>.
+    /// </remarks>
+    public static byte[] ImportToDst(ReadOnlySpan<byte> ddsData)
+    {
+        if (ddsData.Length < DdsHeaderSize || BinaryPrimitives.ReadUInt32LittleEndian(ddsData) != 0x20534444)
+            throw new InvalidDataException("Not a DDS file.");
+
+        var fourCc = GetFourCc(ddsData);
+        switch (fourCc)
+        {
+            case FourCcDst1:
+            case FourCcDst3:
+            case FourCcDst5:
+                return ddsData.ToArray(); // already shuffled (legacy isShuffled branch)
+            case FourCcDxt1:
+            case FourCcDxt5:
+            {
+                var blockSize = fourCc == FourCcDxt1 ? 8 : 16;
+                var dataSize = ddsData.Length - DdsHeaderSize;
+                if (dataSize <= 0 || dataSize % blockSize != 0)
+                    throw new InvalidDataException("DDS block data is not a whole number of blocks.");
+                return fourCc == FourCcDxt1 ? ShuffleToDst1(ddsData) : ShuffleToDst5(ddsData);
+            }
+
+            case FourCcDxt3:
+                throw new NotSupportedException("DXT3 cannot be converted to DST: no DST3 sample exists (legacy: 'No sample yet').");
+            default:
+                throw new NotSupportedException($"Not a supported DDS format: FourCC 0x{fourCc:X8}.");
+        }
     }
 
     /// <summary>

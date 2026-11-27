@@ -1,6 +1,3 @@
-using System.Reflection;
-using System.Text.Json;
-
 namespace TS4Tools.UI.Services;
 
 /// <summary>
@@ -13,9 +10,11 @@ namespace TS4Tools.UI.Services;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("IDisposableAnalyzers.Correctness", "CA1001:Types that own disposable fields should be disposable", Justification = "HttpClient is intentionally not disposed - singleton service reuses client")]
 public sealed class UpdateCheckerService
 {
-    // TODO: Update this to the actual TS4Tools repository when available
-    private const string GitHubApiUrl = "https://api.github.com/repos/anthropics/ts4tools/releases/latest";
-    private const string DownloadPageUrl = "https://github.com/anthropics/ts4tools/releases";
+    /// <summary>GitHub releases API endpoint for the latest TS4Tools release.</summary>
+    internal const string GitHubApiUrl = "https://api.github.com/repos/nawglan/TS4Tools/releases/latest";
+
+    /// <summary>Page users are sent to in order to download a new release.</summary>
+    internal const string DownloadPageUrl = "https://github.com/nawglan/TS4Tools/releases";
 
     private static readonly Lazy<UpdateCheckerService> LazyInstance = new(() => new UpdateCheckerService());
     private readonly HttpClient _httpClient;
@@ -23,8 +22,14 @@ public sealed class UpdateCheckerService
     public static UpdateCheckerService Instance => LazyInstance.Value;
 
     private UpdateCheckerService()
+        : this(new HttpClient())
     {
-        _httpClient = new HttpClient();
+    }
+
+    /// <summary>Creates a checker over the given client (tests supply a fake handler).</summary>
+    internal UpdateCheckerService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
         _httpClient.DefaultRequestHeaders.Add("User-Agent", "TS4Tools-UpdateChecker");
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
     }
@@ -85,6 +90,19 @@ public sealed class UpdateCheckerService
                 Success = false,
                 CurrentVersion = CurrentVersion,
                 ErrorMessage = "Could not parse version from GitHub response"
+            };
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // GitHub answers 404 for /releases/latest when no release has been published yet:
+            // that is "no update available", not a failed check.
+            return new UpdateCheckResult
+            {
+                Success = true,
+                CurrentVersion = CurrentVersion,
+                LatestVersion = CurrentVersion,
+                UpdateAvailable = false,
+                DownloadUrl = DownloadPageUrl
             };
         }
         catch (HttpRequestException ex)
@@ -155,7 +173,7 @@ public sealed class UpdateCheckerService
         if (result.Success)
         {
             settings.LastUpdateCheck = DateTime.UtcNow;
-            SettingsService.Instance.Save();
+            await SettingsService.Instance.SaveAsync(cancellationToken);
         }
 
         return result;

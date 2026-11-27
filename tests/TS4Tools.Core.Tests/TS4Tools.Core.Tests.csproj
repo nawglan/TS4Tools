@@ -25,7 +25,9 @@
 
   <ItemGroup>
     <Using Include="System.Buffers.Binary" />
+    <Using Include="System.Reflection" />
     <Using Include="System.Security.Cryptography" />
+    <Using Include="System.Xml.Linq" />
   </ItemGroup>
 
   <ItemGroup>

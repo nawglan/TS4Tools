@@ -24,6 +24,14 @@ public sealed class StyleLookResource : TypedResource
 
     private byte[] _rawData = [];
     private byte[] _unknownBlob = new byte[UnknownBlobSize];
+    private byte[] _trailingData = [];
+
+    /// <summary>
+    /// Highest version the legacy layout parses. Legacy has no version branches (StyleLookResource.cs
+    /// lines 61-82); real game data shows version 0x0A matches it and 0x0C inserts an extra byte in the
+    /// header, so 0x0C and later cannot be read with the legacy layout.
+    /// </summary>
+    public const uint MaxSupportedVersion = 0x0B;
 
     /// <summary>Resource version.</summary>
     public uint Version { get; set; }
@@ -76,6 +84,13 @@ public sealed class StyleLookResource : TypedResource
     /// <summary>List of CAS part flags.</summary>
     public CaspFlagList FlagList { get; private set; } = [];
 
+    /// <summary>
+    /// Bytes after the flag list. Legacy stops reading after the flag list (StyleLookResource.cs line 81)
+    /// and so drops them on UnParse; every real version 0x0A look carries one such byte. They are kept and
+    /// written back so unmodified looks round-trip byte-identically.
+    /// </summary>
+    public ReadOnlySpan<byte> TrailingData => _trailingData;
+
     /// <summary>Whether this resource was successfully parsed.</summary>
     public bool IsValid { get; private set; }
 
@@ -92,8 +107,14 @@ public sealed class StyleLookResource : TypedResource
         _rawData = data.ToArray();
         IsValid = false;
 
+        _trailingData = [];
+
         if (data.Length < MinimumSize)
             return;
+
+        uint version = BinaryPrimitives.ReadUInt32LittleEndian(data);
+        if (version > MaxSupportedVersion)
+            throw new UnsupportedResourceVersionException("StyleLook", version, MaxSupportedVersion);
 
         try
         {
@@ -161,6 +182,8 @@ public sealed class StyleLookResource : TypedResource
             FlagList = CaspFlagList.Parse(data[offset..], out int flagBytesRead);
             offset += flagBytesRead;
 
+            _trailingData = data[offset..].ToArray();
+
             IsValid = true;
         }
         catch
@@ -198,6 +221,10 @@ public sealed class StyleLookResource : TypedResource
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
+        // Data that did not parse is kept verbatim rather than replaced by a default layout.
+        if (!IsValid && _rawData.Length > 0)
+            return _rawData;
+
         // Calculate total size
         int totalSize = CalculateSerializedSize();
         byte[] buffer = new byte[totalSize];
@@ -262,6 +289,8 @@ public sealed class StyleLookResource : TypedResource
         // Source: StyleLookResource.cs lines 107-108
         offset += FlagList.WriteTo(span[offset..]);
 
+        _trailingData.CopyTo(span[offset..]);
+
         return buffer;
     }
 
@@ -303,7 +332,8 @@ public sealed class StyleLookResource : TypedResource
             + 8 // AnimationReference2
             + 4 + Encoding.ASCII.GetByteCount(AnimationStateName2 ?? string.Empty) // AnimationStateName2
             + ColorList.GetSerializedSize()
-            + FlagList.GetSerializedSize();
+            + FlagList.GetSerializedSize()
+            + _trailingData.Length;
     }
 
     /// <summary>
@@ -321,6 +351,7 @@ public sealed class StyleLookResource : TypedResource
     {
         _rawData = [];
         _unknownBlob = new byte[UnknownBlobSize];
+        _trailingData = [];
         Version = 0;
         AgeGender = AgeGenderFlags.None;
         GroupingId = 0;

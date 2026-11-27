@@ -228,19 +228,39 @@ public class PackageWriterTests
         }
     }
 
-    [Fact]
-    public async Task ToUInt32Checked_ValidValue_ReturnsValue()
+    [Theory]
+    [InlineData(0L, 0u)]
+    [InlineData(1000L, 1000u)]
+    [InlineData(4294967295L, uint.MaxValue)]
+    public void ToUInt32Checked_ValidValue_ReturnsValue(long value, uint expected)
     {
-        // Arrange & Act - test indirectly through package save
-        // The ToUInt32Checked is tested through normal package operations
-        // Values under 4GB should work fine
+        PackageWriter.ToUInt32Checked(value, "Field").Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(-1L)]
+    [InlineData(4294967296L)]
+    public void ToUInt32Checked_OutOfRange_ThrowsPackageFormatException(long value)
+    {
+        // DBPF offsets/sizes are 32-bit; anything outside uint range must be rejected, not truncated.
+        var act = () => PackageWriter.ToUInt32Checked(value, "Field");
+
+        act.Should().Throw<PackageFormatException>().WithMessage("Field*4GB*");
+    }
+
+    [Fact]
+    public async Task Save_SmallResource_WritesSizesThatRoundTrip()
+    {
         using var package = DbpfPackage.CreateNew();
         var key = new ResourceKey(1, 2, 3);
         package.AddResource(key, new byte[1000]);
-
-        // Should not throw
         using var stream = new MemoryStream();
+
         await package.SaveToStreamAsync(stream);
+
+        stream.Position = 0;
+        await using var reloaded = await DbpfPackage.OpenAsync(stream, leaveOpen: true);
+        reloaded.Find(key)!.MemorySize.Should().Be(1000);
     }
 
     [Fact]

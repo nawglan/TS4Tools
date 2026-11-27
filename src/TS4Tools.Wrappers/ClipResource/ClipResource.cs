@@ -98,6 +98,22 @@ public sealed class ClipResource : TypedResource
     public ClipCodecData CodecData { get; private set; } = new();
 
     /// <summary>
+    /// First clip version with a 64-bit value between the clip events and the codec data length.
+    /// </summary>
+    /// <remarks>
+    /// Not in legacy: ClipResource.cs lines 170-216 read the codec length directly after the events and
+    /// UnParse defaults to version 14. In the game's packages every version-18 clip (and no version-14
+    /// clip) has exactly 8 bytes there, located by the "_pilC3S_" codec token; legacy would read part of
+    /// them as the codec length and fail. No version 15-17 clips were found, so the field is tied to 18.
+    /// </remarks>
+    public const uint PostEventsValueVersion = 18;
+
+    /// <summary>
+    /// Unknown 64-bit value stored after the clip events (version 18+, see <see cref="PostEventsValueVersion"/>).
+    /// </summary>
+    public ulong PostEventsValue { get; set; }
+
+    /// <summary>
     /// Whether this resource was successfully parsed.
     /// </summary>
     public bool IsValid { get; private set; }
@@ -213,6 +229,12 @@ public sealed class ClipResource : TypedResource
                 offset += (int)size;
             }
 
+            if (Version >= PostEventsValueVersion)
+            {
+                PostEventsValue = BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
+                offset += 8;
+            }
+
             // Codec data length and content
             int codecDataLength = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
             offset += 4;
@@ -291,6 +313,9 @@ public sealed class ClipResource : TypedResource
         {
             evt.Write(writer);
         }
+
+        if (Version >= PostEventsValueVersion)
+            writer.Write(PostEventsValue);
 
         // Codec data
         long codecLengthPos = ms.Position;

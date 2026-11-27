@@ -4,14 +4,16 @@
 namespace TS4Tools.Wrappers;
 
 /// <summary>
-/// Decoder for DXT (S3 Texture Compression) formats.
-/// Implements BC1 (DXT1) and BC3 (DXT5) block decompression.
+/// Decoder for DDS pixel data: DXT (S3 Texture Compression) block formats plus the uncompressed formats
+/// the legacy DdsFile supports. Implements BC1 (DXT1), BC2 (DXT3) and BC3 (DXT5) block decompression and
+/// A8R8G8B8, X8R8G8B8, A8B8G8R8, X8B8G8R8, A1R5G5B5, A4R4G4B4, R8G8B8, R5G6B5 and A8L8 conversion.
 /// </summary>
 /// <remarks>
 /// Source: s4pi Wrappers/ImageResource/DDS.cs (FourCC enums, PixelFormat)
 /// Source: s4pi Extras/DDSPanel/DdsSquish.cs (native squish library P/Invoke)
 /// - Legacy uses native squish library; this is pure managed C# based on DirectX/OpenGL specs
 /// - Output is RGBA32 (8 bits per channel, in memory order: R, G, B, A)
+/// Source: s4pi Extras/DDSPanel/DdsFile.cs lines 396-473 (fromDDS_* uncompressed conversions) and lines 594-651 (Dds(Stream) reading)
 /// </remarks>
 public static class DxtDecoder
 {
@@ -26,9 +28,19 @@ public static class DxtDecoder
     public const uint FourCcDxt1 = 0x31545844; // "DXT1"
 
     /// <summary>
+    /// FourCC value for DXT3 format (BC2 compression).
+    /// </summary>
+    public const uint FourCcDxt3 = 0x33545844; // "DXT3"
+
+    /// <summary>
     /// FourCC value for DXT5 format (BC3 compression).
     /// </summary>
     public const uint FourCcDxt5 = 0x35545844; // "DXT5"
+
+    /// <summary>
+    /// Largest image (in pixels) that will be decoded, to bound allocations from untrusted headers.
+    /// </summary>
+    private const long MaxPixels = 100_000_000;
 
     /// <summary>
     /// Gets the FourCC from a DDS file.
@@ -71,14 +83,66 @@ public static class DxtDecoder
         if (width <= 0 || height <= 0)
             return null;
 
+        if ((long)width * height > MaxPixels)
+            return null;
+
         var blockData = ddsData[DdsHeaderSize..];
 
-        return fourCc switch
+        switch (fourCc)
         {
-            FourCcDxt1 => DecompressDxt1(blockData, width, height),
-            FourCcDxt5 => DecompressDxt5(blockData, width, height),
-            _ => null
-        };
+            case FourCcDxt1: return DecompressDxt1(blockData, width, height);
+            case FourCcDxt3: return DecompressDxt3(blockData, width, height);
+            case FourCcDxt5: return DecompressDxt5(blockData, width, height);
+        }
+
+        // Uncompressed (or luminance) formats: parse the full header like the legacy Dds class.
+        if (!DdsHeader.TryParse(ddsData, out var header, out _) || header is null || header.IsBlockCompressed)
+            return null;
+
+        return DecompressUncompressed(header, blockData);
+    }
+
+    /// <summary>
+    /// Detects the pixel format of a DDS file from its header.
+    /// </summary>
+    /// <param name="ddsData">Complete DDS file data including header.</param>
+    /// <returns>The format, or null if the header is invalid or unsupported.</returns>
+    public static DdsFormat? GetFormat(ReadOnlySpan<byte> ddsData)
+    {
+        return DdsHeader.TryParse(ddsData, out var header, out _) && header is not null ? header.Format : null;
+    }
+
+    private static byte[]? DecompressUncompressed(DdsHeader header, ReadOnlySpan<byte> pixelData)
+    {
+        int width = header.Width;
+        int height = header.Height;
+        int pixelSize = header.PixelSize;
+        int rowPitch = header.RowPitch;
+
+        if (pixelSize < 1 || pixelSize > 4 || header.DataSize > pixelData.Length)
+            return null;
+
+        var output = new byte[width * height * 4];
+        for (var y = 0; y < height; y++)
+        {
+            var rowOffset = y * rowPitch;
+            for (var x = 0; x < width; x++)
+            {
+                var src = rowOffset + (x * pixelSize);
+                uint pixel = 0;
+                for (var i = 0; i < pixelSize; i++)
+                    pixel |= (uint)pixelData[src + i] << (8 * i);
+
+                uint argb = header.ToArgb(pixel);
+                var dest = ((y * width) + x) * 4;
+                output[dest] = (byte)(argb >> 16);
+                output[dest + 1] = (byte)(argb >> 8);
+                output[dest + 2] = (byte)argb;
+                output[dest + 3] = (byte)(argb >> 24);
+            }
+        }
+
+        return output;
     }
 
     /// <summary>
@@ -152,6 +216,76 @@ public static class DxtDecoder
         }
 
         return output;
+    }
+
+    /// <summary>
+    /// Decompresses DXT3 (BC2) block data to RGBA32 pixels.
+    ///
+    /// DXT3 block format (16 bytes per 4x4 pixel block):
+    /// - Bytes 0-7: 16 x 4-bit explicit alpha values (low nibble is the even pixel)
+    /// - Bytes 8-15: DXT1-style colour block (always decoded in 4-colour mode)
+    /// </summary>
+    public static byte[] DecompressDxt3(ReadOnlySpan<byte> blockData, int width, int height)
+    {
+        var output = new byte[width * height * 4];
+        var blocksX = (width + 3) / 4;
+        var blocksY = (height + 3) / 4;
+        const int blockSize = 16;
+
+        var blockOffset = 0;
+        for (var by = 0; by < blocksY; by++)
+        {
+            for (var bx = 0; bx < blocksX; bx++)
+            {
+                if (blockOffset + blockSize > blockData.Length)
+                    break;
+
+                DecodeDxt3Block(blockData.Slice(blockOffset, blockSize), output, bx * 4, by * 4, width, height);
+                blockOffset += blockSize;
+            }
+        }
+
+        return output;
+    }
+
+    private static void DecodeDxt3Block(ReadOnlySpan<byte> block, byte[] output, int x, int y, int width, int height)
+    {
+        var colorBlock = block[8..];
+        var c0 = (ushort)(colorBlock[0] | (colorBlock[1] << 8));
+        var c1 = (ushort)(colorBlock[2] | (colorBlock[3] << 8));
+
+        Span<byte> colors = stackalloc byte[16];
+        DecodeRgb565(c0, colors[..4]);
+        DecodeRgb565(c1, colors.Slice(4, 4));
+        for (var i = 0; i < 3; i++)
+        {
+            colors[8 + i] = (byte)((2 * colors[i] + colors[4 + i] + 1) / 3);
+            colors[12 + i] = (byte)((colors[i] + 2 * colors[4 + i] + 1) / 3);
+        }
+
+        var colorIndices = (uint)(colorBlock[4] | (colorBlock[5] << 8) | (colorBlock[6] << 16) | (colorBlock[7] << 24));
+
+        for (var py = 0; py < 4; py++)
+        {
+            var destY = y + py;
+            if (destY >= height) break;
+
+            for (var px = 0; px < 4; px++)
+            {
+                var destX = x + px;
+                if (destX >= width) continue;
+
+                var pixelIndex = py * 4 + px;
+                var colorIndex = (int)((colorIndices >> (pixelIndex * 2)) & 0x3);
+                var nibble = (block[pixelIndex >> 1] >> ((pixelIndex & 1) * 4)) & 0xF;
+
+                var destOffset = (destY * width + destX) * 4;
+                output[destOffset] = colors[colorIndex * 4];
+                output[destOffset + 1] = colors[colorIndex * 4 + 1];
+                output[destOffset + 2] = colors[colorIndex * 4 + 2];
+                output[destOffset + 3] = (byte)((nibble << 4) | nibble);
+            }
+        }
     }
 
     /// <summary>

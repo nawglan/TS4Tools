@@ -24,7 +24,7 @@ public class CstrResourceTests
     {
         var cstr = new CstrResource(TestKey, ReadOnlyMemory<byte>.Empty);
 
-        cstr.Version.Should().Be(SimpleCatalogResource.DefaultVersion);
+        cstr.Version.Should().Be(CstrResource.DefaultVersion); // legacy CSTRResource.cs line 34
         cstr.CommonBlock.Should().NotBeNull();
         cstr.HashIndicator.Should().Be(0x1);
         cstr.Hash01.Should().Be(0x811C9DC5);
@@ -167,7 +167,7 @@ public class CstrResourceTests
         var resource = factory.CreateEmpty(TestKey) as CstrResource;
 
         resource.Should().NotBeNull();
-        resource!.Version.Should().Be(SimpleCatalogResource.DefaultVersion);
+        resource!.Version.Should().Be(CstrResource.DefaultVersion); // legacy CSTRResource.cs line 34
         resource.ReferenceList.Ref01.Should().Be(TgiReference.Empty);
     }
 }

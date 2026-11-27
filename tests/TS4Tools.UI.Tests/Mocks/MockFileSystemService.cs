@@ -80,16 +80,6 @@ public sealed class MockFileSystemService : IFileSystemService
         return Task.CompletedTask;
     }
 
-    public string ReadAllText(string path)
-    {
-        OperationLog.Add($"ReadAllText: {path}");
-        if (_textFiles.TryGetValue(path, out var content))
-        {
-            return content;
-        }
-        throw new FileNotFoundException($"Mock file not found: {path}", path);
-    }
-
     public Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default)
     {
         OperationLog.Add($"ReadAllTextAsync: {path}");
@@ -98,13 +88,6 @@ public sealed class MockFileSystemService : IFileSystemService
             return Task.FromResult(content);
         }
         throw new FileNotFoundException($"Mock file not found: {path}", path);
-    }
-
-    public void WriteAllText(string path, string contents)
-    {
-        OperationLog.Add($"WriteAllText: {path}");
-        _textFiles[path] = contents;
-        _lastWriteTimes[path] = DateTime.UtcNow;
     }
 
     public Task WriteAllTextAsync(string path, string contents, CancellationToken cancellationToken = default)

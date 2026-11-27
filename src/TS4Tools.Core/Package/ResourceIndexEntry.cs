@@ -26,17 +26,61 @@ internal sealed class ResourceIndexEntry : IMutableResourceIndexEntry
 {
     private ResourceKey _key;
     private bool _isDeleted;
+    private ushort _compressionType;
+
+    /// <summary>
+    /// Callback raised when a user-visible field (Key, IsDeleted, CompressionType) changes.
+    /// The owning package uses this to mark itself dirty.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs lines 51-80, 116-120, 144
+    /// (every setter calls OnElementChanged()).
+    /// </remarks>
+    internal Action<ResourceIndexEntry>? ElementChanged { get; set; }
 
     public ResourceKey Key
     {
         get => _key;
-        set => _key = value;
+        set
+        {
+            if (_key == value) return;
+            _key = value;
+            ElementChanged?.Invoke(this);
+        }
     }
 
     public uint ChunkOffset { get; internal set; }
     public uint FileSize { get; internal set; }
     public uint MemorySize { get; internal set; }
-    public ushort CompressionType { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the compression type flag (0x0000 = none, 0x5A42 = ZLIB, 0xFFFF = RefPack, ...).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs lines 116-120 (setter
+    /// raises OnElementChanged, which marks the entry dirty so Package.packedChunk re-encodes it,
+    /// Package.cs lines 559-573).
+    /// Setting a different value through the public interface marks the entry dirty so its data is
+    /// re-encoded (compressed or stored uncompressed) on the next save.
+    /// </remarks>
+    public ushort CompressionType
+    {
+        get => _compressionType;
+        set
+        {
+            if (_compressionType == value) return;
+            _compressionType = value;
+            IsDirty = true;
+            ElementChanged?.Invoke(this);
+        }
+    }
+
+    /// <summary>Initialises the compression flag without marking the entry dirty (object initialisers).</summary>
+    internal ushort CompressionTypeInit { init => _compressionType = value; }
+
+    /// <summary>Sets the compression flag without marking the entry dirty (used by index readers/writers).</summary>
+    internal void SetCompressionTypeRaw(ushort value) => _compressionType = value;
+
     public ushort Unknown2 { get; internal set; } = 1;
 
     public bool IsCompressed => FileSize != MemorySize;
@@ -44,16 +88,24 @@ internal sealed class ResourceIndexEntry : IMutableResourceIndexEntry
     public bool IsDeleted
     {
         get => _isDeleted;
-        set => _isDeleted = value;
+        set
+        {
+            // Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs line 144
+            if (_isDeleted == value) return;
+            _isDeleted = value;
+            ElementChanged?.Invoke(this);
+        }
     }
 
     /// <summary>
-    /// Cached/modified resource data (if loaded or replaced).
+    /// Replaced/added resource data. Only set for new or replaced resources: clean reads are not
+    /// cached here (legacy only holds ResourceStream for replaced data,
+    /// legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs lines 252-256).
     /// </summary>
     internal Memory<byte>? ResourceData { get; set; }
 
     /// <summary>
-    /// Whether the resource data has been modified.
+    /// Whether the resource must be re-encoded on save (new/replaced data or compression change).
     /// </summary>
     internal bool IsDirty { get; set; }
 
@@ -76,7 +128,7 @@ internal sealed class ResourceIndexEntry : IMutableResourceIndexEntry
             ChunkOffset = ChunkOffset,
             FileSize = FileSize,
             MemorySize = MemorySize,
-            CompressionType = CompressionType,
+            _compressionType = _compressionType,
             Unknown2 = Unknown2,
             _isDeleted = _isDeleted,
             ResourceData = ResourceData,
@@ -154,7 +206,7 @@ internal static class ResourceIndexEntrySerializer
             ChunkOffset = chunkOffset,
             FileSize = fileSize,
             MemorySize = memSize,
-            CompressionType = compressed,
+            CompressionTypeInit = compressed,
             Unknown2 = unknown2
         };
     }

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using SkiaSharp;
+using TS4Tools.UI.Services;
 
 namespace TS4Tools.UI.Views.Dialogs;
 
@@ -60,7 +61,9 @@ public partial class ThumbnailHelperWindow : Window
 
             foreach (var file in _files)
             {
-                var convertedData = ConvertPngToJfifAlfa(file);
+                // Read asynchronously; decode/encode is CPU-bound so keep it off the UI thread.
+                var pngBytes = await File.ReadAllBytesAsync(file);
+                var convertedData = await Task.Run(() => ConvertPngToJfifAlfa(pngBytes));
                 if (convertedData != null)
                 {
                     ConvertedFiles.Add((Path.GetFileName(file), convertedData));
@@ -88,9 +91,8 @@ public partial class ThumbnailHelperWindow : Window
     /// 3. Create grayscale PNG from alpha channel (R=G=B=Alpha)
     /// 4. Embed alpha PNG in JFIF APP0 extension after the initial APP0 marker
     /// </remarks>
-    private static byte[]? ConvertPngToJfifAlfa(string pngPath)
+    private static byte[]? ConvertPngToJfifAlfa(byte[] pngData)
     {
-        using var pngData = File.OpenRead(pngPath);
         using var bitmap = SKBitmap.Decode(pngData);
 
         if (bitmap == null)
@@ -190,9 +192,8 @@ public partial class ThumbnailHelperWindow : Window
             ]
         });
 
-        foreach (var file in files)
+        foreach (var path in StorageItemPaths.LocalPaths(files))
         {
-            var path = file.Path.LocalPath;
             if (!_files.Contains(path))
             {
                 _files.Add(path);

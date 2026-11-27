@@ -1,3 +1,5 @@
+using MtnfModel = TS4Tools.Wrappers.MeshChunks.MtnfData;
+
 namespace TS4Tools.Wrappers.MeshChunks;
 
 /// <summary>
@@ -32,8 +34,31 @@ public sealed class GeomBlock : RcolBlock
     /// <summary>Shader type. 0 means no shader/MTNF data.</summary>
     public uint Shader { get; private set; }
 
-    /// <summary>Raw MTNF (material) data when Shader != 0.</summary>
+    /// <summary>Raw MTNF (material) data when Shader != 0, exactly as read.</summary>
     public byte[]? MtnfData { get; private set; }
+
+    private MtnfModel? _mtnf;
+    private bool _mtnfStructuredIsFaithful;
+
+    /// <summary>
+    /// Structured MTNF (material) data when Shader != 0.
+    /// Source: GEOM.cs lines 135-145, 1295-1310 (legacy parses MTNF with RCOLTag "GEOM").
+    /// </summary>
+    /// <remarks>
+    /// The structured model is used when serializing only if it reproduces the original bytes when
+    /// unmodified, or after the caller assigns a new instance; otherwise the raw bytes are written so
+    /// that unrecognised shader layouts survive a round trip untouched. Texture references stay
+    /// addressable through <see cref="TgiBlocks"/>.
+    /// </remarks>
+    public MtnfModel? Mtnf
+    {
+        get => _mtnf;
+        set
+        {
+            _mtnf = value;
+            _mtnfStructuredIsFaithful = value is not null;
+        }
+    }
 
     /// <summary>Merge group identifier.</summary>
     public uint MergeGroup { get; private set; }
@@ -103,6 +128,10 @@ public sealed class GeomBlock : RcolBlock
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[pos..]);
         pos += 4;
 
+        // Source: GEOM.cs lines 128-130 - legacy accepts only 0x05 and 0x0C and throws otherwise. Newer game
+        // and mod files use 0x0D-0x0F, which no legacy layout covers.
+        if (Version > Version12)
+            throw new UnsupportedResourceVersionException("GEOM", Version, Version12);
         if (Version != Version5 && Version != Version12)
             throw new InvalidDataException(
                 $"Invalid GEOM version: expected 0x{Version5:X8} or 0x{Version12:X8}, got 0x{Version:X8}");
@@ -126,12 +155,21 @@ public sealed class GeomBlock : RcolBlock
         {
             uint mtnfSize = BinaryPrimitives.ReadUInt32LittleEndian(data[pos..]);
             pos += 4;
+            if (mtnfSize > (uint)(data.Length - pos))
+                throw new InvalidDataException(
+                    $"GEOM MTNF chunk size invalid: 0x{mtnfSize:X8} bytes declared, {data.Length - pos} available");
             MtnfData = data.Slice(pos, (int)mtnfSize).ToArray();
             pos += (int)mtnfSize;
+
+            // Source: GEOM.cs lines 138-144 - MTNF parsed from the chunk
+            _mtnf = MtnfModel.TryParse(MtnfData, out var parsed, geomIndexedTextures: true) ? parsed : null;
+            _mtnfStructuredIsFaithful = _mtnf is not null && _mtnf.Serialize().AsSpan().SequenceEqual(MtnfData);
         }
         else
         {
             MtnfData = null;
+            _mtnf = null;
+            _mtnfStructuredIsFaithful = false;
         }
 
         // Read merge group and sort order
@@ -193,27 +231,44 @@ public sealed class GeomBlock : RcolBlock
         BoneHashes = GeomBoneHashList.Read(data, ref pos);
 
         // Read TGI blocks
-        // Source: GEOM.cs line 174
+        // Source: GEOM.cs line 174; DependentList.cs lines 677-685 - the list must start where the
+        // body ends
+        if (pos != tgiAbsolutePos)
+            throw new InvalidDataException($"GEOM TGI list position 0x{tgiAbsolutePos:X8}, actual 0x{pos:X8}");
         ParseTgiBlocks(data, tgiAbsolutePos, tgiSize);
     }
 
     /// <summary>
     /// Parses the TGI block list from the specified position.
+    /// Source: GEOM.cs line 174 - <c>new TGIBlockList(OnRCOLChanged, s, tgiPosn, tgiSize)</c>, i.e.
+    /// s4pi/Interfaces/DependentList.cs lines 673-700 (TGIBlockList.Parse): when the size is non-zero the
+    /// list is read as an int32 count followed by that many 16-byte TGIBlocks in the default "TGI" order
+    /// (s4pi/Interfaces/TGIBlock.cs line 37); the size covers the count field too.
     /// </summary>
     private void ParseTgiBlocks(ReadOnlySpan<byte> data, int tgiPos, uint tgiSize)
     {
         TgiBlocks.Clear();
 
-        if (tgiPos >= data.Length)
+        if (tgiSize == 0)
             return;
 
-        int blockCount = (int)(tgiSize / RcolTgiBlock.Size);
+        if (tgiPos < 0 || tgiPos > data.Length - 4)
+            throw new InvalidDataException($"GEOM TGI list position 0x{tgiPos:X} outside the block ({data.Length} bytes)");
 
-        for (int i = 0; i < blockCount && tgiPos + RcolTgiBlock.Size <= data.Length; i++)
+        int count = BinaryPrimitives.ReadInt32LittleEndian(data[tgiPos..]);
+        tgiPos += 4;
+        if (count < 0 || count > (data.Length - tgiPos) / RcolTgiBlock.Size)
+            throw new InvalidDataException($"Invalid GEOM TGI count: {count}");
+
+        for (int i = 0; i < count; i++)
         {
-            TgiBlocks.Add(RcolTgiBlock.Read(data[tgiPos..]));
+            TgiBlocks.Add(RcolTgiBlock.ReadTgiOrder(data[tgiPos..]));
             tgiPos += RcolTgiBlock.Size;
         }
+
+        // Source: DependentList.cs lines 690-698 - the stored size must match what was read
+        if (tgiSize != 4 + (uint)count * RcolTgiBlock.Size)
+            throw new InvalidDataException($"GEOM TGI list size 0x{tgiSize:X8} does not match {count} entries");
     }
 
     /// <summary>
@@ -242,10 +297,13 @@ public sealed class GeomBlock : RcolBlock
         // Write shader type and MTNF data
         // Source: GEOM.cs lines 191-198
         writer.Write(Shader);
-        if (Shader != 0 && MtnfData != null)
+        if (Shader != 0)
         {
-            writer.Write(MtnfData.Length);
-            writer.Write(MtnfData);
+            byte[] mtnfBytes = _mtnf is not null && _mtnfStructuredIsFaithful
+                ? _mtnf.Serialize()
+                : MtnfData ?? [];
+            writer.Write(mtnfBytes.Length);
+            writer.Write(mtnfBytes);
         }
 
         // Write merge group and sort order
@@ -328,19 +386,20 @@ public sealed class GeomBlock : RcolBlock
         // Record TGI position
         long tgiStartPos = ms.Position;
 
-        // Write TGI blocks
-        // Source: GEOM.cs line 233
+        // Write TGI blocks: count + entries in TGI order
+        // Source: GEOM.cs line 233; DependentList.cs lines 710-723 (TGIBlockList.UnParse(s, ptgiO))
+        writer.Write(TgiBlocks.Count);
         var tgiBuffer = new byte[RcolTgiBlock.Size];
         foreach (var tgi in TgiBlocks)
         {
-            tgi.Write(tgiBuffer);
+            tgi.WriteTgiOrder(tgiBuffer);
             writer.Write(tgiBuffer);
         }
 
         // Patch TGI offset and size
-        // Offset is relative to position after reading the offset value
+        // Offset is relative to position after reading the offset value; size includes the count
         uint tgiOffset = (uint)(tgiStartPos - (tgiOffsetPos + 4));
-        uint tgiSize = (uint)(TgiBlocks.Count * RcolTgiBlock.Size);
+        uint tgiSize = (uint)(ms.Position - tgiStartPos);
 
         ms.Position = tgiOffsetPos;
         writer.Write(tgiOffset);

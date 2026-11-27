@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using FluentAssertions;
 using TS4Tools.Package;
 using TS4Tools.Wrappers;

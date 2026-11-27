@@ -109,6 +109,10 @@ public sealed class CfenResource : SimpleCatalogResource
 
     #endregion
 
+    /// <inheritdoc/>
+    /// <remarks>Source: CFENResource.cs line 35 (version = 0x0A); real 0x0C files fail the 0x0A layout.</remarks>
+    protected override uint? MaxSupportedVersion => 0x0A;
+
     /// <summary>
     /// Creates a new CFEN resource.
     /// </summary>
@@ -234,6 +238,8 @@ public sealed class CfenResource : SimpleCatalogResource
     /// <inheritdoc/>
     protected override void InitializeTypeSpecificDefaults()
     {
+        // Source: CFENResource.cs line 35 (legacy default version for a new resource)
+        Version = 0x0A;
         ModlEntryList01 = new SpnFenModlEntryList();
         ModlEntryList02 = new SpnFenModlEntryList();
         ModlEntryList03 = new SpnFenModlEntryList();

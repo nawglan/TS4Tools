@@ -149,6 +149,10 @@ public sealed class MatdBlock : RcolBlock
     /// <summary>Parsed shader data from MTNF block. Null if parsing failed.</summary>
     public MtnfData? MaterialData { get; set; }
 
+    // The model parsed from MtrlData and whether it re-serializes to exactly those bytes.
+    private MtnfData? _parsedMaterial;
+    private bool _parsedMaterialIsFaithful;
+
     /// <summary>
     /// Creates an empty MATD block.
     /// </summary>
@@ -216,19 +220,12 @@ public sealed class MatdBlock : RcolBlock
             MtrlData = data[pos..].ToArray();
         }
 
-        // Try to parse the MTNF/MTRL data into structured form
-        if (MtrlData.Length > 0)
-        {
-            try
-            {
-                MaterialData = MtnfData.Parse(MtrlData);
-            }
-            catch
-            {
-                // Parsing failed, but we have raw data for round-tripping
-                MaterialData = null;
-            }
-        }
+        // Parse the MTRL data into structured form (Source: MATD.cs lines 114-126). The structured model is
+        // only written back if it reproduces the stored bytes; otherwise the raw bytes are kept so layouts
+        // the model does not cover survive a round trip (same policy as GeomBlock.Mtnf).
+        _parsedMaterial = MtrlData.Length > 0 && MtnfData.TryParse(MtrlData, out var parsed) ? parsed : null;
+        _parsedMaterialIsFaithful = _parsedMaterial is not null && _parsedMaterial.Serialize().AsSpan().SequenceEqual(MtrlData);
+        MaterialData = _parsedMaterial;
     }
 
     /// <summary>
@@ -252,7 +249,13 @@ public sealed class MatdBlock : RcolBlock
         writer.Write((uint)Shader);
 
         // Serialize MTRL data - prefer structured MaterialData if available
-        byte[] mtrlBytes = MaterialData?.Serialize() ?? MtrlData;
+        // A model parsed from the stored bytes is written only if it reproduced them exactly when parsed
+        // (it is re-serialized, so in-place edits are kept); a model assigned by the caller is always written.
+        byte[] mtrlBytes = MaterialData is null
+            ? MtrlData
+            : ReferenceEquals(MaterialData, _parsedMaterial) && !_parsedMaterialIsFaithful
+                ? MtrlData
+                : MaterialData.Serialize();
         writer.Write((uint)mtrlBytes.Length);
 
         if (Version >= NewFormatVersion)

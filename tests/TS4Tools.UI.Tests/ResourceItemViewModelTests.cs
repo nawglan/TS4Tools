@@ -69,14 +69,15 @@ public class ResourceItemViewModelTests
     }
 
     [Fact]
-    public void TypeName_PNG_ReturnsName()
+    public void TypeName_NonLegacyPngType_IsNotGivenAFriendlyName()
     {
-        // Arrange
+        // 0x00B00000 is not a type legacy s4pe knows (no Extensions.txt entry, no wrapper), so the
+        // browser must not invent an "Image (PNG)" label for it.
         var key = new ResourceKey(0x00B00000, 0, 0);
         var vm = new ResourceItemViewModel(key, 100);
 
-        // Act & Assert
-        vm.TypeName.Should().Be("Image (PNG)");
+        vm.TypeName.Should().NotContain("PNG");
+        vm.TypeName.Should().Contain("0x00B00000");
     }
 
     [Fact]

@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Legacy s4pi public API compatibility layer.
+    Source: legacy_references/Sims4Tools/s4pi/{Interfaces,Package,WrapperDealer,Settings},
+            legacy_references/Sims4Tools/CS System Classes, legacy_references/Sims4Tools/s4pi Extras/Extensions
+    Types keep their original namespaces (s4pi.Interfaces, s4pi.Package, ...) so plugin source written
+    against s4pi recompiles against this assembly.
+  -->
+
+  <PropertyGroup>
+    <RootNamespace>s4pi</RootNamespace>
+    <Description>Legacy s4pi API compatibility layer for TS4Tools</Description>
+    <!--
+      The public surface reproduces legacy s4pi signatures verbatim (plugin source compatibility); these
+      design/naming rules object to that shape and are suppressed rather than changing the API:
+        CA1010  IGenericAdd extends non-generic IList (legacy interface)
+        CA1018  VersionAttribute has no AttributeUsage (legacy base attribute)
+        CA1036  AResourceKey/TypedValue implement IComparable without comparison operators
+        CA1041  [Obsolete] without message on DataGridExpandableAttribute (legacy)
+        CA1051  visible instance fields (TypedValue.Type/Value, protected handler/dirty/stream fields, TGIN)
+        CA1708  members differing only by case (protected field "stream" vs property "Stream", ...)
+        CA1715  generic parameter "U" of the nested Enumerator<U> classes
+    -->
+    <NoWarn>$(NoWarn);CA1010;CA1018;CA1036;CA1041;CA1051;CA1708;CA1715</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System.Buffers.Binary" />
+    <Using Include="System.Collections" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.ExceptionServices" />
+    <Using Include="System.Runtime.Serialization" />
+    <Using Include="System.Text" />
+    <Using Include="System.Text.RegularExpressions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Interfaces\TS4Tools.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core\TS4Tools.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TS4Tools.Compatibility.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

@@ -25,7 +25,7 @@ public class FnvHashTests
     [Fact]
     public void Fnv32_EmptyString_ReturnsOffsetBasis()
     {
-        // FNV-1a offset basis for 32-bit
+        // FNV offset basis for 32-bit
         // This is the standard starting value defined by the FNV algorithm
         // Source: http://www.isthe.com/chongo/tech/comp/fnv/#FNV-param
         const uint expected = 0x811C9DC5;
@@ -38,13 +38,11 @@ public class FnvHashTests
     [Fact]
     public void Fnv32_KnownValue_ReturnsExpectedHash()
     {
-        // FNV-1a 32-bit hash of "hello"
-        // Verified against: https://www.tools4noobs.com/online_tools/hash/
-        // Algorithm: For each byte: hash ^= byte; hash *= prime
+        // Legacy s4pi FNV-1 32-bit hash of "hello" (CS System Classes/FNVHash.cs line 65:
+        // hash *= prime; hash ^= byte)
         var result = FnvHash.Fnv32("hello");
 
-        // FNV-1a("hello") = 0x4F9F2CAB
-        result.Should().Be(0x4F9F2CAB);
+        result.Should().Be(0xB6FA7167);
     }
 
     [Fact]
@@ -70,7 +68,7 @@ public class FnvHashTests
     [Fact]
     public void Fnv64_EmptyString_ReturnsOffsetBasis()
     {
-        // FNV-1a offset basis for 64-bit
+        // FNV offset basis for 64-bit
         // Legacy source: FNV64() constructor in legacy_references/Sims4Tools/CS System Classes/FNVHash.cs:128
         const ulong expected = 0xCBF29CE484222325;
 
@@ -87,7 +85,7 @@ public class FnvHashTests
         var result = FnvHash.Fnv64("hello");
 
         // FNV-1a 64-bit("hello") = 0xA430D84680AABD0B
-        result.Should().Be(0xA430D84680AABD0B);
+        result.Should().Be(0x7B495389BDBDD4C7);
     }
 
     [Fact]

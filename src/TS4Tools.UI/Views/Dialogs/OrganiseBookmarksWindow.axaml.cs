@@ -109,14 +109,13 @@ public partial class OrganiseBookmarksWindow : Window
             ]
         });
 
-        foreach (var file in files)
+        foreach (var path in StorageItemPaths.LocalPaths(files))
         {
             if (_bookmarks.Count >= (int)(MaxBookmarksNumeric.Value ?? 10))
             {
                 break;
             }
 
-            var path = file.Path.LocalPath;
             // Add as read-write (1:) by default
             var entry = "1:" + path;
             _bookmarks.Add(new BookmarkItem(_bookmarks.Count + 1, entry));
@@ -200,9 +199,9 @@ public partial class OrganiseBookmarksWindow : Window
         RefreshList();
     }
 
-    private void OkButton_Click(object? sender, RoutedEventArgs e)
+    private async void OkButton_Click(object? sender, RoutedEventArgs e)
     {
-        SaveBookmarks();
+        await SaveBookmarksAsync();
         Close(true);
     }
 
@@ -211,7 +210,7 @@ public partial class OrganiseBookmarksWindow : Window
         Close(false);
     }
 
-    private void SaveBookmarks()
+    private async Task SaveBookmarksAsync()
     {
         _settings.Bookmarks.Clear();
         foreach (var item in _bookmarks)
@@ -219,7 +218,7 @@ public partial class OrganiseBookmarksWindow : Window
             _settings.Bookmarks.Add(item.RawEntry);
         }
         _settings.MaxBookmarks = (int)(MaxBookmarksNumeric.Value ?? 10);
-        SettingsService.Instance.Save();
+        await SettingsService.Instance.SaveAsync();
     }
 }
 

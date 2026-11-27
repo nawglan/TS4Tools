@@ -14,6 +14,13 @@ public sealed class SkinToneResource : TypedResource
 
     private const int MaxOverlays = 1000;
 
+    /// <summary>
+    /// Highest version the legacy layout parses. Legacy knows two layouts, version 6 and "&gt; 6"
+    /// (SkinToneResource.cs lines 85-92). Real game data at version 0x0A and 0x0C inserts new fields after
+    /// the texture instance, so those versions cannot be read with the legacy layout.
+    /// </summary>
+    public const uint MaxSupportedVersion = 9;
+
     /// <summary>Resource version.</summary>
     public uint Version { get; set; } = 7;
 
@@ -64,6 +71,8 @@ public sealed class SkinToneResource : TypedResource
         int offset = 0;
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
+        if (Version > MaxSupportedVersion)
+            throw new UnsupportedResourceVersionException("SkinTone", Version, MaxSupportedVersion);
         TextureInstance = BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
         offset += 8;
 

@@ -114,14 +114,37 @@ public class IbufBlock : RcolBlock
     }
 
     /// <summary>
+    /// Whether every value written (index, or delta when differenced) fits the 16-bit field, which legacy reads
+    /// back sign-extended (IBUF.cs line 194) and writes as UInt16 (line 235).
+    /// </summary>
+    private bool StoredValuesFit16Bit(bool isDifferenced)
+    {
+        int last = 0;
+        foreach (int current in Buffer)
+        {
+            int stored = isDifferenced ? current - last : current;
+            last = current;
+            if (stored < short.MinValue || stored > ushort.MaxValue)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Serializes the IBUF block back to bytes.
     /// Source: s4pi Wrappers/MeshChunks/IBUF.cs UnParse() lines 206-239
     /// </summary>
     public override ReadOnlyMemory<byte> Serialize()
     {
-        // Determine if we need 32-bit indices
-        bool is32Bit = Buffer.Length > ushort.MaxValue || Buffer.Any(i => i > ushort.MaxValue || i < short.MinValue);
+        // Determine if we need 32-bit indices.
+        // Source: IBUF.cs line 210 - legacy switches to 32-bit exactly when there are more than 65535 indices
+        // and otherwise writes every value (or delta) as UInt16. Real game/mod meshes contradict that rule in
+        // both directions (a game IBUF with 74,832 16-bit differenced indices, a mod IBUF with 64,614 32-bit
+        // indices), so legacy rewrites them with a different width. The port keeps the stored width and only
+        // widens a 16-bit buffer when a stored value (index, or delta when differenced) no longer fits.
         bool isDifferenced = (Flags & IbufFormat.DifferencedIndices) != 0;
+        bool is32Bit = (Flags & IbufFormat.Uses32BitIndices) != 0 || !StoredValuesFit16Bit(isDifferenced);
 
         // Update flags
         var flags = Flags;

@@ -4,7 +4,8 @@ namespace TS4Tools.Wrappers;
 
 /// <summary>
 /// Image resource for PNG and DDS/DST textures.
-/// Resource Types: 0x00B00000 (PNG), 0x00B2D882 (DDS/DST).
+/// Resource Types: 0x00B2D882 (DDS/DST). PNG payloads appear under the thumbnail/snapshot types listed in the
+/// legacy ImageResources.txt (e.g. 0x0580A2B4 THUM, 0x0580A2CD SNAP); 0x00B00000 is not a legacy type.
 /// </summary>
 /// <remarks>
 /// Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/DSTResource.cs
@@ -86,7 +87,9 @@ public sealed class ImageResource : TypedResource
         // Check for DDS signature
         if (data.Length >= DdsSignature.Length && data[..DdsSignature.Length].SequenceEqual(DdsSignature))
         {
-            Format = ImageFormat.Dds;
+            // Source: DSTResource.cs lines 54-72 - DST files carry a "DDS " header but a shuffled DST1/DST3/DST5
+            // FourCC; report those as Dst so callers unshuffle them instead of treating them as plain DDS.
+            Format = DstDecoder.IsDst(data) ? ImageFormat.Dst : ImageFormat.Dds;
             ParseDdsDimensions(data);
             return;
         }
@@ -172,11 +175,44 @@ public sealed class ImageResource : TypedResource
             if (fourCc == DstDecoder.FourCcDst5) return DxtFormat.Dxt5;
 
             // Handle standard DXT formats
+            if (fourCc == DstDecoder.FourCcDst3) return DxtFormat.Dxt3;
             if (fourCc == DxtDecoder.FourCcDxt1) return DxtFormat.Dxt1;
+            if (fourCc == DxtDecoder.FourCcDxt3) return DxtFormat.Dxt3;
             if (fourCc == DxtDecoder.FourCcDxt5) return DxtFormat.Dxt5;
 
             return DxtFormat.Unknown;
         }
+    }
+
+    /// <summary>
+    /// Returns the image as a standard (unshuffled) DDS file. For DST resources this unshuffles the data;
+    /// for DDS resources it returns the data unchanged.
+    /// </summary>
+    /// <returns>DDS data, or null if the resource is not DDS/DST or cannot be converted.</returns>
+    /// <remarks>Source: DSTResource.cs lines 54-72 (ToDDS).</remarks>
+    public byte[]? ToDds()
+    {
+        return Format switch
+        {
+            ImageFormat.Dds => _imageData.ToArray(),
+            ImageFormat.Dst => DstDecoder.UnshuffleToDds(_imageData),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Replaces the resource data with a DDS converted to the shuffled DST layout (DXT1 -> DST1, DXT5 -> DST5).
+    /// </summary>
+    /// <param name="ddsData">A complete DDS file.</param>
+    /// <exception cref="NotSupportedException">The DDS is DXT3 or another unsupported format.</exception>
+    /// <remarks>Source: DSTResource.cs lines 82-134 (ImportToDST).</remarks>
+    public void ImportToDst(ReadOnlySpan<byte> ddsData)
+    {
+        var dst = DstDecoder.ImportToDst(ddsData);
+        _imageData = dst;
+        Format = ImageFormat.Dst;
+        ParseDdsDimensions(dst);
+        OnChanged();
     }
 
     /// <summary>
@@ -231,7 +267,10 @@ public enum DxtFormat
     Dxt1,
 
     /// <summary>DXT5 (BC3) - 4:1 compression, interpolated alpha.</summary>
-    Dxt5
+    Dxt5,
+
+    /// <summary>DXT3 (BC2) - 4:1 compression, explicit 4-bit alpha.</summary>
+    Dxt3
 }
 
 /// <summary>
@@ -245,7 +284,7 @@ public enum ImageFormat
     /// <summary>PNG image format.</summary>
     Png,
 
-    /// <summary>DirectDraw Surface (DDS) format.</summary>
+    /// <summary>DirectDraw Surface (DDS) format (standard, unshuffled; DST data reports <see cref="Dst"/>).</summary>
     Dds,
 
     /// <summary>Sims 4 DST texture format.</summary>

@@ -24,6 +24,13 @@ public sealed class SimOutfitResource : TypedResource
     public uint Version { get; set; }
 
     /// <summary>
+    /// Highest version the legacy layout parses. Legacy has a single layout with no version branches
+    /// (SimOutfitResource.cs lines 66-123); real game data at version 0x12 matches it, while 0x1B and 0x26
+    /// have a different layout after the eight header floats, so those cannot be read with it.
+    /// </summary>
+    public const uint MaxSupportedVersion = 0x1A;
+
+    /// <summary>
     /// Unknown float value 1.
     /// </summary>
     public float Unknown1 { get; set; }
@@ -172,6 +179,8 @@ public sealed class SimOutfitResource : TypedResource
         // Source: SimOutfitResource.cs lines 70-71
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
+        if (Version > MaxSupportedVersion)
+            throw new UnsupportedResourceVersionException("SimOutfit", Version, MaxSupportedVersion);
 
         uint tgiOffset = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]) + 8;
         offset += 4;

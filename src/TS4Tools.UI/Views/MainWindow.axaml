@@ -9,7 +9,8 @@
         x:DataType="vm:MainWindowViewModel"
         Title="{Binding Title}"
         Width="1200" Height="800"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        DragDrop.AllowDrop="True">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
@@ -49,12 +50,15 @@
                 <MenuItem Header="E_xit" Command="{Binding ExitCommand}" InputGesture="Alt+F4" />
             </MenuItem>
             <MenuItem Header="_Edit">
-                <MenuItem Header="_Undo" InputGesture="Ctrl+Z" IsEnabled="False" />
-                <MenuItem Header="_Redo" InputGesture="Ctrl+Y" IsEnabled="False" />
-                <Separator />
-                <MenuItem Header="_Copy" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
-                <MenuItem Header="_Paste" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasClipboardResource}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1282-1324 (Resource menu items and enablement) -->
+                <MenuItem Header="A_dd..." Command="{Binding AddResourceCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <MenuItem Header="_Copy Resource" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="_Paste Resource" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasOpenPackage}" />
                 <MenuItem Header="D_uplicate" Command="{Binding DuplicateResourceCommand}" InputGesture="Ctrl+D" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="Co_mpressed" Command="{Binding ToggleCompressedCommand}" ToggleType="CheckBox"
+                          IsChecked="{Binding IsSelectionCompressed, Mode=OneWay}" IsEnabled="{Binding HasSelectedResource}" />
+                <MenuItem Header="Dele_ted" Command="{Binding ToggleDeletedCommand}" ToggleType="CheckBox" InputGesture="Delete"
+                          IsChecked="{Binding IsSelectionDeleted, Mode=OneWay}" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
                 <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
                 <Separator />
@@ -70,6 +74,8 @@
                 <MenuItem Header="Import _Thumbnail..." Command="{Binding ImportThumbnailCommand}" IsEnabled="{Binding HasOpenPackage}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ExperimentalDBCWarning.cs -->
                 <MenuItem Header="Import D_BC..." Command="{Binding ImportDbcCommand}" IsEnabled="{Binding HasOpenPackage}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 164-195 (ResourceReplaceFrom) -->
+                <MenuItem Header="Replace Selected from Pac_kage(s)..." Command="{Binding ReplaceFromPackagesCommand}" IsEnabled="{Binding HasSelectedResource}" />
                 <MenuItem Header="_Export Resource..." Command="{Binding ExportResourceCommand}" InputGesture="Ctrl+Shift+X" IsEnabled="{Binding HasSelectedResource}" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1882-2080 -->
                 <MenuItem Header="Export to P_ackage..." Command="{Binding ExportToPackageCommand}" IsEnabled="{Binding HasSelectedResource}" />
@@ -89,13 +95,34 @@
                         </Style>
                     </MenuItem.Styles>
                 </MenuItem>
+                <!-- Built-in image/model helpers -->
+                <!-- Source: legacy_references/Sims4Tools/s4pe Helpers (DDSHelper, RLEDDSHelper, RLESDDSHelper, DMAPImageHelper, ModelViewer) -->
+                <MenuItem Header="_Viewer Tools" IsEnabled="{Binding HasViewerTools}">
+                    <MenuItem Header="Export to _DDS..." Command="{Binding ExportDdsCommand}" IsEnabled="{Binding CanExportDds}" />
+                    <MenuItem Header="_Import From DDS..." Command="{Binding ImportDdsCommand}" IsEnabled="{Binding CanImportDds}" />
+                    <MenuItem Header="Import DDS as DS_T..." Command="{Binding ImportDdsToDstCommand}" IsEnabled="{Binding CanImportDdsToDst}" />
+                    <!-- Source: s4pi Extras/DDSPanel/DDSPanel.cs lines 417-462 (Import), 625-680 (HSV, alpha) -->
+                    <MenuItem Header="Import from _Image (PNG/JPEG)..." Command="{Binding ImportImageCommand}" IsEnabled="{Binding CanEditDdsImage}" />
+                    <MenuItem Header="Alpha from _Greyscale Image..." Command="{Binding SetAlphaFromGreyscaleCommand}" IsEnabled="{Binding CanEditDdsImage}" />
+                    <MenuItem Header="_Delete Alpha Channel" Command="{Binding DeleteAlphaChannelCommand}" IsEnabled="{Binding CanEditDdsImage}" />
+                    <Separator />
+                    <MenuItem Header="Export to Bitmap (_Skintight data)..." Command="{Binding ExportDeformerMapSkinCommand}" IsEnabled="{Binding CanEditDeformerMapImage}" />
+                    <MenuItem Header="Export to Bitmap (_Robe data)..." Command="{Binding ExportDeformerMapRobeCommand}" IsEnabled="{Binding CanEditDeformerMapImage}" />
+                    <MenuItem Header="Import _Bitmap..." Command="{Binding ImportDeformerMapBitmapCommand}" IsEnabled="{Binding CanEditDeformerMapImage}" />
+                    <Separator />
+                    <MenuItem Header="_3D Model Viewer..." Command="{Binding OpenModelViewerCommand}" IsEnabled="{Binding CanOpenModelViewer}" />
+                </MenuItem>
+                <MenuItem Header="Show _Value" Command="{Binding ShowValueCommand}" IsEnabled="{Binding CanShowValue}" />
                 <Separator />
                 <!-- Float and Save Preview -->
                 <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1107-1163, 2910-2936 -->
                 <MenuItem Header="_Float" Command="{Binding FloatPreviewCommand}" IsEnabled="{Binding CanFloat}" />
                 <MenuItem Header="Save Preview..." Command="{Binding SavePreviewCommand}" IsEnabled="{Binding CanSavePreview}" />
-                <Separator />
-                <MenuItem Header="_Delete Resource" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 1030-1092 (EditCopy), 1165-1250 (EditOte) -->
+                <MenuItem Header="Copy Pre_view" Command="{Binding CopyPreviewCommand}" IsEnabled="{Binding CanCopyPreview}" />
+                <MenuItem Header="Open in Te_xt Editor (OTE)" Command="{Binding OpenInTextEditorCommand}" IsEnabled="{Binding CanOpenInTextEditor}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3095-3172 (TextEdit) -->
+                <MenuItem Header="Edit Resource in Text _Editor" Command="{Binding EditInTextEditorCommand}" IsEnabled="{Binding CanEditInTextEditor}" />
                 <Separator />
                 <!-- Select All command -->
                 <!-- Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 236-285 -->
@@ -134,14 +161,20 @@
             </MenuItem>
             <MenuItem Header="_Settings">
                 <MenuItem Header="_Settings..." Command="{Binding SettingsCommand}" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2406-2409 (SettingsManageWrappers) -->
+                <MenuItem Header="Manage _Wrappers..." Command="{Binding ManageWrappersCommand}" />
                 <Separator />
                 <MenuItem Header="_Custom Places..." Command="{Binding CustomPlacesCommand}" />
             </MenuItem>
             <MenuItem Header="_Help">
+                <!-- Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2425-2565 (Help menu) -->
+                <MenuItem Header="_Contents" Command="{Binding HelpContentsCommand}" />
+                <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" InputGesture="F1" />
                 <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs -->
                 <MenuItem Header="Check for _Updates..." Command="{Binding CheckForUpdatesCommand}" />
                 <Separator />
-                <MenuItem Header="_About TS4Tools" Command="{Binding AboutCommand}" InputGesture="F1" />
+                <MenuItem Header="_Warranty" Command="{Binding HelpWarrantyCommand}" />
+                <MenuItem Header="_Licence" Command="{Binding HelpLicenceCommand}" />
             </MenuItem>
         </Menu>
 
@@ -160,138 +193,167 @@
             </Grid>
         </Border>
 
-        <!-- Main Content -->
-        <Grid ColumnDefinitions="300,Auto,*">
-            <!-- Resource List Panel -->
-            <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
-                <DockPanel>
-                    <!-- Advanced Filter Panel -->
-                    <ctrl:AdvancedFilterPanel x:Name="FilterPanel" DockPanel.Dock="Top" Margin="8"
-                                               IsVisible="{Binding ShowAdvancedFilter}" />
+        <!-- Main Content.
+             Legacy layout: splitContainer1 (horizontal) holds splitContainer2 (browser | preview) on top and a
+             fixed-height bottom strip with the package info and the resource filter.
+             Source: legacy_references/Sims4Tools/s4pe/MainForm.Designer.cs lines 89-125 -->
+        <Grid x:Name="OuterLayoutGrid">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="120" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="230" MinHeight="60" />
+            </Grid.RowDefinitions>
 
-                    <!-- Simple Filter Box (when advanced filter is hidden) -->
-                    <Border DockPanel.Dock="Top" Padding="8" IsVisible="{Binding !ShowAdvancedFilter}">
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <TextBox PlaceholderText="Filter resources..." Text="{Binding FilterText}" />
-                            <Button Grid.Column="1" Content="..." ToolTip.Tip="Show Advanced Filter"
-                                    Command="{Binding ToggleAdvancedFilterCommand}"
-                                    Margin="4,0,0,0" Padding="8,4" FontSize="11" />
-                            <Button Grid.Column="2" Content="{Binding SortMode}"
-                                    Command="{Binding CycleSortModeCommand}"
-                                    ToolTip.Tip="Toggle sort mode"
-                                    Margin="4,0,0,0" Padding="8,4"
-                                    FontSize="11" />
-                        </Grid>
-                    </Border>
+            <Grid x:Name="MainLayoutGrid" Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" MinWidth="200" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="2*" MinWidth="200" />
+                </Grid.ColumnDefinitions>
 
-                    <!-- Sort button when advanced filter is visible -->
-                    <Border DockPanel.Dock="Top" Padding="8,0,8,8" IsVisible="{Binding ShowAdvancedFilter}">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Button Grid.Column="0" Content="Hide Advanced Filter"
-                                    Command="{Binding ToggleAdvancedFilterCommand}"
-                                    Padding="8,4" FontSize="11" HorizontalAlignment="Left" />
-                            <Button Grid.Column="1" Content="{Binding SortMode}"
-                                    Command="{Binding CycleSortModeCommand}"
-                                    ToolTip.Tip="Toggle sort mode"
-                                    Padding="8,4" FontSize="11" />
-                        </Grid>
-                    </Border>
-
+                <!-- Browser: Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs -->
+                <Border Grid.Column="0" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="0,0,1,0">
                     <!-- Resource List -->
-                    <!-- Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs -->
-                    <ListBox x:Name="ResourceListBox"
-                             ItemsSource="{Binding FilteredResources}"
-                             SelectedItem="{Binding SelectedResource}"
-                             SelectionMode="Multiple"
-                             Margin="0,0,0,0">
-                        <ListBox.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="_Copy" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
-                                <MenuItem Header="_Paste" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasClipboardResource}" />
-                                <MenuItem Header="D_uplicate" Command="{Binding DuplicateResourceCommand}" InputGesture="Ctrl+D" IsEnabled="{Binding HasSelectedResource}" />
-                                <Separator />
-                                <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
-                                <Separator />
-                                <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
-                                <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
-                                <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
-                                <Separator />
-                                <!-- Helper Programs submenu in context menu -->
-                                <MenuItem Header="_Helpers" IsEnabled="{Binding HasHelpers}" ItemsSource="{Binding AvailableHelpers}">
-                                    <MenuItem.Styles>
-                                        <Style Selector="MenuItem">
-                                            <Setter Property="Header" Value="{ReflectionBinding Label}" />
-                                            <Setter Property="Command" Value="{ReflectionBinding ExecuteCommand}" />
-                                            <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Description}" />
-                                        </Style>
-                                    </MenuItem.Styles>
-                                </MenuItem>
-                                <Separator />
-                                <MenuItem Header="_Delete" Command="{Binding DeleteResourceCommand}" InputGesture="Delete" IsEnabled="{Binding HasSelectedResource}" />
-                            </ContextMenu>
-                        </ListBox.ContextMenu>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="4,2">
-                                    <TextBlock Text="{Binding TypeName}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding DisplayKey}" FontSize="11" Opacity="0.7" />
+                    <!-- Columns: Name, Tag, Type, Group, Instance, Chunkoffset, Filesize, Memsize, Compressed.
+                         Click a heading to sort. Source: legacy_references/Sims4Tools/s4pe/BrowserWidget/BrowserWidget.cs lines 584-621 -->
+                    <DataGrid x:Name="ResourceGrid"
+                              ItemsSource="{Binding FilteredResources}"
+                              SelectedItem="{Binding SelectedResource}"
+                              SelectionMode="Extended"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserResizeColumns="True"
+                              CanUserReorderColumns="True"
+                              CanUserSortColumns="True"
+                              GridLinesVisibility="None"
+                              HeadersVisibility="Column">
+                        <!-- Deleted resources stay listed struck out (legacy BrowserWidget.cs line 713) -->
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridRow.deleted DataGridCell TextBlock">
+                                <Setter Property="TextDecorations" Value="Strikethrough" />
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Style>
+                        </DataGrid.Styles>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Name" Binding="{Binding NameText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Tag" Binding="{Binding Tag}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Type" Binding="{Binding TypeText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Group" Binding="{Binding GroupText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Instance" Binding="{Binding InstanceText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Chunkoffset" Binding="{Binding ChunkOffsetText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Filesize" Binding="{Binding FileSizeText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Memsize" Binding="{Binding MemorySizeText}" />
+                            <DataGridTextColumn x:DataType="vm:ResourceItemViewModel" Header="Compressed" Binding="{Binding CompressedText}" />
+                        </DataGrid.Columns>
+                        <DataGrid.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="_Copy Resource" Command="{Binding CopyResourceCommand}" InputGesture="Ctrl+C" IsEnabled="{Binding HasSelectedResource}" />
+                            <MenuItem Header="_Paste Resource" Command="{Binding PasteResourceCommand}" InputGesture="Ctrl+V" IsEnabled="{Binding HasOpenPackage}" />
+                            <MenuItem Header="D_uplicate" Command="{Binding DuplicateResourceCommand}" InputGesture="Ctrl+D" IsEnabled="{Binding HasSelectedResource}" />
+                            <Separator />
+                            <MenuItem Header="Copy Resource _Key" Command="{Binding CopyResourceKeyCommand}" InputGesture="Ctrl+Shift+C" IsEnabled="{Binding HasSelectedResource}" />
+                            <Separator />
+                            <MenuItem Header="_Export..." Command="{Binding ExportResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                            <MenuItem Header="_Replace..." Command="{Binding ReplaceResourceCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                            <MenuItem Header="Resource _Details..." Command="{Binding ResourceDetailsCommand}" IsEnabled="{Binding HasSelectedResource}" />
+                            <Separator />
+                            <!-- Helper Programs submenu in context menu -->
+                            <MenuItem Header="_Helpers" IsEnabled="{Binding HasHelpers}" ItemsSource="{Binding AvailableHelpers}">
+                                <MenuItem.Styles>
+                                    <Style Selector="MenuItem">
+                                        <Setter Property="Header" Value="{ReflectionBinding Label}" />
+                                        <Setter Property="Command" Value="{ReflectionBinding ExecuteCommand}" />
+                                        <Setter Property="ToolTip.Tip" Value="{ReflectionBinding Description}" />
+                                    </Style>
+                                </MenuItem.Styles>
+                            </MenuItem>
+                            <Separator />
+                            <MenuItem Header="Dele_ted" Command="{Binding ToggleDeletedCommand}" ToggleType="CheckBox" InputGesture="Delete"
+                                      IsChecked="{Binding IsSelectionDeleted, Mode=OneWay}" IsEnabled="{Binding HasSelectedResource}" />
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                    </DataGrid>
+                </Border>
+
+                <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+
+                <!-- Resource Detail Panel -->
+                <Border Grid.Column="2" Padding="16">
+                    <Grid>
+                        <!-- Empty State -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    IsVisible="{Binding !HasOpenPackage}">
+                            <TextBlock Text="TS4Tools" FontSize="32" FontWeight="Light" HorizontalAlignment="Center" />
+                            <TextBlock Text="Cross-platform Sims 4 Package Editor" FontSize="14" Opacity="0.7"
+                                       HorizontalAlignment="Center" Margin="0,8,0,24" />
+                            <Button Content="Open Package..." Command="{Binding OpenPackageCommand}"
+                                    HorizontalAlignment="Center" Padding="24,8" />
+                        </StackPanel>
+
+                        <!-- Nothing selected yet: legacy leaves the preview area empty; say what to do instead -->
+                        <TextBlock Text="Select a resource to view it"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6">
+                            <TextBlock.IsVisible>
+                                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                    <Binding Path="HasOpenPackage" />
+                                    <Binding Path="!HasSelectedResource" />
+                                </MultiBinding>
+                            </TextBlock.IsVisible>
+                        </TextBlock>
+
+                        <!-- Resource Details -->
+                        <DockPanel IsVisible="{Binding HasSelectedResource}">
+                            <Border DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectedResourceTypeName}" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding SelectedResourceKey}" FontSize="12" Opacity="0.7" Margin="0,4,0,0" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-
-            <!-- Splitter -->
-            <GridSplitter Grid.Column="1" Width="4" Background="Transparent" />
-
-            <!-- Resource Detail Panel -->
-            <Border Grid.Column="2" Padding="16">
-                <Grid>
-                    <!-- Empty State -->
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
-                                IsVisible="{Binding !HasOpenPackage}">
-                        <TextBlock Text="TS4Tools" FontSize="32" FontWeight="Light" HorizontalAlignment="Center" />
-                        <TextBlock Text="Cross-platform Sims 4 Package Editor" FontSize="14" Opacity="0.7"
-                                   HorizontalAlignment="Center" Margin="0,8,0,24" />
-                        <Button Content="Open Package..." Command="{Binding OpenPackageCommand}"
-                                HorizontalAlignment="Center" Padding="24,8" />
-                    </StackPanel>
-
-                    <!-- Resource Details -->
-                    <DockPanel IsVisible="{Binding HasOpenPackage}">
-                        <Border DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <StackPanel>
-                                <TextBlock Text="{Binding SelectedResourceTypeName}" FontSize="18" FontWeight="SemiBold" />
-                                <TextBlock Text="{Binding SelectedResourceKey}" FontSize="12" Opacity="0.7" Margin="0,4,0,0" />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Editor Content with optional property grid -->
-                        <Grid RowDefinitions="*,Auto,Auto">
-                            <ContentControl Grid.Row="0" Content="{Binding EditorContent}" />
-
-                            <!-- Property Grid Toggle -->
-                            <Border Grid.Row="1" Padding="8,4"
-                                    IsVisible="{Binding HasSelectedResource}"
-                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
-                                <Button Content="{Binding PropertyGridButtonText}"
-                                        Command="{Binding TogglePropertyGridCommand}"
-                                        Padding="8,4" FontSize="11"
-                                        HorizontalAlignment="Left" />
                             </Border>
 
-                            <!-- Property Grid Panel -->
-                            <Border Grid.Row="2" Height="200"
-                                    IsVisible="{Binding ShowPropertyGrid}"
-                                    BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                                    BorderThickness="0,1,0,0">
-                                <ContentControl Content="{Binding PropertyGridContent}" />
-                            </Border>
-                        </Grid>
-                    </DockPanel>
-                </Grid>
-            </Border>
+                            <!-- Editor Content with optional property grid -->
+                            <Grid RowDefinitions="*,Auto,Auto">
+                                <!-- Text previews are zoomed by the PreviewZoomFactor setting (Ctrl+wheel changes it) -->
+                                <LayoutTransformControl x:Name="PreviewZoomHost" Grid.Row="0">
+                                    <ContentControl Content="{Binding EditorContent}" />
+                                </LayoutTransformControl>
+
+                                <!-- Property Grid Toggle -->
+                                <Border Grid.Row="1" Padding="8,4"
+                                        IsVisible="{Binding HasSelectedResource}"
+                                        Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                                    <Button Content="{Binding PropertyGridButtonText}"
+                                            Command="{Binding TogglePropertyGridCommand}"
+                                            Padding="8,4" FontSize="11"
+                                            HorizontalAlignment="Left" />
+                                </Border>
+
+                                <!-- Property Grid Panel -->
+                                <Border Grid.Row="2" Height="200"
+                                        IsVisible="{Binding ShowPropertyGrid}"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        BorderThickness="0,1,0,0">
+                                    <ContentControl Content="{Binding PropertyGridContent}" />
+                                </Border>
+                            </Grid>
+                        </DockPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="Transparent" ResizeDirection="Rows" />
+
+            <!-- Bottom strip: package info and resource filter.
+                 Source: PackageInfo/PackageInfoWidget.cs, Filter/ResourceFilterWidget.cs -->
+            <Grid Grid.Row="2" ColumnDefinitions="360,Auto,*"
+                  Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+                <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <ctrl:PackageInfoPanel />
+                </ScrollViewer>
+                <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns" />
+                <ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ctrl:ResourceFilterPanel Margin="4" />
+                </ScrollViewer>
+            </Grid>
         </Grid>
     </DockPanel>
 </Window>

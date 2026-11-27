@@ -26,14 +26,19 @@ The original s4pe (Sims 4 Package Editor), based on the s4pi (Sims 4 Package Int
 
 ## Current Status
 
-- Core DBPF package reader/writer with ZLIB + RefPack compression
-- Resource handler/factory system with 50+ resource wrappers
-- CAS, Catalog, Mesh, RCOL, Image (DDS/RLE), SimData, and more
-- 10 resource editors/viewers with specialized UI
-- 14 dialog windows (search, import, merge, statistics, etc.)
-- FNV hashing utilities + calculator tool
-- Cross-platform CI/CD (GitHub Actions)
-- 120+ test files with comprehensive coverage
+- DBPF package reader/writer (ZLIB + RefPack decode, legacy compression semantics, byte-identical save of untouched resources)
+- WrapperDealer-style handler registry: all legacy wrapper types registered, disabled wrappers, plugin DLLs from a `Wrappers` folder
+- 60+ resource wrappers (CAS, Catalog, RCOL/Mesh, Jazz, Image/DDS/DST/RLE/Thumbnail, SimData, STBL, NameMap, Text, …), validated
+  against real game and mod packages (`docs/real-data-validation.md`)
+- s4pe GUI parity: multi-column browser and filter, editors/viewers for every wrapped type, property grid, commit/save workflow,
+  import/export/copy/paste, helpers, DDS/RLE/DMAP tools, 3D model viewer
+- `TS4Tools.Compatibility`: the s4pi public API (`s4pi.Interfaces`, `s4pi.Package`, `s4pi.WrapperDealer`, …) for recompiled plugins.
+  Legacy-style wrapper plugins (`AResourceHandler` + `AResource`) placed in the `Wrappers` folder are used by the app's Value
+  view, property grid and commit for resource types no built-in wrapper handles. **Binary compatibility with the original
+  s4pi/s4pe DLLs is not provided** (they target .NET Framework and WinForms): plugins must be recompiled against
+  `TS4Tools.Compatibility`.
+- Legacy FNV hashing (FNV-24/32/64/64CLIP), ExtList type tags, catalog tag names, FileTable/GameFolders
+- Resource versions newer than the legacy s4pi snapshot (e.g. current-game CASP > v37) are shown raw rather than misparsed
 
 ## Building
 

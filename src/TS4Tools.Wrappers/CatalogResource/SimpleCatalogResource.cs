@@ -36,6 +36,13 @@ public abstract class SimpleCatalogResource : TypedResource
     #endregion
 
     /// <summary>
+    /// Highest version whose layout the legacy wrapper knows, or null when legacy reads every version with
+    /// one layout and real data confirms it. Derived types set this when newer game files append fields that
+    /// legacy (and therefore this port) would silently drop on write.
+    /// </summary>
+    protected virtual uint? MaxSupportedVersion => null;
+
+    /// <summary>
     /// Creates a new SimpleCatalogResource.
     /// </summary>
     protected SimpleCatalogResource(ResourceKey key, ReadOnlyMemory<byte> data)
@@ -51,6 +58,9 @@ public abstract class SimpleCatalogResource : TypedResource
         // Version
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
+
+        if (MaxSupportedVersion is uint max && Version > max)
+            throw new UnsupportedResourceVersionException(GetType().Name, Version, max);
 
         // Common block
         CommonBlock = CatalogCommon.Parse(data[offset..], out int commonBytes);

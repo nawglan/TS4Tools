@@ -17,17 +17,22 @@ dotnet run --project src/TS4Tools.UI  # Run the application
 
 ## Architecture
 
-- `src/TS4Tools.Core/` - Package parsing, resource handling, business logic
+- `src/TS4Tools.Core/` - DBPF package read/write, resource handler registry (WrapperDealer), ExtList, FileTable
+- `src/TS4Tools.Wrappers/` - Resource wrappers (one `[ResourceHandler]` factory per wrapper), DDS/RLE/DST codecs, FNV hashing
 - `src/TS4Tools.UI/` - Avalonia MVVM application
 - `src/TS4Tools.Interfaces/` - Public API contracts
-- `src/TS4Tools.Compatibility/` - Legacy s4pi API compatibility layer
-- `tests/` - xUnit tests with FluentAssertions
+- `src/TS4Tools.Compatibility/` - Legacy s4pi API compatibility layer (original `s4pi.*` namespaces) for recompiled plugins.
+  `LegacyWrapperBridge` registers `AResourceHandler` plugins from the UI's `Wrappers` folder with the TS4Tools registry
+  (adapter `LegacyResourceFactory`/`LegacyResourceAdapter`). Source compatibility only: original s4pi DLLs (.NET Framework +
+  WinForms) are **not** binary compatible and must be recompiled against TS4Tools.Compatibility.
+- `tests/` - xUnit tests with FluentAssertions (all test projects are in `TS4Tools.sln`)
+- `tests/TS4Tools.Wrappers.Tests/RealData/` - real game-data round-trip harness (skips when the game is absent; see `docs/real-data-validation.md`)
 - `legacy_references/Sims4Tools/` - **s4pi/s4pe reference code (SINGLE SOURCE OF TRUTH)**
 
 ### Technology Stack
 
 - .NET 10, C# 12+ (LangVersion preview)
-- Avalonia UI with MVVM (ReactiveUI/CommunityToolkit.Mvvm)
+- Avalonia UI 12 with MVVM (CommunityToolkit.Mvvm)
 - xUnit, FluentAssertions, BenchmarkDotNet
 - MSBuild with centralized package management (`Directory.Build.props`, `Directory.Packages.props`)
 

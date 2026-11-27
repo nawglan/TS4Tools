@@ -390,4 +390,59 @@ public class IbufBlockTests
     }
 
     #endregion
+
+    private static byte[] CreateIbuf(IbufFormat flags, bool wide, params int[] stored)
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        w.Write("IBUF"u8.ToArray());
+        w.Write(2u);
+        w.Write((uint)flags);
+        w.Write(0u);
+        foreach (var v in stored)
+        {
+            if (wide) w.Write(v); else w.Write((short)v);
+        }
+
+        return ms.ToArray();
+    }
+
+    /// <summary>
+    /// Regression (real game mesh): a 16-bit differenced buffer whose accumulated indices exceed 65535 must stay
+    /// 16-bit - legacy picks the width by count only (IBUF.cs line 210) and writes the deltas as UInt16.
+    /// </summary>
+    [Fact]
+    public void Serialize_Differenced16Bit_AbsoluteAbove65535_StaysByteIdentical()
+    {
+        var data = CreateIbuf(IbufFormat.DifferencedIndices, wide: false, 30000, 30000, 30000);
+
+        var block = new IbufBlock(data);
+
+        block.Buffer.Should().Equal(30000, 60000, 90000);
+        block.Serialize().ToArray().Should().Equal(data);
+    }
+
+    /// <summary>
+    /// Regression (real mod mesh): a buffer stored with 32-bit indices keeps them even with fewer than 65536
+    /// indices (legacy would narrow it, IBUF.cs lines 210-218).
+    /// </summary>
+    [Fact]
+    public void Serialize_32BitFewIndices_StaysByteIdentical()
+    {
+        var data = CreateIbuf(IbufFormat.Uses32BitIndices, wide: true, 1, 2, 70000);
+
+        new IbufBlock(data).Serialize().ToArray().Should().Equal(data);
+    }
+
+    /// <summary>
+    /// Regression (real game mesh): a 16-bit differenced buffer with more than 65535 indices stays 16-bit
+    /// (legacy's count rule, IBUF.cs line 210, would widen it to 32-bit and double its size).
+    /// </summary>
+    [Fact]
+    public void Serialize_16BitMoreThan65535Indices_StaysByteIdentical()
+    {
+        var data = CreateIbuf(IbufFormat.DifferencedIndices, wide: false, Enumerable.Repeat(1, 70000).ToArray());
+
+        new IbufBlock(data).Serialize().ToArray().Should().Equal(data);
+    }
 }

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             xmlns:main="using:TS4Tools.UI.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="TS4Tools.UI.Views.Editors.ImageViewerView"
              x:DataType="vm:ImageViewerViewModel">
@@ -44,6 +45,29 @@
                               ToolTip.Tip="Invert Alpha Channel" />
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <!-- Image edits: import from PNG/JPEG, HSV shift, alpha. The commands belong to the main window.
+             Source: legacy_references/Sims4Tools/s4pi Extras/DDSPanel/DDSPanel.cs lines 417-462, 625-680 -->
+        <Border DockPanel.Dock="Top" Padding="8,4" IsVisible="{Binding HasChannelControls}"
+                BorderThickness="0,0,0,1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+            <WrapPanel Orientation="Horizontal">
+                <Button Content="Import from Image..." Margin="0,0,8,0"
+                        Command="{Binding $parent[Window].((main:MainWindowViewModel)DataContext).ImportImageCommand}" />
+                <Button Content="Alpha from Greyscale..." Margin="0,0,8,0"
+                        Command="{Binding $parent[Window].((main:MainWindowViewModel)DataContext).SetAlphaFromGreyscaleCommand}" />
+                <Button Content="Delete Alpha" Margin="0,0,16,0"
+                        Command="{Binding $parent[Window].((main:MainWindowViewModel)DataContext).DeleteAlphaChannelCommand}" />
+                <TextBlock Text="H" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <Slider Minimum="-1" Maximum="1" Width="90" Value="{Binding HueShift}" ToolTip.Tip="Hue shift" />
+                <TextBlock Text="S" VerticalAlignment="Center" Margin="8,0,4,0" />
+                <Slider Minimum="-1" Maximum="1" Width="90" Value="{Binding SaturationShift}" ToolTip.Tip="Saturation shift" />
+                <TextBlock Text="V" VerticalAlignment="Center" Margin="8,0,4,0" />
+                <Slider Minimum="-1" Maximum="1" Width="90" Value="{Binding ValueShift}" ToolTip.Tip="Value shift" />
+                <Button Content="Apply HSV" Margin="8,0,0,0" IsEnabled="{Binding !IsHsvNeutral}"
+                        Command="{Binding $parent[Window].((main:MainWindowViewModel)DataContext).ApplyHsvShiftCommand}" />
+                <Button Content="Reset" Margin="4,0,0,0" Command="{Binding ResetHsvShiftCommand}" />
+            </WrapPanel>
         </Border>
 
         <!-- Status Bar -->

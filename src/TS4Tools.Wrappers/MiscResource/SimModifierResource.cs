@@ -42,11 +42,23 @@ public sealed class SimModifierResource : TypedResource
     private const int ObjectDataSize = 8; // Position (4) + Length (4)
     private const int BoneEntrySize = 8; // BoneHash (4) + Multiplier (4)
 
+    /// <summary>
+    /// First SMOD version with a sub-region field after <see cref="Region"/>.
+    /// </summary>
+    /// <remarks>
+    /// Not in legacy (SimModifierResource.cs lines 52-64 predate it). Real game/mod SMODs of version 144
+    /// (0x90) are exactly 4 bytes longer than the legacy layout, and only with those 4 bytes skipped do the
+    /// three ITG keys line up (the bone-pose key's instance then equals the resource instance).
+    /// Legacy would mis-read the keys and drop the trailing 4 bytes on save.
+    /// </remarks>
+    public const uint SubRegionVersion = 144;
+
     #region Fields
 
     private uint _version;
     private uint _gender;
     private uint _region;
+    private uint _subRegion;
     private uint _linkTag;
     private ResourceKey _bonePoseKey;
     private ResourceKey _deformerMapShapeKey;
@@ -105,6 +117,22 @@ public sealed class SimModifierResource : TypedResource
             if (_region != value)
             {
                 _region = value;
+                OnChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// The sub-region (present only when <see cref="Version"/> &gt;= <see cref="SubRegionVersion"/>).
+    /// </summary>
+    public uint SubRegion
+    {
+        get => _subRegion;
+        set
+        {
+            if (_subRegion != value)
+            {
+                _subRegion = value;
                 OnChanged();
             }
         }
@@ -261,6 +289,12 @@ public sealed class SimModifierResource : TypedResource
         _region = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
+        if (_version >= SubRegionVersion)
+        {
+            _subRegion = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+            offset += 4;
+        }
+
         _linkTag = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
@@ -394,7 +428,7 @@ public sealed class SimModifierResource : TypedResource
 
         // Calculate size
         int contextDataSize = CalculateContextDataSize();
-        int mainDataSize = 16 + (3 * TgiBlockSize) + 4 + (_boneEntries.Count * BoneEntrySize);
+        int mainDataSize = 16 + (Version >= SubRegionVersion ? 4 : 0) + (3 * TgiBlockSize) + 4 + (_boneEntries.Count * BoneEntrySize);
         // 16 = Version (4) + Gender (4) + Region (4) + LinkTag (4)
         // 3 * 16 = 3 TGI blocks
         // 4 = bone count
@@ -415,6 +449,11 @@ public sealed class SimModifierResource : TypedResource
         offset += 4;
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset), Region);
         offset += 4;
+        if (Version >= SubRegionVersion)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset), SubRegion);
+            offset += 4;
+        }
         BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset), LinkTag);
         offset += 4;
 
@@ -520,6 +559,7 @@ public sealed class SimModifierResource : TypedResource
         _version = 0;
         _gender = 0;
         _region = 0;
+        _subRegion = 0;
         _linkTag = 0;
         _bonePoseKey = default;
         _deformerMapShapeKey = default;

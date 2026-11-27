@@ -20,19 +20,9 @@ public interface IFileSystemService
     Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Reads all text from a file.
-    /// </summary>
-    string ReadAllText(string path);
-
-    /// <summary>
     /// Asynchronously reads all text from a file.
     /// </summary>
     Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Writes text to a file.
-    /// </summary>
-    void WriteAllText(string path, string contents);
 
     /// <summary>
     /// Asynchronously writes text to a file.

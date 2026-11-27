@@ -63,108 +63,23 @@ public sealed class TxtcResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
-        if (data.Length < 18)
-            throw new ResourceFormatException("TXTC resource data too short for header.");
+        // Source: TxtcResource.cs line 41 (root = new ContentType(...)); the root is parsed as a TxtcContent
+        var root = TxtcContent.Parse(data, nested: false, depth: 0, out _);
 
-        int offset = 0;
-
-        // Read version
-        Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
-
-        // Read TGI offset (relative to current position)
-        uint tgiOffset = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
-        long tgiPosn = offset + tgiOffset;
-
-        // Read super blocks if version >= 7
+        Version = root.Version;
+        PatternSize = root.PatternSize;
+        DataType = root.DataType;
+        Unknown3 = root.Unknown3;
+        Unknown4 = root.Unknown4;
         _superBlocks.Clear();
-        if (Version >= 7)
-        {
-            int superBlockCount = data[offset++];
-            for (int i = 0; i < superBlockCount; i++)
-            {
-                var (superBlock, bytesRead) = ParseSuperBlock(data[offset..]);
-                _superBlocks.Add(superBlock);
-                offset += bytesRead;
-            }
-        }
-
-        // Read PatternSize
-        PatternSize = (TxtcPatternSize)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
-
-        // Read DataType
-        DataType = (TxtcDataType)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
-
-        // Read Unknown3
-        Unknown3 = data[offset++];
-
-        // Read entry count
-        int entryCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-        offset += 4;
-
-        // Read Unknown4 if version >= 8
-        if (Version >= 8)
-        {
-            Unknown4 = data[offset++];
-        }
-
-        // Read entry blocks
+        _superBlocks.AddRange(root.SuperBlocks);
         _entries.Clear();
-        _entries.EnsureCapacity(entryCount);
-        for (int i = 0; i < entryCount; i++)
-        {
-            var (entryBlock, bytesRead) = ParseEntryBlock(data[offset..]);
-            _entries.Add(entryBlock);
-            offset += bytesRead;
-        }
-
-        // Read TGI blocks (IGT order per legacy)
+        _entries.AddRange(root.Entries);
         _tgiBlocks.Clear();
-        if (tgiPosn < data.Length)
-        {
-            int tgiBlockCount = data[(int)tgiPosn];
-            int tgiReadOffset = (int)tgiPosn + 1;
-            _tgiBlocks.EnsureCapacity(tgiBlockCount);
-
-            for (int i = 0; i < tgiBlockCount && tgiReadOffset + 16 <= data.Length; i++)
-            {
-                // IGT order: Instance (8), Group (4), Type (4)
-                ulong instance = BinaryPrimitives.ReadUInt64LittleEndian(data[tgiReadOffset..]);
-                tgiReadOffset += 8;
-                uint group = BinaryPrimitives.ReadUInt32LittleEndian(data[tgiReadOffset..]);
-                tgiReadOffset += 4;
-                uint type = BinaryPrimitives.ReadUInt32LittleEndian(data[tgiReadOffset..]);
-                tgiReadOffset += 4;
-                _tgiBlocks.Add(new ResourceKey(type, group, instance));
-            }
-        }
+        _tgiBlocks.AddRange(root.TgiBlocks);
     }
 
-    private static (TxtcSuperBlock block, int bytesRead) ParseSuperBlock(ReadOnlySpan<byte> data)
-    {
-        int offset = 0;
-
-        byte tgiIndex = data[offset++];
-        uint blockSize = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
-
-        int nestedStart = offset;
-        // For now, store the nested fabric content as raw bytes
-        // Full implementation would recursively parse ContentType
-        var fabricData = data.Slice(offset, (int)blockSize - 3).ToArray(); // -3 for unknown1/2/3
-        offset += (int)blockSize - 3;
-
-        byte unknown1 = data[offset++];
-        byte unknown2 = data[offset++];
-        byte unknown3 = data[offset++];
-
-        return (new TxtcSuperBlock(tgiIndex, fabricData, unknown1, unknown2, unknown3), offset);
-    }
-
-    private static (TxtcEntryBlock block, int bytesRead) ParseEntryBlock(ReadOnlySpan<byte> data)
+    internal static (TxtcEntryBlock block, int bytesRead) ParseEntryBlock(ReadOnlySpan<byte> data)
     {
         var entries = new List<TxtcEntry>();
         int offset = 0;
@@ -262,84 +177,25 @@ public sealed class TxtcResource : TypedResource
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
+        var root = new TxtcContent
+        {
+            Version = Version,
+            PatternSize = PatternSize,
+            DataType = DataType,
+            Unknown3 = Unknown3,
+            Unknown4 = Unknown4,
+        };
+        root.SuperBlocks.AddRange(_superBlocks);
+        root.Entries.AddRange(_entries);
+        root.TgiBlocks.AddRange(_tgiBlocks);
+
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms, Encoding.ASCII, leaveOpen: true);
-
-        // Write version
-        writer.Write(Version);
-
-        // Placeholder for TGI offset
-        long offsetPos = ms.Position;
-        writer.Write(0u);
-
-        // Write super blocks if version >= 7
-        if (Version >= 7)
-        {
-            writer.Write((byte)_superBlocks.Count);
-            foreach (var superBlock in _superBlocks)
-            {
-                WriteSuperBlock(writer, superBlock);
-            }
-        }
-
-        // Write PatternSize
-        writer.Write((uint)PatternSize);
-
-        // Write DataType
-        writer.Write((uint)DataType);
-
-        // Write Unknown3
-        writer.Write(Unknown3);
-
-        // Write entry count
-        writer.Write(_entries.Count);
-
-        // Write Unknown4 if version >= 8
-        if (Version >= 8)
-        {
-            writer.Write(Unknown4);
-        }
-
-        // Write entry blocks
-        foreach (var entryBlock in _entries)
-        {
-            WriteEntryBlock(writer, entryBlock);
-        }
-
-        // Record TGI position and write offset
-        long tgiStart = ms.Position;
-        uint tgiOffset = (uint)(tgiStart - offsetPos - 4);
-
-        // Write TGI blocks (IGT order)
-        writer.Write((byte)_tgiBlocks.Count);
-        foreach (var tgi in _tgiBlocks)
-        {
-            writer.Write(tgi.Instance);
-            writer.Write(tgi.ResourceGroup);
-            writer.Write(tgi.ResourceType);
-        }
-
-        // Go back and write offset
-        long endPos = ms.Position;
-        ms.Position = offsetPos;
-        writer.Write(tgiOffset);
-        ms.Position = endPos;
-
+        root.Write(writer);
         return ms.ToArray();
     }
 
-    private static void WriteSuperBlock(BinaryWriter writer, TxtcSuperBlock superBlock)
-    {
-        writer.Write(superBlock.TgiIndex);
-        uint blockSize = (uint)(superBlock.FabricData.Length + 3);
-        writer.Write(blockSize);
-        writer.Write(superBlock.FabricData);
-        writer.Write(superBlock.Unknown1);
-        writer.Write(superBlock.Unknown2);
-        writer.Write(superBlock.Unknown3);
-    }
-
-    private static void WriteEntryBlock(BinaryWriter writer, TxtcEntryBlock entryBlock)
+    internal static void WriteEntryBlock(BinaryWriter writer, TxtcEntryBlock entryBlock)
     {
         foreach (var entry in entryBlock.Entries)
         {
@@ -553,14 +409,15 @@ public enum TxtcDataType : uint
 /// <summary>
 /// Super block for version 7+ TXTC resources.
 /// </summary>
+/// <remarks>Source: TxtcResource.cs SuperBlock, lines 281-330; the fabric is a nested ContentType.</remarks>
 /// <param name="TgiIndex">TGI block index.</param>
-/// <param name="FabricData">Fabric content data.</param>
+/// <param name="Fabric">Nested fabric content.</param>
 /// <param name="Unknown1">Unknown field 1.</param>
 /// <param name="Unknown2">Unknown field 2.</param>
 /// <param name="Unknown3">Unknown field 3.</param>
 public sealed record TxtcSuperBlock(
     byte TgiIndex,
-    byte[] FabricData,
+    TxtcContent Fabric,
     byte Unknown1,
     byte Unknown2,
     byte Unknown3);

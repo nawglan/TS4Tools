@@ -18,7 +18,7 @@ public sealed class HelperManager
 
     private readonly List<HelperDefinition> _allHelpers = [];
     private readonly string _helpersFolder;
-    private bool _loaded;
+    private volatile bool _loaded;
 
     /// <summary>
     /// Gets the singleton instance of the HelperManager.
@@ -56,6 +56,18 @@ public sealed class HelperManager
         var appDir = AppContext.BaseDirectory;
         _helpersFolder = Path.Combine(appDir, "Helpers");
     }
+
+    /// <summary>Creates a manager that reads the *.helper files of a given folder (for tests).</summary>
+    internal HelperManager(string helpersFolder)
+    {
+        _helpersFolder = helpersFolder;
+    }
+
+    /// <summary>
+    /// Loads the helper definitions on a worker thread, so the Helpers folder is not read on the
+    /// UI thread when the first resource is selected.
+    /// </summary>
+    public Task PreloadAsync() => _loaded ? Task.CompletedTask : Task.Run(EnsureLoaded);
 
     /// <summary>
     /// Reloads all helper definitions from disk.
@@ -176,7 +188,7 @@ public sealed class HelperManager
             return;
         }
 
-        foreach (var file in Directory.GetFiles(_helpersFolder, "*.helper"))
+        foreach (var file in Directory.EnumerateFiles(_helpersFolder, "*.helper"))
         {
             try
             {
@@ -283,8 +295,9 @@ public sealed class HelperManager
             Description = config.GetValueOrDefault("desc", ""),
             Command = config.GetValueOrDefault("command", ""),
             Arguments = config.GetValueOrDefault("arguments", ""),
-            IsReadOnly = config.ContainsKey("readonly"),
-            IgnoreWriteTimestamp = config.ContainsKey("ignorewritetimestamp"),
+            // Source: Helpers.cs lines 107-110 (a flag is set only when it has a value)
+            IsReadOnly = config.GetValueOrDefault("readonly", "").Length > 0,
+            IgnoreWriteTimestamp = config.GetValueOrDefault("ignorewritetimestamp", "").Length > 0,
             Wrappers = ParseSpaceSeparatedList(config.GetValueOrDefault("wrapper", "")),
             ResourceTypes = ParseSpaceSeparatedList(config.GetValueOrDefault("ResourceType", "")),
             ResourceGroups = ParseSpaceSeparatedList(config.GetValueOrDefault("ResourceGroup", "")),
@@ -365,9 +378,11 @@ public sealed class HelperDefinition
     public List<string> Instances { get; init; } = [];
 
     /// <summary>
-    /// Gets whether this helper uses file export (has {} in command or arguments).
+    /// Gets whether this helper exchanges data through a file (has {} in command or arguments).
+    /// Otherwise the resource is passed on the clipboard.
     /// </summary>
-    public bool UsesFileExport => Command.Contains("{}") || Arguments.Contains("{}");
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs line 106 (export)</remarks>
+    public bool UsesFileExport => Command.Contains("{}", StringComparison.Ordinal) || Arguments.Contains("{}", StringComparison.Ordinal);
 }
 
 /// <summary>
@@ -419,7 +434,11 @@ public sealed class HelperInstance
     public string Command => _definition.Command;
     public string Arguments => _definition.Arguments;
     public bool IsReadOnly => _definition.IsReadOnly;
-    public bool IgnoreWriteTimestamp => _definition.IgnoreWriteTimestamp;
+
+    /// <summary>Only a helper that exchanges a file can ignore the file's write time.</summary>
+    /// <remarks>Source: Helpers.cs line 107</remarks>
+    public bool IgnoreWriteTimestamp => UsesFileExport && _definition.IgnoreWriteTimestamp;
+
     public bool UsesFileExport => _definition.UsesFileExport;
 
     /// <summary>
@@ -446,42 +465,154 @@ public sealed class HelperInstance
     /// <summary>
     /// Expands command and arguments with the actual filename and resource properties.
     /// </summary>
-    /// <param name="filename">The temp filename to substitute for {}.</param>
+    /// <param name="filename">The temp filename to substitute for {}; null when the helper does not use a file.</param>
+    /// <param name="properties">
+    /// The resource's field values by lower case name; <c>{name}</c> in the arguments is replaced by the value.
+    /// </param>
     /// <returns>Tuple of (expanded command, expanded arguments).</returns>
     /// <remarks>
-    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 254-257
+    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 252-257: {} is replaced in
+    /// the command and the arguments, then every <c>{field}</c> of the resource in the arguments only.
     /// </remarks>
-    public (string Command, string Arguments) ExpandCommandLine(string filename)
+    public (string Command, string Arguments) ExpandCommandLine(string? filename, IReadOnlyDictionary<string, string>? properties = null)
     {
-        var cmd = Command.Replace("{}", filename);
-        var args = Arguments.Replace("{}", filename);
+        var cmd = Command;
+        var args = Arguments;
 
-        // Additional property substitution would happen here if we had access to the resource
-        // For now, just handle the filename substitution
+        if (filename != null)
+        {
+            cmd = cmd.Replace("{}", filename, StringComparison.Ordinal);
+            args = args.Replace("{}", filename, StringComparison.Ordinal);
+        }
+
+        if (properties != null)
+        {
+            foreach (var (name, value) in properties)
+            {
+                args = args.Replace("{" + name.ToLowerInvariant() + "}", value, StringComparison.OrdinalIgnoreCase);
+            }
+        }
 
         return (cmd, args);
     }
+
+    /// <summary>
+    /// Expands the command and arguments into an argv list for execution.
+    /// </summary>
+    /// <remarks>
+    /// Same substitutions as <see cref="ExpandCommandLine"/> (Source: legacy Helpers.cs lines 252-257), but the
+    /// helper's own argument template is tokenised FIRST and each placeholder is substituted inside a single argv
+    /// element. Resource field values come from untrusted package files, so they must never be able to add,
+    /// split or quote arguments; control characters are also stripped from them. Legacy built one string and
+    /// had this weakness.
+    /// </remarks>
+    public (string Command, IReadOnlyList<string> Arguments) ExpandArgumentList(
+        string? filename, IReadOnlyDictionary<string, string>? properties = null)
+    {
+        var cmd = filename != null ? Command.Replace("{}", filename, StringComparison.Ordinal) : Command;
+        var result = new List<string>();
+
+        foreach (var token in TokenizeArguments(Arguments))
+        {
+            var arg = token;
+            if (filename != null)
+                arg = arg.Replace("{}", filename, StringComparison.Ordinal);
+
+            if (properties != null)
+            {
+                foreach (var (name, value) in properties)
+                {
+                    arg = arg.Replace("{" + name.ToLowerInvariant() + "}", SanitizeArgumentValue(value),
+                        StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            result.Add(arg);
+        }
+
+        return (cmd, result);
+    }
+
+    /// <summary>
+    /// Splits an argument template on whitespace outside double quotes. Quotes are removed; <c>\"</c> is a literal quote.
+    /// </summary>
+    internal static List<string> TokenizeArguments(string template)
+    {
+        var tokens = new List<string>();
+        var current = new StringBuilder();
+        bool inQuotes = false, hasToken = false;
+
+        for (int i = 0; i < template.Length; i++)
+        {
+            char c = template[i];
+            if (c == '\\' && i + 1 < template.Length && template[i + 1] == '"')
+            {
+                current.Append('"');
+                hasToken = true;
+                i++;
+            }
+            else if (c == '"')
+            {
+                inQuotes = !inQuotes;
+                hasToken = true;
+            }
+            else if (char.IsWhiteSpace(c) && !inQuotes)
+            {
+                if (hasToken)
+                {
+                    tokens.Add(current.ToString());
+                    current.Clear();
+                    hasToken = false;
+                }
+            }
+            else
+            {
+                current.Append(c);
+                hasToken = true;
+            }
+        }
+
+        if (hasToken)
+            tokens.Add(current.ToString());
+
+        return tokens;
+    }
+
+    private static string SanitizeArgumentValue(string value) =>
+        string.Concat(value.Where(ch => !char.IsControl(ch)));
 
     /// <summary>
     /// Executes the helper with the given resource data.
     /// </summary>
     /// <param name="resourceData">The resource data to edit.</param>
     /// <param name="resourceName">Optional resource name for the temp filename.</param>
+    /// <param name="properties">The resource's field values for <c>{field}</c> arguments.</param>
+    /// <param name="clipboard">
+    /// Used when the command line has no <c>{}</c>: the resource is placed on the clipboard for the helper and the
+    /// helper's result is read back from it.
+    /// </param>
     /// <returns>Result containing modified data if changed.</returns>
     /// <remarks>
-    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 176-205, 252-279
+    /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 176-205 (execHelper),
+    /// 252-279 (Execute). With a file the change is detected by the file's write time; with the clipboard
+    /// there is nothing to compare, so whatever the helper leaves on the clipboard is taken as the new data.
     /// </remarks>
-    public async Task<HelperExecutionResult> ExecuteAsync(ReadOnlyMemory<byte> resourceData, string? resourceName = null)
+    public async Task<HelperExecutionResult> ExecuteAsync(
+        ReadOnlyMemory<byte> resourceData,
+        string? resourceName = null,
+        IReadOnlyDictionary<string, string>? properties = null,
+        IHelperClipboard? clipboard = null)
     {
-        if (!UsesFileExport)
-        {
-            return new HelperExecutionResult
-            {
-                Success = false,
-                ErrorMessage = "Helper does not use file export (no {} in command/arguments)"
-            };
-        }
+        return UsesFileExport
+            ? await ExecuteWithFileAsync(resourceData, resourceName, properties)
+            : await ExecuteWithClipboardAsync(resourceData, properties, clipboard);
+    }
 
+    private async Task<HelperExecutionResult> ExecuteWithFileAsync(
+        ReadOnlyMemory<byte> resourceData,
+        string? resourceName,
+        IReadOnlyDictionary<string, string>? properties)
+    {
         var tempFile = GetTempFilename(resourceName);
 
         try
@@ -491,7 +622,7 @@ public sealed class HelperInstance
             var lastWriteTime = File.GetLastWriteTimeUtc(tempFile);
 
             // Expand command line
-            var (cmd, args) = ExpandCommandLine(tempFile);
+            var (cmd, args) = ExpandArgumentList(tempFile, properties);
 
             // Execute the helper
             var success = await ExecuteProcessAsync(cmd, args);
@@ -548,17 +679,61 @@ public sealed class HelperInstance
         }
     }
 
+    private async Task<HelperExecutionResult> ExecuteWithClipboardAsync(
+        ReadOnlyMemory<byte> resourceData,
+        IReadOnlyDictionary<string, string>? properties,
+        IHelperClipboard? clipboard)
+    {
+        if (clipboard == null)
+        {
+            return new HelperExecutionResult
+            {
+                Success = false,
+                ErrorMessage = "The clipboard is not available to pass the resource to the helper"
+            };
+        }
+
+        try
+        {
+            await clipboard.SetResourceAsync(resourceData.ToArray());
+
+            var (cmd, args) = ExpandArgumentList(null, properties);
+            if (!await ExecuteProcessAsync(cmd, args))
+            {
+                return new HelperExecutionResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Helper process exited with non-zero code"
+                };
+            }
+
+            if (IsReadOnly) return new HelperExecutionResult { Success = true };
+
+            var result = await clipboard.TryGetResourceAsync();
+            return new HelperExecutionResult { Success = true, ModifiedData = result };
+        }
+        catch (Exception ex)
+        {
+            return new HelperExecutionResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+
     /// <summary>
     /// Executes a process and waits for it to exit.
     /// </summary>
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 259-278
     /// </remarks>
-    private static async Task<bool> ExecuteProcessAsync(string command, string arguments)
+    private static async Task<bool> ExecuteProcessAsync(string command, IReadOnlyList<string> arguments)
     {
         using var process = new Process();
         process.StartInfo.FileName = command;
-        process.StartInfo.Arguments = arguments;
+        foreach (var argument in arguments)
+            process.StartInfo.ArgumentList.Add(argument);
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.CreateNoWindow = false;
 
@@ -575,5 +750,77 @@ public sealed class HelperInstance
         await process.WaitForExitAsync();
 
         return process.ExitCode == 0;
+    }
+}
+
+/// <summary>
+/// The clipboard a helper without <c>{}</c> in its command line uses to receive the resource and return
+/// the changed resource.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 176-205 (Clipboard.SetData /
+/// GetData with DataFormats.Serializable) and RunHelper.cs lines 54-117 (the helper reads and clears it,
+/// then puts its result back). The data is a binary clipboard format named
+/// <see cref="HelperClipboardFormat.Name"/>.
+/// </remarks>
+public interface IHelperClipboard
+{
+    /// <summary>Places the resource data on the clipboard.</summary>
+    Task SetResourceAsync(byte[] data);
+
+    /// <summary>Reads resource data from the clipboard, or null when there is none.</summary>
+    Task<byte[]?> TryGetResourceAsync();
+}
+
+/// <summary>The binary clipboard format used to exchange a resource with helpers.</summary>
+public static class HelperClipboardFormat
+{
+    /// <summary>Name of the application specific clipboard format.</summary>
+    public const string Name = "application/x-ts4tools-resource";
+}
+
+/// <summary>
+/// Builds the <c>{field}</c> values a helper's arguments can use from a resource wrapper.
+/// </summary>
+/// <remarks>
+/// Source: legacy_references/Sims4Tools/s4pi Extras/Helpers/Helpers.cs lines 254-256: every content field of the
+/// resource is available as <c>{fieldname}</c> (lower case) with the field's text value.
+/// </remarks>
+public static class HelperProperties
+{
+    private const int MaxValueLength = 4096;
+
+    /// <summary>Gets the simple (text, number, flag, enum) public properties of a resource by lower case name.</summary>
+    public static IReadOnlyDictionary<string, string> From(object? resource)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (resource == null) return result;
+
+        foreach (var property in resource.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (!property.CanRead || property.GetIndexParameters().Length != 0) continue;
+            if (!IsSimple(property.PropertyType)) continue;
+
+            object? value;
+            try
+            {
+                value = property.GetValue(resource);
+            }
+            catch (TargetInvocationException)
+            {
+                continue;
+            }
+
+            var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+            result[property.Name.ToLowerInvariant()] = text.Length > MaxValueLength ? text[..MaxValueLength] : text;
+        }
+
+        return result;
+    }
+
+    private static bool IsSimple(Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(decimal);
     }
 }

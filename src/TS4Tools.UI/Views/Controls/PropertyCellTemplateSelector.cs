@@ -35,6 +35,17 @@ public sealed class PropertyCellTemplateSelector : IDataTemplate
     /// </summary>
     public IDataTemplate? ReadOnlyTemplate { get; set; }
 
+    /// <summary>
+    /// Template for bool properties (check box).
+    /// </summary>
+    public IDataTemplate? BooleanTemplate { get; set; }
+
+    /// <summary>
+    /// Template for non-flags enum properties (drop-down).
+    /// Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs lines 588-727 (EnumChooserCTD)
+    /// </summary>
+    public IDataTemplate? EnumTemplate { get; set; }
+
     public Control? Build(object? param)
     {
         if (param is not PropertyItem item)
@@ -46,6 +57,12 @@ public sealed class PropertyCellTemplateSelector : IDataTemplate
 
         if (item.IsBinaryData && BinaryEditorTemplate != null)
             return BinaryEditorTemplate.Build(param);
+
+        if (item.EditorKind == PropertyEditorKind.Boolean && BooleanTemplate != null)
+            return BooleanTemplate.Build(param);
+
+        if (item.EditorKind == PropertyEditorKind.Enum && EnumTemplate != null)
+            return EnumTemplate.Build(param);
 
         if (item.IsReadOnly && ReadOnlyTemplate != null)
             return ReadOnlyTemplate.Build(param);

@@ -12,14 +12,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Using Include="System.Collections" />
     <Using Include="System.Collections.ObjectModel" />
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Collections.Specialized" />
     <Using Include="System.ComponentModel" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Globalization" />
     <Using Include="System.Reflection" />
     <Using Include="System.Runtime.InteropServices" />
     <Using Include="System.Text" />
+    <Using Include="System.Windows.Input" />
     <Using Include="System.Text.Json" />
+    <Using Include="System.Text.RegularExpressions" />
+    <Using Include="System.Collections.Frozen" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TS4Tools.UI.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +44,8 @@
   <ItemGroup>
     <ProjectReference Include="..\TS4Tools.Core\TS4Tools.Core.csproj" />
     <ProjectReference Include="..\TS4Tools.Wrappers\TS4Tools.Wrappers.csproj" />
+    <!-- Legacy s4pi API: plugins recompiled against it are bridged into the registry (WrapperRegistryService). -->
+    <ProjectReference Include="..\TS4Tools.Compatibility\TS4Tools.Compatibility.csproj" />
   </ItemGroup>
 
 </Project>

@@ -49,6 +49,12 @@ public sealed class GeomListResource : TypedResource
     public uint ObjectVersion { get; set; }
 
     /// <summary>
+    /// Object count from the header, preserved verbatim (legacy writes the parsed value back,
+    /// GEOMListResource.cs lines 67 and 98; it is not the reference block count).
+    /// </summary>
+    public uint ObjectCount { get; set; }
+
+    /// <summary>
     /// Public TGI keys.
     /// </summary>
     public IReadOnlyList<ResourceKey> PublicKeys => _publicKeys;
@@ -113,6 +119,7 @@ public sealed class GeomListResource : TypedResource
 
             // Object count (stored but not directly used - it's for the reference block list)
             uint objectCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+            ObjectCount = objectCount;
             offset += 4;
 
             // Validate counts
@@ -264,7 +271,7 @@ public sealed class GeomListResource : TypedResource
         writer.Write((uint)_publicKeys.Count);
         writer.Write((uint)_externalKeys.Count);
         writer.Write((uint)_delayLoadKeys.Count);
-        writer.Write((uint)_referenceBlocks.Count); // objectCount
+        writer.Write(ObjectCount); // Source: GEOMListResource.cs line 98 (parsed value, not block count)
 
         // Write public keys
         // Source: GEOMListResource.cs lines 100-103
@@ -290,7 +297,9 @@ public sealed class GeomListResource : TypedResource
         // Calculate and write object position, length
         // Source: GEOMListResource.cs lines 112-117
         uint objectPos = (uint)(ms.Position + 8); // After position and length fields
-        uint objectLen = CalculateReferenceBlockListSize() + 4; // +4 for the count
+        // Source: GEOMListResource.cs line 113 and lines 181-191: objectLength = ReferenceBlockList.Size + 4,
+        // where Size itself already starts at 4 (the count). Real game files carry the same value.
+        uint objectLen = CalculateReferenceBlockListSize() + 4 + 4;
 
         writer.Write(objectPos);
         writer.Write(objectLen);
@@ -388,6 +397,7 @@ public sealed class GeomListResource : TypedResource
         ObjectPosition = 0;
         ObjectLength = 0;
         ObjectVersion = 0;
+        ObjectCount = 0;
         _publicKeys.Clear();
         _externalKeys.Clear();
         _delayLoadKeys.Clear();

@@ -47,13 +47,13 @@ public partial class DbcWarningWindow : Window
         OkButton.IsEnabled = UnderstandComboBox.SelectedIndex == 2;
     }
 
-    private void OkButton_Click(object? sender, RoutedEventArgs e)
+    private async void OkButton_Click(object? sender, RoutedEventArgs e)
     {
         Confirmed = true;
 
         // Save the autosave setting
         PromptAutosave = PromptAutosaveCheckBox.IsChecked == true;
-        SettingsService.Instance.Save();
+        await SettingsService.Instance.SaveAsync();
 
         Close(true);
     }

@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using FluentAssertions;
 using TS4Tools.Wrappers;
 using Xunit;
@@ -250,5 +249,99 @@ public class RcolTgiBlockTests
 
         // Assert
         str.Should().Be("0x00000000:0x00000000:0x0000000000000000");
+    }
+
+    [Fact]
+    public void Read_IgnoresBytesBeyondSize()
+    {
+        var data = new byte[24];
+        BinaryPrimitives.WriteUInt64LittleEndian(data, 0x1122334455667788);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(8), 0xAABBCCDD);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(12), 0x01020304);
+        data.AsSpan(16).Fill(0xFF);
+
+        var tgi = RcolTgiBlock.Read(data);
+
+        tgi.Should().Be(new RcolTgiBlock(0x1122334455667788, 0xAABBCCDD, 0x01020304));
+    }
+
+    [Fact]
+    public void Read_FifteenBytes_ThrowsArgumentException()
+    {
+        var action = () => RcolTgiBlock.Read(new byte[15]);
+
+        action.Should().Throw<ArgumentException>().WithMessage("*expected 16 bytes, got 15*");
+    }
+
+    [Fact]
+    public void Write_FifteenByteDestination_ThrowsArgumentException()
+    {
+        var action = () => new RcolTgiBlock(1, 2, 3).Write(new byte[15]);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Write_LargerDestination_LeavesTrailingBytesUntouched()
+    {
+        var buffer = new byte[20];
+        buffer.AsSpan().Fill(0xEE);
+
+        new RcolTgiBlock(1, 2, 3).Write(buffer);
+
+        buffer[16..].Should().OnlyContain(b => b == 0xEE);
+        RcolTgiBlock.Read(buffer).Should().Be(new RcolTgiBlock(1, 2, 3));
+    }
+
+    [Fact]
+    public void Layout_IsInstanceThenTypeThenGroup_LittleEndian()
+    {
+        var buffer = new byte[16];
+
+        new RcolTgiBlock(0x0807060504030201, 0x0C0B0A09, 0x100F0E0D).Write(buffer);
+
+        buffer.Should().Equal(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16);
+    }
+
+    [Fact]
+    public void Equals_DifferingOnlyInOneField_ReturnsFalse()
+    {
+        var baseline = new RcolTgiBlock(1, 2, 3);
+
+        baseline.Equals(new RcolTgiBlock(9, 2, 3)).Should().BeFalse();
+        baseline.Equals(new RcolTgiBlock(1, 9, 3)).Should().BeFalse();
+        baseline.Equals(new RcolTgiBlock(1, 2, 9)).Should().BeFalse();
+        (baseline == new RcolTgiBlock(1, 2, 3)).Should().BeTrue();
+        (baseline != new RcolTgiBlock(1, 2, 4)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void GetHashCode_EqualBlocks_HaveEqualHashes()
+    {
+        new RcolTgiBlock(5, 6, 7).GetHashCode().Should().Be(new RcolTgiBlock(5, 6, 7).GetHashCode());
+    }
+
+    [Fact]
+    public void Equals_BoxedOtherType_ReturnsFalse()
+    {
+        new RcolTgiBlock(1, 2, 3).Equals((object)"not a tgi").Should().BeFalse();
+        new RcolTgiBlock(1, 2, 3).Equals((object)new RcolTgiBlock(1, 2, 3)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ResourceKey_RoundTrip_PreservesAllFields()
+    {
+        var tgi = new RcolTgiBlock(ulong.MaxValue, uint.MaxValue, 0);
+
+        RcolTgiBlock.FromResourceKey(tgi.ToResourceKey()).Should().Be(tgi);
+        tgi.ToResourceKey().ResourceType.Should().Be(uint.MaxValue);
+        tgi.ToResourceKey().ResourceGroup.Should().Be(0u);
+    }
+
+    [Fact]
+    public void ToString_MaxValues_UsesFixedWidthHex()
+    {
+        new RcolTgiBlock(ulong.MaxValue, uint.MaxValue, uint.MaxValue).ToString()
+            .Should().Be("0xFFFFFFFF:0xFFFFFFFF:0xFFFFFFFFFFFFFFFF");
     }
 }

@@ -32,6 +32,13 @@ public partial class RcolViewerViewModel : ViewModelBase
     private RcolChunkViewModel? _selectedChunk;
 
     /// <summary>
+    /// Whether the resource holds a mesh (MLOD/GEOM/MODL) the 3D model viewer can show.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pe Helpers/ModelViewer (MLODViewer.helper, GEOMViewer.helper)</remarks>
+    [ObservableProperty]
+    private bool _hasModel;
+
+    /// <summary>
     /// The chunks in this RCOL resource.
     /// </summary>
     public ObservableCollection<RcolChunkViewModel> Chunks { get; } = [];
@@ -48,6 +55,7 @@ public partial class RcolViewerViewModel : ViewModelBase
     {
         _resource = resource;
         IsValid = resource.IsValid;
+        HasModel = Services.ModelViewer.MeshExtractor.HasModel(resource);
         VersionDisplay = $"0x{resource.Version:X8}";
         PublicChunksCount = resource.PublicChunksCount;
         ChunkCount = resource.ChunkCount;

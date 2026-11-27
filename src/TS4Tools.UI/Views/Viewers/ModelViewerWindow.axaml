@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+        x:Class="TS4Tools.UI.Views.Viewers.ModelViewerWindow"
+        x:DataType="vm:ModelViewerViewModel"
+        Title="{Binding Title}"
+        Width="900" Height="640"
+        WindowStartupLocation="CenterOwner">
+    <!-- Source: legacy_references/Sims4Tools/s4pe Helpers/ModelViewer/MainWindow.xaml -->
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Padding="8,4" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}">
+            <TextBlock Text="{Binding Statistics}" FontSize="11" />
+        </Border>
+        <Border DockPanel.Dock="Left" Width="240" Padding="8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Spacing="6">
+                    <TextBlock Text="Draw mode" FontWeight="SemiBold" />
+                    <ComboBox ItemsSource="{Binding RenderModes}" SelectedItem="{Binding RenderMode}" HorizontalAlignment="Stretch" />
+                    <Button Content="Reset camera" Command="{Binding ResetCameraCommand}" HorizontalAlignment="Stretch" />
+                    <TextBlock Text="Drag to rotate, wheel to zoom." Opacity="0.6" FontSize="11" TextWrapping="Wrap" />
+                    <TextBlock Text="Meshes" FontWeight="SemiBold" Margin="0,8,0,0" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Warnings}" TextWrapping="Wrap" FontSize="11"
+                           Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Meshes}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ModelMeshItem">
+                                <CheckBox IsChecked="{Binding IsVisible}" Content="{Binding Display}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+        <Border x:Name="Viewport" Background="#2B2B30" ClipToBounds="True">
+            <Image Source="{Binding Frame}" Stretch="None" />
+        </Border>
+    </DockPanel>
+</Window>

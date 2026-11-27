@@ -389,11 +389,63 @@ public class ClipResourceTests
     {
         // Test the factory method creates correct derived types
         ClipEvent.Create(ClipEventType.Sound, 140, new byte[152], 0).Should().BeOfType<ClipEventSound>();
-        ClipEvent.Create(ClipEventType.Effect, 280, new byte[292], 0).Should().BeOfType<ClipEventEffect>();
+        ClipEvent.Create(ClipEventType.Effect, 292, new byte[304], 0).Should().BeOfType<ClipEventEffect>();
         ClipEvent.Create(ClipEventType.Censor, 16, new byte[28], 0).Should().BeOfType<ClipEventCensor>();
         ClipEvent.Create(ClipEventType.Script, 24, new byte[36], 0).Should().BeOfType<ClipEventScript>();
         ClipEvent.Create(ClipEventType.Snap, 20, new byte[32], 0).Should().BeOfType<ClipEventSnap>();
-        ClipEvent.Create(ClipEventType.DoubleModifierSound, 144, new byte[156], 0).Should().BeOfType<ClipEventDoubleModifierSound>();
+        ClipEvent.Create(ClipEventType.DoubleModifierSound, 148, new byte[160], 0).Should().BeOfType<ClipEventDoubleModifierSound>();
         ClipEvent.Create((ClipEventType)999, 16, new byte[28], 0).Should().BeOfType<ClipEventUnknown>();
+    }
+
+    /// <summary>
+    /// Regression (real data): a version-18 game clip. Legacy (ClipResource.cs lines 170-216, ClipEvents.cs
+    /// lines 600-622) only knows up to version 14 and fixed 0x80-byte event strings; real clips have
+    /// (a) 8 bytes between the events and the codec length in version 18, (b) compact SOUND events whose
+    /// name is length-prefixed, (c) compact EFFECT events smaller than the legacy layout, and (d) fixed
+    /// names with trailing spaces that legacy's trimming reader cannot write back.
+    /// </summary>
+    [Fact]
+    public void Parse_Version18_RealLayout_RoundTripsByteIdentical()
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        w.Write(18u); w.Write(0u); w.Write(1.03f);
+        w.Write(0f); w.Write(0f); w.Write(0f); w.Write(1f);
+        w.Write(0f); w.Write(0f); w.Write(0f);
+        w.Write(0u);              // reference namespace hash (v5+)
+        w.Write(0u); w.Write(0u); // surface hashes (v10+)
+        w.Write(0u);              // surface child namespace hash (v11+)
+        WriteString32(w, "clip");
+        WriteString32(w, "rig");
+        w.Write(0);               // explicit namespaces
+        w.Write(0);               // IK configuration
+
+        w.Write(3);               // event count
+        // (b) compact SOUND: 12 + 4 + 5
+        w.Write(3u); w.Write(21u); w.Write(1u); w.Write(6u); w.Write(0.13f);
+        w.Write(5); w.Write("sound"u8.ToArray());
+        // (d) legacy fixed SOUND with trailing space
+        w.Write(3u); w.Write(140u); w.Write(1u); w.Write(0u); w.Write(0.5f);
+        var fixedName = new byte[0x80];
+        "grunt "u8.ToArray().CopyTo(fixedName, 0);
+        w.Write(fixedName);
+        // (c) compact EFFECT: 12 + 7 raw bytes
+        w.Write(5u); w.Write(19u); w.Write(1u); w.Write(0u); w.Write(0.7f);
+        w.Write(new byte[] { 1, 2, 3, 4, 5, 6, 7 });
+
+        w.Write(0x0D29F41E52C10D17UL); // (a) version-18 value after the events
+        w.Write(8);                    // codec length
+        w.Write("_pilC3S_"u8.ToArray());
+        var data = ms.ToArray();
+
+        var clip = new ClipResource(new ResourceKey(ClipResource.TypeId, 0, 0), data);
+
+        clip.IsValid.Should().BeTrue();
+        clip.PostEventsValue.Should().Be(0x0D29F41E52C10D17UL);
+        clip.ClipEvents.Should().HaveCount(3);
+        clip.ClipEvents[0].Should().BeOfType<ClipEventSound>().Which.SoundName.Should().Be("sound");
+        clip.ClipEvents[1].Should().BeOfType<ClipEventSound>().Which.SoundName.Should().Be("grunt");
+        clip.ClipEvents[2].Should().BeOfType<ClipEventUnknown>();
+        clip.Data.ToArray().Should().Equal(data);
     }
 }

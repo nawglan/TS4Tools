@@ -160,27 +160,27 @@ public class FileSystemServiceTests
     }
 
     [Fact]
-    public void MockFileSystemService_ReadAllText_ReturnsSetupContent()
+    public async Task MockFileSystemService_ReadAllTextAsync_ReturnsSetupContent()
     {
         // Arrange
         var mock = new MockFileSystemService();
         mock.SetupTextFile("/test/config.json", "{\"key\": \"value\"}");
 
         // Act
-        var result = mock.ReadAllText("/test/config.json");
+        var result = await mock.ReadAllTextAsync("/test/config.json");
 
         // Assert
         result.Should().Be("{\"key\": \"value\"}");
     }
 
     [Fact]
-    public void MockFileSystemService_WriteAllText_StoresContent()
+    public async Task MockFileSystemService_WriteAllTextAsync_StoresContent()
     {
         // Arrange
         var mock = new MockFileSystemService();
 
         // Act
-        mock.WriteAllText("/output/file.txt", "Hello, World!");
+        await mock.WriteAllTextAsync("/output/file.txt", "Hello, World!");
 
         // Assert
         mock.WrittenTextFiles.Should().ContainKey("/output/file.txt");

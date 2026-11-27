@@ -76,6 +76,29 @@ public sealed class RsltBlock : RcolBlock
     /// </summary>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
+        // Legacy has no version gate and no end-of-data check (RSLT.cs lines 76-121). Versions up to 9 match its
+        // layout on real game data; version 0x0A files with slots carry data the legacy layout does not describe
+        // (legacy either reads past the end or silently drops the tail), so those are refused as unsupported
+        // rather than misparsed or truncated on save.
+        int end;
+        try
+        {
+            end = ParseBody(data);
+        }
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException && Version > MaxLegacyCompatibleVersion)
+        {
+            throw new UnsupportedResourceVersionException("RSLT", Version, MaxLegacyCompatibleVersion);
+        }
+
+        if (end != data.Length && Version > MaxLegacyCompatibleVersion)
+            throw new UnsupportedResourceVersionException("RSLT", Version, MaxLegacyCompatibleVersion);
+    }
+
+    /// <summary>Newest RSLT version whose layout matches legacy RSLT.cs (validated on real game data).</summary>
+    internal const uint MaxLegacyCompatibleVersion = 9;
+
+    private int ParseBody(ReadOnlySpan<byte> data)
+    {
         int pos = 0;
 
         // Validate tag
@@ -140,6 +163,8 @@ public sealed class RsltBlock : RcolBlock
         ParseConePartList(data, ref pos, nConeSlots, Cones);
         if (nConeSlots > 0)
             ParseSlotOffsets(data, ref pos, ConeOffsets);
+
+        return pos;
     }
 
     /// <summary>

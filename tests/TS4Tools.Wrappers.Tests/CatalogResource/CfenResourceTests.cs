@@ -28,7 +28,7 @@ public class CfenResourceTests
     {
         var resource = new CfenResource(TestKey, ReadOnlyMemory<byte>.Empty);
 
-        resource.Version.Should().Be(SimpleCatalogResource.DefaultVersion);
+        resource.Version.Should().Be(0x0Au); // legacy CFENResource.cs line 35
         resource.CommonBlock.Should().NotBeNull();
         resource.ModlEntryList01.Count.Should().Be(0);
         resource.ModlEntryList02.Count.Should().Be(0);

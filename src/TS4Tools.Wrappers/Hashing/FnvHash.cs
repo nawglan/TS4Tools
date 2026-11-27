@@ -4,37 +4,41 @@ namespace TS4Tools.Wrappers.Hashing;
 
 /// <summary>
 /// Fowler-Noll-Vo hash functions used by The Sims 4 for string hashing.
-/// Implements FNV-1a variant for both 32-bit and 64-bit hashes.
+/// Implements the legacy s4pi FNV-1 variant (multiply, then XOR) for 32/64/24-bit hashes.
 /// </summary>
 /// <remarks>
 /// Source: CS System Classes/FNVHash.cs
-/// Legacy implementation uses HashAlgorithm base class; this is a modern static implementation.
+/// - HashCore (line 65): <c>hash *= prime; hash ^= b;</c> — FNV-1, NOT FNV-1.
+/// - ComputeHash(string) (line 50): ASCII bytes of <c>value.ToLowerInvariant()</c>, so every
+///   string overload here is case-insensitive, exactly like legacy.
+/// - FNV24: 32-bit hash folded <c>(h &gt;&gt; 24) ^ (h &amp; 0xFFFFFF)</c>, see <see cref="FNV24"/>.
+/// This static API delegates to the faithful <see cref="FNV32"/>/<see cref="FNV64"/>/<see cref="FNV24"/> classes.
 /// FNV32 parameters: prime=0x01000193, offset=0x811C9DC5
 /// FNV64 parameters: prime=0x00000100000001B3, offset=0xCBF29CE484222325
 /// </remarks>
 public static class FnvHash
 {
-    // FNV-1a 32-bit parameters
+    // FNV 32-bit parameters
     private const uint Fnv32Prime = 0x01000193;
     private const uint Fnv32Offset = 0x811C9DC5;
 
-    // FNV-1a 64-bit parameters
+    // FNV 64-bit parameters
     private const ulong Fnv64Prime = 0x00000100000001B3;
     private const ulong Fnv64Offset = 0xCBF29CE484222325;
 
     /// <summary>
-    /// Computes FNV-1a 32-bit hash of a string.
+    /// Computes FNV-1 32-bit hash of a string.
     /// </summary>
     /// <param name="value">The string to hash.</param>
     /// <returns>The 32-bit hash value.</returns>
     public static uint Fnv32(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Fnv32(Encoding.UTF8.GetBytes(value));
+        return FNV32.GetHash(value);
     }
 
     /// <summary>
-    /// Computes FNV-1a 32-bit hash of bytes.
+    /// Computes FNV-1 32-bit hash of bytes.
     /// </summary>
     /// <param name="data">The data to hash.</param>
     /// <returns>The 32-bit hash value.</returns>
@@ -44,26 +48,26 @@ public static class FnvHash
 
         foreach (byte b in data)
         {
-            hash ^= b;
             hash *= Fnv32Prime;
+            hash ^= b;
         }
 
         return hash;
     }
 
     /// <summary>
-    /// Computes FNV-1a 64-bit hash of a string.
+    /// Computes FNV-1 64-bit hash of a string.
     /// </summary>
     /// <param name="value">The string to hash.</param>
     /// <returns>The 64-bit hash value.</returns>
     public static ulong Fnv64(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        return Fnv64(Encoding.UTF8.GetBytes(value));
+        return FNV64.GetHash(value);
     }
 
     /// <summary>
-    /// Computes FNV-1a 64-bit hash of bytes.
+    /// Computes FNV-1 64-bit hash of bytes.
     /// </summary>
     /// <param name="data">The data to hash.</param>
     /// <returns>The 64-bit hash value.</returns>
@@ -73,15 +77,15 @@ public static class FnvHash
 
         foreach (byte b in data)
         {
-            hash ^= b;
             hash *= Fnv64Prime;
+            hash ^= b;
         }
 
         return hash;
     }
 
     /// <summary>
-    /// Computes FNV-1a 32-bit hash of a lowercase string.
+    /// Computes FNV-1 32-bit hash of a lowercase string.
     /// Used for case-insensitive hashing.
     /// </summary>
     /// <param name="value">The string to hash (will be lowercased).</param>
@@ -93,7 +97,7 @@ public static class FnvHash
     }
 
     /// <summary>
-    /// Computes FNV-1a 64-bit hash of a lowercase string.
+    /// Computes FNV-1 64-bit hash of a lowercase string.
     /// Used for case-insensitive hashing.
     /// </summary>
     /// <param name="value">The string to hash (will be lowercased).</param>
@@ -105,13 +109,13 @@ public static class FnvHash
     }
 
     /// <summary>
-    /// Computes FNV-24 hash (used for CLIP hashes in TS4).
-    /// This is FNV-32 masked to 24 bits.
+    /// Computes the legacy FNV-24 hash (FNV-32 with the high byte folded into the low 24 bits).
     /// </summary>
     /// <param name="value">The string to hash.</param>
     /// <returns>The 24-bit hash value.</returns>
     public static uint Fnv24(string value)
     {
-        return Fnv32Lower(value) & 0x00FFFFFF;
+        ArgumentNullException.ThrowIfNull(value);
+        return FNV24.GetHash(value);
     }
 }

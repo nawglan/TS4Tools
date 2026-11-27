@@ -170,18 +170,27 @@ public static class RcolConstants
     public const uint JazzStopAnimationNode = 0x0344D438;
 
     /// <summary>
+    /// VBSI - Vertex Buffer Swizzle Info. Never stored as a standalone resource; legacy VBSI.ResourceType
+    /// is 0xFFFFFFFF (VBSI.cs line 333).
+    /// </summary>
+    public const uint Vbsi = 0xFFFFFFFF;
+
+    /// <summary>
     /// All standalone RCOL resource type IDs (Y=yes in RCOLResources.txt).
     /// </summary>
+    /// <remarks>
+    /// 0x02D5DF13 (Jazz) is commented out in RCOLResources.txt (legacy treats it as the text based
+    /// "JAZZ tuning" resource) and 0x0344D438 is not listed at all, so neither is standalone. They remain
+    /// valid chunk types inside an RCOL (see <see cref="RcolBlockRegistry"/>).
+    /// </remarks>
     public static readonly uint[] StandaloneTypes =
     [
         Modl,    // 0x01661233
         Matd,    // 0x01D0E75D
         Mlod,    // 0x01D10F34
         Mtst,    // 0x02019972
-        JazzStateMachine, // 0x02D5DF13 - S_SM
         Tree,    // 0x021D7E8C
         TkMk,    // 0x033260E3
-        JazzStopAnimationNode, // 0x0344D438 - Stop
         SlotAdjusts, // 0x0355E0A6
         Lite,    // 0x03B4C61D
         Anim,    // 0x63A33EA7
@@ -214,6 +223,7 @@ public static class RcolConstants
         Vpxy => "VPXY",
         Rslt => "RSLT",
         Ftpt => "FTPT",
+        Vbsi => "VBSI",
         // Jazz State Machine types
         JazzStateMachine => "S_SM (Jazz State Machine)",
         JazzState => "S_St (Jazz State)",

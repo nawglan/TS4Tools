@@ -3,14 +3,54 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             xmlns:controls="using:TS4Tools.UI.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              x:Class="TS4Tools.UI.Views.Editors.PropertyGridEditorView"
              x:DataType="vm:PropertyGridViewModel">
     <!-- Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs -->
+    <!-- Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/NewGridForm.cs (list Add/Insert/Copy/Delete) -->
 
     <Design.DataContext>
         <vm:PropertyGridViewModel />
     </Design.DataContext>
+
+    <UserControl.Resources>
+        <controls:PropertyCellTemplateSelector x:Key="PropertyCellSelector">
+            <controls:PropertyCellTemplateSelector.DefaultTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                             Padding="4,1" MinHeight="22" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.DefaultTemplate>
+            <controls:PropertyCellTemplateSelector.ReadOnlyTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <TextBlock Text="{Binding Value}" Padding="4,2" Opacity="0.75" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="12" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.ReadOnlyTemplate>
+            <controls:PropertyCellTemplateSelector.BooleanTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <CheckBox IsChecked="{Binding BoolValue, Mode=TwoWay}" Padding="4,0" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.BooleanTemplate>
+            <controls:PropertyCellTemplateSelector.EnumTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <ComboBox ItemsSource="{Binding EnumNames}" SelectedItem="{Binding EnumName, Mode=TwoWay}"
+                              MinWidth="160" Padding="4,1" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.EnumTemplate>
+            <controls:PropertyCellTemplateSelector.TgiBlockSelectorTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <controls:TgiBlockSelectorControl DataContext="{Binding}" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.TgiBlockSelectorTemplate>
+            <controls:PropertyCellTemplateSelector.BinaryEditorTemplate>
+                <DataTemplate x:DataType="controls:PropertyItem">
+                    <controls:BinaryPropertyEditorControl DataContext="{Binding}" />
+                </DataTemplate>
+            </controls:PropertyCellTemplateSelector.BinaryEditorTemplate>
+        </controls:PropertyCellTemplateSelector>
+    </UserControl.Resources>
 
     <DockPanel>
         <!-- Header -->
@@ -30,32 +70,44 @@
             <TextBlock Text="{Binding StatusMessage}" FontSize="11" Opacity="0.7" />
         </Border>
 
-        <!-- Property Grid -->
-        <DataGrid ItemsSource="{Binding Properties}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="False"
-                  CanUserReorderColumns="False"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="True"
-                  GridLinesVisibility="Horizontal"
-                  SelectionMode="Single">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Property"
-                                    Binding="{ReflectionBinding Name}"
-                                    Width="180"
-                                    IsReadOnly="True" />
-                <DataGridTextColumn Header="Type"
-                                    Binding="{ReflectionBinding TypeName}"
-                                    Width="100"
-                                    IsReadOnly="True" />
-                <DataGridTextColumn Header="Value"
-                                    Binding="{ReflectionBinding Value, Mode=TwoWay}"
-                                    Width="*" />
-                <DataGridTextColumn Header="Category"
-                                    Binding="{ReflectionBinding Category}"
-                                    Width="80"
-                                    IsReadOnly="True" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Column headers -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="220,110,*" Margin="24,4,8,2">
+            <TextBlock Text="Property" FontWeight="SemiBold" FontSize="11" Opacity="0.7" />
+            <TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" FontSize="11" Opacity="0.7" />
+            <TextBlock Grid.Column="2" Text="Value" FontWeight="SemiBold" FontSize="11" Opacity="0.7" />
+        </Grid>
+
+        <!-- Property tree: nested objects, lists (with element commands) and flags expand. -->
+        <TreeView ItemsSource="{Binding Properties}" SelectionMode="Single">
+            <TreeView.Styles>
+                <Style Selector="TreeViewItem" x:DataType="controls:PropertyItem">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Setter Property="MinHeight" Value="24" />
+                </Style>
+            </TreeView.Styles>
+            <TreeView.ItemTemplate>
+                <TreeDataTemplate x:DataType="controls:PropertyItem" ItemsSource="{Binding Children}">
+                    <Grid ColumnDefinitions="220,110,*,Auto">
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding Category}" />
+                        <TextBlock Grid.Column="1" Text="{Binding TypeName}" Opacity="0.6" FontSize="11"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        <ContentControl Grid.Column="2" Content="{Binding}"
+                                        ContentTemplate="{StaticResource PropertyCellSelector}" />
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" Margin="4,0,0,0"
+                                    IsVisible="{Binding HasListCommands}">
+                            <Button Content="Add" Command="{Binding AddItemCommand}" IsVisible="{Binding CanAddItem}"
+                                    Padding="6,1" FontSize="11" ToolTip.Tip="Add a new element at the end" />
+                            <Button Content="Insert" Command="{Binding InsertItemCommand}" IsVisible="{Binding CanInsertBefore}"
+                                    Padding="6,1" FontSize="11" ToolTip.Tip="Insert a new element before this one" />
+                            <Button Content="Copy" Command="{Binding DuplicateItemCommand}" IsVisible="{Binding CanDuplicate}"
+                                    Padding="6,1" FontSize="11" ToolTip.Tip="Append a copy of this element" />
+                            <Button Content="Delete" Command="{Binding RemoveItemCommand}" IsVisible="{Binding CanRemove}"
+                                    Padding="6,1" FontSize="11" ToolTip.Tip="Delete this element" />
+                        </StackPanel>
+                    </Grid>
+                </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
     </DockPanel>
 </UserControl>

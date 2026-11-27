@@ -6,9 +6,16 @@ namespace TS4Tools.UI.ViewModels.Editors;
 /// <summary>
 /// View model for the catalog resource viewer.
 /// </summary>
+/// <remarks>
+/// Shows every catalog wrapper family: <see cref="AbstractCatalogResource"/> (COBJ, CCOL),
+/// <see cref="SimpleCatalogResource"/> (CFLR, CWAL, CFND, ... - common block only) and
+/// <see cref="ObjectCatalogResource"/> (0xA8F7B517, 0x48C28979, roof styles - the older catalog block).
+/// Tag values are named through <see cref="CatalogTagRegistry"/> (legacy CatalogTag.ToString shows "0xNNNN Name").
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/CatalogResource/CatalogCommon.cs and Common/CatalogTag.cs
+/// </remarks>
 public partial class CatalogViewerViewModel : ViewModelBase
 {
-    private AbstractCatalogResource? _resource;
+    private object? _resource;
 
     [ObservableProperty]
     private string _resourceTypeName = string.Empty;
@@ -74,25 +81,93 @@ public partial class CatalogViewerViewModel : ViewModelBase
         };
 
         VersionDisplay = $"0x{resource.Version:X8}";
-        CommonVersionDisplay = $"0x{resource.CommonBlock.CommonBlockVersion:X2}";
-        PriceDisplay = $"${resource.CommonBlock.Price:N0}";
-        NameHashDisplay = $"0x{resource.CommonBlock.NameHash:X8}";
-        DescriptionHashDisplay = $"0x{resource.CommonBlock.DescriptionHash:X8}";
-        ThumbnailHashDisplay = $"0x{resource.CommonBlock.ThumbnailHash:X16}";
-
-        BuildSummaryInfo(resource);
+        LoadCommon(resource.CommonBlock);
         BuildAuralInfo(resource);
         BuildPlacementInfo(resource);
-        LoadTags(resource);
-        LoadSellingPoints(resource);
         LoadColors(resource);
-        LoadProductStyles(resource);
     }
 
-    private void BuildSummaryInfo(AbstractCatalogResource resource)
+    /// <summary>
+    /// Loads a simple catalog resource (version + common block + type-specific fields) for display.
+    /// </summary>
+    public void LoadResource(SimpleCatalogResource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        _resource = resource;
+        ResourceTypeName = $"Catalog Resource ({resource.GetType().Name.Replace("Resource", string.Empty, StringComparison.Ordinal).ToUpperInvariant()})";
+        VersionDisplay = $"0x{resource.Version:X8}";
+        LoadCommon(resource.CommonBlock);
+        AuralInfo = "(not present in this catalog type)";
+        PlacementInfo = BuildOtherFields(resource, nameof(SimpleCatalogResource.Version), nameof(SimpleCatalogResource.CommonBlock));
+        Colors.Clear();
+    }
+
+    /// <summary>
+    /// Loads an object catalog resource (the pre-common-block catalog layout) for display.
+    /// </summary>
+    public void LoadResource(ObjectCatalogResource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        _resource = resource;
+        ResourceTypeName = $"Object Catalog ({resource.GetType().Name})";
+        VersionDisplay = $"0x{resource.Version:X8}";
+        CommonVersionDisplay = $"0x{resource.CatalogVersion:X2}";
+        PriceDisplay = $"${resource.CatalogPrice:N0}";
+        NameHashDisplay = $"0x{resource.CatalogNameHash:X8}";
+        DescriptionHashDisplay = $"0x{resource.CatalogDescHash:X8}";
+        ThumbnailHashDisplay = string.Empty;
+
+        var sb = new StringBuilder();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Resource Version: {VersionDisplay}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Catalog Version: {CommonVersionDisplay}");
+        sb.AppendLine();
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Price: {PriceDisplay}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Name Hash: {NameHashDisplay}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"Description Hash: {DescriptionHashDisplay}");
+        SummaryInfo = sb.ToString();
+        AuralInfo = "(not present in this catalog type)";
+        PlacementInfo = BuildOtherFields(resource,
+            nameof(ObjectCatalogResource.Version), nameof(ObjectCatalogResource.CatalogVersion),
+            nameof(ObjectCatalogResource.CatalogPrice), nameof(ObjectCatalogResource.CatalogNameHash),
+            nameof(ObjectCatalogResource.CatalogDescHash), nameof(ObjectCatalogResource.CatalogTagList),
+            nameof(ObjectCatalogResource.CatalogSellingPointList), nameof(ObjectCatalogResource.CatalogStyleTgiList));
+
+        Tags.Clear();
+        for (int i = 0; i < resource.CatalogTagList.Count; i++)
+            Tags.Add(new CatalogTagViewModel(i, resource.CatalogTagList[i]));
+
+        SellingPoints.Clear();
+        for (int i = 0; i < resource.CatalogSellingPointList.Count; i++)
+        {
+            var point = resource.CatalogSellingPointList.Points[i];
+            SellingPoints.Add(new SellingPointViewModel(i, point.Commodity, unchecked((int)point.Amount)));
+        }
+
+        Colors.Clear();
+        ProductStyles.Clear();
+        for (int i = 0; i < resource.CatalogStyleTgiList.Count; i++)
+            ProductStyles.Add(new TgiReferenceViewModel(i, resource.CatalogStyleTgiList[i]));
+    }
+
+    private static string BuildOtherFields(object resource, params string[] skip) =>
+        new FieldSubset(resource, skip).ToString();
+
+    private void LoadCommon(CatalogCommon common)
+    {
+        CommonVersionDisplay = $"0x{common.CommonBlockVersion:X2}";
+        PriceDisplay = $"${common.Price:N0}";
+        NameHashDisplay = $"0x{common.NameHash:X8}";
+        DescriptionHashDisplay = $"0x{common.DescriptionHash:X8}";
+        ThumbnailHashDisplay = $"0x{common.ThumbnailHash:X16}";
+        BuildSummaryInfo(common);
+        LoadTags(common);
+        LoadSellingPoints(common);
+        LoadProductStyles(common);
+    }
+
+    private void BuildSummaryInfo(CatalogCommon common)
     {
         var sb = new StringBuilder();
-        var common = resource.CommonBlock;
 
         sb.AppendLine(CultureInfo.InvariantCulture, $"Resource Version: {VersionDisplay}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"Common Block Version: {CommonVersionDisplay}");
@@ -168,21 +243,21 @@ public partial class CatalogViewerViewModel : ViewModelBase
         PlacementInfo = sb.ToString();
     }
 
-    private void LoadTags(AbstractCatalogResource resource)
+    private void LoadTags(CatalogCommon common)
     {
         Tags.Clear();
-        for (int i = 0; i < resource.CommonBlock.Tags.Count; i++)
+        for (int i = 0; i < common.Tags.Count; i++)
         {
-            Tags.Add(new CatalogTagViewModel(i, resource.CommonBlock.Tags[i]));
+            Tags.Add(new CatalogTagViewModel(i, common.Tags[i]));
         }
     }
 
-    private void LoadSellingPoints(AbstractCatalogResource resource)
+    private void LoadSellingPoints(CatalogCommon common)
     {
         SellingPoints.Clear();
-        for (int i = 0; i < resource.CommonBlock.SellingPoints.Count; i++)
+        for (int i = 0; i < common.SellingPoints.Count; i++)
         {
-            var point = resource.CommonBlock.SellingPoints.Points[i];
+            var point = common.SellingPoints.Points[i];
             SellingPoints.Add(new SellingPointViewModel(i, point.CommodityTag, point.Amount));
         }
     }
@@ -196,12 +271,12 @@ public partial class CatalogViewerViewModel : ViewModelBase
         }
     }
 
-    private void LoadProductStyles(AbstractCatalogResource resource)
+    private void LoadProductStyles(CatalogCommon common)
     {
         ProductStyles.Clear();
-        for (int i = 0; i < resource.CommonBlock.ProductStyles.Count; i++)
+        for (int i = 0; i < common.ProductStyles.Count; i++)
         {
-            var tgi = resource.CommonBlock.ProductStyles[i];
+            var tgi = common.ProductStyles[i];
             ProductStyles.Add(new TgiReferenceViewModel(i, tgi));
         }
     }
@@ -221,11 +296,47 @@ public partial class CatalogTagViewModel : ViewModelBase
     [ObservableProperty]
     private uint _tagValue;
 
+    /// <summary>The tag's name from the catalog tag registry, or empty when unknown.</summary>
+    [ObservableProperty]
+    private string _tagName = string.Empty;
+
+    /// <summary>"0xNNNNNNNN Name" (legacy CatalogTag.ToString style).</summary>
+    public string Display => string.IsNullOrEmpty(TagName) ? TagHex : $"{TagHex} {TagName}";
+
     public CatalogTagViewModel(int index, uint tag)
     {
         Index = index;
         TagValue = tag;
         TagHex = $"0x{tag:X8}";
+        TagName = CatalogTagRegistry.GetTagName(tag) ?? string.Empty;
+    }
+}
+
+/// <summary>
+/// Exposes every public property of an object except some names, for <see cref="TS4Tools.UI.Services.ValueBuilder"/>.
+/// </summary>
+internal sealed class FieldSubset(object source, string[] skip)
+{
+    public object Source => source;
+
+    public IReadOnlyCollection<string> Skip => skip;
+
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
+        foreach (var prop in source.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                     .Where(p => p.CanRead && p.GetIndexParameters().Length == 0 && !skip.Contains(p.Name))
+                     .Where(p => p.Name is not ("Data" or "Key" or "IsDirty"))
+                     .OrderBy(p => p.MetadataToken))
+        {
+            object? value;
+            try { value = prop.GetValue(source); }
+            catch (TargetInvocationException ex) { value = $"(Exception: {ex.InnerException?.Message})"; }
+            sb.Append(prop.Name).Append(": ");
+            sb.AppendLine(value is null ? "(null)"
+                : TS4Tools.UI.Services.ValueBuilder.TryFormatSimple(value, false, out var text) ? text : value.ToString());
+        }
+        return sb.ToString();
     }
 }
 

@@ -84,6 +84,10 @@ public sealed class CstrResource : SimpleCatalogResource
 
     #endregion
 
+    /// <inheritdoc/>
+    /// <remarks>Source: CSTRResource.cs line 34 (version = 0x0A); real 0x0B files append 17 bytes legacy drops.</remarks>
+    protected override uint? MaxSupportedVersion => 0x0A;
+
     /// <summary>
     /// Creates a new CSTR resource by parsing data.
     /// </summary>
@@ -224,6 +228,8 @@ public sealed class CstrResource : SimpleCatalogResource
     /// <inheritdoc/>
     protected override void InitializeTypeSpecificDefaults()
     {
+        // Source: CSTRResource.cs line 34 (legacy default version for a new resource)
+        Version = DefaultVersion;
         HashIndicator = 0x1;
         Hash01 = 0x811C9DC5;
         Hash02 = 0x811C9DC5;

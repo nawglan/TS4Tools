@@ -13,8 +13,31 @@ public class RealPackageTests
     private const string GamePath = "/mnt/ai/SteamLibrary/steamapps/common/The Sims 4";
     private const string DeltaPath = $"{GamePath}/Delta";
 
-    // Large third-party mod (~140 MB) used for full open -> save -> reopen round-trips.
-    private const string ModPackagePath = "/mnt/ai/sims_mods/test-mod.package";
+    private const string ModsPath = "/mnt/ai/sims_mods";
+
+    // A large third-party mod package used for full open -> save -> reopen round-trips: the package
+    // named by TS4TOOLS_TEST_MOD_PACKAGE, otherwise the largest *.package under the mods folder.
+    // No specific mod is named here, so the repository does not reveal anyone's Mods folder.
+    private static readonly Lazy<string?> LazyModPackagePath = new(FindModPackage);
+
+    private static string? ModPackagePath => LazyModPackagePath.Value;
+
+    private static string? FindModPackage()
+    {
+        var configured = Environment.GetEnvironmentVariable("TS4TOOLS_TEST_MOD_PACKAGE");
+        if (!string.IsNullOrWhiteSpace(configured))
+            return configured;
+
+        if (!Directory.Exists(ModsPath))
+            return null;
+
+        return Directory.EnumerateFiles(ModsPath, "*.package", SearchOption.AllDirectories)
+            .Select(p => new FileInfo(p))
+            .OrderByDescending(f => f.Length)
+            .ThenBy(f => f.FullName, StringComparer.Ordinal)
+            .Select(f => f.FullName)
+            .FirstOrDefault();
+    }
 
     private static bool GameInstalled => Directory.Exists(GamePath);
     private static bool DeltaExists => Directory.Exists(DeltaPath);
@@ -184,17 +207,18 @@ public class RealPackageTests
     [SkippableFact]
     public async Task SaveAsync_RealModPackage_InPlaceRoundTripPreservesEveryResource()
     {
-        Skip.IfNot(File.Exists(ModPackagePath), "Test mod package not found");
+        var modPackagePath = ModPackagePath;
+        Skip.If(modPackagePath is null || !File.Exists(modPackagePath), "Test mod package not found");
 
         var tempDir = Path.Combine(Path.GetTempPath(), "ts4tools-real-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempDir);
-        var copyPath = Path.Combine(tempDir, Path.GetFileName(ModPackagePath));
+        var copyPath = Path.Combine(tempDir, "test-mod.package");
         try
         {
-            File.Copy(ModPackagePath, copyPath);
+            File.Copy(modPackagePath!, copyPath);
 
             List<EntrySnapshot> original;
-            await using (var ro = await DbpfPackage.OpenAsync(ModPackagePath))
+            await using (var ro = await DbpfPackage.OpenAsync(modPackagePath!))
                 original = await SnapshotAsync(ro);
             original.Should().NotBeEmpty();
 
@@ -205,7 +229,7 @@ public class RealPackageTests
             {
                 // 1. Unchanged in-place save: stored chunks must be copied verbatim
                 await package.SaveAsync();
-                new FileInfo(copyPath).Length.Should().Be(new FileInfo(ModPackagePath).Length,
+                new FileInfo(copyPath).Length.Should().Be(new FileInfo(modPackagePath!).Length,
                     "an unmodified save must not change the package size");
 
                 var afterClean = package.Resources.Cast<ResourceIndexEntry>().ToList();

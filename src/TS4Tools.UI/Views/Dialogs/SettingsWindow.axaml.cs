@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using TS4Tools.UI.Services;
+using TS4Tools.UI.ViewModels;
 
 namespace TS4Tools.UI.Views.Dialogs;
 
@@ -15,10 +16,10 @@ namespace TS4Tools.UI.Views.Dialogs;
 /// </remarks>
 public partial class SettingsWindow : Window
 {
-    private readonly AppSettings _settings;
+    private AppSettings _settings;
     private readonly List<string> _bookmarks = [];
     private readonly List<HelperSettingItem> _helperItems = [];
-    private readonly List<WrapperSettingItem> _wrapperItems = [];
+    private readonly ManageWrappersViewModel _wrappersViewModel = new();
 
     public SettingsWindow()
     {
@@ -27,7 +28,7 @@ public partial class SettingsWindow : Window
 
         LoadSettings();
         LoadHelpers();
-        LoadWrappers();
+        WrappersView.DataContext = _wrappersViewModel;
 
         OkButton.Click += OkButton_Click;
         CancelButton.Click += CancelButton_Click;
@@ -68,6 +69,10 @@ public partial class SettingsWindow : Window
         // Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings AskDBCAutoSave
         PromptDbcAutosaveCheckBox.IsChecked = _settings.PromptDbcAutosave;
 
+        // Updates
+        // Source: legacy_references/Sims4Tools/s4pe/Settings/UpdateChecker.cs lines 68-80
+        AutoCheckForUpdatesCheckBox.IsChecked = _settings.AutoCheckForUpdates;
+
         // External editors
         HexEditorCommandTextBox.Text = _settings.HexEditorCommand ?? "";
         HexEditorIgnoreTSCheckBox.IsChecked = _settings.HexEditorIgnoreTimestamp;
@@ -83,7 +88,7 @@ public partial class SettingsWindow : Window
         BookmarksListBox.ItemsSource = _bookmarks;
     }
 
-    private void SaveSettings()
+    private async Task SaveSettingsAsync()
     {
         // Display options
         _settings.UseNames = UseNamesCheckBox.IsChecked == true;
@@ -99,6 +104,9 @@ public partial class SettingsWindow : Window
         // Import options
         _settings.PromptDbcAutosave = PromptDbcAutosaveCheckBox.IsChecked == true;
 
+        // Updates
+        _settings.AutoCheckForUpdates = AutoCheckForUpdatesCheckBox.IsChecked == true;
+
         // External editors
         _settings.HexEditorCommand = string.IsNullOrWhiteSpace(HexEditorCommandTextBox.Text) ? null : HexEditorCommandTextBox.Text;
         _settings.HexEditorIgnoreTimestamp = HexEditorIgnoreTSCheckBox.IsChecked == true;
@@ -113,15 +121,16 @@ public partial class SettingsWindow : Window
         // Helpers
         SaveHelperSettings();
 
-        // Wrappers
-        SaveWrapperSettings();
+        // Wrappers - applied to the live registry, persisted as "0xTTTTTTTT:Full.Type.Name"
+        // Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs lines 140-145
+        _wrappersViewModel.Apply(_settings);
 
-        SettingsService.Instance.Save();
+        await SettingsService.Instance.SaveAsync();
     }
 
-    private void OkButton_Click(object? sender, RoutedEventArgs e)
+    private async void OkButton_Click(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         Close(true);
     }
 
@@ -130,9 +139,12 @@ public partial class SettingsWindow : Window
         Close(false);
     }
 
-    private void ResetButton_Click(object? sender, RoutedEventArgs e)
+    private async void ResetButton_Click(object? sender, RoutedEventArgs e)
     {
-        SettingsService.Instance.Reset();
+        await SettingsService.Instance.ResetAsync();
+
+        // Reset installs a new settings object; show and edit that one from now on.
+        _settings = SettingsService.Instance.Settings;
         LoadSettings();
     }
 
@@ -170,7 +182,7 @@ public partial class SettingsWindow : Window
             ]
         });
 
-        return files.Count == 1 ? files[0].Path.LocalPath : null;
+        return files.Count == 1 ? files[0].TryGetLocalPath() : null;
     }
 
     private async void AddBookmarkButton_Click(object? sender, RoutedEventArgs e)
@@ -184,9 +196,8 @@ public partial class SettingsWindow : Window
             AllowMultiple = false
         });
 
-        if (folders.Count == 1)
+        if (folders.Count == 1 && folders[0].TryGetLocalPath() is { } path)
         {
-            var path = folders[0].Path.LocalPath;
             if (!_bookmarks.Contains(path))
             {
                 _bookmarks.Add(path);
@@ -318,62 +329,6 @@ public partial class SettingsWindow : Window
             }
         }
     }
-
-    /// <summary>
-    /// Loads wrapper definitions and creates UI items.
-    /// </summary>
-    /// <remarks>
-    /// Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs lines 45-75
-    /// </remarks>
-    private void LoadWrappers()
-    {
-        _wrapperItems.Clear();
-
-        // Get all wrapper factories from the Wrappers assembly
-        var wrappersAssembly = typeof(TS4Tools.Wrappers.StblResource).Assembly;
-        var factoryTypes = wrappersAssembly.GetTypes()
-            .Where(t => t.Name.EndsWith("Factory", StringComparison.Ordinal) && !t.IsAbstract && t.IsPublic)
-            .OrderBy(t => t.Name)
-            .ToList();
-
-        foreach (var factoryType in factoryTypes)
-        {
-            // Get the associated resource type count (from ResourceTypes property if available)
-            var resourceTypesField = factoryType.GetField("ResourceTypes",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            var typeCount = 1;
-            if (resourceTypesField != null && resourceTypesField.GetValue(null) is uint[] types)
-            {
-                typeCount = types.Length;
-            }
-
-            var wrapperName = factoryType.Name.Replace("Factory", "");
-
-            var item = new WrapperSettingItem
-            {
-                WrapperName = wrapperName,
-                TypeCount = typeCount,
-                IsDisabled = _settings.DisabledWrappers.Contains(wrapperName)
-            };
-            _wrapperItems.Add(item);
-        }
-
-        WrappersItemsControl.ItemsSource = null;
-        WrappersItemsControl.ItemsSource = _wrapperItems;
-        WrapperCountTextBlock.Text = $"{_wrapperItems.Count} wrappers available";
-    }
-
-    private void SaveWrapperSettings()
-    {
-        _settings.DisabledWrappers.Clear();
-        foreach (var item in _wrapperItems)
-        {
-            if (item.IsDisabled)
-            {
-                _settings.DisabledWrappers.Add(item.WrapperName);
-            }
-        }
-    }
 }
 
 /// <summary>
@@ -388,23 +343,6 @@ public partial class HelperSettingItem : ObservableObject
     public required string Label { get; init; }
     public string Description { get; init; } = "";
     public string Command { get; init; } = "";
-
-    [ObservableProperty]
-    private bool _isDisabled;
-}
-
-/// <summary>
-/// View model item for wrapper settings.
-/// </summary>
-/// <remarks>
-/// Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs
-/// </remarks>
-public partial class WrapperSettingItem : ObservableObject
-{
-    public required string WrapperName { get; init; }
-    public required int TypeCount { get; init; }
-
-    public string DisplayName => WrapperName;
 
     [ObservableProperty]
     private bool _isDisabled;

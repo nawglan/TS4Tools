@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TS4Tools.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="200"
+             x:Class="TS4Tools.UI.Views.Controls.PackageInfoPanel"
+             x:DataType="vm:MainWindowViewModel">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/PackageInfo/PackageInfoWidget.cs -->
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="Package Info" FontWeight="SemiBold" Margin="8,4" />
+        <ScrollViewer HorizontalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding PackageInfo.Rows}" Margin="8,0,8,4">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:PackageInfoRow">
+                        <Grid ColumnDefinitions="170,*">
+                            <TextBlock Grid.Column="0" Text="{Binding Field}" HorizontalAlignment="Right" Margin="0,0,8,0" Opacity="0.7" />
+                            <SelectableTextBlock Grid.Column="1" Text="{Binding Value}" FontFamily="Consolas,Menlo,monospace" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
