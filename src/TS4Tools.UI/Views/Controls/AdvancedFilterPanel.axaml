@@ -23,29 +23,29 @@
             <!-- Type Filter -->
             <Grid ColumnDefinitions="Auto,*">
                 <CheckBox x:Name="TypeCheckBox" Content="Type:" VerticalAlignment="Center" Width="70" />
-                <TextBox Grid.Column="1" x:Name="TypeTextBox" Watermark="220557DA" IsEnabled="{Binding #TypeCheckBox.IsChecked}" />
+                <TextBox Grid.Column="1" x:Name="TypeTextBox" PlaceholderText="220557DA" IsEnabled="{Binding #TypeCheckBox.IsChecked}" />
             </Grid>
 
             <!-- Group Filter -->
             <Grid ColumnDefinitions="Auto,*">
                 <CheckBox x:Name="GroupCheckBox" Content="Group:" VerticalAlignment="Center" Width="70" />
-                <TextBox Grid.Column="1" x:Name="GroupTextBox" Watermark="00000000" IsEnabled="{Binding #GroupCheckBox.IsChecked}" />
+                <TextBox Grid.Column="1" x:Name="GroupTextBox" PlaceholderText="00000000" IsEnabled="{Binding #GroupCheckBox.IsChecked}" />
             </Grid>
 
             <!-- Instance Filter -->
             <Grid ColumnDefinitions="Auto,*">
                 <CheckBox x:Name="InstanceCheckBox" Content="Instance:" VerticalAlignment="Center" Width="70" />
-                <TextBox Grid.Column="1" x:Name="InstanceTextBox" Watermark="pattern or hex" IsEnabled="{Binding #InstanceCheckBox.IsChecked}" />
+                <TextBox Grid.Column="1" x:Name="InstanceTextBox" PlaceholderText="pattern or hex" IsEnabled="{Binding #InstanceCheckBox.IsChecked}" />
             </Grid>
 
             <!-- Name Filter -->
             <Grid ColumnDefinitions="Auto,*">
                 <CheckBox x:Name="NameCheckBox" Content="Name:" VerticalAlignment="Center" Width="70" />
-                <TextBox Grid.Column="1" x:Name="NameTextBox" Watermark="pattern" IsEnabled="{Binding #NameCheckBox.IsChecked}" />
+                <TextBox Grid.Column="1" x:Name="NameTextBox" PlaceholderText="pattern" IsEnabled="{Binding #NameCheckBox.IsChecked}" />
             </Grid>
 
             <!-- Quick filter for basic search -->
-            <TextBox x:Name="QuickFilterTextBox" Watermark="Quick filter..." />
+            <TextBox x:Name="QuickFilterTextBox" PlaceholderText="Quick filter..." />
         </StackPanel>
     </Border>
 </UserControl>

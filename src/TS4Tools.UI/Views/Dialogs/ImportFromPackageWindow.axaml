@@ -15,7 +15,7 @@
         <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,12">
             <TextBlock Text="Source Package:" FontWeight="SemiBold" />
             <Grid ColumnDefinitions="*,Auto">
-                <TextBox x:Name="SourcePathTextBox" IsReadOnly="True" Watermark="Select a package file..." />
+                <TextBox x:Name="SourcePathTextBox" IsReadOnly="True" PlaceholderText="Select a package file..." />
                 <Button Grid.Column="1" Content="_Browse..." Click="BrowseButton_Click" Margin="8,0,0,0" Padding="16,8" />
             </Grid>
         </StackPanel>

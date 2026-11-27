@@ -29,13 +29,13 @@
             <!-- Search Text -->
             <Grid ColumnDefinitions="120,*">
                 <TextBlock Text="Search for:" VerticalAlignment="Center" />
-                <TextBox Grid.Column="1" x:Name="SearchTextBox" Watermark="Enter search text..." />
+                <TextBox Grid.Column="1" x:Name="SearchTextBox" PlaceholderText="Enter search text..." />
             </Grid>
 
             <!-- Type Filter -->
             <Grid ColumnDefinitions="120,*,Auto">
                 <CheckBox x:Name="FilterByTypeCheckBox" Content="Filter by type:" VerticalAlignment="Center" />
-                <TextBox Grid.Column="1" x:Name="TypeFilterTextBox" Watermark="e.g., 220557DA" IsEnabled="{Binding #FilterByTypeCheckBox.IsChecked}" />
+                <TextBox Grid.Column="1" x:Name="TypeFilterTextBox" PlaceholderText="e.g., 220557DA" IsEnabled="{Binding #FilterByTypeCheckBox.IsChecked}" />
                 <TextBlock Grid.Column="2" Text="(hex)" Margin="8,0,0,0" VerticalAlignment="Center" Opacity="0.6" />
             </Grid>
 
