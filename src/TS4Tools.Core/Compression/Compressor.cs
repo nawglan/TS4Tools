@@ -28,6 +28,11 @@ internal static class Compressor
     public const ushort NoCompression = 0x0000;
 
     /// <summary>
+    /// Label of a zero-length deletion record (seen in game Delta packages). Preserved by the writer for empty entries.
+    /// </summary>
+    public const ushort DeletedRecordCompressionType = 0xFFE0;
+
+    /// <summary>
     /// Compresses data using ZLIB.
     /// </summary>
     /// <param name="data">The uncompressed data.</param>

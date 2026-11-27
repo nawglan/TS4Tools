@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ts4tools</AssemblyName>
+    <RootNamespace>TS4Tools.Cli</RootNamespace>
+    <Description>TS4Tools headless command-line tool - inspect, unpack, pack and scan Sims 4 packages</Description>
+    <IsPackable>false</IsPackable>
+    <!-- Application, not a library: no XML docs -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System.Buffers.Binary" />
+    <Using Include="System.Collections.Concurrent" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.Security.Cryptography" />
+    <Using Include="System.Text" />
+    <Using Include="System.Text.Json" />
+    <Using Include="System.Text.RegularExpressions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TS4Tools.Interfaces\TS4Tools.Interfaces.csproj" />
+    <ProjectReference Include="..\TS4Tools.Core\TS4Tools.Core.csproj" />
+    <ProjectReference Include="..\TS4Tools.Wrappers\TS4Tools.Wrappers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="TS4Tools.Cli.Tests" />
+  </ItemGroup>
+
+</Project>

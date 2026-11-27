@@ -226,4 +226,24 @@ public class SimOutfitResourceTests
         resource.Should().NotBeNull();
         resource!.Version.Should().Be(1);
     }
+
+    [Theory]
+    [InlineData(0)]   // offset of the block-list count, relative to the block's Unknown1
+    [InlineData(1)]   // offset of the block's reference count
+    public void Parse_ImpossibleListCount_ThrowsInsteadOfAllocating(int which)
+    {
+        // Real game SIMO data in layouts legacy does not know misreads these int32 counts as ~2^31, which made
+        // `new List<T>(count)` allocate gigabytes. The count must fit in the remaining bytes.
+        var original = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        original.Unknown11.Add(new OutfitUnknownBlock { BlockIndex = 0xAB, Unknown1 = 0xDEADBEEF });
+        var data = original.Data.ToArray();
+        int unknown1 = data.AsSpan().IndexOf(new byte[] { 0xEF, 0xBE, 0xAD, 0xDE });
+        unknown1.Should().BeGreaterThan(5);
+        int countOffset = which == 0 ? unknown1 - 5 : unknown1 + 4;
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(countOffset), int.MaxValue);
+
+        var act = () => new SimOutfitResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*count*");
+    }
 }

@@ -97,7 +97,14 @@ internal sealed class PackageWriter
 
                 newEntry.MemorySize = ToUInt32Checked(resourceData.Length, "Memory size");
                 newEntry.FileSize = ToUInt32Checked(dataToWrite.Length, "File size");
-                newEntry.SetCompressionTypeRaw(isCompressed ? Compressor.ZlibCompressionType : Compressor.NoCompression);
+                // An empty entry labelled 0xFFE0 is a deletion record (Delta packages use them to remove base-game
+                // resources); keep that label rather than relabelling it as an empty 0x0000 resource. Legacy
+                // relabels it (SaveAs lines 127-138), which would turn a deletion into an empty override.
+                newEntry.SetCompressionTypeRaw(
+                    isCompressed ? Compressor.ZlibCompressionType
+                    : resourceData.Length == 0 && entry.CompressionType == Compressor.DeletedRecordCompressionType
+                        ? Compressor.DeletedRecordCompressionType
+                        : Compressor.NoCompression);
             }
             else
             {

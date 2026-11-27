@@ -277,10 +277,23 @@ public sealed class SimOutfitResource : TypedResource
         return list;
     }
 
-    private static List<OutfitUnknownBlock> ParseUnknownBlockList(ReadOnlySpan<byte> data, ref int offset)
+    /// <summary>
+    /// Reads an int32 element count and rejects one that cannot fit in the remaining data, so a misread count
+    /// cannot trigger a multi-gigabyte list allocation (legacy reads it unchecked, SimOutfitResource.cs lines 66-123).
+    /// </summary>
+    /// <exception cref="ResourceFormatException">Negative count, or more elements than bytes remain for.</exception>
+    internal static int ReadCount(ReadOnlySpan<byte> data, ref int offset, int minElementSize)
     {
         int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
+        if (count < 0 || count > (data.Length - offset) / minElementSize)
+            throw new ResourceFormatException($"SimOutfit list count {count} exceeds the remaining {data.Length - offset} bytes.");
+        return count;
+    }
+
+    private static List<OutfitUnknownBlock> ParseUnknownBlockList(ReadOnlySpan<byte> data, ref int offset)
+    {
+        int count = ReadCount(data, ref offset, OutfitUnknownBlock.MinSize);
         var list = new List<OutfitUnknownBlock>(count);
         for (int i = 0; i < count; i++)
         {
@@ -480,6 +493,9 @@ public readonly record struct OutfitUnknownReference2(byte TgiIndex, uint Refere
 /// </summary>
 public sealed class OutfitUnknownReference
 {
+    /// <summary>Smallest serialized size: 17-byte blob + int32 count.</summary>
+    internal const int MinSize = 21;
+
     /// <summary>
     /// Unknown data blob (17 bytes).
     /// </summary>
@@ -499,8 +515,7 @@ public sealed class OutfitUnknownReference
         result.UnknownBlob = data.Slice(offset, 17).ToArray();
         offset += 17;
 
-        int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-        offset += 4;
+        int count = SimOutfitResource.ReadCount(data, ref offset, 5);
 
         result.UnknownReference2List = new List<OutfitUnknownReference2>(count);
         for (int i = 0; i < count; i++)
@@ -548,6 +563,9 @@ public sealed class OutfitUnknownReference
 /// </summary>
 public sealed class OutfitUnknownBlock
 {
+    /// <summary>Smallest serialized size: index byte + uint32 + int32 count.</summary>
+    internal const int MinSize = 9;
+
     /// <summary>
     /// Block index (TGI index).
     /// </summary>
@@ -574,8 +592,7 @@ public sealed class OutfitUnknownBlock
         block.Unknown1 = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
-        int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-        offset += 4;
+        int count = SimOutfitResource.ReadCount(data, ref offset, OutfitUnknownReference.MinSize);
 
         block.UnknownReferenceList = new List<OutfitUnknownReference>(count);
         for (int i = 0; i < count; i++)

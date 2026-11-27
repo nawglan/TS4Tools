@@ -447,3 +447,6 @@ PackageWriteTest/
 
 # NuGet packages directory
 packages/
+
+# ts4tools CLI outputs (scan reports, unpack/pack scratch)
+artifacts/
