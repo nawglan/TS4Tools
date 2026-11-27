@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Agent entry point and usage docs: see `AGENTS.md` and `docs/agent-guide.md` (how to read/edit packages with the libraries and the `ts4tools` CLI).
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
