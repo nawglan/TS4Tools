@@ -420,16 +420,17 @@ ReadOnlyMemory<byte>? data = hit is null ? null : await hit.GetDataAsync();
 
 ## 14. Headless CLI (`ts4tools`)
 
-Another agent is implementing the CLI to the contract below. See `ts4tools --help` for the authoritative option list. If the help output and this section disagree, the help output wins.
+The CLI lives in `src/TS4Tools.Cli` (assembly `ts4tools`). See `ts4tools --help` / `ts4tools <command> --help` for the authoritative option list; if they disagree with this section, the help output wins. `AGENTS.md` has a quick-start.
 
-Run it as the published `ts4tools` binary (or `dotnet run --project <cli project> -- <command> ...`; find the project under `src/`). Commands:
+Run it with `dotnet run --project src/TS4Tools.Cli -- <command> ...`, or build it (`dotnet build src/TS4Tools.Cli -c Release`) and call `src/TS4Tools.Cli/bin/Release/net10.0/ts4tools`. Commands:
 
 ```
 ts4tools info    <package> [--json]
 ts4tools list    <package> [--type 0xTTTTTTTT] [--json]
-ts4tools unpack  <package> <outdir> [--force]
+ts4tools unpack  <package> <outdir> [--force] [--parallel N]
 ts4tools pack    <dir> <package> [--force] [--no-compress-new]
-ts4tools scan    <path>... [--json <file>] [--markdown <file>] [--roundtrip] [--parallel N] [--types 0x..]
+ts4tools compare <a.package> <b.package>
+ts4tools scan    <path>... [--json <file>] [--markdown <file>] [--roundtrip] [--parallel N] [--types 0xT,0xT] [--all] [--quiet]
 ts4tools extract <package> <key> <file>
 ts4tools replace <package> <key> <file> [--output <package>]
 ```
@@ -449,25 +450,28 @@ Manifest (formatVersion 1):
 {
   "formatVersion": 1,
   "source": "in.package",
-  "header": { "major": 2, "minor": 1, "userVersionMajor": 0, "userVersionMinor": 0,
-              "unused1": 0, "unused2": 0, "unused3": 0, "unused4": 0, "unused5": "<hex>",
-              "creationTime": 0, "updatedTime": 0 },
+  "header": { "magic": "DBPF", "major": 2, "minor": 1, "userVersionMajor": 0, "userVersionMinor": 0,
+              "unused1": 0, "creationTime": 0, "updatedTime": 0, "unused2": 0,
+              "indexCount": 1, "indexRecordPositionLow": 0, "indexSize": 32, "unused3": 0, "unused4": 3,
+              "indexPosition": 96, "unused5": "<56 hex digits>", "indexType": "0x00000007" },
   "resources": [
     { "type": "0x220557DA", "group": "0x00000000", "instance": "0x00000000DEADBEEF",
       "file": "resources/220557DA_00000000_00000000DEADBEEF.stbl",
-      "compressionType": "0x5A42", "unknown2": 1, "sha256": "<hex>" }
+      "compressionType": "0x5A42", "unknown2": 1, "memSize": 1234,
+      "sha256": "<lowercase hex of the decompressed bytes>" }
   ]
 }
 ```
 
-`type`, `group` and `instance` are hex strings. Resources are listed in index order. The header block may contain more fields than shown; treat unknown ones as opaque and preserve them. (Exact value formats for `unused5`, `compressionType` and times are defined by the CLI; check a real `unpack` output.)
+`type`, `group` and `instance` are hex strings. Resources are listed in index order. `compressionType` is the index label as a hex string (`0x0000` raw, `0x5A42` ZLIB, `0xFFFF` RefPack, `0xFFE0` deletion record). `unused5` is the 28 header bytes at offset 68 as 56 hex digits. The index fields (`indexCount`, `indexSize`, `indexPosition`, `indexType`, `indexRecordPositionLow`) are informational; `pack` recomputes them.
 
 ### pack behavior
 
 - Resources are written in manifest order. Edited files are picked up. The header is restored from the manifest.
 - Files in `resources/` that are not in the manifest are added; the key comes from the file name, and they are compressed by default (`--no-compress-new` stores them raw).
 - Manifest entries whose file is missing are dropped, with a warning.
-- Packing an unchanged directory yields a package identical resource-for-resource to the original.
+- Packing an unchanged directory yields a package identical resource-for-resource to the original (`ts4tools compare` proves it), with one exception: RefPack (`0xFFFF`) resources are re-encoded as ZLIB (`0x5A42`) because, like legacy, TS4Tools has no RefPack compressor; `pack` warns and `compare` reports the label change.
+- An existing output package is refused unless `--force`; output goes to a temp file first. Manifest paths that escape the directory are rejected. File names may also use the legacy `S4_` export prefix.
 - `--force` (on `unpack` and `pack`) allows overwriting existing output.
 
 ### scan
@@ -481,8 +485,9 @@ Classifies every resource in each package (or every `*.package` under a director
 | `unsupported-version` | `UnsupportedResourceVersionException` (newer than legacy) |
 | `parse-error` | wrapper threw while parsing |
 | `roundtrip-mismatch` | with `--roundtrip`, wrapper output differs from input |
+| `empty` | zero-length resource (e.g. a `0xFFE0` deletion record); not a problem |
 
-Exit code is 1 when issues are found (which classes count as issues is defined by the CLI; check `--help`). `--json f` and `--markdown f` write reports, `--parallel N` sets package-level parallelism, `--types 0x..` restricts types.
+Exit code is 1 when any resource is `unwrapped`, `unsupported-version`, `parse-error` or `roundtrip-mismatch`, or a package fails to open. `--json f` and `--markdown f` write reports, `--parallel N` sets package-level parallelism, `--types 0x..` restricts types.
 `scripts/scan-unsupported.sh [gameDir]` runs a scan over the game install (read-only) and writes `docs/unsupported-resources.md`.
 
 ### extract / replace
@@ -499,7 +504,7 @@ Exit code is 1 when issues are found (which classes count as issues is defined b
    - STBL: do not hand-edit the binary; use the library (Samples 4 and 14) to write a new `.stbl` into `work/resources/`, or `extract` one, edit it in a small C# script and `replace` it;
    - other binary: hex-edit with care, keeping sizes consistent with the format.
 4. `ts4tools pack work/ out.package` (add new files named `<T>_<G>_<I>.<ext>` to add resources).
-5. Verify: `ts4tools list out.package`, then `ts4tools scan out.package --roundtrip` (exit code 0 means every wrapped resource still parses and round-trips).
+5. Verify: `ts4tools compare my.package out.package` to review exactly what changed, then `ts4tools scan out.package --roundtrip`. Note that scan exits 1 whenever any resource is merely unwrapped or newer than legacy, which is normal for game data; compare its per-type counts against a scan of the original rather than relying on the exit code.
 
 ## 15. Further reading
 
