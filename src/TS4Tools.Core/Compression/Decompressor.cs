@@ -89,11 +89,14 @@ internal static class Decompressor
     /// </summary>
     private static byte[] DecompressRefPack(byte[] compressed, byte compressionType)
     {
-        int offset = 1; // Skip the already-read byte1 (0xFB marker)
+        // Legacy reads the 2-byte header (type byte + 0xFB marker) before calling
+        // OldDecompress, so the size field starts at byte 2.
+        // Source: legacy_references/Sims4Tools/s4pi/Package/Compression.cs lines 41, 78, 101-102
+        int offset = 2;
         bool isLargeSize = compressionType != 0x80;
 
         // Validate we have enough bytes for the header
-        int headerBytesNeeded = isLargeSize ? 4 : 5; // 1 (already read) + 3 or 4 for size
+        int headerBytesNeeded = isLargeSize ? 5 : 6; // 2 header bytes + 3 or 4 size bytes
         if (compressed.Length < headerBytesNeeded)
             throw new PackageFormatException(
                 $"RefPack data too short for header. Need {headerBytesNeeded} bytes, got {compressed.Length}.");

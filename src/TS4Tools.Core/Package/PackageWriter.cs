@@ -77,34 +77,30 @@ internal sealed class PackageWriter
         {
             if (entry.IsDeleted) continue;
 
-            byte[] resourceData = await GetResourceDataAsync(entry, cancellationToken).ConfigureAwait(false);
-            byte[] dataToWrite;
-            bool isCompressed;
-
-            if (entry.CompressionType != 0 || entry.IsDirty)
-            {
-                // Compress if previously compressed or if dirty (new/modified data)
-                (dataToWrite, isCompressed) = Compressor.Compress(resourceData);
-            }
-            else
-            {
-                // Keep uncompressed
-                dataToWrite = resourceData;
-                isCompressed = false;
-            }
-
             var newEntry = entry.Clone();
             newEntry.ChunkOffset = ToUInt32Checked(output.Position, "Chunk offset");
-            newEntry.MemorySize = ToUInt32Checked(resourceData.Length, "Memory size");
-            newEntry.FileSize = ToUInt32Checked(dataToWrite.Length, "File size");
+            byte[] dataToWrite;
 
-            if (isCompressed)
+            if (entry.IsDirty || _sourceStream == null)
             {
-                newEntry.CompressionType = Compressor.ZlibCompressionType;
+                // Dirty (new/modified) resource: compress, keeping the result only if smaller.
+                // Source: s4pi/Package/Package.cs packedChunk() lines 559-573
+                byte[] resourceData = GetDirtyResourceData(entry);
+                (dataToWrite, bool isCompressed) = Compressor.Compress(resourceData);
+
+                newEntry.MemorySize = ToUInt32Checked(resourceData.Length, "Memory size");
+                newEntry.FileSize = ToUInt32Checked(dataToWrite.Length, "File size");
+                newEntry.CompressionType = isCompressed ? Compressor.ZlibCompressionType : Compressor.NoCompression;
             }
             else
             {
-                newEntry.CompressionType = Compressor.NoCompression;
+                // Clean resource: copy the stored chunk verbatim (no decompress/recompress).
+                // Sizes and the compression label are kept, so RefPack (0xFFFF) chunks stay
+                // correctly labelled. Legacy relabels every smaller chunk as 0x5A42
+                // (SaveAs lines 127-138); preserving the original label is the faithful choice
+                // for bytes we did not change.
+                // Source: s4pi/Package/Package.cs packedChunk() lines 574-583
+                dataToWrite = await ReadStoredChunkAsync(entry, cancellationToken).ConfigureAwait(false);
             }
 
             // Write resource data
@@ -154,28 +150,25 @@ internal sealed class PackageWriter
         await output.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<byte[]> GetResourceDataAsync(ResourceIndexEntry entry, CancellationToken cancellationToken)
+    private static byte[] GetDirtyResourceData(ResourceIndexEntry entry)
     {
-        // If we have cached/modified data, use it
-        if (entry.ResourceData.HasValue)
-            return entry.ResourceData.Value.ToArray();
+        if (!entry.ResourceData.HasValue)
+            throw new InvalidOperationException($"No data for new or modified resource {entry.Key}.");
+        return entry.ResourceData.Value.ToArray();
+    }
 
-        // Otherwise read from source stream
-        if (_sourceStream == null)
-            throw new InvalidOperationException("No source stream for clean resource.");
+    private async Task<byte[]> ReadStoredChunkAsync(ResourceIndexEntry entry, CancellationToken cancellationToken)
+    {
+        if (entry.FileSize > PackageLimits.MaxResourceSize)
+            throw new PackageFormatException(
+                $"Resource file size ({entry.FileSize:N0}) exceeds maximum ({PackageLimits.MaxResourceSize:N0}).");
+        if ((ulong)entry.ChunkOffset + entry.FileSize > (ulong)_sourceStream!.Length)
+            throw new PackageFormatException(
+                $"Resource at 0x{entry.ChunkOffset:X8} extends beyond end of file.");
 
         _sourceStream.Position = entry.ChunkOffset;
         var data = new byte[entry.FileSize];
-        int bytesRead = await _sourceStream.ReadAsync(data, cancellationToken).ConfigureAwait(false);
-        if (bytesRead != entry.FileSize)
-            throw new PackageFormatException("Unexpected end of file reading resource for save.");
-
-        // If compressed, decompress first
-        if (entry.IsCompressed)
-        {
-            return Decompressor.Decompress(data, (int)entry.MemorySize);
-        }
-
+        await _sourceStream.ReadExactlyAsync(data, cancellationToken).ConfigureAwait(false);
         return data;
     }
 

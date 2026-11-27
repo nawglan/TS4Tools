@@ -145,6 +145,30 @@ public class CompressionTests
     }
 
     [Fact]
+    public void Decompress_RefPack_PlainRunAndBackReference_DecodesLikeLegacy()
+    {
+        // Legacy OldDecompress (Compression.cs lines 92-168) is called after the 2-byte
+        // header has been consumed, so the size starts at byte 2.
+        // 0x10 0xFB | size 00 00 09 (BE) | 2-byte cmd 0x0F 0x02: 3 literals + copy 6 from offset 3
+        byte[] refPack = [0x10, 0xFB, 0x00, 0x00, 0x09, 0x0F, 0x02, (byte)'A', (byte)'B', (byte)'C', 0xFC];
+
+        var result = Decompressor.Decompress(refPack, 9);
+
+        result.Should().Equal("ABCABCABC"u8.ToArray());
+    }
+
+    [Fact]
+    public void Decompress_RefPack_LargeSizeHeader_UsesFourSizeBytes()
+    {
+        // compressionType 0x80 => 4-byte size; plain-text run 0xE0 = 4 literals
+        byte[] refPack = [0x80, 0xFB, 0x00, 0x00, 0x00, 0x04, 0xE0, 1, 2, 3, 4, 0xFC];
+
+        var result = Decompressor.Decompress(refPack, 4);
+
+        result.Should().Equal(1, 2, 3, 4);
+    }
+
+    [Fact]
     public void Compressor_Constants_AreCorrect()
     {
         Compressor.ZlibCompressionType.Should().Be(0x5A42); // "ZB"
