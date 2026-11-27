@@ -212,6 +212,10 @@ public sealed class DbpfPackage : IMutablePackage
     {
         if (_stream == null) return;
 
+        // Always start from an empty index: this is also used to re-sync after an
+        // in-place save, where an empty package must not keep stale entries.
+        _resources.Clear();
+
         int indexPosition = IndexPosition;
         int indexSize = IndexSize;
         int indexCount = IndexCount;
@@ -272,7 +276,6 @@ public sealed class DbpfPackage : IMutablePackage
         int entrySize = ResourceIndexEntrySerializer.GetEntrySize(indexType);
 
         // Read entries
-        _resources.Clear();
         _resources.Capacity = indexCount;
 
         for (int i = 0; i < indexCount; i++)
@@ -544,6 +547,14 @@ public sealed class DbpfPackage : IMutablePackage
             int bytesRead = await _stream.ReadAsync(_header, cancellationToken).ConfigureAwait(false);
             if (bytesRead != PackageLimits.HeaderSize)
                 throw new PackageFormatException("Failed to re-read header after save.");
+            ValidateHeader();
+
+            // Discard the in-memory index and re-read it from the saved file, so entries
+            // carry their new offsets/sizes, deleted entries are dropped, and dirty flags
+            // and cached data are cleared. Without this, later reads (and a second save)
+            // would use stale offsets into the rewritten file.
+            // Source: s4pi/Package/Package.cs lines 81-86 (index = null; re-read on demand)
+            await ReadIndexAsync(cancellationToken).ConfigureAwait(false);
 
             IsDirty = false;
             OnResourceIndexInvalidated();
