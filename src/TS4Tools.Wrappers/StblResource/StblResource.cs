@@ -153,7 +153,12 @@ public sealed class StblResource : TypedResource
         Reserved.CopyTo(buffer.AsSpan(offset));
         offset += 2;
 
-        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset), (uint)totalStringBytes);
+        // Source: StblResource.cs lines 141-152 and 168-171 - legacy writes the sum of
+        // (string length + 1) over all entries, i.e. string data plus one terminator per entry.
+        // Legacy counts UTF-16 chars (StringValue.Length); real game tables (Strings_ENG_US.package)
+        // hold the UTF-8 byte count + 1, which equals legacy for ASCII text. Using the byte count keeps
+        // non-ASCII tables byte-identical to the game's own files.
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer.AsSpan(offset), (uint)(totalStringBytes + _entries.Count));
         offset += 4;
 
         // Write entries

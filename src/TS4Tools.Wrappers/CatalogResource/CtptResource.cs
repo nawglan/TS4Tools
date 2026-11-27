@@ -56,6 +56,10 @@ public sealed class CtptResource : SimpleCatalogResource
 
     #endregion
 
+    /// <inheritdoc/>
+    /// <remarks>Source: CTPTResource.cs line 34 (version = 0x02); real 0x03 files append 1 byte legacy drops.</remarks>
+    protected override uint? MaxSupportedVersion => 0x02;
+
     /// <summary>
     /// Creates a new CTPT resource by parsing data.
     /// </summary>

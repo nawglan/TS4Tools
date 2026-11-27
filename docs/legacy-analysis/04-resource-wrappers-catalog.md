@@ -49,12 +49,17 @@ Generic text/XML file wrapper.
 ---
 
 ### 5. ImageResource
-**ResourceTypes:**
-- `0x00B2D882` - DST
-- `0x3453CF95`, `0xBA856C78` - RLE compressed
-- `0x0D338A3A`, `0x16CCF748`, `0x3BD45407`, `0x3C1AF1F2`, `0x3C2A8647`, `0x5B282D45`, `0xCD9DE247`, `0xE18CAEE2`, `0xE254AE6E` - Thumbnails
+The ImageResource project contains several handlers:
+- **ImageResourceHandler** - every type listed in `ImageResource/ImageResources.txt` (~48 PNG THUM/SNAP/ICON/IMAG/TWNI types), read at startup
+- **DSTResourceHandler** - `0x00B2D882` (DST, shuffled DXT)
+- **RLEResourceHandler** - `0x3453CF95` (RLE2), `0xBA856C78` (RLES)
+- **ThumbnailResourceHandler** - `0x0D338A3A`, `0x16CCF748`, `0x3BD45407`, `0x3C1AF1F2`, `0x3C2A8647`, `0x5B282D45`, `0xCD9DE247`, `0xE18CAEE2`, `0xE254AE6E` (JFIF + ALFA)
 
-Handles DDS, RLE-compressed, and thumbnail images.
+`0x3C1AF1F2`, `0x5B282D45`, `0xCD9DE247` appear in both ImageResources.txt and the Thumbnail handler; legacy
+has no defined winner. TS4Tools gives the dedicated Thumbnail factory precedence (documented in `ResourceHandlerRegistry`).
+
+TextResource is likewise config-driven: every type in `TextResource/TextResources.txt` (~105, including
+`0x02D5DF13` "JAZZ tuning", which is commented out of RCOLResources.txt).
 
 ---
 
@@ -139,7 +144,14 @@ RCOL block types (used within GenericRCOLResource):
 - RSLT (Result)
 - VPXY (Vertex Proxy)
 - ShaderData
-- SlotAdjust
+- SlotAdjust (BOND)
+- TrackMask (TkMk, `0x033260E3`)
+
+Mesh blocks (MeshChunks): GEOM, MODL, MLOD, VBUF/VBUF2, IBUF/IBUF2, VRTF, SKIN, VBSI (`ResourceType` 0xFFFFFFFF).
+Jazz animation-state chunks (JazzResource) are also RCOL blocks. Legacy also ships `ClipResourceSims3`
+(Sims 3 clip format), which TS4Tools does not port.
+
+> Implementation status of every wrapper against real game data is tracked in `docs/real-data-validation.md`.
 
 ---
 

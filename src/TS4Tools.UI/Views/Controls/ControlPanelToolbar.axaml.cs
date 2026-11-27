@@ -38,6 +38,7 @@ public partial class ControlPanelToolbar : UserControl
         Helper2Button.Click += Helper2Button_Click;
         HexEditButton.Click += HexEditButton_Click;
         CommitButton.Click += CommitButton_Click;
+        CommitButton.IsEnabled = false;
     }
 
     /// <summary>
@@ -72,7 +73,7 @@ public partial class ControlPanelToolbar : UserControl
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pe/ControlPanel/ControlPanel.cs lines 55-62
     /// </remarks>
-    public void SaveSettings()
+    public Task SaveSettingsAsync()
     {
         _settings.Sort = SortCheckBox.IsChecked == true;
         _settings.HexOnly = HexOnlyCheckBox.IsChecked == true;
@@ -80,7 +81,7 @@ public partial class ControlPanelToolbar : UserControl
         _settings.UseTags = UseTagsCheckBox.IsChecked == true;
         _settings.AutoDisplayMode = AutoHexRadio.IsChecked == true ? 1 : AutoPreviewRadio.IsChecked == true ? 2 : 0;
 
-        SettingsService.Instance.Save();
+        return SettingsService.Instance.SaveAsync();
     }
 
     /// <summary>
@@ -92,7 +93,18 @@ public partial class ControlPanelToolbar : UserControl
         ValueButton.IsEnabled = enabled;
         GridButton.IsEnabled = enabled;
         HexEditButton.IsEnabled = enabled;
-        CommitButton.IsEnabled = enabled;
+    }
+
+    /// <summary>
+    /// Gets or sets whether the Commit button is enabled (only while the resource has uncommitted edits).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/ControlPanel/ControlPanel.cs line 278 (CommitEnabled)
+    /// </remarks>
+    public bool CommitEnabled
+    {
+        get => CommitButton.IsEnabled;
+        set => CommitButton.IsEnabled = value;
     }
 
     /// <summary>
@@ -130,33 +142,33 @@ public partial class ControlPanelToolbar : UserControl
     public event EventHandler? HexEditClick;
     public event EventHandler? CommitClick;
 
-    private void SortCheckBox_Changed(object? sender, RoutedEventArgs e)
+    private async void SortCheckBox_Changed(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         SortChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void HexOnlyCheckBox_Changed(object? sender, RoutedEventArgs e)
+    private async void HexOnlyCheckBox_Changed(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         HexOnlyChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UseNamesCheckBox_Changed(object? sender, RoutedEventArgs e)
+    private async void UseNamesCheckBox_Changed(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         UseNamesChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UseTagsCheckBox_Changed(object? sender, RoutedEventArgs e)
+    private async void UseTagsCheckBox_Changed(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         UseTagsChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void AutoRadio_Changed(object? sender, RoutedEventArgs e)
+    private async void AutoRadio_Changed(object? sender, RoutedEventArgs e)
     {
-        SaveSettings();
+        await SaveSettingsAsync();
         AutoChanged?.Invoke(this, EventArgs.Empty);
     }
 

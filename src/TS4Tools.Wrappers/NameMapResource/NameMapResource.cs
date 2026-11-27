@@ -10,7 +10,9 @@ namespace TS4Tools.Wrappers;
 /// </summary>
 /// <remarks>
 /// Source: s4pi Wrappers/NameMapResource/NameMapResource.cs
-/// Format: version (uint32), count (int32), entries (ulong hash, int32 length, char[] name)
+/// Format: version (uint32), count (int32), entries (ulong hash, int32 length, char[] name).
+/// Names are BinaryReader/BinaryWriter chars, i.e. UTF-8 encoded with the length counted in chars
+/// (NameMapResource.cs lines 60-61 ReadChars, lines 75-76 Write(char[])).
 /// Handler TypeId: 0x0166038C
 /// </remarks>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1710:Identifiers should have correct suffix", Justification = "Domain-specific resource type, not a generic collection")]
@@ -76,19 +78,40 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
             int stringLength = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
             offset += 4;
 
-            if (stringLength < 0 || offset + stringLength * 2 > data.Length)
+            // Each char takes at least one UTF-8 byte.
+            if (stringLength < 0 || stringLength > data.Length - offset)
                 throw new ResourceFormatException($"Invalid string length at entry {i}: {stringLength}");
 
-            // Read as Unicode chars (2 bytes each)
-            var chars = new char[stringLength];
-            for (int j = 0; j < stringLength; j++)
-            {
-                chars[j] = (char)BinaryPrimitives.ReadUInt16LittleEndian(data[(offset + j * 2)..]);
-            }
-            offset += stringLength * 2;
-
-            _entries[hash] = new string(chars);
+            _entries[hash] = ReadChars(data, ref offset, stringLength, i);
         }
+    }
+
+    /// <summary>
+    /// Reads <paramref name="charCount"/> UTF-8 encoded chars, like legacy <c>BinaryReader.ReadChars</c>
+    /// (NameMapResource.cs line 61).
+    /// </summary>
+    private static string ReadChars(ReadOnlySpan<byte> data, ref int offset, int charCount, int entry)
+    {
+        if (charCount == 0)
+            return string.Empty;
+
+        var decoder = Encoding.UTF8.GetDecoder();
+        var chars = new char[charCount];
+        int produced = 0;
+        Span<char> one = stackalloc char[2];
+        while (produced < charCount)
+        {
+            if (offset >= data.Length)
+                throw new ResourceFormatException($"Unexpected end of NameMap data in name of entry {entry}");
+
+            int n = decoder.GetChars(data.Slice(offset++, 1), one, flush: false);
+            if (produced + n > charCount)
+                throw new ResourceFormatException($"Name of entry {entry} ends inside a surrogate pair");
+            one[..n].CopyTo(chars.AsSpan(produced));
+            produced += n;
+        }
+
+        return new string(chars);
     }
 
     /// <inheritdoc/>
@@ -98,7 +121,7 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
         int totalCharBytes = 0;
         foreach (var value in _entries.Values)
         {
-            totalCharBytes += value.Length * 2; // 2 bytes per char
+            totalCharBytes += Encoding.UTF8.GetByteCount(value);
         }
 
         // Header (8 bytes) + entries (12 bytes each + char data)
@@ -122,12 +145,8 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
             BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset), name.Length);
             offset += 4;
 
-            // Write as Unicode chars
-            foreach (char c in name)
-            {
-                BinaryPrimitives.WriteUInt16LittleEndian(buffer.AsSpan(offset), c);
-                offset += 2;
-            }
+            // Source: NameMapResource.cs line 76 - BinaryWriter.Write(char[]) writes UTF-8
+            offset += Encoding.UTF8.GetBytes(name, buffer.AsSpan(offset));
         }
 
         return buffer;

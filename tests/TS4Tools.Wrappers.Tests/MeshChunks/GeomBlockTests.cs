@@ -87,11 +87,13 @@ public class GeomBlockTests
         writer.Write(0);
 
         // Record TGI position and patch offset
+        // TGI list: count 0; its size covers the count (legacy TGIBlockList.UnParse always writes it)
         long tgiStartPos = ms.Position;
+        writer.Write(0);
         uint tgiOffset = (uint)(tgiStartPos - (tgiOffsetPos + 4));
         ms.Position = tgiOffsetPos;
         writer.Write(tgiOffset);
-        writer.Write(0u); // tgiSize = 0
+        writer.Write(4u); // tgiSize = count field only
 
         return ms.ToArray();
     }
@@ -173,11 +175,13 @@ public class GeomBlockTests
         writer.Write(0);
 
         // Record TGI position and patch offset
+        // TGI list: count 0; its size covers the count (legacy TGIBlockList.UnParse always writes it)
         long tgiStartPos = ms.Position;
+        writer.Write(0);
         uint tgiOffset = (uint)(tgiStartPos - (tgiOffsetPos + 4));
         ms.Position = tgiOffsetPos;
         writer.Write(tgiOffset);
-        writer.Write(0u); // tgiSize = 0
+        writer.Write(4u); // tgiSize = count field only
 
         return ms.ToArray();
     }
@@ -253,11 +257,13 @@ public class GeomBlockTests
         writer.Write(0);
 
         // Record TGI position and patch offset
+        // TGI list: count 0; its size covers the count (legacy TGIBlockList.UnParse always writes it)
         long tgiStartPos = ms.Position;
+        writer.Write(0);
         uint tgiOffset = (uint)(tgiStartPos - (tgiOffsetPos + 4));
         ms.Position = tgiOffsetPos;
         writer.Write(tgiOffset);
-        writer.Write(0u); // tgiSize = 0
+        writer.Write(4u); // tgiSize = count field only
 
         return ms.ToArray();
     }
@@ -383,13 +389,33 @@ public class GeomBlockTests
         var data = new byte[]
         {
             (byte)'G', (byte)'E', (byte)'O', (byte)'M',
-            0x99, 0x00, 0x00, 0x00, // Invalid version
+            0x07, 0x00, 0x00, 0x00, // Invalid version (between the two legacy layouts)
         };
 
         // Act & Assert
         var action = () => new GeomBlock(data);
         action.Should().Throw<InvalidDataException>()
             .WithMessage("*Invalid GEOM version*");
+    }
+
+    /// <summary>
+    /// Regression (real data): current game and mod GEOMs use versions 0x0D-0x0F. Legacy GEOM.cs lines 128-130
+    /// accepts only 0x05 and 0x0C, so these are refused as unsupported (not misparsed).
+    /// </summary>
+    [Theory]
+    [InlineData(0x0Du)]
+    [InlineData(0x0Eu)]
+    [InlineData(0x0Fu)]
+    public void GeomBlock_Parse_NewerThanLegacyVersion_ThrowsUnsupported(uint version)
+    {
+        var data = new byte[64];
+        "GEOM"u8.CopyTo(data);
+        BitConverter.GetBytes(version).CopyTo(data, 4);
+
+        var action = () => new GeomBlock(data);
+
+        action.Should().Throw<UnsupportedResourceVersionException>()
+            .Which.Version.Should().Be(version);
     }
 
     [Fact]

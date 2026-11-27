@@ -287,3 +287,26 @@ public static class Limits
 4. **Full UI** - Edit, save, filter, search
 5. **Advanced wrappers** - CAS, Catalog, Mesh
 6. **Polish** - Performance, UX, documentation
+
+---
+
+## Implementation Status (2026-11-27)
+
+All phases above are implemented. The parity audit that tracked the remaining gaps is
+`.claude/audit-reports/audit-2026-11-27-134212.md`.
+
+| Phase | Status | Notes |
+|---|---|---|
+| 1.1 Interfaces | Done | Plus `IResourceTypeProvider`, compression setter, `IResource` add/replace overloads |
+| 1.2 DBPF reader/writer | Done | Legacy compression semantics (new resources raw unless `CompressionType != 0`), header fields, `ReadExactlyAsync`, dirty tracking |
+| 1.3 Wrapper system | Done | Deterministic precedence, disabled wrappers (`0xTTTTTTTT:Factory.Type`), plugin folder loading |
+| 2 Essential wrappers | Done | Validated on real data |
+| 3 Avalonia UI | Done | Avalonia 12; commit/save prompts, multi-select ops, registry-driven viewers |
+| 4 Advanced wrappers | Done | CASP to legacy v37; newer game versions are refused (raw) — see `docs/real-data-validation.md` |
+| 5 Helpers | Done | `.helper` files with `{field}` substitution (argv-safe), DDS/RLE/DST/DMAP tools, software 3D viewer |
+| Compatibility layer | Done | `src/TS4Tools.Compatibility` — plugins must be recompiled against it (types live in TS4Tools.Compatibility, not `s4pi.*` assemblies) |
+
+### Known limits beyond legacy parity
+- Resource versions newer than the legacy snapshot (CASP > 37, SkinTone > 9, SimOutfit > 0x1A, StyleLook > 0x0B, GEOM > 0x0C,
+  some catalog versions) are refused and shown raw; supporting them needs layouts newer than legacy.
+- The managed DXT encoder is not byte-identical to legacy's native squish (within block-compression error).

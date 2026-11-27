@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Selection;
 using Avalonia.Input;
+using TS4Tools.UI.Services;
 using TS4Tools.UI.ViewModels;
 using TS4Tools.UI.Views.Controls;
 
@@ -10,18 +11,15 @@ public partial class MainWindow : Window, IAsyncDisposable
 {
     private MainWindowViewModel? _viewModel;
     private bool _disposed;
+    private bool _closeConfirmed;
+    private bool _closePromptActive;
+    private PropertyChangedEventHandler? _viewModelPropertyChangedHandler;
 
     public MainWindow()
     {
         InitializeComponent();
         _viewModel = new MainWindowViewModel();
         DataContext = _viewModel;
-
-        // Wire up the advanced filter panel
-        FilterPanel.FilterChanged += (sender, args) =>
-        {
-            _viewModel.ApplyAdvancedFilter(args);
-        };
 
         // Wire up control panel events
         // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs control panel event handlers
@@ -35,7 +33,51 @@ public partial class MainWindow : Window, IAsyncDisposable
         // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs keyboard shortcuts
         WireQuickAccessShortcuts();
 
+        // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2729-2752 (DragOver/DragDrop, DeletePressed)
+        WireResourceOpsEvents();
+
+        // Window placement, browser columns, command line and update check
+        InitializeShell();
+
+        Closing += OnWindowClosing;
         Closed += OnWindowClosed;
+    }
+
+    /// <summary>
+    /// Defers closing to the view model so uncommitted resource edits and unsaved package
+    /// changes can be committed/saved, discarded, or the close cancelled, and so the settings
+    /// are saved asynchronously while the window is still open.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 231-247 (MainForm_FormClosing:
+    /// closing the package prompts; if the package is still open the close is cancelled; otherwise
+    /// the settings are saved)
+    /// </remarks>
+    private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (_closeConfirmed || _viewModel == null)
+        {
+            return;
+        }
+
+        // The prompts and the settings save are asynchronous, so always cancel this close and
+        // re-issue it once they have finished.
+        e.Cancel = true;
+        if (_closePromptActive) return;
+
+        _closePromptActive = true;
+        try
+        {
+            if (await _viewModel.PrepareWindowCloseAsync(StoreShellSettings))
+            {
+                _closeConfirmed = true;
+                Close();
+            }
+        }
+        finally
+        {
+            _closePromptActive = false;
+        }
     }
 
     /// <summary>
@@ -50,11 +92,20 @@ public partial class MainWindow : Window, IAsyncDisposable
         {
             if (_viewModel == null) return;
 
+            // Menu gestures (Ctrl+N/O/S/F, F5, Ctrl+C/V/D/A, ...); the text inputs keep copy/paste/select all.
+            // Events already handled by a focused control are not seen here.
+            if (await MainWindowShortcuts.TryExecuteAsync(e.Key, e.KeyModifiers, _viewModel,
+                    TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement()))
+            {
+                e.Handled = true;
+                return;
+            }
+
             // Ctrl+Shift+V: Paste ResourceKey to filter
             // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2593-2601
             if (e.Key == Key.V && e.KeyModifiers == (KeyModifiers.Control | KeyModifiers.Shift))
             {
-                await FilterPanel.PasteResourceKeyAsync();
+                await _viewModel.FilterPasteKeyCommand.ExecuteAsync(null);
                 e.Handled = true;
                 return;
             }
@@ -112,7 +163,15 @@ public partial class MainWindow : Window, IAsyncDisposable
         ControlPanel.Helper1Click += async (_, _) => await ExecuteHelperAsync(0);
         ControlPanel.Helper2Click += async (_, _) => await ExecuteHelperAsync(1);
         ControlPanel.HexEditClick += async (_, _) => await _viewModel?.ExecuteHexEditorAsync()!;
-        ControlPanel.CommitClick += async (_, _) => await _viewModel?.SaveCommand.ExecuteAsync(null)!;
+        // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3060-3073 (controlPanel1_CommitClick
+        // replaces the resource in the package; it does not save the package)
+        ControlPanel.CommitClick += (_, _) =>
+        {
+            if (_viewModel?.CommitCommand.CanExecute(null) == true)
+            {
+                _viewModel.CommitCommand.Execute(null);
+            }
+        };
 
         // Display option changes
         ControlPanel.SortChanged += (_, _) => _viewModel?.OnSortOptionChanged(ControlPanel.Sort);
@@ -124,8 +183,10 @@ public partial class MainWindow : Window, IAsyncDisposable
         // Subscribe to ViewModel changes to update control panel helper buttons
         if (_viewModel != null)
         {
-            _viewModel.PropertyChanged += (_, args) =>
+            _viewModelPropertyChangedHandler = (_, args) =>
             {
+                if (_viewModel == null) return;
+
                 if (args.PropertyName == nameof(MainWindowViewModel.AvailableHelpers))
                 {
                     UpdateControlPanelHelpers();
@@ -134,7 +195,13 @@ public partial class MainWindow : Window, IAsyncDisposable
                 {
                     ControlPanel.SetButtonsEnabled(_viewModel.HasSelectedResource);
                 }
+                else if (args.PropertyName == nameof(MainWindowViewModel.IsResourceDirty))
+                {
+                    // Source: legacy_references/Sims4Tools/s4pe/MainForm.cs line 704 (CommitEnabled = resourceIsDirty)
+                    ControlPanel.CommitEnabled = _viewModel.IsResourceDirty;
+                }
             };
+            _viewModel.PropertyChanged += _viewModelPropertyChangedHandler;
         }
     }
 
@@ -182,55 +249,69 @@ public partial class MainWindow : Window, IAsyncDisposable
     {
         if (_viewModel == null) return;
 
-        // Subscribe to SelectedResources changes from ViewModel (for SelectAll command)
-        _viewModel.SelectedResources.CollectionChanged += (_, args) =>
-        {
-            if (args.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-            {
-                // When items are added programmatically, select them in the ListBox
-                foreach (var item in args.NewItems ?? Array.Empty<object>())
-                {
-                    if (item is ResourceItemViewModel resource &&
-                        !ResourceListBox.Selection.SelectedItems.Contains(resource))
-                    {
-                        var index = ResourceListBox.ItemsSource?.Cast<ResourceItemViewModel>()
-                            .ToList().IndexOf(resource) ?? -1;
-                        if (index >= 0)
-                        {
-                            ResourceListBox.Selection.Select(index);
-                        }
-                    }
-                }
-            }
-            else if (args.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-            {
-                // Clear was called - don't clear UI selection as new items will be added
-            }
-        };
+        _selectionSync = new BrowserSelectionSync(ResourceGrid, _viewModel);
+    }
 
-        // Subscribe to ListBox selection changes
-        ResourceListBox.SelectionChanged += (_, args) =>
-        {
-            // Update ViewModel's SelectedResources from ListBox selection
-            // (but avoid recursion when ViewModel is updating ListBox)
-            var selectedItems = ResourceListBox.Selection.SelectedItems
-                .OfType<ResourceItemViewModel>()
-                .ToList();
+    /// <summary>
+    /// Wires drag-and-drop import onto the window and the Delete key (toggle deleted) on the resource list.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 2729-2752 (browserWidget1_DragOver,
+    /// browserWidget1_DeletePressed) and legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 561-590
+    /// (browserWidget1_DragDrop).
+    /// </remarks>
+    private void WireResourceOpsEvents()
+    {
+        AddHandler(DragDrop.DragOverEvent, OnResourceDragOver);
+        AddHandler(DragDrop.DropEvent, OnResourceDrop);
+        ResourceGrid.KeyDown += OnResourceListKeyDown;
+    }
 
-            // Only sync if different from current SelectedResources
-            if (!selectedItems.SequenceEqual(_viewModel.SelectedResources))
-            {
-                _viewModel.SelectedResources.Clear();
-                foreach (var item in selectedItems)
-                {
-                    _viewModel.SelectedResources.Add(item);
-                }
-            }
-        };
+    private void UnwireResourceOpsEvents()
+    {
+        RemoveHandler(DragDrop.DragOverEvent, OnResourceDragOver);
+        RemoveHandler(DragDrop.DropEvent, OnResourceDrop);
+        ResourceGrid.KeyDown -= OnResourceListKeyDown;
+    }
+
+    private void OnResourceDragOver(object? sender, DragEventArgs e)
+    {
+        if (e.Handled) return;
+        e.DragEffects = e.DataTransfer.Contains(DataFormat.File) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private async void OnResourceDrop(object? sender, DragEventArgs e)
+    {
+        if (e.Handled || _viewModel == null) return;
+        e.Handled = true;
+
+        var paths = StorageItemPaths.LocalPaths(e.DataTransfer.TryGetFiles());
+        if (paths.Count == 0) return;
+
+        try
+        {
+            await _viewModel.ImportDroppedFilesAsync(paths);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            _viewModel.StatusMessage = $"Import error: {ex.Message}";
+        }
+    }
+
+    private void OnResourceListKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_viewModel == null || e.Key != Key.Delete || e.KeyModifiers != KeyModifiers.None) return;
+        if (_viewModel.ToggleDeletedCommand.CanExecute(null))
+        {
+            _viewModel.ToggleDeletedCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private async void OnWindowClosed(object? sender, EventArgs e)
     {
+        // Settings were stored and saved in the closing flow (OnWindowClosing).
         await DisposeAsync().ConfigureAwait(false);
     }
 
@@ -238,9 +319,17 @@ public partial class MainWindow : Window, IAsyncDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        UnwireResourceOpsEvents();
+
+        DisposeShell();
 
         if (_viewModel != null)
         {
+            if (_viewModelPropertyChangedHandler != null)
+            {
+                _viewModel.PropertyChanged -= _viewModelPropertyChangedHandler;
+                _viewModelPropertyChangedHandler = null;
+            }
             await _viewModel.DisposeAsync().ConfigureAwait(false);
             _viewModel = null;
         }

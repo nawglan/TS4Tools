@@ -43,9 +43,14 @@ public sealed class CftrResource : SimpleCatalogResource
     public ColorList Colors { get; set; } = new();
 
     /// <summary>
-    /// Unknown field (appears to be a boolean or flags).
+    /// Unknown field.
     /// </summary>
-    public byte Unk01 { get; set; }
+    /// <remarks>
+    /// Source: CFTRResource.cs line 39 (<c>private uint unk01</c>) and line 143 (<c>bw.Write(this.unk01)</c>):
+    /// legacy stores and writes a UInt32. Its Parse (line 125) reads only one byte, leaving the other
+    /// three in the stream; every real CFTR stores 4 bytes here, so it is read as the UInt32 legacy writes.
+    /// </remarks>
+    public uint Unk01 { get; set; }
 
     #endregion
 
@@ -85,8 +90,9 @@ public sealed class CftrResource : SimpleCatalogResource
         Colors = ColorList.Parse(data[offset..], out int colorBytes);
         offset += colorBytes;
 
-        // Unk01 (byte)
-        Unk01 = data[offset++];
+        // Unk01 (uint32, as legacy writes it - CFTRResource.cs lines 39, 143)
+        Unk01 = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+        offset += 4;
     }
 
     /// <inheritdoc/>
@@ -114,8 +120,9 @@ public sealed class CftrResource : SimpleCatalogResource
         // Colors
         offset += Colors.WriteTo(buffer[offset..]);
 
-        // Unk01
-        buffer[offset++] = Unk01;
+        // Unk01 (uint32)
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer[offset..], Unk01);
+        offset += 4;
     }
 
     /// <inheritdoc/>
@@ -132,8 +139,8 @@ public sealed class CftrResource : SimpleCatalogResource
         // Colors (byte count + values)
         size += Colors.GetSerializedSize();
 
-        // Unk01
-        size += 1;
+        // Unk01 (uint32)
+        size += 4;
 
         return size;
     }

@@ -1,4 +1,3 @@
-using System.Text;
 using FluentAssertions;
 using TS4Tools.Wrappers;
 using Xunit;
@@ -147,5 +146,31 @@ public class TextResourceTests
         var resource = new TextResource(TestKey, data);
 
         resource.Text.Should().Be(text);
+    }
+
+    /// <summary>
+    /// Regression (real data): 0x02D5DF13 (JAZZ) is listed in TextResources.txt but holds binary
+    /// "DATA" content. Legacy TextResource.Stream returns the original stream (TextResource.cs line 55),
+    /// so the bytes must survive even though they are not valid UTF-8.
+    /// </summary>
+    [Fact]
+    public void Data_BinaryContent_RoundTripsByteIdentical()
+    {
+        byte[] data = [0x44, 0x41, 0x54, 0x41, 0x01, 0x01, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xD9, 0x54, 0xBE, 0xCE, 0xC5, 0x9D, 0x1C, 0x81];
+
+        var resource = new TextResource(new ResourceKey(0x02D5DF13, 0, 0), data);
+
+        resource.Data.ToArray().Should().Equal(data);
+    }
+
+    [Fact]
+    public void Data_AfterTextChange_IsReencoded()
+    {
+        byte[] data = [0xEF, 0xBB, 0xBF, (byte)'a', 0xFF];
+        var resource = new TextResource(TestKey, data);
+
+        resource.Text = "b";
+
+        resource.Data.ToArray().Should().Equal(0xEF, 0xBB, 0xBF, (byte)'b');
     }
 }

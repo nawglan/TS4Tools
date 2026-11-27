@@ -1,3 +1,4 @@
+using TS4Tools.Wrappers.JazzChunks;
 using TS4Tools.Wrappers.MeshChunks;
 
 namespace TS4Tools.Wrappers;
@@ -5,12 +6,16 @@ namespace TS4Tools.Wrappers;
 /// <summary>
 /// Registry for RCOL block type factories.
 /// Maps resource type IDs and tags to factory functions that create the appropriate block type.
-/// Source: Conceptually based on GenericRCOLResourceHandler.RCOLDealer pattern from legacy s4pi.
+/// Source: GenericRCOLResource.cs lines 745-870 (GenericRCOLResourceHandler: typeRegistry/tagRegistry built by
+/// reflecting over every ARCOLBlock subclass, RCOLDealer, RCOLTypesForTag). Legacy discovers blocks from all
+/// loaded wrapper assemblies (MeshChunks, s4piRCOLChunks, AnimationResources, JazzResource); here they are
+/// registered explicitly.
 /// </summary>
 public static class RcolBlockRegistry
 {
     private static readonly Dictionary<uint, Func<ReadOnlySpan<byte>, RcolBlock>> _factoriesByType = new();
     private static readonly Dictionary<string, Func<ReadOnlySpan<byte>, RcolBlock>> _factoriesByTag = new();
+    private static readonly Dictionary<string, uint> _typesByTag = new();
 
     static RcolBlockRegistry()
     {
@@ -37,6 +42,25 @@ public static class RcolBlockRegistry
         // Bone/slot adjustment block (note: has no tag in binary data - identified by resource type only)
         // BondBlock = SlotAdjust, uses "BOND" as a registration tag but binary has no tag
         Register(BondBlock.TypeId, "BOND", data => new BondBlock(data));
+
+        // TrackMask (AnimationResources/TrackMask.cs)
+        Register(TrackMaskBlock.TypeId, "TkMk", data => new TrackMaskBlock(data));
+
+        // Jazz state machine chunks (JazzResource/JazzResource.cs): legacy registers these through the same
+        // reflection scan as every other ARCOLBlock.
+        Register(JazzStateMachineBlock.TypeId, "S_SM", data => new JazzStateMachineBlock(data));
+        Register(JazzStateBlock.TypeId, "S_St", data => new JazzStateBlock(data));
+        Register(JazzDecisionGraphBlock.TypeId, "S_DG", data => new JazzDecisionGraphBlock(data));
+        Register(JazzActorDefinitionBlock.TypeId, "S_AD", data => new JazzActorDefinitionBlock(data));
+        Register(JazzParameterDefinitionBlock.TypeId, "S_PD", data => new JazzParameterDefinitionBlock(data));
+        Register(JazzPlayAnimationNodeBlock.TypeId, "Play", data => new JazzPlayAnimationNodeBlock(data));
+        Register(JazzRandomNodeBlock.TypeId, "Rand", data => new JazzRandomNodeBlock(data));
+        Register(JazzSelectOnParameterNodeBlock.TypeId, "SoPn", data => new JazzSelectOnParameterNodeBlock(data));
+        Register(JazzSelectOnDestinationNodeBlock.TypeId, "DG00", data => new JazzSelectOnDestinationNodeBlock(data));
+        Register(JazzNextStateNodeBlock.TypeId, "SNSN", data => new JazzNextStateNodeBlock(data));
+        Register(JazzCreatePropNodeBlock.TypeId, "Prop", data => new JazzCreatePropNodeBlock(data));
+        Register(JazzActorOperationNodeBlock.TypeId, "AcOp", data => new JazzActorOperationNodeBlock(data));
+        Register(JazzStopAnimationNodeBlock.TypeId, "Stop", data => new JazzStopAnimationNodeBlock(data));
     }
 
     /// <summary>
@@ -49,9 +73,20 @@ public static class RcolBlockRegistry
     {
         _factoriesByType[resourceType] = factory;
         // Only register the first factory for a tag (priority to specific resource types)
+        // Source: GenericRCOLResource.cs line 778 (tagRegistry keeps the first type per tag)
         if (!_factoriesByTag.ContainsKey(tag))
+        {
             _factoriesByTag[tag] = factory;
+            _typesByTag[tag] = resourceType;
+        }
     }
+
+    /// <summary>
+    /// Gets the resource type registered for a tag, or null when the tag is not registered.
+    /// Source: GenericRCOLResourceHandler.RCOLTypesForTag (GenericRCOLResource.cs lines 877-885)
+    /// </summary>
+    public static uint? GetTypeForTag(string tag) =>
+        _typesByTag.TryGetValue(tag, out uint type) ? type : null;
 
     /// <summary>
     /// Creates an RCOL block from raw data.

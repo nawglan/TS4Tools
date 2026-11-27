@@ -248,4 +248,59 @@ public class TxtcResourceTests
         parsed.TgiBlocks[0].ResourceGroup.Should().Be(0x11223344);
         parsed.TgiBlocks[0].Instance.Should().Be(0x5566778899AABBCC);
     }
+
+    // Source: TxtcResource.cs SuperBlock.Parse lines 299-317 (blockSize covers fabric + 3 unknown bytes; fabric is a ContentType)
+    private static TxtcResource ResourceWithSuperBlock()
+    {
+        var fabric = new TxtcContent { Version = 8, Unknown3 = 7, Unknown4 = 9 };
+        fabric.Entries.Add(new TxtcEntryBlock([new TxtcEntryUInt32(0x182E64EB, 1, 256)]));
+        fabric.TgiBlocks.Add(new ResourceKey(1, 2, 3));
+
+        var resource = new TxtcResource(TestKey, ReadOnlyMemory<byte>.Empty) { Version = 8 };
+        resource.AddSuperBlock(new TxtcSuperBlock(4, fabric, 1, 2, 3));
+        resource.AddEntryBlock(new TxtcEntryBlock([new TxtcEntryBoolean(0x655FD973, 0, true)]));
+        return resource;
+    }
+
+    [Fact]
+    public void RoundTrip_SuperBlock_FabricIsParsedRecursively()
+    {
+        var serialized = ResourceWithSuperBlock().Data;
+
+        var parsed = new TxtcResource(TestKey, serialized);
+
+        parsed.SuperBlocks.Should().HaveCount(1);
+        var sb = parsed.SuperBlocks[0];
+        sb.TgiIndex.Should().Be(4);
+        sb.Unknown3.Should().Be(3);
+        sb.Fabric.Version.Should().Be(8);
+        sb.Fabric.Unknown3.Should().Be(7);
+        sb.Fabric.Unknown4.Should().Be(9);
+        sb.Fabric.Entries.Should().HaveCount(1);
+        sb.Fabric.TgiBlocks.Should().Equal(new ResourceKey(1, 2, 3));
+        parsed.Data.ToArray().Should().Equal(serialized.ToArray());
+    }
+
+    [Fact]
+    public void Parse_SuperBlockSizeSmallerThanTrailer_Throws()
+    {
+        var bytes = ResourceWithSuperBlock().Data.ToArray();
+        // header: version(4) + tgiOffset(4) + count(1) + tgiIndex(1) => blockSize at offset 10
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(10), 2);
+
+        var act = () => new TxtcResource(TestKey, bytes);
+
+        act.Should().Throw<ResourceFormatException>();
+    }
+
+    [Fact]
+    public void Parse_SuperBlockSizeBeyondData_Throws()
+    {
+        var bytes = ResourceWithSuperBlock().Data.ToArray();
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(10), uint.MaxValue);
+
+        var act = () => new TxtcResource(TestKey, bytes);
+
+        act.Should().Throw<ResourceFormatException>();
+    }
 }

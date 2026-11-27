@@ -157,9 +157,9 @@ public sealed class RigResource : TypedResource
             }
         }
 
-        // Read IK chains (version 4+ or TS4)
-        // Note: Legacy has version/isTS4 logic, we read for version 4+
-        if (Major >= 4 && position < data.Length)
+        // Read IK chains. Source: RigResource.cs lines 33, 95-96 - legacy reads them when
+        // (major >= 4 || isTS4), and isTS4 is always true, so major-3 TS4 rigs carry an IK chain
+        // list too (real game rigs are major 3 with a trailing IK chain count).
         {
             int ikCount = BinaryPrimitives.ReadInt32LittleEndian(data[position..]);
             position += 4;
@@ -210,8 +210,7 @@ public sealed class RigResource : TypedResource
             size += skeletonNameBytes;
         }
 
-        // IK chains (version 4+)
-        if (Major >= 4)
+        // IK chains (every TS4 rig; see Parse)
         {
             size += 4; // IK chain count
             foreach (var chain in IkChains)
@@ -253,8 +252,7 @@ public sealed class RigResource : TypedResource
             }
         }
 
-        // Write IK chains (version 4+)
-        if (Major >= 4)
+        // Write IK chains. Source: RigResource.cs lines 145-149 (major >= 4 || isTS4, isTS4 = true)
         {
             BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(position), IkChains.Count);
             position += 4;
@@ -295,14 +293,13 @@ public sealed class RigResource : TypedResource
 
     /// <summary>
     /// Adds an IK chain to the skeleton.
-    /// Only valid for Clear format with version 4+.
+    /// Only valid for Clear format. Source: RigResource.cs line 599 - legacy only rejects IK chain
+    /// access when major &lt; 4 and !isTS4, which never happens for TS4 rigs.
     /// </summary>
     public void AddIkChain(IkChain chain)
     {
         if (Format != RigFormat.Clear)
             throw new InvalidOperationException("Cannot modify IK chains in RawGranny format");
-        if (Major < 4)
-            throw new InvalidOperationException("IK chains require version 4+");
 
         IkChains.Add(chain);
         OnChanged();

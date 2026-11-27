@@ -17,23 +17,49 @@ public sealed class SettingsService
     private static SettingsService? _instance;
     private AppSettings _settings;
 
-    public static SettingsService Instance => _instance ??= new SettingsService();
+    /// <summary>
+    /// Gets the settings service. Returns defaults until <see cref="InitializeAsync"/> has loaded
+    /// the persisted settings, so accessing it never performs blocking file I/O.
+    /// </summary>
+    public static SettingsService Instance => _instance ??= new SettingsService(new AppSettings());
 
     public AppSettings Settings => _settings;
 
-    private SettingsService()
+    private SettingsService(AppSettings settings)
     {
-        _settings = LoadSettings();
+        _settings = settings;
     }
 
-    private static AppSettings LoadSettings()
+    /// <summary>
+    /// Loads persisted settings asynchronously and installs them as the current instance.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Properties/Settings.settings (loaded once at startup)
+    /// </remarks>
+    public static async Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        var settings = await LoadSettingsAsync(cancellationToken).ConfigureAwait(false);
+        if (_instance == null)
+        {
+            _instance = new SettingsService(settings);
+        }
+        else
+        {
+            _instance._settings = settings;
+        }
+    }
+
+    private static async Task<AppSettings> LoadSettingsAsync(CancellationToken cancellationToken)
     {
         try
         {
             if (File.Exists(SettingsPath))
             {
-                var json = File.ReadAllText(SettingsPath);
-                var settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json);
+                await using var stream = new FileStream(SettingsPath, FileMode.Open, FileAccess.Read,
+                    FileShare.Read, 4096, FileOptions.Asynchronous);
+                var settings = await System.Text.Json.JsonSerializer
+                    .DeserializeAsync<AppSettings>(stream, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
                 return settings ?? new AppSettings();
             }
         }
@@ -45,7 +71,10 @@ public sealed class SettingsService
         return new AppSettings();
     }
 
-    public void Save()
+    /// <summary>
+    /// Persists the current settings asynchronously.
+    /// </summary>
+    public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -56,7 +85,7 @@ public sealed class SettingsService
             }
 
             var json = System.Text.Json.JsonSerializer.Serialize(_settings, JsonOptions);
-            File.WriteAllText(SettingsPath, json);
+            await File.WriteAllTextAsync(SettingsPath, json, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -64,10 +93,13 @@ public sealed class SettingsService
         }
     }
 
-    public void Reset()
+    /// <summary>
+    /// Resets all settings to defaults and persists them.
+    /// </summary>
+    public Task ResetAsync()
     {
         _settings = new AppSettings();
-        Save();
+        return SaveAsync();
     }
 }
 
@@ -117,8 +149,8 @@ public sealed class AppSettings
     public int HexRowSize { get; set; } = 16;
 
     // MRU/Bookmarks
-    // Source: Settings.settings lines 50-55
-    public List<string> RecentFiles { get; set; } = [];
+    // Source: Settings.settings lines 50-55. The MRU list itself is kept in recent.json by
+    // MainWindowViewModel; a "RecentFiles" key in older settings files is ignored on load.
     public int MaxRecentFiles { get; set; } = 10;
     public List<string> Bookmarks { get; set; } = [];
     public int MaxBookmarks { get; set; } = 10;
@@ -133,6 +165,10 @@ public sealed class AppSettings
     public List<string> CustomPlaces { get; set; } = [];
     public int CustomPlacesCount { get; set; } = 5;
 
+    // Browser column widths, ':'-separated, in column order (Name, Tag, Type, ...)
+    // Source: Settings.settings line 47 (ColumnWidths); BrowserWidget.cs lines 46-89
+    public string ColumnWidths { get; set; } = "";
+
     // Window state
     // Source: Settings.settings lines 17-25
     public int WindowWidth { get; set; } = -1;
@@ -141,13 +177,21 @@ public sealed class AppSettings
     public int WindowY { get; set; } = -1;
     public int WindowState { get; set; } = 1;
 
-    // Splitter positions
+    // Splitter positions: Splitter1 is the width of the browser column, Splitter2 the height of
+    // the package information panel (-1 = default)
     // Source: Settings.settings lines 68-73
     public int Splitter1Position { get; set; } = -1;
     public int Splitter2Position { get; set; } = -1;
 
+    /// <summary>
+    /// Version of the main-window layout the splitter positions and column widths were saved for.
+    /// Saved layout values from an older layout are discarded so they cannot squeeze the new one.
+    /// </summary>
+    public int LayoutVersion { get; set; }
+
     // Last paths
-    // Source: Settings.settings lines 74-76
+    // Source: Settings.settings lines 74-76; used as the start folder of the export pickers
+    // (MainForm.cs lines 1773-1781, 1798-1804)
     public string? LastExportPath { get; set; }
 
     // Disabled features
@@ -157,7 +201,7 @@ public sealed class AppSettings
 
     // Auto display mode (0=Off, 1=Hex, 2=Preview)
     // Note: Legacy s4pe used AutoUpdateChoice for this, but we renamed it for clarity
-    public int AutoDisplayMode { get; set; }
+    public int AutoDisplayMode { get; set; } = 2;
 
     // Legacy property for backward compatibility (renamed to AutoDisplayMode)
     [System.Text.Json.Serialization.JsonIgnore]

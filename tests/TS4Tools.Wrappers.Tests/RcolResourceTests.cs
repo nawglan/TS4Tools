@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using FluentAssertions;
 using TS4Tools.Wrappers;
 using Xunit;
@@ -11,12 +10,23 @@ namespace TS4Tools.Wrappers.Tests;
 public class RcolResourceTests
 {
     /// <summary>
+    /// A valid empty MODL chunk (MODL.cs layout: tag, version 256, LOD count 0, zeroed bounding box).
+    /// </summary>
+    private static byte[] ValidModl()
+    {
+        var data = new byte[4 + 4 + 4 + 24];
+        "MODL"u8.CopyTo(data);
+        BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(4), 256);
+        return data;
+    }
+
+    /// <summary>
     /// Creates a minimal valid RCOL resource with one chunk.
     /// </summary>
     private static byte[] CreateMinimalRcol(uint version = 3, int publicChunks = 1, uint unused = 0,
         uint chunkType = RcolConstants.Modl, byte[]? chunkData = null)
     {
-        chunkData ??= "MODL\x00\x00\x00\x00TEST"u8.ToArray(); // Minimal MODL-like data
+        chunkData ??= ValidModl();
 
         // Header: 5 x uint32 = 20 bytes
         // Chunk TGI: 1 x 16 bytes = 16 bytes
@@ -150,7 +160,7 @@ public class RcolResourceTests
     public void Parse_WithExternalResources_ParsesExternals()
     {
         // Arrange - Create RCOL with 2 external resources
-        var chunkData = "MODL\x00\x00\x00\x00TEST"u8.ToArray();
+        var chunkData = ValidModl();
 
         // Header size: 20 + 16 (chunk TGI) + 32 (2 external TGIs) + 8 (index) = 76 bytes
         int headerSize = 20 + 16 + 32 + 8;
@@ -224,7 +234,7 @@ public class RcolResourceTests
         // This tests the special case from GenericRCOLResource.cs lines 86-95
         // When there's a single chunk with Position=0, data starts after the index
 
-        var chunkData = "MODL\x00\x00\x00\x00DATA"u8.ToArray();
+        var chunkData = ValidModl();
 
         // Header: 20 bytes
         // Chunk TGI: 16 bytes

@@ -74,6 +74,10 @@ public sealed class CfndResource : SimpleCatalogResource
 
     #endregion
 
+    /// <inheritdoc/>
+    /// <remarks>Source: CFNDResource.cs line 33 (version = 0x6); real 0x07 files append 16 bytes legacy drops.</remarks>
+    protected override uint? MaxSupportedVersion => 0x06;
+
     /// <summary>
     /// Creates a new CFND resource by parsing data.
     /// </summary>
@@ -199,6 +203,8 @@ public sealed class CfndResource : SimpleCatalogResource
     /// <inheritdoc/>
     protected override void InitializeTypeSpecificDefaults()
     {
+        // Source: CFNDResource.cs line 33 (legacy default version for a new resource)
+        Version = DefaultVersion;
         Unk01 = 0;
         Unk02 = 0;
         ModlRef1 = TgiReference.Empty;

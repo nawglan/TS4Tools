@@ -223,8 +223,12 @@ public sealed class WallMatdEntryList
     /// </summary>
     public static WallMatdEntryList Parse(ReadOnlySpan<byte> data, out int bytesRead)
     {
-        int offset = 0;
-        byte count = data[offset++];
+        // WallMatdEntryList derives from DependentList without overriding ReadCount, so the count is an Int32
+        // (legacy_references/Sims4Tools/s4pi/Interfaces/DependentList.cs lines 124-127).
+        int count = BinaryPrimitives.ReadInt32LittleEndian(data);
+        int offset = 4;
+        if (count < 0 || (long)count * WallMatdEntry.SerializedSize > data.Length - offset)
+            throw new InvalidDataException($"Invalid WallMatdEntryList count: {count}");
 
         var list = new WallMatdEntryList();
         list._entries.Capacity = count;
@@ -243,15 +247,16 @@ public sealed class WallMatdEntryList
     /// <summary>
     /// Gets the size in bytes when serialized.
     /// </summary>
-    public int GetSerializedSize() => 1 + (_entries.Count * WallMatdEntry.SerializedSize);
+    public int GetSerializedSize() => 4 + (_entries.Count * WallMatdEntry.SerializedSize);
 
     /// <summary>
     /// Writes the entry list to a buffer.
     /// </summary>
     public int WriteTo(Span<byte> buffer)
     {
-        int offset = 0;
-        buffer[offset++] = (byte)_entries.Count;
+        // Source: DependentList.cs lines 167-170 (Int32 count)
+        BinaryPrimitives.WriteInt32LittleEndian(buffer, _entries.Count);
+        int offset = 4;
 
         foreach (var entry in _entries)
         {
@@ -363,8 +368,12 @@ public sealed class WallImgGroupList
     /// </summary>
     public static WallImgGroupList Parse(ReadOnlySpan<byte> data, out int bytesRead)
     {
-        int offset = 0;
-        byte count = data[offset++];
+        // WallImgGroupList derives from DependentList without overriding ReadCount, so the count is an Int32
+        // (legacy_references/Sims4Tools/s4pi/Interfaces/DependentList.cs lines 124-127).
+        int count = BinaryPrimitives.ReadInt32LittleEndian(data);
+        int offset = 4;
+        if (count < 0 || (long)count * WallImgGroupEntry.SerializedSize > data.Length - offset)
+            throw new InvalidDataException($"Invalid WallImgGroupList count: {count}");
 
         var list = new WallImgGroupList();
         list._entries.Capacity = count;
@@ -383,15 +392,16 @@ public sealed class WallImgGroupList
     /// <summary>
     /// Gets the size in bytes when serialized.
     /// </summary>
-    public int GetSerializedSize() => 1 + (_entries.Count * WallImgGroupEntry.SerializedSize);
+    public int GetSerializedSize() => 4 + (_entries.Count * WallImgGroupEntry.SerializedSize);
 
     /// <summary>
     /// Writes the entry list to a buffer.
     /// </summary>
     public int WriteTo(Span<byte> buffer)
     {
-        int offset = 0;
-        buffer[offset++] = (byte)_entries.Count;
+        // Source: DependentList.cs lines 167-170 (Int32 count)
+        BinaryPrimitives.WriteInt32LittleEndian(buffer, _entries.Count);
+        int offset = 4;
 
         foreach (var entry in _entries)
         {

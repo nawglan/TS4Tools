@@ -13,8 +13,18 @@ public sealed class ClipEventSound : ClipEvent
     /// <summary>Name of the sound to play.</summary>
     public string SoundName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// True when the name is stored as a 32-bit length followed by ASCII chars (the compact layout in
+    /// current TS4 clips) instead of legacy's fixed 0x80-byte field (ClipEvents.cs lines 95-104).
+    /// </summary>
+    public bool LengthPrefixedName { get; set; }
+
     /// <inheritdoc/>
-    protected override int TypeDataSize => ClipEventConstants.FixedStringLength;
+    protected override int TypeDataSize => LengthPrefixedName ? 4 + Encoding.ASCII.GetByteCount(SoundName) : ClipEventConstants.FixedStringLength;
+
+    /// <summary>Whether <paramref name="payload"/> is exactly an int32 length followed by that many bytes.</summary>
+    internal static bool IsLengthPrefixed(ReadOnlySpan<byte> payload) =>
+        payload.Length >= 4 && BinaryPrimitives.ReadInt32LittleEndian(payload) == payload.Length - 4;
 
     /// <summary>Creates a new sound event.</summary>
     public ClipEventSound() : base(ClipEventType.Sound) { }
@@ -22,13 +32,28 @@ public sealed class ClipEventSound : ClipEvent
     /// <inheritdoc/>
     protected override void ReadTypeData(ReadOnlySpan<byte> data, int offset)
     {
-        SoundName = ReadStringFixed(data, offset);
+        if (LengthPrefixedName)
+        {
+            int length = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
+            SoundName = Encoding.ASCII.GetString(data.Slice(offset + 4, length));
+            return;
+        }
+
+        SoundName = ReadStringFixedField(data, offset, 0);
     }
 
     /// <inheritdoc/>
     protected override void WriteTypeData(BinaryWriter writer)
     {
-        WriteStringFixed(writer, SoundName);
+        if (LengthPrefixedName)
+        {
+            byte[] bytes = Encoding.ASCII.GetBytes(SoundName);
+            writer.Write(bytes.Length);
+            writer.Write(bytes);
+            return;
+        }
+
+        WriteStringFixedField(writer, SoundName, 0);
     }
 }
 
@@ -95,7 +120,10 @@ public sealed class ClipEventEffect : ClipEvent
     public string EffectName { get; set; } = string.Empty;
 
     /// <inheritdoc/>
-    protected override int TypeDataSize => (2 * ClipEventConstants.FixedStringLength) + 24;
+    protected override int TypeDataSize => LegacyTypeDataSize;
+
+    /// <summary>Payload size of the legacy layout (ClipEvents.cs ClipEventEffect).</summary>
+    internal const int LegacyTypeDataSize = (2 * ClipEventConstants.FixedStringLength) + 24;
 
     /// <summary>Creates a new effect event.</summary>
     public ClipEventEffect() : base(ClipEventType.Effect) { }
@@ -103,7 +131,7 @@ public sealed class ClipEventEffect : ClipEvent
     /// <inheritdoc/>
     protected override void ReadTypeData(ReadOnlySpan<byte> data, int offset)
     {
-        SlotName = ReadStringFixed(data, offset);
+        SlotName = ReadStringFixedField(data, offset, 0);
         offset += ClipEventConstants.FixedStringLength;
 
         ActorNameHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -115,17 +143,17 @@ public sealed class ClipEventEffect : ClipEvent
         data.Slice(offset, 16).CopyTo(UnknownBytes);
         offset += 16;
 
-        EffectName = ReadStringFixed(data, offset);
+        EffectName = ReadStringFixedField(data, offset, 1);
     }
 
     /// <inheritdoc/>
     protected override void WriteTypeData(BinaryWriter writer)
     {
-        WriteStringFixed(writer, SlotName);
+        WriteStringFixedField(writer, SlotName, 0);
         writer.Write(ActorNameHash);
         writer.Write(SlotNameHash);
         writer.Write(UnknownBytes);
-        WriteStringFixed(writer, EffectName);
+        WriteStringFixedField(writer, EffectName, 1);
     }
 }
 
@@ -186,7 +214,10 @@ public sealed class ClipEventDoubleModifierSound : ClipEvent
     public uint SlotNameHash { get; set; }
 
     /// <inheritdoc/>
-    protected override int TypeDataSize => ClipEventConstants.FixedStringLength + 8;
+    protected override int TypeDataSize => LegacyTypeDataSize;
+
+    /// <summary>Payload size of the legacy layout (ClipEvents.cs ClipEventDoubleModifierSound).</summary>
+    internal const int LegacyTypeDataSize = ClipEventConstants.FixedStringLength + 8;
 
     /// <summary>Creates a new double modifier sound event.</summary>
     public ClipEventDoubleModifierSound() : base(ClipEventType.DoubleModifierSound) { }
@@ -194,7 +225,7 @@ public sealed class ClipEventDoubleModifierSound : ClipEvent
     /// <inheritdoc/>
     protected override void ReadTypeData(ReadOnlySpan<byte> data, int offset)
     {
-        Unknown3 = ReadStringFixed(data, offset);
+        Unknown3 = ReadStringFixedField(data, offset, 0);
         offset += ClipEventConstants.FixedStringLength;
 
         ActorNameHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -206,7 +237,7 @@ public sealed class ClipEventDoubleModifierSound : ClipEvent
     /// <inheritdoc/>
     protected override void WriteTypeData(BinaryWriter writer)
     {
-        WriteStringFixed(writer, Unknown3);
+        WriteStringFixedField(writer, Unknown3, 0);
         writer.Write(ActorNameHash);
         writer.Write(SlotNameHash);
     }
@@ -224,7 +255,10 @@ public sealed class ClipEventCensor : ClipEvent
     public float Unknown3 { get; set; }
 
     /// <inheritdoc/>
-    protected override int TypeDataSize => 4;
+    protected override int TypeDataSize => LegacyTypeDataSize;
+
+    /// <summary>Payload size of the legacy layout (ClipEvents.cs ClipEventCensor).</summary>
+    internal const int LegacyTypeDataSize = 4;
 
     /// <summary>Creates a new censor event.</summary>
     public ClipEventCensor() : base(ClipEventType.Censor) { }

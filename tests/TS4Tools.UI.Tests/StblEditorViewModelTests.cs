@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using FluentAssertions;
 using TS4Tools.UI.ViewModels.Editors;
 using TS4Tools.Wrappers;

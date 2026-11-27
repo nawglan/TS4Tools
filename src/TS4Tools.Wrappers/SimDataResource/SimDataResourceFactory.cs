@@ -1,10 +1,12 @@
-// Source: legacy_references/Sims4Tools/s4pi Wrappers/DataResource/DataResource.cs lines 806-816
+// Source: legacy_references/Sims4Tools/s4pi Wrappers/DataResource/DataResource.cs lines 806-812
 
 namespace TS4Tools.Wrappers;
 
 /// <summary>
 /// Factory for creating SimDataResource instances.
 /// </summary>
+/// <remarks>Legacy DataResourceHandler registers 0x545AC67A (DataResource.cs line 810).</remarks>
+[ResourceHandler(0x545AC67A)]
 public sealed class SimDataResourceFactory : IResourceFactory
 {
     /// <inheritdoc/>

@@ -9,101 +9,49 @@ namespace TS4Tools.Wrappers.Tests.MeshChunks;
 /// </summary>
 public class MtnfDataTests
 {
-    /// <summary>
-    /// Creates a minimal MTNF block with MTNF tag (just header, no structured shader data).
-    /// </summary>
+    // Layouts follow legacy s4piRCOLChunks/MTNF.cs lines 63-88 (MTNF: tag, unknown1, data length, list),
+    // MATD.cs lines 205-228 (MTRL: tag, unknown1, uint16, uint16, list) and ShaderData.cs lines 262-270,
+    // 944-964 (list: count, 16-byte headers, data; offsets relative to the tag; data length = data bytes only).
+
+    /// <summary>Creates a minimal MTNF block: no shader data, data length 0.</summary>
     private static byte[] CreateMtnfBlock()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
-
-        // Tag: MTNF
-        writer.Write((byte)'M');
-        writer.Write((byte)'T');
-        writer.Write((byte)'N');
-        writer.Write((byte)'F');
-
-        // Unknown1
-        writer.Write(0x12345678u);
-
-        // Shader data length (contains entry count + raw data)
-        byte[] shaderData = [0x00, 0x00, 0x00, 0x00, 0x05]; // entry count = 0, then 1 byte raw
-        writer.Write((uint)shaderData.Length);
-
-        // Shader data
-        writer.Write(shaderData);
-
+        writer.Write("MTNF"u8);
+        writer.Write(0x12345678u); // Unknown1
+        writer.Write(0u);          // data length
+        writer.Write(0);           // shader data count
         return ms.ToArray();
     }
 
-    /// <summary>
-    /// Creates a minimal MTRL block (alternative tag).
-    /// </summary>
+    /// <summary>Creates a minimal MTRL block (as embedded in MATD): two uint16 unknowns, no data length.</summary>
     private static byte[] CreateMtrlBlock()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
-
-        // Tag: MTRL
-        writer.Write((byte)'M');
-        writer.Write((byte)'T');
-        writer.Write((byte)'R');
-        writer.Write((byte)'L');
-
-        // Unknown1
-        writer.Write(0xAABBCCDDu);
-
-        // Shader data length = 0
-        writer.Write(0u);
-
+        writer.Write("MTRL"u8);
+        writer.Write(0xAABBCCDDu);   // Unknown1
+        writer.Write((ushort)0x0102); // Unknown2
+        writer.Write((ushort)0x0304); // Unknown3
+        writer.Write(0);             // shader data count
         return ms.ToArray();
     }
 
-    /// <summary>
-    /// Creates an MTNF block with a valid Float shader element.
-    /// </summary>
+    /// <summary>Creates an MTNF block with one Float element.</summary>
     private static byte[] CreateMtnfWithFloatElement()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
-
-        // Tag: MTNF
-        writer.Write((byte)'M');
-        writer.Write((byte)'T');
-        writer.Write((byte)'N');
-        writer.Write((byte)'F');
-
-        // Unknown1
-        writer.Write(0u);
-
-        // We'll write data section, then calculate total length
-        // Data section format:
-        // - entry count (4 bytes)
-        // - for each entry: field (4), type (4), count (4), offset (4) = 16 bytes
-        // - then data values
-
-        // Entry count = 1
-        // Entry: field=Shininess (0xF755F7FF), type=Float (1), count=1, offset=20 (after header)
-        // Data: 1 float = 4 bytes
-
-        int headerSize = 4 + 16; // count + 1 entry header
-        int dataSize = 4; // 1 float
-        int totalSize = headerSize + dataSize;
-
-        writer.Write((uint)totalSize); // Shader data length
-
-        // Entry count
-        writer.Write(1);
-
-        // Entry header: field, type, count, offset
-        writer.Write((uint)ShaderFieldType.Shininess); // 0xF755F7FF
-        writer.Write((uint)ShaderDataType.Float);      // 1
-        writer.Write(1);                                // count
-        writer.Write((uint)headerSize);                 // offset to data
-
-        // Data: float value
+        writer.Write("MTNF"u8);
+        writer.Write(0u);  // Unknown1
+        writer.Write(4u);  // data length: one float (headers are not counted)
+        writer.Write(1);   // count
+        writer.Write((uint)ShaderFieldType.Shininess);
+        writer.Write((uint)ShaderDataType.Float);
+        writer.Write(1);   // component count
+        writer.Write(16u + 16u); // offset from the tag: 16-byte header + 16-byte element header
         writer.Write(0.75f);
-
         return ms.ToArray();
     }
 
@@ -119,7 +67,6 @@ public class MtnfDataTests
         // Assert
         mtnf.Tag.Should().Be("MTNF");
         mtnf.Unknown1.Should().Be(0x12345678u);
-        // No structured elements parsed (the raw data doesn't follow element format)
         mtnf.ShaderData.Should().BeEmpty();
     }
 
@@ -135,6 +82,8 @@ public class MtnfDataTests
         // Assert
         mtnf.Tag.Should().Be("MTRL");
         mtnf.Unknown1.Should().Be(0xAABBCCDDu);
+        mtnf.Unknown2.Should().Be(0x0102);
+        mtnf.Unknown3.Should().Be(0x0304);
         mtnf.ShaderData.Should().BeEmpty();
     }
 
@@ -203,16 +152,48 @@ public class MtnfDataTests
     }
 
     [Fact]
-    public void MtnfData_Parse_TooShort_HandledGracefully()
+    public void MtnfData_Parse_TooShort_Throws()
     {
-        // Arrange - data too short for full header
+        // Legacy reads past the end and throws; the GEOM/MATD callers then keep the raw bytes.
         var data = new byte[] { (byte)'M', (byte)'T', (byte)'N', (byte)'F' };
 
-        // Act - should not throw, just preserve raw data
-        var mtnf = new MtnfData(data);
+        var action = () => new MtnfData(data);
 
-        // Assert
-        mtnf.ShaderData.Should().BeEmpty();
+        action.Should().Throw<InvalidDataException>();
+        MtnfData.TryParse(data, out _).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// Regression (real data): every real GEOM MTNF and MATD MTRL block must re-serialize byte-identically.
+    /// The old model treated MTRL's two uint16 unknowns as a data length, counted headers in the MTNF data
+    /// length and resolved offsets from after the length field instead of from the tag.
+    /// </summary>
+    [Fact]
+    public void MtnfData_Serialize_WithFloatElement_IsByteIdentical()
+    {
+        var data = CreateMtnfWithFloatElement();
+
+        new MtnfData(data).Serialize().Should().Equal(data);
+    }
+
+    [Fact]
+    public void MtnfData_Serialize_Mtrl_IsByteIdentical()
+    {
+        var data = CreateMtrlBlock();
+
+        new MtnfData(data).Serialize().Should().Equal(data);
+    }
+
+    [Fact]
+    public void MtnfData_Parse_DataLengthMismatch_Throws()
+    {
+        // Source: ShaderData.cs lines 953-954 - the MTNF data length must equal the element data size
+        var data = CreateMtnfWithFloatElement();
+        data[8] = 8;
+
+        var action = () => new MtnfData(data);
+
+        action.Should().Throw<InvalidDataException>();
     }
 
     [Fact]

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    A legacy-style s4pi wrapper plugin (AResourceHandler + AResource) recompiled against TS4Tools.Compatibility,
+    used by TS4Tools.UI.Tests to check that plugins loaded from the Wrappers folder are bridged into the registry.
+    It is not referenced as an assembly: the tests copy the DLL into a plugin folder and load it from there.
+  -->
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>LegacyTestPlugin</RootNamespace>
+    <!-- CA1051 / CA1305: legacy wrapper shape (protected fields, culture-free hex formatting) -->
+    <NoWarn>$(NoWarn);CA1051;CA1305</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TS4Tools.Compatibility\TS4Tools.Compatibility.csproj">
+      <!-- The host provides TS4Tools.Compatibility; the plugin folder holds only the plugin. -->
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+</Project>

@@ -18,6 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Source: legacy_references/Sims4Tools/s4pi Wrappers/TextResource/TextResources.txt -->
+    <EmbeddedResource Include="TextResource/TextResources.txt" LogicalName="TS4Tools.Wrappers.TextResource.TextResources.txt" />
+    <!-- Source: legacy_references/Sims4Tools/s4pi Wrappers/ImageResource/ImageResources.txt -->
+    <EmbeddedResource Include="ImageResource/ImageResources.txt" LogicalName="TS4Tools.Wrappers.ImageResource.ImageResources.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="TS4Tools.Wrappers.Tests" />
   </ItemGroup>
 

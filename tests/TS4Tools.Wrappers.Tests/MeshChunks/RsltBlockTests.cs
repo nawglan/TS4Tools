@@ -414,4 +414,22 @@ public class RsltBlockTests
         // Assert
         block.Should().BeOfType<RsltBlock>();
     }
+
+    /// <summary>
+    /// Regression (real data): RSLT version 0x0A files with slots hold data the legacy layout (RSLT.cs lines
+    /// 76-121, no version branches) does not describe: legacy either reads past the end or drops the tail on
+    /// save. They are refused as unsupported; version 0x0A without the extra data still parses.
+    /// </summary>
+    [Fact]
+    public void RsltBlock_Parse_Version10WithUnreadData_ThrowsUnsupported()
+    {
+        var data = CreateRsltWithContainer();
+        BitConverter.GetBytes(0x0Au).CopyTo(data, 4);
+        byte[] withTail = [.. data, .. new byte[32]];
+        byte[] truncated = data[..^8];
+
+        new RsltBlock(data).Version.Should().Be(0x0Au);
+        FluentActions.Invoking(() => new RsltBlock(withTail)).Should().Throw<UnsupportedResourceVersionException>();
+        FluentActions.Invoking(() => new RsltBlock(truncated)).Should().Throw<UnsupportedResourceVersionException>();
+    }
 }

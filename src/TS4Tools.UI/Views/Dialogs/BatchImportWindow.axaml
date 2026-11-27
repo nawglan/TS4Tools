@@ -1,50 +1,49 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:TS4Tools.UI.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="TS4Tools.UI.Views.Dialogs.BatchImportWindow"
-        Title="Batch Import"
-        Width="600" Height="500"
+        x:DataType="vm:ImportBatchViewModel"
+        Title="{Binding Title}"
+        Width="640" Height="500"
         WindowStartupLocation="CenterOwner"
         CanResize="True">
-    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs -->
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs, ImportBatch.Designer.cs -->
 
     <DockPanel Margin="16">
-        <!-- Buttons at bottom -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
-            <Button x:Name="ImportButton" Content="_Import" Padding="24,8" IsDefault="True" />
-            <Button x:Name="CancelButton" Content="_Cancel" Padding="24,8" IsCancel="True" />
+            <Button x:Name="ImportButton" Content="OK" Padding="24,8" IsDefault="True" />
+            <Button x:Name="CancelButton" Content="Cancel" Padding="24,8" IsCancel="True" />
         </StackPanel>
 
-        <!-- Import Settings -->
+        <!-- Source: legacy_references/Sims4Tools/s4pe/Import/ImportSettings.Designer.cs lines 56-135 -->
         <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
                 BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,16,0,0">
-            <StackPanel Spacing="8">
-                <TextBlock Text="Import Settings" FontWeight="SemiBold" FontSize="14" />
-                <CheckBox x:Name="ReplaceCheckBox" Content="Replace existing resources with same key" />
-                <CheckBox x:Name="CompressCheckBox" Content="Compress resources" IsChecked="True" />
-                <CheckBox x:Name="UseNamesCheckBox" Content="Use resource names from filenames" />
-            </StackPanel>
+            <WrapPanel DataContext="{Binding Settings}" x:DataType="vm:ImportSettingsViewModel" ItemSpacing="16" LineSpacing="8">
+                <StackPanel>
+                    <RadioButton GroupName="BatchDuplicates" Content="Replace duplicates" IsChecked="{Binding Replace}" IsEnabled="{Binding ReplaceEnabled}" />
+                    <RadioButton GroupName="BatchDuplicates" Content="Reject duplicates" IsChecked="{Binding Reject}" IsEnabled="{Binding ReplaceEnabled}" />
+                </StackPanel>
+                <CheckBox Content="Compress" IsChecked="{Binding Compress}" IsEnabled="{Binding CompressEnabled}" />
+                <CheckBox Content="Use resource name" IsChecked="{Binding UseName}" IsEnabled="{Binding UseNameEnabled}" />
+                <CheckBox Content="Rename if present" IsChecked="{Binding AllowRename}" IsEnabled="{Binding CanAllowRename}" />
+            </WrapPanel>
         </Border>
 
-        <!-- File List -->
         <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Spacing="8" Margin="0,0,0,8">
-                <TextBlock Text="Files to Import" FontWeight="SemiBold" FontSize="14" />
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="AddFilesButton" Content="Add Files..." Padding="12,4" />
-                    <Button x:Name="AddFolderButton" Content="Add Folder..." Padding="12,4" />
-                    <Button x:Name="RemoveButton" Content="Remove Selected" Padding="12,4" IsEnabled="False" />
-                    <Button x:Name="ClearButton" Content="Clear All" Padding="12,4" />
-                </StackPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                <Button x:Name="AddFilesButton" Content="Add Files..." Padding="12,4" IsVisible="{Binding AllowAddFiles}" />
+                <Button x:Name="AddFolderButton" Content="Add Folder..." Padding="12,4" IsVisible="{Binding AllowAddFiles}" />
+                <Button x:Name="RemoveButton" Content="Remove Selected" Padding="12,4" IsEnabled="False" />
+                <Button x:Name="ClearButton" Content="Clear All" Padding="12,4" />
             </StackPanel>
 
-            <TextBlock DockPanel.Dock="Bottom" x:Name="FileCountLabel" Text="0 files" Margin="0,8,0,0" Opacity="0.7" />
+            <TextBlock DockPanel.Dock="Bottom" Text="{Binding Items.Count, StringFormat='{}{0} item(s)'}" Margin="0,8,0,0" Opacity="0.7" />
 
-            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                    BorderThickness="1" CornerRadius="4">
-                <ListBox x:Name="FilesListBox" SelectionMode="Multiple" />
+            <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" BorderThickness="1" CornerRadius="4">
+                <ListBox x:Name="FilesListBox" ItemsSource="{Binding Items}" SelectionMode="Multiple" />
             </Border>
         </DockPanel>
     </DockPanel>

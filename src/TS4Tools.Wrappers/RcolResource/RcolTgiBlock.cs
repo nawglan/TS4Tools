@@ -68,6 +68,34 @@ public readonly struct RcolTgiBlock : IEquatable<RcolTgiBlock>
     }
 
     /// <summary>
+    /// Reads a TGI block stored in TGI order (Type, Group, Instance) - the default order of legacy
+    /// <c>TGIBlock</c> (s4pi/Interfaces/TGIBlock.cs line 37), used e.g. by the GEOM TGI list.
+    /// </summary>
+    public static RcolTgiBlock ReadTgiOrder(ReadOnlySpan<byte> data)
+    {
+        if (data.Length < Size)
+            throw new ArgumentException($"Data too short for TGI block: expected {Size} bytes, got {data.Length}");
+
+        uint type = BinaryPrimitives.ReadUInt32LittleEndian(data);
+        uint group = BinaryPrimitives.ReadUInt32LittleEndian(data[4..]);
+        ulong instance = BinaryPrimitives.ReadUInt64LittleEndian(data[8..]);
+        return new RcolTgiBlock(instance, type, group);
+    }
+
+    /// <summary>
+    /// Writes this TGI block in TGI order (Type, Group, Instance); see <see cref="ReadTgiOrder"/>.
+    /// </summary>
+    public void WriteTgiOrder(Span<byte> destination)
+    {
+        if (destination.Length < Size)
+            throw new ArgumentException($"Destination too short for TGI block: need {Size} bytes, got {destination.Length}");
+
+        BinaryPrimitives.WriteUInt32LittleEndian(destination, ResourceType);
+        BinaryPrimitives.WriteUInt32LittleEndian(destination[4..], ResourceGroup);
+        BinaryPrimitives.WriteUInt64LittleEndian(destination[8..], Instance);
+    }
+
+    /// <summary>
     /// Converts to a ResourceKey.
     /// </summary>
     public ResourceKey ToResourceKey() => new(ResourceType, ResourceGroup, Instance);

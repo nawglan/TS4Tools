@@ -138,7 +138,12 @@ public sealed class DeformerMapResource : TypedResource
         BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], MaxRow);
         offset += 4;
         span[offset++] = (byte)HasRobeChannel;
-        BinaryPrimitives.WriteInt32LittleEndian(span[offset..], ScanLines.Count);
+        // The field read as "totalBytes" (DeformerMapResource.cs line 82) is the byte size of the scan-line
+        // data that follows: every real game deformer map stores size - 39 here. Legacy reads it only as a
+        // zero/non-zero flag (lines 83-96) but writes scanLines.Length (line 115), so legacy does not
+        // round-trip game files. Writing the byte size is equally valid for the legacy reader (zero iff
+        // there are no scan lines) and reproduces the game data byte for byte.
+        BinaryPrimitives.WriteInt32LittleEndian(span[offset..], size - 39);
         offset += 4;
 
         foreach (var scanLine in ScanLines)

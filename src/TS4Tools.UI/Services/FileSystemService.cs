@@ -29,16 +29,8 @@ public sealed class FileSystemService : IFileSystemService
         => File.WriteAllBytesAsync(path, bytes, cancellationToken);
 
     /// <inheritdoc />
-    public string ReadAllText(string path)
-        => File.ReadAllText(path);
-
-    /// <inheritdoc />
     public Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default)
         => File.ReadAllTextAsync(path, cancellationToken);
-
-    /// <inheritdoc />
-    public void WriteAllText(string path, string contents)
-        => File.WriteAllText(path, contents);
 
     /// <inheritdoc />
     public Task WriteAllTextAsync(string path, string contents, CancellationToken cancellationToken = default)

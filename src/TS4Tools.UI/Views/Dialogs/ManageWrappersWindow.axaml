@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="using:TS4Tools.UI.Views.Controls"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="560"
+        x:Class="TS4Tools.UI.Views.Dialogs.ManageWrappersWindow"
+        Title="Manage Wrappers"
+        Width="900" Height="560"
+        WindowStartupLocation="CenterOwner">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs -->
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button Content="_OK" Click="OkButton_Click" IsDefault="True" Padding="24,6" />
+            <Button Content="_Cancel" Click="CancelButton_Click" IsCancel="True" Padding="16,6" />
+        </StackPanel>
+        <controls:ManageWrappersView x:Name="WrappersView" />
+    </DockPanel>
+</Window>

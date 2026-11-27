@@ -9,11 +9,25 @@ namespace TS4Tools.UI.ViewModels.Editors;
 /// </summary>
 /// <remarks>
 /// Source: legacy_references/Sims4Tools/s4pe/s4pePropertyGrid/S4PIPropertyGrid.cs
-/// This provides a simplified reflection-based property editor for any resource wrapper.
+/// This provides a reflection-based property editor for any resource wrapper. Rows expand to nested objects,
+/// list elements (with add/insert/copy/delete, legacy NewGridForm) and flag bits; edits anywhere in the tree
+/// bubble up as a Value change of the top-level row (see <see cref="PropertyItem"/>).
+/// Edits are made directly on the wrapper; <see cref="PropertyValueChanged"/> lets the main
+/// window mark the resource as having uncommitted edits, mirroring how legacy s4pe's grid
+/// edits raise ResourceChanged and are written back by Commit
+/// (legacy_references/Sims4Tools/s4pe/MainForm.cs lines 3008-3029 controlPanel1_GridClick,
+/// lines 3060-3073 controlPanel1_CommitClick).
 /// </remarks>
-public partial class PropertyGridViewModel : ViewModelBase
+public partial class PropertyGridViewModel : ViewModelBase, IDisposable
 {
+    private bool _disposed;
     private object? _target;
+    private readonly List<(PropertyItem Item, PropertyChangedEventHandler Handler)> _subscriptions = [];
+
+    /// <summary>
+    /// Raised after a property value on the target has been changed through the grid.
+    /// </summary>
+    public event EventHandler? PropertyValueChanged;
 
     [ObservableProperty]
     private string _typeName = string.Empty;
@@ -39,6 +53,7 @@ public partial class PropertyGridViewModel : ViewModelBase
     [RelayCommand]
     private void RefreshProperties()
     {
+        ClearSubscriptions();
         Properties.Clear();
 
         if (_target == null)
@@ -59,6 +74,16 @@ public partial class PropertyGridViewModel : ViewModelBase
             try
             {
                 var item = new PropertyItem(_target, prop);
+                PropertyChangedEventHandler handler = (_, e) =>
+                {
+                    // PropertyItem raises Value only after a successful set on the target.
+                    if (e.PropertyName == nameof(PropertyItem.Value))
+                    {
+                        PropertyValueChanged?.Invoke(this, EventArgs.Empty);
+                    }
+                };
+                item.PropertyChanged += handler;
+                _subscriptions.Add((item, handler));
                 Properties.Add(item);
             }
             catch
@@ -68,6 +93,26 @@ public partial class PropertyGridViewModel : ViewModelBase
         }
 
         StatusMessage = $"{Properties.Count} properties";
+    }
+
+    private void ClearSubscriptions()
+    {
+        foreach (var (item, handler) in _subscriptions)
+        {
+            item.PropertyChanged -= handler;
+            // Releases the nested rows' subscriptions to their own children.
+            item.Dispose();
+        }
+        _subscriptions.Clear();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        ClearSubscriptions();
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

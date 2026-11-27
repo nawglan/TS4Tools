@@ -154,6 +154,51 @@ public sealed class ThumbnailResource : TypedResource
     }
 
     /// <summary>
+    /// Applies the alpha plane of an ALFA thumbnail to RGBA32 pixels (R, G, B, A byte order).
+    /// </summary>
+    /// <param name="rgba">Decoded JPEG pixels; the A byte of every pixel is overwritten.</param>
+    /// <param name="alphaPngRgba">The embedded alpha PNG (<see cref="GetAlphaPngData"/>) decoded to RGBA32 with
+    /// the same dimensions as the JPEG; only its R channel is used.</param>
+    /// <exception cref="InvalidDataException">The buffers differ in size (the images differ in dimensions).</exception>
+    /// <remarks>
+    /// Source: ThumbnailResource.cs lines 138-142 (dimension check "Not a proper TS4 Thumbnail image") and
+    /// 252-256, 311-316 (UpdateAlpha: <c>new ColorARGB(original, alpha)</c> sets A = alpha->R).
+    /// </remarks>
+    public static void ApplyAlpha(Span<byte> rgba, ReadOnlySpan<byte> alphaPngRgba)
+    {
+        if (rgba.Length != alphaPngRgba.Length || rgba.Length % 4 != 0)
+            throw new InvalidDataException("Not a proper TS4 Thumbnail image");
+        for (int i = 0; i < rgba.Length; i += 4)
+            rgba[i + 3] = alphaPngRgba[i];
+    }
+
+    /// <summary>
+    /// Applies a one-byte-per-pixel alpha plane (see <see cref="ExtractAlphaPlane"/>) to RGBA32 pixels.
+    /// </summary>
+    /// <exception cref="InvalidDataException">The plane does not hold one byte per pixel.</exception>
+    public static void ApplyAlphaPlane(Span<byte> rgba, ReadOnlySpan<byte> alphaPlane)
+    {
+        if (rgba.Length % 4 != 0 || alphaPlane.Length != rgba.Length / 4)
+            throw new InvalidDataException("Not a proper TS4 Thumbnail image");
+        for (int i = 0; i < alphaPlane.Length; i++)
+            rgba[i * 4 + 3] = alphaPlane[i];
+    }
+
+    /// <summary>
+    /// Reduces a decoded alpha PNG (RGBA32) to its alpha plane: the R channel of each pixel.
+    /// Source: ThumbnailResource.cs lines 311-316.
+    /// </summary>
+    public static byte[] ExtractAlphaPlane(ReadOnlySpan<byte> alphaPngRgba)
+    {
+        if (alphaPngRgba.Length % 4 != 0)
+            throw new InvalidDataException("Alpha image is not RGBA32");
+        var plane = new byte[alphaPngRgba.Length / 4];
+        for (int i = 0; i < plane.Length; i++)
+            plane[i] = alphaPngRgba[i * 4];
+        return plane;
+    }
+
+    /// <summary>
     /// Gets the raw JPEG data (the entire JFIF stream).
     /// Note: This includes the ALFA segment if present - the JPEG decoder
     /// will ignore the APP0 extension containing the alpha PNG.

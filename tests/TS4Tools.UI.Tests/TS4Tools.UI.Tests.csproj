@@ -24,7 +24,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\TS4Tools.UI\TS4Tools.UI.csproj" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.Text" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TS4Tools.UI\TS4Tools.UI.csproj" />
+    <!-- Built but not referenced: LegacyPluginBridgeTests load it from a plugin folder, like the app's Wrappers folder. -->
+    <ProjectReference Include="..\TS4Tools.TestLegacyPlugin\TS4Tools.TestLegacyPlugin.csproj"
+                      ReferenceOutputAssembly="false" OutputItemType="LegacyTestPlugin" />
+  </ItemGroup>
+
+  <Target Name="CopyLegacyTestPlugin" AfterTargets="Build">
+    <Copy SourceFiles="@(LegacyTestPlugin)" DestinationFolder="$(OutDir)LegacyTestPlugin" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

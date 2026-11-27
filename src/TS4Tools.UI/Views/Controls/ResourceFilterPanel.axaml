@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TS4Tools.UI.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="220"
+             x:Class="TS4Tools.UI.Views.Controls.ResourceFilterPanel"
+             x:DataType="vm:MainWindowViewModel">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Filter/ResourceFilterWidget.cs, FilterField.cs -->
+    <Expander Header="Filter" IsExpanded="True" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="4">
+        <StackPanel Spacing="4">
+            <!-- Filter switch, actions and the number of listed resources -->
+            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*">
+                <CheckBox Grid.Column="0" Content="Filter" IsChecked="{Binding Filter.IsEnabled}"
+                          ToolTip.Tip="Only list resources that match the applied filter" />
+                <Button Grid.Column="1" Content="Revise" Command="{Binding FilterReviseCommand}" Margin="4,0,0,0" Padding="8,2" FontSize="11"
+                        ToolTip.Tip="Copy the applied filter back into the entry boxes" />
+                <Button Grid.Column="2" Content="Set" Command="{Binding FilterSetCommand}" Margin="4,0,0,0" Padding="8,2" FontSize="11"
+                        ToolTip.Tip="Apply the entered values" />
+                <Button Grid.Column="3" Content="QBE" Command="{Binding FilterQbeCommand}" Margin="4,0,0,0" Padding="8,2" FontSize="11"
+                        ToolTip.Tip="Query by example: fill the entry boxes from the selected resource" />
+                <Button Grid.Column="4" Content="Paste RK" Command="{Binding FilterPasteKeyCommand}" Margin="4,0,0,0" Padding="8,2" FontSize="11"
+                        ToolTip.Tip="Paste a resource key from the clipboard into Type, Group and Instance" />
+                <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="4">
+                    <TextBlock Text="Count:" VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBlock x:Name="CountText" Text="{Binding VisibleCount}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                </StackPanel>
+            </Grid>
+
+            <!-- One row per filterable column: use, name, applied filter, entry -->
+            <ItemsControl ItemsSource="{Binding Filter.Fields}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FilterFieldViewModel">
+                        <Grid ColumnDefinitions="Auto,80,*,*" Margin="0,1">
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked}" MinWidth="0" Padding="0" />
+                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="2" Text="{Binding AppliedText}" IsReadOnly="True" Opacity="0.7"
+                                     MinHeight="0" Padding="4,2" Margin="0,0,4,0" ToolTip.Tip="Applied filter" />
+                            <TextBox Grid.Column="3" Text="{Binding EntryText}" MinHeight="0" Padding="4,2"
+                                     ToolTip.Tip="Regular expression to filter on" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Expander>
+</UserControl>

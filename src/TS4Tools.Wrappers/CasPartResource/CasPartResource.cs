@@ -5,9 +5,12 @@ namespace TS4Tools.Wrappers.CasPartResource;
 
 /// <summary>
 /// CAS Part resource (0x034AEECB) - defines Create-A-Sim clothing and accessory parts.
-/// Supports versions 27 (0x1B) and 28 (0x1C) as defined in legacy s4pi.
+/// Supports every version branch of the active legacy implementation (0x1B and later,
+/// including 0x1C, 0x1E, 0x1F, 0x20, 34+, 36+ and 37+). The version that was read is the
+/// version that is written back.
 ///
-/// Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResourceTS4.cs
+/// Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResource.cs
+/// Parse: lines 115-226, UnParse: lines 228-352.
 /// </summary>
 public sealed class CasPartResource : TypedResource
 {
@@ -28,6 +31,30 @@ public sealed class CasPartResource : TypedResource
 
     /// <summary>Version threshold for voiceEffectHash field (v28+).</summary>
     private const uint VersionVoiceEffectHash = 0x1C; // 28
+
+    /// <summary>Version threshold for usedMaterialCount / material set hashes / emissionMapKey (v30+).</summary>
+    private const uint VersionMaterialSets = 0x1E; // 30
+
+    /// <summary>Version threshold for hideForOccultFlags (v31+).</summary>
+    private const uint VersionHideForOccult = 0x1F; // 31
+
+    /// <summary>Version threshold for reserved1 (v32+).</summary>
+    private const uint VersionReserved1 = 0x20; // 32
+
+    /// <summary>Version threshold for packID / packFlags / reserved2 (v34+).</summary>
+    private const uint VersionPackInfo = 34;
+
+    /// <summary>Version threshold for 64-bit excludeModifierRegionFlags (v36+).</summary>
+    private const uint VersionExcludeModifierRegion64 = 36;
+
+    /// <summary>Version threshold for 32-bit flag list values (v37+).</summary>
+    private const uint VersionFlag32 = 37;
+
+    /// <summary>Highest version with a legacy layout (CASPartResource.cs line 137: version &gt;= 37).</summary>
+    public const uint MaxSupportedVersion = VersionFlag32;
+
+    /// <summary>Length of the reserved2 block (v34+).</summary>
+    private const int Reserved2Length = 9;
 
     #endregion
 
@@ -60,10 +87,10 @@ public sealed class CasPartResource : TypedResource
     /// <summary>Body part exclusion flags.</summary>
     public ExcludePartFlag ExcludePartFlags { get; set; }
 
-    /// <summary>Modifier region exclusion flags.</summary>
-    public uint ExcludeModifierRegionFlags { get; set; }
+    /// <summary>Modifier region exclusion flags (32-bit before v36, 64-bit from v36).</summary>
+    public ulong ExcludeModifierRegionFlags { get; set; }
 
-    /// <summary>List of catalog tag flags.</summary>
+    /// <summary>List of catalog tag flags (16-bit values before v37, 32-bit values from v37).</summary>
     public CaspFlagList FlagList { get; set; } = new();
 
     /// <summary>Deprecated price field.</summary>
@@ -87,10 +114,22 @@ public sealed class CasPartResource : TypedResource
     /// <summary>Age and gender flags.</summary>
     public AgeGenderFlags AgeGender { get; set; }
 
-    /// <summary>Unused byte 2.</summary>
+    /// <summary>Reserved value (v32+, normally 1).</summary>
+    public uint Reserved1 { get; set; }
+
+    /// <summary>Pack ID (v34+).</summary>
+    public short PackId { get; set; }
+
+    /// <summary>Pack flags (v34+).</summary>
+    public PackFlag PackFlags { get; set; }
+
+    /// <summary>Nine reserved bytes (v34+, normally zero). Always exactly 9 bytes.</summary>
+    public byte[] Reserved2 { get; set; } = new byte[Reserved2Length];
+
+    /// <summary>Unused byte 2 (only before v34).</summary>
     public byte Unused2 { get; set; }
 
-    /// <summary>Unused byte 3 (only present if Unused2 > 0).</summary>
+    /// <summary>Unused byte 3 (only before v34, and only present if Unused2 > 0).</summary>
     public byte Unused3 { get; set; }
 
     /// <summary>Swatch colors for this part.</summary>
@@ -106,6 +145,21 @@ public sealed class CasPartResource : TypedResource
 
     /// <summary>Voice effect hash (v28+).</summary>
     public ulong VoiceEffectHash { get; set; }
+
+    /// <summary>Number of used materials (v30+). The three material set hashes exist only when this is greater than 0.</summary>
+    public byte UsedMaterialCount { get; set; }
+
+    /// <summary>Upper body material set hash (v30+, when UsedMaterialCount greater than 0).</summary>
+    public uint MaterialSetUpperBodyHash { get; set; }
+
+    /// <summary>Lower body material set hash (v30+, when UsedMaterialCount greater than 0).</summary>
+    public uint MaterialSetLowerBodyHash { get; set; }
+
+    /// <summary>Shoes material set hash (v30+, when UsedMaterialCount greater than 0).</summary>
+    public uint MaterialSetShoesHash { get; set; }
+
+    /// <summary>Occult types for which this part is hidden (v31+).</summary>
+    public OccultTypesDisabled HideForOccultFlags { get; set; }
 
     /// <summary>TGI index for naked layer.</summary>
     [TgiBlockIndex(nameof(TgiBlocks))]
@@ -139,9 +193,8 @@ public sealed class CasPartResource : TypedResource
     [TgiBlockIndex(nameof(TgiBlocks))]
     public byte RegionMapKey { get; set; }
 
-    /// <summary>TGI index for overrides.</summary>
-    [TgiBlockIndex(nameof(TgiBlocks))]
-    public byte Overrides { get; set; }
+    /// <summary>Region/layer overrides.</summary>
+    public CaspOverrideList Overrides { get; set; } = new();
 
     /// <summary>TGI index for normal map.</summary>
     [TgiBlockIndex(nameof(TgiBlocks))]
@@ -153,6 +206,10 @@ public sealed class CasPartResource : TypedResource
 
     /// <summary>Shared UV map space (v27+).</summary>
     public uint SharedUvMapSpace { get; set; }
+
+    /// <summary>TGI index for emission map (v30+).</summary>
+    [TgiBlockIndex(nameof(TgiBlocks))]
+    public byte EmissionMapKey { get; set; }
 
     /// <summary>TGI block list for referenced resources.</summary>
     public CaspTgiBlockList TgiBlocks { get; set; } = new();
@@ -170,11 +227,30 @@ public sealed class CasPartResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
+        try
+        {
+            ParseCore(data);
+        }
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or IndexOutOfRangeException)
+        {
+            throw new InvalidDataException("CAS Part data is truncated or malformed.", ex);
+        }
+    }
+
+    // Source: CASPartResource.cs lines 115-226
+    private void ParseCore(ReadOnlySpan<byte> data)
+    {
         int offset = 0;
 
         // Header
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
+
+        // Legacy's newest branch is version 37 (CASPartResource.cs lines 134-137, 253; ContentFields line 1064).
+        // Later game versions (0x28, 0x2A, 0x2C, 0x2E, 0x32, 0x33 in current game data) add fields legacy does
+        // not know, so reading them with the v37 layout misparses them.
+        if (Version > MaxSupportedVersion)
+            throw new UnsupportedResourceVersionException("CASP", Version, MaxSupportedVersion);
 
         // TGI offset - stored as (actualOffset - 8)
         uint tgiOffsetRaw = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -211,13 +287,20 @@ public sealed class CasPartResource : TypedResource
         ExcludePartFlags = (ExcludePartFlag)BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
         offset += 8;
 
-        // excludeModifierRegionFlags is always 32-bit in legacy
-        ExcludeModifierRegionFlags = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-        offset += 4;
+        // CASPartResource.cs lines 138-139: 64-bit from v36, otherwise 32-bit
+        if (Version >= VersionExcludeModifierRegion64)
+        {
+            ExcludeModifierRegionFlags = BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
+            offset += 8;
+        }
+        else
+        {
+            ExcludeModifierRegionFlags = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+            offset += 4;
+        }
 
-        // Flag list - always uses 16-bit values in legacy
-        FlagList = CaspFlagList.Parse(data[offset..], out int flagBytes);
-        offset += flagBytes;
+        // CASPartResource.cs lines 141-146: 32-bit flag values from v37, otherwise 16-bit
+        FlagList = CaspFlagList.Parse(data, ref offset, Version >= VersionFlag32);
 
         // More basic properties
         DeprecatedPrice = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -240,11 +323,29 @@ public sealed class CasPartResource : TypedResource
         AgeGender = (AgeGenderFlags)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
-        // Unused2 and conditional Unused3
-        Unused2 = data[offset++];
-        if (Unused2 > 0)
+        // CASPartResource.cs lines 158-161
+        if (Version >= VersionReserved1)
         {
-            Unused3 = data[offset++];
+            Reserved1 = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+            offset += 4;
+        }
+
+        // CASPartResource.cs lines 162-174
+        if (Version >= VersionPackInfo)
+        {
+            PackId = BinaryPrimitives.ReadInt16LittleEndian(data[offset..]);
+            offset += 2;
+            PackFlags = (PackFlag)data[offset++];
+            Reserved2 = data.Slice(offset, Reserved2Length).ToArray();
+            offset += Reserved2Length;
+        }
+        else
+        {
+            Unused2 = data[offset++];
+            if (Unused2 > 0)
+            {
+                Unused3 = data[offset++];
+            }
         }
 
         // Swatch colors
@@ -261,6 +362,26 @@ public sealed class CasPartResource : TypedResource
             offset += 8;
         }
 
+        // CASPartResource.cs lines 181-189
+        if (Version >= VersionMaterialSets)
+        {
+            UsedMaterialCount = data[offset++];
+            if (UsedMaterialCount > 0)
+            {
+                MaterialSetUpperBodyHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                MaterialSetLowerBodyHash = BinaryPrimitives.ReadUInt32LittleEndian(data[(offset + 4)..]);
+                MaterialSetShoesHash = BinaryPrimitives.ReadUInt32LittleEndian(data[(offset + 8)..]);
+                offset += 12;
+            }
+        }
+
+        // CASPartResource.cs lines 190-193
+        if (Version >= VersionHideForOccult)
+        {
+            HideForOccultFlags = (OccultTypesDisabled)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+            offset += 4;
+        }
+
         NakedKey = data[offset++];
         ParentKey = data[offset++];
 
@@ -272,7 +393,7 @@ public sealed class CasPartResource : TypedResource
         // Save current position, jump to TGI offset, parse, then return
         int savedOffset = offset;
 
-        if (tgiOffset >= data.Length)
+        if (tgiOffset < offset || tgiOffset >= data.Length)
         {
             throw new InvalidDataException($"TGI offset {tgiOffset} exceeds data length {data.Length}");
         }
@@ -289,6 +410,10 @@ public sealed class CasPartResource : TypedResource
         // Slot keys
         byte slotKeyCount = data[offset++];
         SlotKeys = new List<byte>(slotKeyCount);
+        if (offset + slotKeyCount > data.Length)
+        {
+            throw new InvalidDataException($"Truncated slot key data: {slotKeyCount} keys");
+        }
         for (int i = 0; i < slotKeyCount; i++)
         {
             SlotKeys.Add(data[offset++]);
@@ -299,8 +424,8 @@ public sealed class CasPartResource : TypedResource
         CompositionMethod = data[offset++];
         RegionMapKey = data[offset++];
 
-        // Overrides is a single byte (TGI index)
-        Overrides = data[offset++];
+        // CASPartResource.cs line 214: OverrideList (byte count + region/layer entries)
+        Overrides = CaspOverrideList.Parse(data, ref offset);
 
         NormalMapKey = data[offset++];
         SpecularMapKey = data[offset++];
@@ -311,9 +436,16 @@ public sealed class CasPartResource : TypedResource
             SharedUvMapSpace = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
             offset += 4;
         }
+
+        // CASPartResource.cs lines 221-224
+        if (Version >= VersionMaterialSets)
+        {
+            EmissionMapKey = data[offset++];
+        }
     }
 
     /// <inheritdoc/>
+    // Source: CASPartResource.cs lines 228-352
     protected override ReadOnlyMemory<byte> Serialize()
     {
         int size = CalculateSerializedSize();
@@ -352,11 +484,18 @@ public sealed class CasPartResource : TypedResource
         BinaryPrimitives.WriteUInt64LittleEndian(span[offset..], (ulong)ExcludePartFlags);
         offset += 8;
 
-        // excludeModifierRegionFlags is always 32-bit in legacy
-        BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], ExcludeModifierRegionFlags);
-        offset += 4;
+        if (Version >= VersionExcludeModifierRegion64)
+        {
+            BinaryPrimitives.WriteUInt64LittleEndian(span[offset..], ExcludeModifierRegionFlags);
+            offset += 8;
+        }
+        else
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], (uint)ExcludeModifierRegionFlags);
+            offset += 4;
+        }
 
-        offset += FlagList.WriteTo(span[offset..]);
+        FlagList.Serialize(span, ref offset, Version >= VersionFlag32);
 
         BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], DeprecatedPrice);
         offset += 4;
@@ -378,11 +517,32 @@ public sealed class CasPartResource : TypedResource
         BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], (uint)AgeGender);
         offset += 4;
 
-        // Unused2 and conditional Unused3
-        span[offset++] = Unused2;
-        if (Unused2 > 0)
+        if (Version >= VersionReserved1)
         {
-            span[offset++] = Unused3;
+            BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], Reserved1);
+            offset += 4;
+        }
+
+        if (Version >= VersionPackInfo)
+        {
+            BinaryPrimitives.WriteInt16LittleEndian(span[offset..], PackId);
+            offset += 2;
+            span[offset++] = (byte)PackFlags;
+            var reserved2 = Reserved2;
+            if (reserved2 is null || reserved2.Length != Reserved2Length)
+            {
+                throw new InvalidOperationException($"Reserved2 must be exactly {Reserved2Length} bytes");
+            }
+            reserved2.CopyTo(span[offset..]);
+            offset += Reserved2Length;
+        }
+        else
+        {
+            span[offset++] = Unused2;
+            if (Unused2 > 0)
+            {
+                span[offset++] = Unused3;
+            }
         }
 
         offset += SwatchColors.WriteTo(span[offset..]);
@@ -397,6 +557,24 @@ public sealed class CasPartResource : TypedResource
             offset += 8;
         }
 
+        if (Version >= VersionMaterialSets)
+        {
+            span[offset++] = UsedMaterialCount;
+            if (UsedMaterialCount > 0)
+            {
+                BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], MaterialSetUpperBodyHash);
+                BinaryPrimitives.WriteUInt32LittleEndian(span[(offset + 4)..], MaterialSetLowerBodyHash);
+                BinaryPrimitives.WriteUInt32LittleEndian(span[(offset + 8)..], MaterialSetShoesHash);
+                offset += 12;
+            }
+        }
+
+        if (Version >= VersionHideForOccult)
+        {
+            BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], (uint)HideForOccultFlags);
+            offset += 4;
+        }
+
         span[offset++] = NakedKey;
         span[offset++] = ParentKey;
 
@@ -404,6 +582,11 @@ public sealed class CasPartResource : TypedResource
         offset += 4;
 
         offset += LodBlocks.WriteTo(span[offset..]);
+
+        if (SlotKeys.Count > 255)
+        {
+            throw new InvalidOperationException($"SlotKeys count {SlotKeys.Count} exceeds byte max (255)");
+        }
 
         span[offset++] = (byte)SlotKeys.Count;
         foreach (byte key in SlotKeys)
@@ -416,8 +599,7 @@ public sealed class CasPartResource : TypedResource
         span[offset++] = CompositionMethod;
         span[offset++] = RegionMapKey;
 
-        // Overrides is a single byte (TGI index)
-        span[offset++] = Overrides;
+        offset += Overrides.WriteTo(span[offset..]);
 
         span[offset++] = NormalMapKey;
         span[offset++] = SpecularMapKey;
@@ -427,6 +609,11 @@ public sealed class CasPartResource : TypedResource
         {
             BinaryPrimitives.WriteUInt32LittleEndian(span[offset..], SharedUvMapSpace);
             offset += 4;
+        }
+
+        if (Version >= VersionMaterialSets)
+        {
+            span[offset++] = EmissionMapKey;
         }
 
         // Now patch the TGI offset
@@ -450,7 +637,8 @@ public sealed class CasPartResource : TypedResource
         SwatchColors = new SwatchColorList();
         LodBlocks = new LodBlockList();
         SlotKeys = [];
-        Overrides = 0;
+        Overrides = new CaspOverrideList();
+        Reserved2 = new byte[Reserved2Length];
         TgiBlocks = new CaspTgiBlockList();
     }
 
@@ -469,19 +657,26 @@ public sealed class CasPartResource : TypedResource
         // + parmFlags(1) + excludePartFlags(8)
         size += 23;
 
-        // excludeModifierRegionFlags (always 32-bit in legacy)
-        size += 4;
+        // excludeModifierRegionFlags (32-bit, 64-bit from v36)
+        size += Version >= VersionExcludeModifierRegion64 ? 8 : 4;
 
-        // Flag list (always 16-bit values in legacy)
-        size += FlagList.GetSerializedSize();
+        // Flag list (16-bit values, 32-bit from v37)
+        size += FlagList.GetSerializedSize(Version >= VersionFlag32);
 
         // deprecatedPrice(4) + partTitleKey(4) + partDescriptionKey(4)
         // + uniqueTextureSpace(1) + bodyType(4) + bodySubType(4) + ageGender(4)
         size += 25;
 
-        // unused2 + conditional unused3
-        size += 1; // unused2
-        if (Unused2 > 0) size += 1; // unused3
+        if (Version >= VersionReserved1) size += 4;
+        if (Version >= VersionPackInfo)
+        {
+            size += 2 + 1 + Reserved2Length;
+        }
+        else
+        {
+            size += 1; // unused2
+            if (Unused2 > 0) size += 1; // unused3
+        }
 
         // Swatch colors
         size += SwatchColors.GetSerializedSize();
@@ -495,6 +690,13 @@ public sealed class CasPartResource : TypedResource
             size += 8;
         }
 
+        if (Version >= VersionMaterialSets)
+        {
+            size += 1 + (UsedMaterialCount > 0 ? 12 : 0);
+        }
+
+        if (Version >= VersionHideForOccult) size += 4;
+
         // nakedKey + parentKey + sortLayer
         size += 2 + 4;
 
@@ -507,8 +709,7 @@ public sealed class CasPartResource : TypedResource
         // diffuseShadowKey + shadowKey + compositionMethod + regionMapKey
         size += 4;
 
-        // Overrides (single byte)
-        size += 1;
+        size += Overrides.GetSerializedSize();
 
         // normalMapKey + specularMapKey
         size += 2;
@@ -518,6 +719,8 @@ public sealed class CasPartResource : TypedResource
         {
             size += 4;
         }
+
+        if (Version >= VersionMaterialSets) size += 1;
 
         // TGI blocks
         size += TgiBlocks.GetSerializedSize();

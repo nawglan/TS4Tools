@@ -1,5 +1,8 @@
 using FluentAssertions;
+using TS4Tools.Package;
+using TS4Tools.UI.Tests.Mocks;
 using TS4Tools.UI.ViewModels;
+using TS4Tools.Wrappers;
 using Xunit;
 
 namespace TS4Tools.UI.Tests;
@@ -21,10 +24,10 @@ public class MainWindowViewModelTests
         vm.PackagePath.Should().BeEmpty();
         vm.Title.Should().Be("TS4Tools");
         vm.StatusMessage.Should().Be("Ready");
-        vm.FilterText.Should().BeEmpty();
+        vm.Filter.IsEnabled.Should().BeFalse();
         vm.SelectedResource.Should().BeNull();
         vm.HasSelectedResource.Should().BeFalse();
-        vm.SortMode.Should().Be(ResourceSortMode.TypeName);
+        vm.SortOrder.Should().Be(BrowserSortOrder.None);
     }
 
     [Fact]
@@ -67,120 +70,41 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void FilterText_WhenChanged_FiltersResources()
-    {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var stblResource = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 1), 100); // STBL
-        var nameMapResource = new ResourceItemViewModel(new ResourceKey(0x0166038C, 0, 2), 200); // NameMap
-        vm.Resources.Add(stblResource);
-        vm.Resources.Add(nameMapResource);
-        vm.FilteredResources.Add(stblResource);
-        vm.FilteredResources.Add(nameMapResource);
-
-        // Act
-        vm.FilterText = "String Table";
-
-        // Assert - filtered resources should only contain matching items
-        vm.FilteredResources.Should().HaveCount(1);
-        vm.FilteredResources.Should().Contain(stblResource);
-    }
-
-    [Fact]
-    public void FilterText_WhenEmpty_ShowsAllResources()
-    {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var stblResource = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 1), 100);
-        var nameMapResource = new ResourceItemViewModel(new ResourceKey(0x0166038C, 0, 2), 200);
-        vm.Resources.Add(stblResource);
-        vm.Resources.Add(nameMapResource);
-
-        // First filter, then clear
-        vm.FilterText = "String";
-        vm.FilterText = "";
-
-        // Assert
-        vm.FilteredResources.Should().HaveCount(2);
-    }
-
-    [Fact]
-    public void CycleSortMode_CyclesThroughModes()
-    {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        vm.SortMode.Should().Be(ResourceSortMode.TypeName);
-
-        // Act & Assert - cycle through all modes
-        vm.CycleSortModeCommand.Execute(null);
-        vm.SortMode.Should().Be(ResourceSortMode.Instance);
-
-        vm.CycleSortModeCommand.Execute(null);
-        vm.SortMode.Should().Be(ResourceSortMode.Size);
-
-        vm.CycleSortModeCommand.Execute(null);
-        vm.SortMode.Should().Be(ResourceSortMode.TypeName);
-    }
-
-    [Fact]
-    public void SortMode_WhenChanged_SortsResources()
-    {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var resource1 = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 3), 300);
-        var resource2 = new ResourceItemViewModel(new ResourceKey(0x0166038C, 0, 1), 100);
-        var resource3 = new ResourceItemViewModel(new ResourceKey(0x545AC67A, 0, 2), 200);
-        vm.Resources.Add(resource1);
-        vm.Resources.Add(resource2);
-        vm.Resources.Add(resource3);
-        vm.FilteredResources.Add(resource1);
-        vm.FilteredResources.Add(resource2);
-        vm.FilteredResources.Add(resource3);
-
-        // Act - sort by size (descending)
-        vm.SortMode = ResourceSortMode.Size;
-
-        // Assert - largest first
-        vm.FilteredResources[0].FileSize.Should().Be(300);
-        vm.FilteredResources[1].FileSize.Should().Be(200);
-        vm.FilteredResources[2].FileSize.Should().Be(100);
-    }
-
-    [Fact]
-    public void SortMode_ByInstance_SortsByInstance()
-    {
-        // Arrange
-        var vm = new MainWindowViewModel();
-        var resource1 = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 300), 100);
-        var resource2 = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 100), 100);
-        var resource3 = new ResourceItemViewModel(new ResourceKey(0x220557DA, 0, 200), 100);
-        vm.Resources.Add(resource1);
-        vm.Resources.Add(resource2);
-        vm.Resources.Add(resource3);
-        vm.FilteredResources.Add(resource1);
-        vm.FilteredResources.Add(resource2);
-        vm.FilteredResources.Add(resource3);
-
-        // Act
-        vm.SortMode = ResourceSortMode.Instance;
-
-        // Assert - smallest instance first
-        vm.FilteredResources[0].Key.Instance.Should().Be(100);
-        vm.FilteredResources[1].Key.Instance.Should().Be(200);
-        vm.FilteredResources[2].Key.Instance.Should().Be(300);
-    }
-
-    [Fact]
     public async Task DisposeAsync_CleansUpResources()
     {
-        // Arrange
-        var vm = new MainWindowViewModel();
+        // Arrange - a VM with an open package and a loaded resource
+        var package = DbpfPackage.CreateNew();
+        var key = new ResourceKey(0x220557DA, 0, 1);
+        var stbl = new StblResource(key, ReadOnlyMemory<byte>.Empty);
+        stbl.Add(1, "value");
+        package.AddResource(key, stbl.Data);
+
+        var vm = new MainWindowViewModel(new MockFileSystemService(), new FakeDialogService(), _ => null);
+        await vm.AttachPackageAsync(package, "");
+        vm.SelectedResource = vm.Resources.Single();
+        await vm.PendingSelectionTask;
+        vm.CurrentEditorViewModel.Should().NotBeNull();
 
         // Act
         await vm.DisposeAsync();
 
-        // Assert - should be idempotent (can call twice)
-        await vm.DisposeAsync();
+        // Assert - package closed and disposed, editor state released
+        vm.HasOpenPackage.Should().BeFalse();
+        vm.Resources.Should().BeEmpty();
+        vm.SelectedResource.Should().BeNull();
+        vm.CurrentEditorViewModel.Should().BeNull();
+        vm.Title.Should().Be("TS4Tools");
+        package.Invoking(p => p.AddResource(new ResourceKey(1, 2, 3), new byte[] { 1 }))
+            .Should().Throw<ObjectDisposedException>();
+
+        // The VM no longer reacts to its own property changes (handler unsubscribed)
+        var item = new ResourceItemViewModel(key, 10);
+        vm.Resources.Add(item);
+        vm.Filter.IsEnabled = true; // with the handler attached this would list the item
+        vm.FilteredResources.Should().BeEmpty("filtering is no longer wired up after dispose");
+
+        // Idempotent
+        await vm.Invoking(v => v.DisposeAsync().AsTask()).Should().NotThrowAsync();
     }
 
     [Fact]
@@ -198,14 +122,14 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void DeleteResourceCommand_WithNoSelection_DoesNothing()
+    public void ToggleDeletedCommand_WithNoSelection_DoesNothing()
     {
         // Arrange
         var vm = new MainWindowViewModel();
         vm.SelectedResource = null;
 
         // Act - should not throw
-        vm.DeleteResourceCommand.Execute(null);
+        vm.ToggleDeletedCommand.Execute(null);
 
         // Assert
         vm.Resources.Should().BeEmpty();

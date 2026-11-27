@@ -99,9 +99,8 @@ public partial class OrganiseCustomPlacesWindow : Window
             AllowMultiple = false
         });
 
-        if (folders.Count > 0)
+        if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path)
         {
-            var path = folders[0].Path.LocalPath;
             if (_places.Count < (int)(MaxPlacesNumeric.Value ?? 5))
             {
                 _places.Add(path);
@@ -181,9 +180,9 @@ public partial class OrganiseCustomPlacesWindow : Window
         RefreshList();
     }
 
-    private void OkButton_Click(object? sender, RoutedEventArgs e)
+    private async void OkButton_Click(object? sender, RoutedEventArgs e)
     {
-        SavePlaces();
+        await SavePlacesAsync();
         Close(true);
     }
 
@@ -192,11 +191,11 @@ public partial class OrganiseCustomPlacesWindow : Window
         Close(false);
     }
 
-    private void SavePlaces()
+    private async Task SavePlacesAsync()
     {
         _settings.CustomPlaces.Clear();
         _settings.CustomPlaces.AddRange(_places);
         _settings.CustomPlacesCount = (int)(MaxPlacesNumeric.Value ?? 5);
-        SettingsService.Instance.Save();
+        await SettingsService.Instance.SaveAsync();
     }
 }

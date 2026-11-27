@@ -338,4 +338,42 @@ public class RigResourceTests
         // Assert
         chain1.Equals(chain2).Should().BeTrue();
     }
+
+    /// <summary>
+    /// Regression (real data): game rigs are Clear format major 3 / minor 1 with no skeleton name but a
+    /// trailing IK chain list. Legacy reads the list when (major &gt;= 4 || isTS4) and isTS4 is always true
+    /// (RigResource.cs lines 33, 93-96, 139-149); the port skipped it for major 3 and dropped 4 bytes.
+    /// </summary>
+    [Fact]
+    public void RigResource_Major3_RealLayout_RoundTripsWithIkChains()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(3u); // Major
+        writer.Write(1u); // Minor
+        writer.Write(1);  // bone count
+        for (int f = 0; f < 10; f++) writer.Write(f == 6 ? 1.0f : 0.0f); // position, orientation, scaling
+        writer.Write(7);
+        writer.Write("_FX_INT"u8.ToArray());
+        writer.Write(9);   // opposing
+        writer.Write(1);   // parent
+        writer.Write(0xCEA49514u); // hash
+        writer.Write(0x913Cu);     // unknown2
+        // no skeleton name for major 3 (isTS4)
+        writer.Write(1);   // IK chain count
+        writer.Write(2);   // chain bone count
+        writer.Write(0);
+        writer.Write(0);
+        writer.Write(5);   // pole vector
+        writer.Write(6);   // slot offset
+        writer.Write(7);   // root
+        var data = ms.ToArray();
+
+        var resource = new RigResource(new ResourceKey(0x8EAF13DE, 0, 0), data);
+
+        resource.Major.Should().Be(3);
+        resource.IkChains.Should().HaveCount(1);
+        resource.IkChains[0].RootIndex.Should().Be(7);
+        resource.Data.ToArray().Should().Equal(data);
+    }
 }

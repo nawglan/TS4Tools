@@ -4,11 +4,27 @@ using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels.Editors;
 
-public partial class SimDataViewerViewModel : ViewModelBase
+/// <remarks>
+/// Change tracking source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 700-705
+/// (resource_ResourceChanged). Cell edits write into <see cref="SimDataTable"/> buffers,
+/// whose DataChanged events are forwarded as <see cref="ContentChanged"/>.
+/// </remarks>
+public partial class SimDataViewerViewModel : ViewModelBase, IResourceEditorViewModel, IDisposable
 {
     private const int HexPreviewBytes = 256;
 
+    private bool _disposed;
     private SimDataResource? _resource;
+    private readonly List<SimDataTable> _subscribedTables = [];
+    private readonly EventHandler _tableDataChangedHandler;
+
+    /// <inheritdoc />
+    public event EventHandler? ContentChanged;
+
+    public SimDataViewerViewModel()
+    {
+        _tableDataChangedHandler = (_, _) => ContentChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     [ObservableProperty]
     private bool _isValid;
@@ -137,10 +153,13 @@ public partial class SimDataViewerViewModel : ViewModelBase
 
     private void LoadTables(SimDataResource resource)
     {
+        ClearTableSubscriptions();
         Tables.Clear();
 
         foreach (var table in resource.Tables)
         {
+            table.DataChanged += _tableDataChangedHandler;
+            _subscribedTables.Add(table);
             Tables.Add(new SimDataTableViewModel(table));
         }
 
@@ -148,7 +167,26 @@ public partial class SimDataViewerViewModel : ViewModelBase
             SelectedTable = Tables[0];
     }
 
+    private void ClearTableSubscriptions()
+    {
+        foreach (var table in _subscribedTables)
+        {
+            table.DataChanged -= _tableDataChangedHandler;
+        }
+        _subscribedTables.Clear();
+    }
+
+    /// <inheritdoc />
     public ReadOnlyMemory<byte> GetData() => _resource?.Data ?? ReadOnlyMemory<byte>.Empty;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        ClearTableSubscriptions();
+        GC.SuppressFinalize(this);
+    }
 }
 
 /// <summary>

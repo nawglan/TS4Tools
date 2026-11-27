@@ -3,7 +3,8 @@ namespace TS4Tools.Wrappers;
 /// <summary>
 /// Factory for creating RcolResource instances.
 /// Registers for all standalone RCOL resource types.
-/// Source: RCOLResources.txt from legacy s4pi (types marked with Y for standalone)
+/// Source: RCOLResources.txt from legacy s4pi (types marked with Y for standalone).
+/// GEOM (0x015A1849) is handled by <see cref="GeomResourceFactory"/>; the Jazz types are not standalone RCOLs.
 /// </summary>
 [ResourceHandler(RcolConstants.Modl)]        // 0x01661233 - MODL
 [ResourceHandler(RcolConstants.Matd)]        // 0x01D0E75D - MATD
@@ -17,9 +18,6 @@ namespace TS4Tools.Wrappers;
 [ResourceHandler(RcolConstants.Vpxy)]        // 0x736884F1 - VPXY
 [ResourceHandler(RcolConstants.Rslt)]        // 0xD3044521 - RSLT
 [ResourceHandler(RcolConstants.Ftpt)]        // 0xD382BF57 - FTPT
-// Jazz State Machine types (from JazzResource.cs)
-[ResourceHandler(RcolConstants.JazzStateMachine)]        // 0x02D5DF13 - S_SM
-[ResourceHandler(RcolConstants.JazzStopAnimationNode)]   // 0x0344D438 - Stop
 public sealed class RcolResourceFactory : IResourceFactory
 {
     /// <inheritdoc/>

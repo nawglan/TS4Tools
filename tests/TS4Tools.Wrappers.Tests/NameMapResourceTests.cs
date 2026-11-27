@@ -137,11 +137,8 @@ public class NameMapResourceTests
             0xEF, 0xCD, 0xAB, 0x90, 0x78, 0x56, 0x34, 0x12,
             // String length (4)
             0x04, 0x00, 0x00, 0x00,
-            // Chars "test" (Unicode, 2 bytes each)
-            0x74, 0x00, // 't'
-            0x65, 0x00, // 'e'
-            0x73, 0x00, // 's'
-            0x74, 0x00  // 't'
+            // Chars "test" - legacy BinaryReader.ReadChars, UTF-8 (NameMapResource.cs line 61)
+            0x74, 0x65, 0x73, 0x74
         };
 
         var nameMap = new NameMapResource(TestKey, data);
@@ -241,5 +238,32 @@ public class NameMapResourceTests
         var items = nameMap.ToList();
 
         items.Should().HaveCount(2);
+    }
+
+    /// <summary>
+    /// Regression (real data, Strings_ENG_US.package): names are UTF-8 chars counted in chars
+    /// (legacy BinaryReader.ReadChars / BinaryWriter.Write(char[]), NameMapResource.cs lines 60-61, 75-76),
+    /// not UTF-16. The port read 2 bytes per char and threw on every real name map.
+    /// </summary>
+    [Fact]
+    public void Parse_RealLayout_Utf8Names_RoundTrips()
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        w.Write(1u);
+        w.Write(2);
+        w.Write(0x0000000062660E01UL);
+        w.Write(15);
+        w.Write("temp-FTUE-PC-en"u8.ToArray());
+        w.Write(0x120000000000E882UL);
+        w.Write(5);
+        w.Write("caf\u00e9!"u8.ToArray()); // 5 chars, 6 bytes
+        var data = ms.ToArray();
+
+        var nameMap = new NameMapResource(TestKey, data);
+
+        nameMap[0x0000000062660E01UL].Should().Be("temp-FTUE-PC-en");
+        nameMap[0x120000000000E882UL].Should().Be("caf\u00e9!");
+        nameMap.Data.ToArray().Should().Equal(data);
     }
 }

@@ -201,4 +201,153 @@ public class CaspEnumsTests
         var flag = (ExcludePartFlag)value;
         ((ulong)flag).Should().Be(value);
     }
+
+    #region Edge cases
+
+    [Fact]
+    public void ParmFlag_SingleBitMembers_AreDisjoint()
+    {
+        var bits = Enum.GetValues<ParmFlag>().Where(f => f != ParmFlag.None).Select(f => (byte)f).ToList();
+
+        bits.Should().OnlyContain(b => (b & (b - 1)) == 0, "each flag is exactly one bit");
+        bits.Distinct().Should().HaveCount(bits.Count);
+        bits.Aggregate(0, (acc, b) => acc | b).Should().Be(0x3F);
+    }
+
+    [Fact]
+    public void ParmFlag_UndefinedHighBits_SurviveCastAndAreNotDefined()
+    {
+        var flag = (ParmFlag)0xFF;
+
+        ((byte)flag).Should().Be(0xFF);
+        flag.HasFlag(ParmFlag.ShowInCASDemo).Should().BeTrue();
+        Enum.IsDefined(flag).Should().BeFalse("0xFF is a bit-combination, not a named member");
+        (flag & ~(ParmFlag.DefaultForBodyType | ParmFlag.DefaultThumbnailPart | ParmFlag.AllowForRandom |
+                  ParmFlag.ShowInUI | ParmFlag.ShowInSimInfoDemo | ParmFlag.ShowInCASDemo))
+            .Should().Be((ParmFlag)0xC0);
+    }
+
+    [Fact]
+    public void PackFlag_OnlyHidePackIcon_IsDefined()
+    {
+        Enum.GetValues<PackFlag>().Should().BeEquivalentTo([PackFlag.None, PackFlag.HidePackIcon]);
+        ((byte)PackFlag.HidePackIcon).Should().Be(1);
+        Enum.IsDefined((PackFlag)2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void AgeGenderFlags_AgeBitsAndGenderBits_DoNotOverlap()
+    {
+        const uint ageMask = 0x7F;
+        const uint genderMask = 0x3000;
+
+        (ageMask & genderMask).Should().Be(0u);
+        ((uint)AgeGenderFlags.Male & ageMask).Should().Be(0u);
+        ((uint)AgeGenderFlags.Female & ageMask).Should().Be(0u);
+        ((uint)AgeGenderFlags.Male & (uint)AgeGenderFlags.Female).Should().Be(0u);
+    }
+
+    [Fact]
+    public void AgeGenderFlags_RemovingFlag_ClearsOnlyThatBit()
+    {
+        var all = AgeGenderFlags.Adult | AgeGenderFlags.Elder | AgeGenderFlags.Male | AgeGenderFlags.Female;
+
+        var withoutFemale = all & ~AgeGenderFlags.Female;
+
+        withoutFemale.Should().Be(AgeGenderFlags.Adult | AgeGenderFlags.Elder | AgeGenderFlags.Male);
+        (all ^ all).Should().Be(AgeGenderFlags.None);
+    }
+
+    [Fact]
+    public void AgeGenderFlags_ToString_ListsCombinedNames()
+    {
+        (AgeGenderFlags.Adult | AgeGenderFlags.Female).ToString().Should().Be("Adult, Female");
+        AgeGenderFlags.None.ToString().Should().Be("None");
+        ((AgeGenderFlags)0x80).ToString().Should().Be("128", "an undefined bit prints numerically");
+    }
+
+    [Fact]
+    public void AgeGenderFlags_Parse_RoundTripsNames()
+    {
+        Enum.Parse<AgeGenderFlags>("Teen, Male").Should().Be(AgeGenderFlags.Teen | AgeGenderFlags.Male);
+        Enum.TryParse<AgeGenderFlags>("NotAnAge", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public void BodyType_AllValues_AreUnique()
+    {
+        var values = Enum.GetValues<BodyType>().Select(v => (uint)v).ToList();
+
+        values.Distinct().Count().Should().Be(values.Count, "no two BodyType names may share a value");
+    }
+
+    [Fact]
+    public void BodyType_ValuesBeyondSkinOverlay_AreNotDefined()
+    {
+        Enum.IsDefined((BodyType)0x3B).Should().BeFalse();
+        Enum.IsDefined((BodyType)uint.MaxValue).Should().BeFalse();
+        Enum.IsDefined(BodyType.SkinOverlay).Should().BeTrue();
+    }
+
+    [Fact]
+    public void OccultTypesDisabled_BothFlags_CombineToThree()
+    {
+        var both = OccultTypesDisabled.Human | OccultTypesDisabled.Alien;
+
+        ((uint)both).Should().Be(3u);
+        both.HasFlag(OccultTypesDisabled.Alien).Should().BeTrue();
+        (both & ~OccultTypesDisabled.Human).Should().Be(OccultTypesDisabled.Alien);
+    }
+
+    [Fact]
+    public void ExcludePartFlag_AllNamedMembers_AreSingleBitsAndUnique()
+    {
+        var values = Enum.GetValues<ExcludePartFlag>().Where(f => f != ExcludePartFlag.None).Select(f => (ulong)f).ToList();
+
+        values.Should().NotBeEmpty();
+        values.Distinct().Count().Should().Be(values.Count);
+        values.Should().OnlyContain(v => (v & (v - 1)) == 0, "legacy defines one bit per body part");
+    }
+
+    [Fact]
+    public void ExcludePartFlag_BitsAbove32_DoNotTruncate()
+    {
+        var flag = ExcludePartFlag.SkinOverlay;
+
+        ((uint)((ulong)flag & 0xFFFFFFFF)).Should().Be(0u, "SkinOverlay lives entirely in the upper 32 bits");
+        ((ulong)flag >> 32).Should().Be(1ul << 26);
+    }
+
+    [Theory]
+    [InlineData(CASPanelGroupType.HeadAndEars, 2u)]
+    [InlineData(CASPanelGroupType.Mouth, 8u)]
+    [InlineData(CASPanelGroupType.Nose, 16u)]
+    [InlineData(CASPanelGroupType.Eyelash, 64u)]
+    [InlineData(CASPanelGroupType.Eyes, 128u)]
+    public void CASPanelGroupType_NamedMembers_HaveExpectedBits(CASPanelGroupType type, uint expected)
+    {
+        ((uint)type).Should().Be(expected);
+    }
+
+    [Fact]
+    public void CASPanelSortType_Members_AreContiguousPowersOfTwo()
+    {
+        var values = Enum.GetValues<CASPanelSortType>().Where(v => v != CASPanelSortType.Unknown0).Select(v => (uint)v).OrderBy(v => v).ToList();
+
+        values.Should().HaveCount(15);
+        for (var i = 0; i < values.Count; i++)
+            values[i].Should().Be(1u << i);
+    }
+
+    [Fact]
+    public void CASPartRegion_Members_AreSequentialFromZero()
+    {
+        var values = Enum.GetValues<CASPartRegion>().Select(v => (uint)v).Distinct().OrderBy(v => v).ToList();
+
+        values.First().Should().Be(0u);
+        values.Last().Should().Be((uint)CASPartRegion.Max);
+        values.Zip(values.Skip(1), (a, b) => b - a).Should().OnlyContain(d => d == 1, "regions are declared without gaps");
+    }
+
+    #endregion
 }

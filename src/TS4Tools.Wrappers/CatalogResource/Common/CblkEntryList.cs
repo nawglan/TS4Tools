@@ -3,8 +3,12 @@ namespace TS4Tools.Wrappers.CatalogResource;
 
 /// <summary>
 /// A list of CBLK entries, each containing 3 bytes.
-/// Source: CBLKResource.cs lines 16-74 (CBLKEntryList class)
+/// Source: CBLKResource.cs lines 154-180 (CBLKEntryList class)
 /// </summary>
+/// <remarks>
+/// CBLKEntryList does not override ReadCount/WriteCount, so it inherits the DependentList default:
+/// an Int32 count (legacy_references/Sims4Tools/s4pi/Interfaces/DependentList.cs lines 124-127, 167-170).
+/// </remarks>
 public sealed class CblkEntryList
 {
     private readonly List<CblkEntry> _entries = [];
@@ -35,7 +39,11 @@ public sealed class CblkEntryList
     public static CblkEntryList Parse(ReadOnlySpan<byte> data, out int bytesRead)
     {
         int offset = 0;
-        byte count = data[offset++];
+        // Source: DependentList.cs lines 124-127 (Int32 count)
+        int count = BinaryPrimitives.ReadInt32LittleEndian(data);
+        offset += 4;
+        if (count < 0 || (long)count * 3 > data.Length - offset)
+            throw new InvalidDataException($"Invalid CBLK entry count: {count}");
 
         var entryList = new CblkEntryList();
         entryList._entries.Capacity = count;
@@ -57,7 +65,7 @@ public sealed class CblkEntryList
     /// <summary>
     /// Gets the size in bytes when serialized.
     /// </summary>
-    public int GetSerializedSize() => 1 + (_entries.Count * 3);
+    public int GetSerializedSize() => 4 + (_entries.Count * 3);
 
     /// <summary>
     /// Writes the entry list to a buffer.
@@ -66,8 +74,9 @@ public sealed class CblkEntryList
     /// <returns>The number of bytes written.</returns>
     public int WriteTo(Span<byte> buffer)
     {
-        int offset = 0;
-        buffer[offset++] = (byte)_entries.Count;
+        // Source: DependentList.cs lines 167-170 (Int32 count)
+        BinaryPrimitives.WriteInt32LittleEndian(buffer, _entries.Count);
+        int offset = 4;
 
         foreach (var entry in _entries)
         {

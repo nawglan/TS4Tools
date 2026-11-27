@@ -5,9 +5,20 @@ using TS4Tools.Wrappers.Hashing;
 
 namespace TS4Tools.UI.ViewModels.Editors;
 
-public partial class StblEditorViewModel : ViewModelBase
+/// <remarks>
+/// Change tracking source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 700-705
+/// (resource_ResourceChanged) - edits flow into the wrapper, whose Changed event is
+/// forwarded as <see cref="ContentChanged"/> so the main window can enable Commit.
+/// </remarks>
+public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewModel, IDisposable
 {
+    private bool _disposed;
     private StblResource? _resource;
+    private readonly PropertyChangedEventHandler _selfPropertyChangedHandler;
+    private readonly EventHandler _resourceChangedHandler;
+
+    /// <inheritdoc />
+    public event EventHandler? ContentChanged;
     private readonly List<(StblEntryViewModel ViewModel, PropertyChangedEventHandler Handler)> _subscriptions = [];
 
     [ObservableProperty]
@@ -29,18 +40,26 @@ public partial class StblEditorViewModel : ViewModelBase
 
     public StblEditorViewModel()
     {
-        PropertyChanged += (_, e) =>
+        _selfPropertyChangedHandler = (_, e) =>
         {
             if (e.PropertyName == nameof(FilterText))
             {
                 ApplyFilter();
             }
         };
+        PropertyChanged += _selfPropertyChangedHandler;
+        _resourceChangedHandler = (_, _) => ContentChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void LoadResource(StblResource resource)
     {
+        if (_resource != null)
+        {
+            _resource.Changed -= _resourceChangedHandler;
+        }
+
         _resource = resource;
+        _resource.Changed += _resourceChangedHandler;
         RefreshEntries();
     }
 
@@ -63,21 +82,30 @@ public partial class StblEditorViewModel : ViewModelBase
 
         foreach (var entry in _resource.Entries)
         {
-            var vm = new StblEntryViewModel(entry.KeyHash, entry.Value);
-            PropertyChangedEventHandler handler = (sender, e) =>
-            {
-                if (e.PropertyName == nameof(StblEntryViewModel.Value) && sender is StblEntryViewModel changedEntry)
-                {
-                    _resource[changedEntry.KeyHash] = changedEntry.Value;
-                }
-            };
-            vm.PropertyChanged += handler;
-            _subscriptions.Add((vm, handler));
+            var vm = CreateTrackedEntry(entry.KeyHash, entry.Value);
             Entries.Add(vm);
             FilteredEntries.Add(vm);
         }
 
         OnPropertyChanged(nameof(EntryCount));
+    }
+
+    /// <summary>
+    /// Creates an entry view model whose value edits are written through to the wrapper.
+    /// </summary>
+    private StblEntryViewModel CreateTrackedEntry(uint keyHash, string value)
+    {
+        var vm = new StblEntryViewModel(keyHash, value);
+        PropertyChangedEventHandler handler = (sender, e) =>
+        {
+            if (_resource != null && e.PropertyName == nameof(StblEntryViewModel.Value) && sender is StblEntryViewModel changedEntry)
+            {
+                _resource[changedEntry.KeyHash] = changedEntry.Value;
+            }
+        };
+        vm.PropertyChanged += handler;
+        _subscriptions.Add((vm, handler));
+        return vm;
     }
 
     private void ApplyFilter()
@@ -119,7 +147,7 @@ public partial class StblEditorViewModel : ViewModelBase
         }
 
         _resource.Add(keyHash, NewValueText);
-        var vm = new StblEntryViewModel(keyHash, NewValueText);
+        var vm = CreateTrackedEntry(keyHash, NewValueText);
         Entries.Add(vm);
         ApplyFilter();
 
@@ -134,13 +162,37 @@ public partial class StblEditorViewModel : ViewModelBase
         if (_resource == null || SelectedEntry == null) return;
 
         _resource.Remove(SelectedEntry.KeyHash);
+        UntrackEntry(SelectedEntry);
         Entries.Remove(SelectedEntry);
         FilteredEntries.Remove(SelectedEntry);
         SelectedEntry = null;
         OnPropertyChanged(nameof(EntryCount));
     }
 
+    private void UntrackEntry(StblEntryViewModel vm)
+    {
+        var index = _subscriptions.FindIndex(s => ReferenceEquals(s.ViewModel, vm));
+        if (index < 0) return;
+        vm.PropertyChanged -= _subscriptions[index].Handler;
+        _subscriptions.RemoveAt(index);
+    }
+
+    /// <inheritdoc />
     public ReadOnlyMemory<byte> GetData() => _resource?.Data ?? ReadOnlyMemory<byte>.Empty;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        ClearSubscriptions();
+        PropertyChanged -= _selfPropertyChangedHandler;
+        if (_resource != null)
+        {
+            _resource.Changed -= _resourceChangedHandler;
+        }
+        GC.SuppressFinalize(this);
+    }
 }
 
 public partial class StblEntryViewModel : ViewModelBase

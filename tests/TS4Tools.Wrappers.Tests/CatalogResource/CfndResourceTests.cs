@@ -23,7 +23,7 @@ public class CfndResourceTests
     {
         var cfnd = new CfndResource(TestKey, ReadOnlyMemory<byte>.Empty);
 
-        cfnd.Version.Should().Be(SimpleCatalogResource.DefaultVersion);
+        cfnd.Version.Should().Be(CfndResource.DefaultVersion); // legacy CFNDResource.cs line 33
         cfnd.CommonBlock.Should().NotBeNull();
         cfnd.Unk01.Should().Be(0);
         cfnd.Unk02.Should().Be(0);
@@ -159,7 +159,7 @@ public class CfndResourceTests
         var resource = factory.CreateEmpty(TestKey) as CfndResource;
 
         resource.Should().NotBeNull();
-        resource!.Version.Should().Be(SimpleCatalogResource.DefaultVersion);
+        resource!.Version.Should().Be(CfndResource.DefaultVersion); // legacy CFNDResource.cs line 33
         resource.ModlRef1.Should().Be(TgiReference.Empty);
     }
 }

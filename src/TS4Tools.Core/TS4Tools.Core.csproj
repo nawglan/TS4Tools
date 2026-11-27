@@ -9,7 +9,14 @@
     <Using Include="System.Buffers.Binary" />
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.IO.Compression" />
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Globalization" />
     <Using Include="System.Reflection" />
+    <Using Include="System.Runtime.Loader" />
+    <Using Include="System.Text" />
+    <Using Include="System.Xml.Linq" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.Versioning" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +26,8 @@
   <ItemGroup>
     <!-- Source: legacy_references/Sims4Tools/s4pi Extras/Extensions/Extensions.txt -->
     <EmbeddedResource Include="Extensions/Extensions.txt" LogicalName="TS4Tools.Extensions.Extensions.txt" />
+    <!-- Source: legacy_references/Sims4Tools/s4pi Extras/Filetable/GameFolders.xml (embedded verbatim) -->
+    <EmbeddedResource Include="FileTable/GameFolders.xml" LogicalName="TS4Tools.FileTable.GameFolders.xml" />
   </ItemGroup>
 
   <ItemGroup>

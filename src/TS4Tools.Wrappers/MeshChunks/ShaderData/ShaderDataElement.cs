@@ -23,7 +23,7 @@ public abstract class ShaderDataElement
     public abstract void WriteData(BinaryWriter writer);
 
     /// <summary>Creates a shader data element from a stream.</summary>
-    public static ShaderDataElement Parse(ReadOnlySpan<byte> data, ref int offset, long startOffset)
+    public static ShaderDataElement Parse(ReadOnlySpan<byte> data, ref int offset, long startOffset, bool indexedTextureRefs = false)
     {
         // Read header
         var field = (ShaderFieldType)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
@@ -55,7 +55,9 @@ public abstract class ShaderDataElement
             },
             ShaderDataType.Texture => count switch
             {
-                4 => new ShaderTextureRef(field, data, dataPos),
+                4 => indexedTextureRefs
+                    ? ShaderTextureRef.ReadIndexed(field, data, dataPos)
+                    : new ShaderTextureRef(field, data, dataPos),
                 5 => new ShaderTextureKey(field, data, dataPos),
                 _ => throw new InvalidDataException($"Invalid count {count} for Texture type")
             },
@@ -301,8 +303,31 @@ public sealed class ShaderTextureRef : ShaderDataElement
     /// <inheritdoc/>
     public override int Count => 4;
 
-    /// <summary>Texture resource key in ITG order.</summary>
+    /// <summary>Texture resource key in ITG order (unused when <see cref="IsIndexed"/>).</summary>
     public ResourceKey TextureKey { get; set; }
+
+    /// <summary>
+    /// True for the GEOM variant, where the element stores an index into the parent TGI list instead of a key.
+    /// Source: ShaderData.cs lines 600-728 (ElementTextureRef with RCOLTag "GEOM": int32 index + 12 zero bytes).
+    /// </summary>
+    public bool IsIndexed { get; set; }
+
+    /// <summary>Index into the parent TGI list (GEOM variant only).</summary>
+    public int Index { get; set; }
+
+    /// <summary>Creates a GEOM-style index-based texture reference.</summary>
+    public static ShaderTextureRef FromIndex(ShaderFieldType field, int index) =>
+        new(field) { IsIndexed = true, Index = index };
+
+    internal static ShaderTextureRef ReadIndexed(ShaderFieldType field, ReadOnlySpan<byte> data, int offset)
+    {
+        // Source: ShaderData.cs lines 686-690 - ReadInt32 then ReadZeros(12)
+        if (offset < 0 || offset > data.Length - 16)
+            throw new InvalidDataException("Texture reference outside the MTNF data");
+        if (!data.Slice(offset + 4, 12).IndexOfAnyExcept((byte)0).Equals(-1))
+            throw new InvalidDataException("Indexed texture reference padding is not zero");
+        return FromIndex(field, BinaryPrimitives.ReadInt32LittleEndian(data[offset..]));
+    }
 
     /// <summary>Initializes a new instance of the <see cref="ShaderTextureRef"/> class.</summary>
     /// <param name="field">The shader field type.</param>
@@ -330,6 +355,12 @@ public sealed class ShaderTextureRef : ShaderDataElement
     /// <inheritdoc/>
     public override void WriteData(BinaryWriter writer)
     {
+        if (IsIndexed)
+        {
+            writer.Write(Index);
+            writer.Write(new byte[12]);
+            return;
+        }
         // ITG order
         writer.Write(TextureKey.Instance);
         writer.Write(TextureKey.ResourceType);

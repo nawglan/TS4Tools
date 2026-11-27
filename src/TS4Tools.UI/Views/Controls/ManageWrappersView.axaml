@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:TS4Tools.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="450"
+             x:Class="TS4Tools.UI.Views.Controls.ManageWrappersView"
+             x:DataType="vm:ManageWrappersViewModel">
+    <!-- Source: legacy_references/Sims4Tools/s4pe/Settings/ManageWrappersDialog.cs -->
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Opacity="0.7" Margin="0,0,0,8"
+                   Text="Each row is one resource type claimed by a wrapper. Disabled wrappers are skipped; the next claim for the type (or the default hex wrapper) is used instead. The active claim for each type is ticked." />
+
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+            <TextBox Text="{Binding FilterText}" PlaceholderText="Filter by type, tag, wrapper or file" />
+            <CheckBox Grid.Column="1" Content="Disabled only" IsChecked="{Binding ShowDisabledOnly}" Margin="8,0,0,0" />
+        </Grid>
+
+        <Border DockPanel.Dock="Bottom" IsVisible="{Binding HasLoadErrors}" Margin="0,8,0,0" Padding="6"
+                BorderThickness="1" BorderBrush="{DynamicResource SystemControlErrorTextForegroundBrush}">
+            <StackPanel>
+                <TextBlock Text="Wrapper load problems" FontWeight="SemiBold" />
+                <ItemsControl ItemsSource="{Binding LoadErrors}" MaxHeight="90">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="11" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
+        <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,8,0,0">
+            <TextBlock Text="{Binding Summary}" Opacity="0.6" FontSize="11" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Content="Disable" Command="{Binding DisableSelectedCommand}" Padding="12,4" Margin="0,0,8,0" />
+            <Button Grid.Column="2" Content="Enable" Command="{Binding EnableSelectedCommand}" Padding="12,4" Margin="0,0,8,0" />
+            <Button Grid.Column="3" Content="Enable All" Command="{Binding EnableAllCommand}" Padding="12,4" />
+        </Grid>
+
+        <DataGrid ItemsSource="{Binding Wrappers}" SelectedItem="{Binding SelectedWrapper}"
+                  AutoGenerateColumns="False" CanUserSortColumns="True" CanUserResizeColumns="True"
+                  GridLinesVisibility="Horizontal" SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Disabled" Binding="{Binding IsDisabled}" Width="70" />
+                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="60" />
+                <DataGridTextColumn Header="#" Binding="{Binding Order}" IsReadOnly="True" Width="50" />
+                <DataGridTextColumn Header="Tag" Binding="{Binding Tag}" IsReadOnly="True" Width="60" />
+                <DataGridTextColumn Header="Type" Binding="{Binding TypeDisplay}" IsReadOnly="True" Width="100" />
+                <DataGridTextColumn Header="Wrapper" Binding="{Binding WrapperName}" IsReadOnly="True" Width="220" />
+                <DataGridTextColumn Header="File" Binding="{Binding FileName}" IsReadOnly="True" Width="160" />
+                <DataGridTextColumn Header="Title" Binding="{Binding Title}" IsReadOnly="True" Width="140" />
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" IsReadOnly="True" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

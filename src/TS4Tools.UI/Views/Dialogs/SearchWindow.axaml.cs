@@ -250,14 +250,27 @@ public partial class SearchWindow : Window, IDisposable
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 279-291 (search method)
     /// </remarks>
-    private async Task<bool> SearchBytesAsync(ResourceItemViewModel resource, byte[] pattern, CancellationToken token)
+    private Task<bool> SearchBytesAsync(ResourceItemViewModel resource, byte[] pattern, CancellationToken token) =>
+        ResourceContainsAsync(_package, resource, pattern, token);
+
+    /// <summary>
+    /// Reports whether the resource behind a browser row contains <paramref name="pattern"/>.
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/Tools/SearchForm.cs lines 279-291 (search reads the
+    /// row's own IResourceIndexEntry). The row's entry is used rather than a key lookup so resources
+    /// that share a key (duplicates) are each searched; key lookup is only the fallback for rows not
+    /// backed by an index entry.
+    /// </remarks>
+    internal static async Task<bool> ResourceContainsAsync(
+        DbpfPackage package, ResourceItemViewModel resource, byte[] pattern, CancellationToken token)
     {
-        var entry = _package.Find(resource.Key);
-        if (entry == null) return false;
+        var entry = resource.Entry ?? package.Find(resource.Key);
+        if (entry == null || entry.IsDeleted) return false;
 
         try
         {
-            var data = await _package.GetResourceDataAsync(entry, token);
+            var data = await package.GetResourceDataAsync(entry, token);
             var bytes = data.Span;
 
             // Simple byte pattern search

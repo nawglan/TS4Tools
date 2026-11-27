@@ -782,8 +782,19 @@ public class SimDataResourceTests
             DataOffset = 0
         };
 
+        var changeCount = 0;
+        table.DataChanged += (_, _) => changeCount++;
+
         // Should not throw
-        table.SetUInt32(0, field, 123);
+        var act = () => table.SetUInt32(0, field, 123);
+        act.Should().NotThrow();
+
+        // Without a schema there is no backing row data: nothing is written, no change is signalled,
+        // and reading back yields the default value rather than the value we tried to set.
+        changeCount.Should().Be(0, "no data was modified");
+        table.GetUInt32(0, field).Should().Be(0u);
+        table.GetFieldBytes(0, field).IsEmpty.Should().BeTrue();
+        table.Schema.Should().BeNull();
     }
 
     #endregion

@@ -569,7 +569,7 @@ public class SimModifierResourceTests
             contextVersion: uint.MaxValue,
             publicKeys: publicKeys,
             objectData: objectData,
-            version: uint.MaxValue,
+            version: SimModifierResource.SubRegionVersion - 1, // largest version without the v144 sub-region
             gender: uint.MaxValue,
             region: uint.MaxValue,
             linkTag: uint.MaxValue,
@@ -585,7 +585,7 @@ public class SimModifierResourceTests
 
         // Assert
         reloaded.ContextData.Version.Should().Be(uint.MaxValue);
-        reloaded.Version.Should().Be(uint.MaxValue);
+        reloaded.Version.Should().Be(SimModifierResource.SubRegionVersion - 1);
         reloaded.Gender.Should().Be(uint.MaxValue);
         reloaded.Region.Should().Be(uint.MaxValue);
         reloaded.LinkTag.Should().Be(uint.MaxValue);
@@ -662,5 +662,38 @@ public class SimModifierResourceTests
         // Assert
         reloaded.ContextData.PublicKeys.Should().HaveCount(1);
         reloaded.ContextData.PublicKeys[0].Should().Be(newKey);
+    }
+
+    /// <summary>
+    /// Regression (real data): version-144 SMODs carry a sub-region uint after Region. Legacy
+    /// (SimModifierResource.cs lines 52-64) predates it and dropped 4 bytes; in real files the bone-pose
+    /// key's instance only lines up with the resource instance once the field is read.
+    /// </summary>
+    [Fact]
+    public void Parse_Version144_RealLayout_ReadsSubRegionAndRoundTrips()
+    {
+        const ulong instance = 0x421760CDF81556E4;
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        // ContexData: version 3, 1 public key, 0 external, 0 delay-load, 1 object
+        w.Write(3u); w.Write(1u); w.Write(0u); w.Write(0u); w.Write(1u);
+        w.Write(instance); w.Write(0xC5F6763Eu); w.Write(0u); // public key (ITG)
+        w.Write(44u); w.Write(72u);                             // object data
+        w.Write(144u);    // version
+        w.Write(0x3078u); // gender
+        w.Write(30u);     // region
+        w.Write(5u);      // sub-region (v144+)
+        w.Write(0u);      // link tag
+        w.Write(instance); w.Write(0x0355E0A6u); w.Write(0u); // bone pose key
+        w.Write(0UL); w.Write(0u); w.Write(0u);               // deformer map shape key
+        w.Write(0UL); w.Write(0u); w.Write(0u);               // deformer map normal key
+        w.Write(0);       // bone entry count
+        var data = ms.ToArray();
+
+        var resource = new SimModifierResource(TestKey, data);
+
+        resource.SubRegion.Should().Be(5);
+        resource.BonePoseKey.Instance.Should().Be(instance);
+        resource.Data.ToArray().Should().Equal(data);
     }
 }

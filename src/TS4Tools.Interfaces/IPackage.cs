@@ -137,6 +137,33 @@ public interface IMutablePackage : IPackage
     void ReplaceResource(IResourceIndexEntry entry, ReadOnlyMemory<byte> data);
 
     /// <summary>
+    /// Adds an empty resource (legacy <c>AddResource(rk, null, rejectDups)</c>).
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 464-471</remarks>
+    IResourceIndexEntry? AddResource(ResourceKey key, bool rejectDuplicates = true) =>
+        AddResource(key, ReadOnlyMemory<byte>.Empty, rejectDuplicates);
+
+    /// <summary>
+    /// Adds a resource using the data of a resource wrapper.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 464-471</remarks>
+    IResourceIndexEntry? AddResource(ResourceKey key, IResource resource, bool rejectDuplicates = true)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        return AddResource(key, resource.Data, rejectDuplicates);
+    }
+
+    /// <summary>
+    /// Replaces the data for an existing resource with a wrapper's data.
+    /// </summary>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 478</remarks>
+    void ReplaceResource(IResourceIndexEntry entry, IResource resource)
+    {
+        ArgumentNullException.ThrowIfNull(resource);
+        ReplaceResource(entry, resource.Data);
+    }
+
+    /// <summary>
     /// Marks a resource as deleted.
     /// </summary>
     void DeleteResource(IResourceIndexEntry entry);

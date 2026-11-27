@@ -26,11 +26,12 @@ internal sealed class PackageWriter
     private readonly DbpfPackage _package;
     private readonly List<ResourceIndexEntry> _resources;
     private readonly Stream? _sourceStream;
+    private readonly SemaphoreSlim? _sourceLock;
 
     /// <summary>
     /// Converts a long value to uint with overflow checking for DBPF 4GB limit.
     /// </summary>
-    private static uint ToUInt32Checked(long value, string fieldName)
+    internal static uint ToUInt32Checked(long value, string fieldName)
     {
         if (value < 0 || value > uint.MaxValue)
             throw new PackageFormatException(
@@ -38,11 +39,12 @@ internal sealed class PackageWriter
         return (uint)value;
     }
 
-    public PackageWriter(DbpfPackage package, List<ResourceIndexEntry> resources, Stream? sourceStream)
+    public PackageWriter(DbpfPackage package, List<ResourceIndexEntry> resources, Stream? sourceStream, SemaphoreSlim? sourceLock = null)
     {
         _package = package;
         _resources = resources;
         _sourceStream = sourceStream;
+        _sourceLock = sourceLock;
     }
 
     public async Task WriteAsync(Stream output, CancellationToken cancellationToken)
@@ -81,16 +83,21 @@ internal sealed class PackageWriter
             newEntry.ChunkOffset = ToUInt32Checked(output.Position, "Chunk offset");
             byte[] dataToWrite;
 
-            if (entry.IsDirty || _sourceStream == null)
+            if (entry.IsDirty || entry.ResourceData.HasValue || _sourceStream == null)
             {
-                // Dirty (new/modified) resource: compress, keeping the result only if smaller.
-                // Source: s4pi/Package/Package.cs packedChunk() lines 559-573
-                byte[] resourceData = GetDirtyResourceData(entry);
-                (dataToWrite, bool isCompressed) = Compressor.Compress(resourceData);
+                // Dirty (new/modified/compression-changed) resource. Legacy only compresses when
+                // the entry's Compressed flag is non-zero, and keeps the result only if smaller;
+                // the stored label then becomes 0x5A42 (compressed) or 0x0000 (stored).
+                // Source: s4pi/Package/Package.cs packedChunk() lines 559-573, SaveAs() lines 127-138
+                byte[] resourceData = await GetDirtyResourceDataAsync(entry, cancellationToken).ConfigureAwait(false);
+                bool isCompressed = false;
+                dataToWrite = resourceData;
+                if (entry.CompressionType != Compressor.NoCompression)
+                    (dataToWrite, isCompressed) = Compressor.Compress(resourceData);
 
                 newEntry.MemorySize = ToUInt32Checked(resourceData.Length, "Memory size");
                 newEntry.FileSize = ToUInt32Checked(dataToWrite.Length, "File size");
-                newEntry.CompressionType = isCompressed ? Compressor.ZlibCompressionType : Compressor.NoCompression;
+                newEntry.SetCompressionTypeRaw(isCompressed ? Compressor.ZlibCompressionType : Compressor.NoCompression);
             }
             else
             {
@@ -150,11 +157,17 @@ internal sealed class PackageWriter
         await output.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static byte[] GetDirtyResourceData(ResourceIndexEntry entry)
+    private async Task<byte[]> GetDirtyResourceDataAsync(ResourceIndexEntry entry, CancellationToken cancellationToken)
     {
-        if (!entry.ResourceData.HasValue)
-            throw new InvalidOperationException($"No data for new or modified resource {entry.Key}.");
-        return entry.ResourceData.Value.ToArray();
+        if (entry.ResourceData.HasValue)
+            return entry.ResourceData.Value.ToArray();
+
+        // Dirty entry without replacement data (e.g. compression type changed on a clean entry):
+        // read and decompress the stored chunk, as legacy packedChunk does via GetResource(ie).
+        // Source: s4pi/Package/Package.cs lines 561-565, 649-673
+        if (_sourceStream == null || entry.ChunkOffset == 0xFFFFFFFF)
+            return [];
+        return (await _package.ReadResourceDataAsync(entry, cancellationToken).ConfigureAwait(false)).ToArray();
     }
 
     private async Task<byte[]> ReadStoredChunkAsync(ResourceIndexEntry entry, CancellationToken cancellationToken)
@@ -162,14 +175,32 @@ internal sealed class PackageWriter
         if (entry.FileSize > PackageLimits.MaxResourceSize)
             throw new PackageFormatException(
                 $"Resource file size ({entry.FileSize:N0}) exceeds maximum ({PackageLimits.MaxResourceSize:N0}).");
-        if ((ulong)entry.ChunkOffset + entry.FileSize > (ulong)_sourceStream!.Length)
-            throw new PackageFormatException(
-                $"Resource at 0x{entry.ChunkOffset:X8} extends beyond end of file.");
 
-        _sourceStream.Position = entry.ChunkOffset;
-        var data = new byte[entry.FileSize];
-        await _sourceStream.ReadExactlyAsync(data, cancellationToken).ConfigureAwait(false);
-        return data;
+        if (_sourceLock != null)
+            await _sourceLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if ((ulong)entry.ChunkOffset + entry.FileSize > (ulong)_sourceStream!.Length)
+                throw new PackageFormatException(
+                    $"Resource at 0x{entry.ChunkOffset:X8} extends beyond end of file.");
+
+            _sourceStream.Position = entry.ChunkOffset;
+            var data = new byte[entry.FileSize];
+            try
+            {
+                await _sourceStream.ReadExactlyAsync(data, cancellationToken).ConfigureAwait(false);
+            }
+            catch (EndOfStreamException ex)
+            {
+                throw new PackageFormatException(
+                    $"Unexpected end of file reading resource at offset 0x{entry.ChunkOffset:X8}.", ex);
+            }
+            return data;
+        }
+        finally
+        {
+            _sourceLock?.Release();
+        }
     }
 
     private static async Task<int> WriteIndexAsync(

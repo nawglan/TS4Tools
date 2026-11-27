@@ -46,6 +46,27 @@ public static class ExtList
     }
 
     /// <summary>
+    /// Gets every resource type that has its own entry, with its tag, in list order.
+    /// </summary>
+    // Source: legacy_references/Sims4Tools/s4pi Extras/s4piControls/ResourceTypeCombo/ResourceTypeCombo.cs
+    // lines 33-43 (the type drop-down lists "TAG 0xTTTTTTTT" for every "0x" key in ExtList.Ext)
+    public static IReadOnlyList<(uint ResourceType, string Tag)> KnownTypes => KnownTypeList.Value;
+
+    private static readonly Lazy<IReadOnlyList<(uint ResourceType, string Tag)>> KnownTypeList = new(() =>
+    {
+        var list = new List<(uint, string)>();
+        foreach (var (key, parts) in Entries.Value)
+        {
+            if (key.StartsWith("0x", StringComparison.Ordinal) &&
+                uint.TryParse(key.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var type))
+            {
+                list.Add((type, parts[0]));
+            }
+        }
+        return list;
+    });
+
+    /// <summary>
     /// Parses the legacy Extensions.txt format.
     /// </summary>
     // Source: ExtList.cs lines 46-69

@@ -15,6 +15,16 @@ public abstract class AbstractCatalogResource : TypedResource
     public const uint DefaultVersion = 0x19;
 
     /// <summary>
+    /// Highest resource version with a legacy layout (AbstractCatalogResource.cs line 33, lines 529-532).
+    /// </summary>
+    public const uint MaxSupportedVersion = 0x19;
+
+    /// <summary>
+    /// Highest aural properties version with a legacy layout (AbstractCatalogResource.cs lines 503-514).
+    /// </summary>
+    public const uint MaxSupportedAuralPropertiesVersion = 4;
+
+    /// <summary>
     /// FNV-32 offset basis used as default for empty hashes.
     /// </summary>
     public const uint FnvOffsetBasis = 0x811C9DC5;
@@ -173,6 +183,11 @@ public abstract class AbstractCatalogResource : TypedResource
         Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
+        // Source: AbstractCatalogResource.cs line 33 (default 0x19) and lines 529-532 (newest branch >= 0x19).
+        // Newer game files (0x1A) carry extra fields legacy does not know and would silently drop.
+        if (Version > MaxSupportedVersion)
+            throw new UnsupportedResourceVersionException(GetType().Name, Version, MaxSupportedVersion);
+
         // Common block
         CommonBlock = CatalogCommon.Parse(data[offset..], out int commonBytes);
         offset += commonBytes;
@@ -196,6 +211,11 @@ public abstract class AbstractCatalogResource : TypedResource
 
         AuralQuality = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
+
+        // Source: AbstractCatalogResource.cs lines 503-514 - legacy knows aural properties versions up to 4.
+        // Version 5 (current game and mod data) has a different layout that legacy misreads.
+        if (AuralPropertiesVersion > MaxSupportedAuralPropertiesVersion)
+            throw new UnsupportedResourceVersionException(GetType().Name + " aural properties", AuralPropertiesVersion, MaxSupportedAuralPropertiesVersion);
 
         if (AuralPropertiesVersion > 1)
         {

@@ -1,39 +1,21 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using TS4Tools.UI.Services;
+using TS4Tools.UI.ViewModels;
 
 namespace TS4Tools.UI.Views.Dialogs;
 
 /// <summary>
-/// Dialog for batch importing multiple files into a package.
+/// Import Batch dialog: the list of files (or pasted resources, or packages) to import and the import settings.
 /// </summary>
 /// <remarks>
-/// Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs
+/// Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs. Files can be dropped on the dialog
+/// in file mode (ImportBatch.cs lines 48, 83-94).
 /// </remarks>
 public partial class BatchImportWindow : Window
 {
-    private readonly List<string> _files = [];
-
-    /// <summary>
-    /// Gets the list of files to import.
-    /// </summary>
-    public IReadOnlyList<string> Files => _files;
-
-    /// <summary>
-    /// Gets whether to replace existing resources with the same key.
-    /// </summary>
-    public bool Replace => ReplaceCheckBox.IsChecked == true;
-
-    /// <summary>
-    /// Gets whether to compress resources on import.
-    /// </summary>
-    public bool Compress => CompressCheckBox.IsChecked == true;
-
-    /// <summary>
-    /// Gets whether to use resource names from filenames.
-    /// </summary>
-    public bool UseNames => UseNamesCheckBox.IsChecked == true;
-
     public BatchImportWindow()
     {
         InitializeComponent();
@@ -45,124 +27,123 @@ public partial class BatchImportWindow : Window
         RemoveButton.Click += RemoveButton_Click;
         ClearButton.Click += ClearButton_Click;
         FilesListBox.SelectionChanged += FilesListBox_SelectionChanged;
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragOverEvent, Window_DragOver);
+        AddHandler(DragDrop.DropEvent, Window_Drop);
+        Closed += OnClosed;
     }
 
-    /// <summary>
-    /// Pre-populates the file list.
-    /// </summary>
-    public void AddFiles(IEnumerable<string> files)
+    private ImportBatchViewModel? ViewModel => DataContext as ImportBatchViewModel;
+
+    private void OnClosed(object? sender, EventArgs e)
     {
-        foreach (var file in files)
+        ImportButton.Click -= ImportButton_Click;
+        CancelButton.Click -= CancelButton_Click;
+        AddFilesButton.Click -= AddFilesButton_Click;
+        AddFolderButton.Click -= AddFolderButton_Click;
+        RemoveButton.Click -= RemoveButton_Click;
+        ClearButton.Click -= ClearButton_Click;
+        FilesListBox.SelectionChanged -= FilesListBox_SelectionChanged;
+        RemoveHandler(DragDrop.DragOverEvent, Window_DragOver);
+        RemoveHandler(DragDrop.DropEvent, Window_Drop);
+        Closed -= OnClosed;
+    }
+
+    private void ImportButton_Click(object? sender, RoutedEventArgs e) => Close(ViewModel?.Items.Count > 0);
+
+    private void CancelButton_Click(object? sender, RoutedEventArgs e) => Close(false);
+
+    // Source: ImportBatch.cs lines 83-87 (DragOver: copy when files are dragged, file mode only)
+    private void Window_DragOver(object? sender, DragEventArgs e)
+    {
+        e.DragEffects = ViewModel?.AllowAddFiles == true && e.DataTransfer.Contains(DataFormat.File)
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    // Source: ImportBatch.cs lines 89-94 (DragDrop replaces the list)
+    private void Window_Drop(object? sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (ViewModel is not { AllowAddFiles: true } vm) return;
+        var files = e.DataTransfer.TryGetFiles();
+        if (files == null) return;
+        var paths = StorageItemPaths.LocalPaths(files);
+        if (paths.Count > 0)
         {
-            if (!_files.Contains(file))
-            {
-                _files.Add(file);
-            }
+            vm.SetItems(paths);
         }
-        UpdateFileList();
     }
 
-    private void UpdateFileList()
-    {
-        FilesListBox.ItemsSource = null;
-        FilesListBox.ItemsSource = _files.Select(f => Path.GetFileName(f)).ToList();
-        FileCountLabel.Text = $"{_files.Count} file{(_files.Count != 1 ? "s" : "")}";
-        ImportButton.IsEnabled = _files.Count > 0;
-    }
-
-    private void ImportButton_Click(object? sender, RoutedEventArgs e)
-    {
-        if (_files.Count == 0)
-        {
-            return;
-        }
-        Close(true);
-    }
-
-    private void CancelButton_Click(object? sender, RoutedEventArgs e)
-    {
-        Close(false);
-    }
-
-    // Source: legacy_references/Sims4Tools/s4pe/Import/ImportBatch.cs lines 82-87
     private async void AddFilesButton_Click(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
+        if (ViewModel is not { } vm) return;
 
-        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Select Files to Import",
             AllowMultiple = true,
             FileTypeFilter =
             [
-                new FilePickerFileType("All Files") { Patterns = ["*"] },
-                new FilePickerFileType("Binary Files") { Patterns = ["*.bin"] },
-                new FilePickerFileType("S4 Resource Files") { Patterns = ["S4_*"] },
+                new FilePickerFileType("Exported files (S4_*.*)") { Patterns = ["S4_*.*"] },
+                new FilePickerFileType("All files (*.*)") { Patterns = ["*"] },
             ]
         });
 
-        foreach (var file in files)
+        foreach (var path in StorageItemPaths.LocalPaths(files))
         {
-            var path = file.Path.LocalPath;
-            if (!_files.Contains(path))
+            if (!vm.Items.Contains(path))
             {
-                _files.Add(path);
+                vm.Items.Add(path);
             }
         }
-        UpdateFileList();
     }
 
     private async void AddFolderButton_Click(object? sender, RoutedEventArgs e)
     {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel == null) return;
+        if (ViewModel is not { } vm) return;
 
-        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
             Title = "Select Folder to Import",
             AllowMultiple = false
         });
 
-        if (folders.Count == 1)
-        {
-            var folderPath = folders[0].Path.LocalPath;
-            var files = Directory.GetFiles(folderPath, "*", SearchOption.TopDirectoryOnly);
+        if (folders.Count != 1 || folders[0].TryGetLocalPath() is not { } folder) return;
 
-            foreach (var file in files)
+        // Source: legacy_references/Sims4Tools/s4pe/Import/Import.cs lines 639-652 (folders are imported recursively).
+        // The tree is walked off the UI thread so a large folder does not freeze the dialog.
+        List<string> found;
+        try
+        {
+            found = await Task.Run(() => Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        foreach (var file in found)
+        {
+            if (!vm.Items.Contains(file))
             {
-                if (!_files.Contains(file))
-                {
-                    _files.Add(file);
-                }
+                vm.Items.Add(file);
             }
-            UpdateFileList();
         }
     }
 
     private void RemoveButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (FilesListBox.SelectedItems == null) return;
+        if (ViewModel is not { } vm || FilesListBox.SelectedItems == null) return;
 
-        var indicesToRemove = FilesListBox.SelectedItems
-            .OfType<string>()
-            .Select(name => _files.FindIndex(f => Path.GetFileName(f) == name))
-            .Where(i => i >= 0)
-            .OrderByDescending(i => i)
-            .ToList();
-
-        foreach (var index in indicesToRemove)
+        foreach (var item in FilesListBox.SelectedItems.OfType<string>().ToList())
         {
-            _files.RemoveAt(index);
+            vm.Items.Remove(item);
         }
-        UpdateFileList();
     }
 
-    private void ClearButton_Click(object? sender, RoutedEventArgs e)
-    {
-        _files.Clear();
-        UpdateFileList();
-    }
+    private void ClearButton_Click(object? sender, RoutedEventArgs e) => ViewModel?.Items.Clear();
 
     private void FilesListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {

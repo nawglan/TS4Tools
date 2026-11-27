@@ -243,4 +243,34 @@ public class StblResourceTests
         entry1.Should().Be(entry2);
         entry1.Should().NotBe(entry3);
     }
+
+    /// <summary>
+    /// Regression (real data): the header's string-data length is the string bytes plus one terminator
+    /// per entry (legacy StblResource.cs lines 141-152, EntrySize = Length + 1), as stored in the game's
+    /// Strings_ENG_US.package. It was written without the per-entry +1.
+    /// </summary>
+    [Fact]
+    public void Data_RealLayout_StringLengthIncludesTerminatorPerEntry_RoundTrips()
+    {
+        byte[] a = Encoding.UTF8.GetBytes("abc");
+        byte[] b = Encoding.UTF8.GetBytes("\u00e9"); // 2 UTF-8 bytes
+        var data = new List<byte>();
+        data.AddRange("STBL"u8.ToArray());
+        data.AddRange(BitConverter.GetBytes((ushort)5));
+        data.Add(0);
+        data.AddRange(BitConverter.GetBytes(2UL));
+        data.AddRange(new byte[2]);
+        data.AddRange(BitConverter.GetBytes((uint)(a.Length + 1 + b.Length + 1)));
+        foreach (var (hash, str) in new[] { (0x11111111u, a), (0x22222222u, b) })
+        {
+            data.AddRange(BitConverter.GetBytes(hash));
+            data.Add(0);
+            data.AddRange(BitConverter.GetBytes((ushort)str.Length));
+            data.AddRange(str);
+        }
+
+        var stbl = new StblResource(TestKey, data.ToArray());
+
+        stbl.Data.ToArray().Should().Equal(data);
+    }
 }

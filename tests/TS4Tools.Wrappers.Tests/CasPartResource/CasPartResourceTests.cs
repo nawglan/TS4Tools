@@ -9,10 +9,10 @@ namespace TS4Tools.Wrappers.Tests.CasPartResource;
 /// Tests for <see cref="CasPartResource"/>.
 ///
 /// LEGACY ANALYSIS:
-/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResourceTS4.cs
+/// - Source: legacy_references/Sims4Tools/s4pi Wrappers/CASPartResource/CASPartResource.cs lines 115-352
 /// - CAS Part defines Create-A-Sim clothing and accessory parts
 /// - Type ID: 0x034AEECB
-/// - Legacy supports versions 27 (0x1B) and 28 (0x1C)
+/// - Version branches: 0x1B, 0x1C, 0x1E, 0x1F, 0x20, 34, 36, 37
 /// </summary>
 public class CasPartResourceTests
 {
@@ -32,7 +32,7 @@ public class CasPartResourceTests
         casp.SwatchColors.Count.Should().Be(0);
         casp.LodBlocks.Should().NotBeNull();
         casp.LodBlocks.Count.Should().Be(0);
-        casp.Overrides.Should().Be(0);
+        casp.Overrides.Should().BeEmpty();
         casp.TgiBlocks.Should().NotBeNull();
         casp.TgiBlocks.Count.Should().Be(0);
     }
@@ -121,12 +121,13 @@ public class CasPartResourceTests
     public void RoundTrip_WithOverrides_PreservesValue()
     {
         var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
-        original.Overrides = 5;
+        original.Overrides.Add(new CaspOverride(5, 1.5f));
+        original.Overrides.Add(new CaspOverride(7, -2.25f));
 
         var data = original.Data.ToArray();
         var parsed = new Wrappers.CasPartResource.CasPartResource(TestKey, data);
 
-        parsed.Overrides.Should().Be(5);
+        parsed.Overrides.Should().Equal(new CaspOverride(5, 1.5f), new CaspOverride(7, -2.25f));
     }
 
     [Fact]
@@ -175,7 +176,7 @@ public class CasPartResourceTests
         original.AuralMaterialHash = 0x11223344;
         original.ParmFlags = ParmFlag.ShowInUI | ParmFlag.AllowForRandom | ParmFlag.DefaultForBodyType;
         original.ExcludePartFlags = ExcludePartFlag.Hat | ExcludePartFlag.Hair;
-        original.ExcludeModifierRegionFlags = 0x12345678; // 32-bit in legacy
+        original.ExcludeModifierRegionFlags = 0x12345678; // 32-bit before v36
         original.DeprecatedPrice = 500;
         original.PartTitleKey = 0xDEADBEEF;
         original.PartDescriptionKey = 0xCAFEBABE;
@@ -188,7 +189,7 @@ public class CasPartResourceTests
         original.RegionMapKey = 3;
         original.NormalMapKey = 4;
         original.SpecularMapKey = 5;
-        original.Overrides = 1;
+        original.Overrides.Add(new CaspOverride(1, 0.5f));
 
         original.SwatchColors.Add(new SwatchColor(unchecked((int)0xFFAABBCC)));
         original.FlagList.Add(new CaspFlag(0x0041, 0x1234));
@@ -236,7 +237,7 @@ public class CasPartResourceTests
     }
 
     [Fact]
-    public void FlagValue_Is16Bit()
+    public void FlagValue_Is16Bit_BeforeV37()
     {
         var original = new Wrappers.CasPartResource.CasPartResource(TestKey, ReadOnlyMemory<byte>.Empty);
         original.FlagList.Add(new CaspFlag(0xFFFF, 0xFFFF)); // Max 16-bit values

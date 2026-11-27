@@ -4,8 +4,17 @@ using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels.Editors;
 
-public partial class TextEditorViewModel : ViewModelBase, IDisposable
+/// <remarks>
+/// Change tracking source: legacy_references/Sims4Tools/s4pe/MainForm.cs lines 700-705
+/// (resource_ResourceChanged). The editor buffer is only applied to the wrapper on
+/// Apply, so becoming modified raises <see cref="ContentChanged"/> and
+/// <see cref="GetData"/> flushes the pending buffer before serializing.
+/// </remarks>
+public partial class TextEditorViewModel : ViewModelBase, IResourceEditorViewModel, IDisposable
 {
+    /// <inheritdoc />
+    public event EventHandler? ContentChanged;
+
     private bool _disposed;
     private TextResource? _resource;
     private readonly PropertyChangedEventHandler _propertyChangedHandler;
@@ -50,6 +59,22 @@ public partial class TextEditorViewModel : ViewModelBase, IDisposable
         UpdateStats();
     }
 
+    partial void OnIsModifiedChanged(bool value)
+    {
+        if (value)
+        {
+            ContentChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    partial void OnHasBomChanged(bool value)
+    {
+        if (_resource != null && value != _resource.HasBom)
+        {
+            IsModified = true;
+        }
+    }
+
     private void UpdateStats()
     {
         // Count lines properly handling both LF and CRLF
@@ -84,7 +109,17 @@ public partial class TextEditorViewModel : ViewModelBase, IDisposable
         IsModified = false;
     }
 
-    public ReadOnlyMemory<byte> GetData() => _resource?.Data ?? ReadOnlyMemory<byte>.Empty;
+    /// <inheritdoc />
+    /// <remarks>Applies any pending (un-applied) editor text before serializing.</remarks>
+    public ReadOnlyMemory<byte> GetData()
+    {
+        if (_resource == null) return ReadOnlyMemory<byte>.Empty;
+        if (IsModified)
+        {
+            ApplyChanges();
+        }
+        return _resource.Data;
+    }
 
     public void Dispose()
     {

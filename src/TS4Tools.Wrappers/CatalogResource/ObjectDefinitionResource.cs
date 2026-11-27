@@ -154,6 +154,21 @@ public sealed class ObjectDefinitionResource : TypedResource
     /// </summary>
     private List<ObjectDefinitionPropertyId> _propertyOrder = [];
 
+    // Data of property IDs legacy does not know, kept verbatim (see Parse).
+    private readonly Dictionary<ObjectDefinitionPropertyId, byte[]> _unknownProperties = [];
+
+    /// <summary>
+    /// Raw data of properties whose IDs have no known layout, keyed by ID.
+    /// </summary>
+    /// <remarks>
+    /// Legacy keeps the table entry but skips the data (<c>default: break</c> in Parse and UnParse,
+    /// ObjectDefinitionResource.cs lines 180-181 and 278-279), so saving an object definition silently
+    /// drops it. Current game OBJDs carry such IDs (e.g. 0x6ED6C8E9, 0x1F1C4F7B, 0x2143974C, 0xD70079B8,
+    /// 0x78822362) in most resources. The data of an unknown property is taken to extend up to the next
+    /// property's data offset (or the property table), and is written back unchanged.
+    /// </remarks>
+    public IReadOnlyDictionary<ObjectDefinitionPropertyId, byte[]> UnknownProperties => _unknownProperties;
+
     #endregion
 
     /// <summary>
@@ -196,9 +211,9 @@ public sealed class ObjectDefinitionResource : TypedResource
             throw new InvalidDataException($"Invalid entry count: {entryCount}");
 
         _propertyOrder = new List<ObjectDefinitionPropertyId>(entryCount);
+        _unknownProperties.Clear();
 
-        // Parse each property entry
-        // Source: ObjectDefinitionResource.cs lines 86-184
+        var entries = new List<(ObjectDefinitionPropertyId Id, int Offset)>(entryCount);
         for (int i = 0; i < entryCount; i++)
         {
             uint typeValue = BinaryPrimitives.ReadUInt32LittleEndian(data[tableOffset..]);
@@ -206,13 +221,33 @@ public sealed class ObjectDefinitionResource : TypedResource
             uint dataOffset = BinaryPrimitives.ReadUInt32LittleEndian(data[tableOffset..]);
             tableOffset += 4;
 
-            if (dataOffset > data.Length)
+            if (dataOffset > tablePosition)
                 throw new InvalidDataException($"Invalid data offset: 0x{dataOffset:X8}");
 
-            var id = (ObjectDefinitionPropertyId)typeValue;
+            entries.Add(((ObjectDefinitionPropertyId)typeValue, (int)dataOffset));
+        }
+
+        // Parse each property entry
+        // Source: ObjectDefinitionResource.cs lines 86-184
+        foreach (var (id, dataOffset) in entries)
+        {
             _propertyOrder.Add(id);
 
-            int propOffset = (int)dataOffset;
+            if (!Enum.IsDefined(id))
+            {
+                // Extent = up to the next property's data (or the table); see UnknownProperties.
+                int end = (int)tablePosition;
+                foreach (var (_, other) in entries)
+                {
+                    if (other > dataOffset && other < end)
+                        end = other;
+                }
+
+                _unknownProperties[id] = data[dataOffset..end].ToArray();
+                continue;
+            }
+
+            int propOffset = dataOffset;
             ParseProperty(data, id, ref propOffset);
         }
     }
@@ -509,6 +544,14 @@ public sealed class ObjectDefinitionResource : TypedResource
                 bytes.CopyTo(buffer[offset..]);
                 offset += bytes.Length;
                 break;
+            default:
+                if (_unknownProperties.TryGetValue(id, out var raw))
+                {
+                    raw.CopyTo(buffer[offset..]);
+                    offset += raw.Length;
+                }
+
+                break;
         }
     }
 
@@ -564,6 +607,12 @@ public sealed class ObjectDefinitionResource : TypedResource
         return size;
     }
 
+    /// <summary>
+    /// Serialized size of one swapped-ITG entry: instance (8) + type (4) + group (4).
+    /// Source: ObjectDefinitionResource.cs lines 298-326 / 334-353 (ReadTGIBlock/WriteTGIBlock).
+    /// </summary>
+    private const int SwappedTgiSize = 16;
+
     private int GetPropertySize(ObjectDefinitionPropertyId id)
     {
         return id switch
@@ -571,11 +620,11 @@ public sealed class ObjectDefinitionResource : TypedResource
             ObjectDefinitionPropertyId.Name => 4 + (Name?.Length ?? 0),
             ObjectDefinitionPropertyId.Tuning => 4 + (Tuning?.Length ?? 0),
             ObjectDefinitionPropertyId.TuningId => 8,
-            ObjectDefinitionPropertyId.Icon => 4 + ((Icon?.Count ?? 0) * 20),
-            ObjectDefinitionPropertyId.Rig => 4 + ((Rig?.Count ?? 0) * 20),
-            ObjectDefinitionPropertyId.Slot => 4 + ((Slot?.Count ?? 0) * 20),
-            ObjectDefinitionPropertyId.Model => 4 + ((Model?.Count ?? 0) * 20),
-            ObjectDefinitionPropertyId.Footprint => 4 + ((Footprint?.Count ?? 0) * 20),
+            ObjectDefinitionPropertyId.Icon => 4 + ((Icon?.Count ?? 0) * SwappedTgiSize),
+            ObjectDefinitionPropertyId.Rig => 4 + ((Rig?.Count ?? 0) * SwappedTgiSize),
+            ObjectDefinitionPropertyId.Slot => 4 + ((Slot?.Count ?? 0) * SwappedTgiSize),
+            ObjectDefinitionPropertyId.Model => 4 + ((Model?.Count ?? 0) * SwappedTgiSize),
+            ObjectDefinitionPropertyId.Footprint => 4 + ((Footprint?.Count ?? 0) * SwappedTgiSize),
             ObjectDefinitionPropertyId.Components => 4 + ((Components?.Count ?? 0) * 4),
             ObjectDefinitionPropertyId.MaterialVariant => 4 + (MaterialVariant?.Length ?? 0),
             ObjectDefinitionPropertyId.Unknown1 => 1,
@@ -589,7 +638,7 @@ public sealed class ObjectDefinitionResource : TypedResource
             ObjectDefinitionPropertyId.Unknown3 => 8,
             ObjectDefinitionPropertyId.IsBaby => 1,
             ObjectDefinitionPropertyId.Unknown4 => 4 + (Unknown4?.Length ?? 0),
-            _ => 0
+            _ => _unknownProperties.TryGetValue(id, out var raw) ? raw.Length : 0
         };
     }
 
@@ -598,6 +647,7 @@ public sealed class ObjectDefinitionResource : TypedResource
     {
         Version = 1;
         _propertyOrder = [];
+        _unknownProperties.Clear();
     }
 
     /// <summary>

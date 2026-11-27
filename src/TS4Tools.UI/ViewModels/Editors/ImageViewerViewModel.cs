@@ -2,6 +2,8 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using TS4Tools.UI.Services;
 using TS4Tools.Wrappers;
 
 namespace TS4Tools.UI.ViewModels.Editors;
@@ -18,6 +20,7 @@ public partial class ImageViewerViewModel : ViewModelBase
 {
     private ImageResource? _resource;
     private RleResource? _rleResource;
+    private ThumbnailResource? _thumbnailResource;
     private byte[]? _decodedPixels;
     private bool _isRleFormat;
 
@@ -64,6 +67,56 @@ public partial class ImageViewerViewModel : ViewModelBase
     [ObservableProperty]
     private bool _invertAlpha;
 
+    // HSV shift, applied to the preview and made permanent by "Apply HSV shift"
+    // Source: legacy_references/Sims4Tools/s4pi Extras/DDSPanel/DDSPanel.cs lines 131-160 (HueShift,
+    // SaturationShift, ValueShift: floats in the 0.0-1.0 domain, effective only when HSV is supported)
+
+    /// <summary>Hue shift (-1 to 1, wraps).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HsvShift))]
+    private float _hueShift;
+
+    /// <summary>Saturation shift (-1 to 1).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HsvShift))]
+    private float _saturationShift;
+
+    /// <summary>Value shift (-1 to 1).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HsvShift))]
+    private float _valueShift;
+
+    /// <summary>The shift the HSV sliders describe.</summary>
+    public HsvShift HsvShift => new(HueShift, SaturationShift, ValueShift);
+
+    /// <summary>Whether the HSV sliders are at zero.</summary>
+    public bool IsHsvNeutral => HsvShift.IsEmpty;
+
+    partial void OnHueShiftChanged(float value) => OnHsvShiftChanged();
+    partial void OnSaturationShiftChanged(float value) => OnHsvShiftChanged();
+    partial void OnValueShiftChanged(float value) => OnHsvShiftChanged();
+
+    private void OnHsvShiftChanged()
+    {
+        OnPropertyChanged(nameof(IsHsvNeutral));
+        RefreshImage();
+    }
+
+    /// <summary>Sets the HSV sliders back to zero.</summary>
+    [RelayCommand]
+    public void ResetHsvShift()
+    {
+        HueShift = 0;
+        SaturationShift = 0;
+        ValueShift = 0;
+    }
+
+    /// <summary>
+    /// The pixels as displayed: the decoded pixels with the HSV shift and channel settings applied
+    /// (RGBA32), or null when no pixels are decoded.
+    /// </summary>
+    public byte[]? PreviewPixels => _decodedPixels == null ? null : ApplyChannelFilter(ApplyHsvPreview(_decodedPixels));
+
     /// <summary>
     /// Whether channel controls should be shown (for DDS/DST/RLE formats).
     /// </summary>
@@ -79,6 +132,7 @@ public partial class ImageViewerViewModel : ViewModelBase
     {
         _resource = resource;
         _rleResource = null;
+        _thumbnailResource = null;
         _isRleFormat = false;
         FormatName = GetFormatDisplayName(resource);
         Width = resource.Width;
@@ -99,6 +153,7 @@ public partial class ImageViewerViewModel : ViewModelBase
     public void LoadRleResource(RleResource resource)
     {
         _resource = null;
+        _thumbnailResource = null;
         _rleResource = resource;
         _isRleFormat = true;
         FormatName = $"RLE ({resource.Version})";
@@ -109,6 +164,98 @@ public partial class ImageViewerViewModel : ViewModelBase
         LoadRleImage(resource);
         OnPropertyChanged(nameof(HasChannelControls));
     }
+
+    /// <summary>
+    /// Loads a JFIF thumbnail resource (JPEG, optionally with an ALFA alpha PNG).
+    /// </summary>
+    /// <remarks>
+    /// Source: legacy_references/Sims4Tools/s4pe/BuiltInValueControl.cs lines 428-472 (ThumbnailControl shows
+    /// ThumbnailResource.Image). The embedded ALFA alpha is composited onto the JPEG colour data (ThumbnailCompositor).
+    /// </remarks>
+    public void LoadThumbnailResource(ThumbnailResource resource)
+    {
+        _resource = null;
+        _rleResource = null;
+        _thumbnailResource = resource;
+        _isRleFormat = false;
+        _decodedPixels = null;
+        FormatName = resource.HasEmbeddedAlpha ? "JFIF (with ALFA alpha)" : "JFIF";
+        DataSize = resource.DataLength;
+        Width = 0;
+        Height = 0;
+
+        // Source: ThumbnailResource.cs lines 119-160 (TransformToPNG): JPEG colour + ALFA alpha
+        if (resource.HasEmbeddedAlpha && TryCompositeThumbnail(resource))
+        {
+            OnPropertyChanged(nameof(HasChannelControls));
+            return;
+        }
+
+        try
+        {
+            using var stream = new MemoryStream(resource.GetJpegData().ToArray());
+            Image = new Bitmap(stream);
+            Width = Image.PixelSize.Width;
+            Height = Image.PixelSize.Height;
+            IsPreviewAvailable = true;
+            StatusMessage = $"Thumbnail loaded ({Width}x{Height})";
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException or NotSupportedException or InvalidDataException)
+        {
+            Image = null;
+            IsPreviewAvailable = false;
+            StatusMessage = $"Failed to load thumbnail: {ex.Message}";
+        }
+
+        OnPropertyChanged(nameof(HasChannelControls));
+    }
+
+    private bool TryCompositeThumbnail(ThumbnailResource resource)
+    {
+        try
+        {
+            var (rgba, width, height) = ThumbnailCompositor.Composite(resource.GetJpegData().Span, resource.GetAlphaPngData().Span);
+            _decodedPixels = rgba;
+            Width = width;
+            Height = height;
+        }
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentException or InvalidOperationException)
+        {
+            // Show the colour image alone, like a thumbnail without ALFA
+            _decodedPixels = null;
+            Debug.WriteLine($"[TS4Tools] Thumbnail alpha not applied: {ex.Message}");
+            return false;
+        }
+
+        try
+        {
+            RefreshImage();
+        }
+        catch (InvalidOperationException ex)
+        {
+            // No rendering platform to create the bitmap (the decoded pixels are still available)
+            Image = null;
+            StatusMessage = $"Failed to create thumbnail bitmap: {ex.Message}";
+            return true;
+        }
+
+        IsPreviewAvailable = Image != null;
+        StatusMessage = $"Thumbnail loaded with alpha ({Width}x{Height})";
+        return true;
+    }
+
+    /// <summary>
+    /// Re-reads the image from the loaded wrapper (after its data was replaced, e.g. by an import).
+    /// </summary>
+    public void Reload()
+    {
+        if (_resource != null) LoadResource(_resource);
+        else if (_rleResource != null) LoadRleResource(_rleResource);
+        else if (_thumbnailResource != null) LoadThumbnailResource(_thumbnailResource);
+    }
+
+    /// <summary>The decoded RGBA32 pixels of a DDS/DST/RLE image, if any.</summary>
+    public byte[]? DecodedPixels => _decodedPixels;
 
     private void LoadRleImage(RleResource resource)
     {
@@ -273,11 +420,20 @@ public partial class ImageViewerViewModel : ViewModelBase
         if (_decodedPixels == null || Width <= 0 || Height <= 0)
             return;
 
-        // Apply channel filtering
-        var filteredPixels = ApplyChannelFilter(_decodedPixels);
+        // Apply the HSV shift, then channel filtering
+        var filteredPixels = ApplyChannelFilter(ApplyHsvPreview(_decodedPixels));
 
-        // Create WriteableBitmap from filtered RGBA pixels
-        var bitmap = CreateBitmapFromRgba(filteredPixels, Width, Height);
+        // Create WriteableBitmap from filtered RGBA pixels (needs a rendering platform; the decoded pixels stay available)
+        WriteableBitmap? bitmap;
+        try
+        {
+            bitmap = CreateBitmapFromRgba(filteredPixels, Width, Height);
+        }
+        catch (InvalidOperationException)
+        {
+            bitmap = null;
+        }
+
         if (bitmap == null)
         {
             Image = null;
@@ -287,6 +443,28 @@ public partial class ImageViewerViewModel : ViewModelBase
         }
 
         Image = bitmap;
+    }
+
+    /// <summary>
+    /// Applies the HSV sliders to RGBA pixels (a copy; the decoded pixels stay unshifted).
+    /// </summary>
+    /// <remarks>Source: RGBHSV.cs lines 160-171 (HSVShift), via <see cref="ColorHsva.Shift"/>.</remarks>
+    private byte[] ApplyHsvPreview(byte[] sourcePixels)
+    {
+        var shift = HsvShift;
+        if (shift.IsEmpty) return sourcePixels;
+
+        var result = new byte[sourcePixels.Length];
+        for (var i = 0; i + 3 < sourcePixels.Length; i += 4)
+        {
+            var argb = ((uint)sourcePixels[i + 3] << 24) | ((uint)sourcePixels[i] << 16) | ((uint)sourcePixels[i + 1] << 8) | sourcePixels[i + 2];
+            var shifted = ColorHsva.FromArgb(argb).Shift(shift).ToArgb();
+            result[i] = (byte)(shifted >> 16);
+            result[i + 1] = (byte)(shifted >> 8);
+            result[i + 2] = (byte)shifted;
+            result[i + 3] = (byte)(shifted >> 24);
+        }
+        return result;
     }
 
     /// <summary>
@@ -368,6 +546,8 @@ public partial class ImageViewerViewModel : ViewModelBase
             return _resource.Data;
         if (_rleResource != null)
             return _rleResource.Data;
+        if (_thumbnailResource != null)
+            return _thumbnailResource.Data;
         return ReadOnlyMemory<byte>.Empty;
     }
 }

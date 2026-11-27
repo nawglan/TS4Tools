@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:TS4Tools.UI.ViewModels.Editors"
+             xmlns:main="using:TS4Tools.UI.ViewModels"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
              x:Class="TS4Tools.UI.Views.Editors.RcolViewerView"
              x:DataType="vm:RcolViewerViewModel">
@@ -26,6 +27,9 @@
                            VerticalAlignment="Center" Opacity="0.7" />
                 <TextBlock Text="(Invalid)" IsVisible="{Binding !IsValid}"
                            VerticalAlignment="Center" Foreground="Red" />
+                <!-- Source: legacy_references/Sims4Tools/s4pe Helpers/ModelViewer (MLODViewer.helper, GEOMViewer.helper) -->
+                <Button Content="3D Model Viewer" IsVisible="{Binding HasModel}"
+                        Command="{Binding $parent[Window].((main:MainWindowViewModel)DataContext).OpenModelViewerCommand}" />
             </StackPanel>
         </Border>
 
