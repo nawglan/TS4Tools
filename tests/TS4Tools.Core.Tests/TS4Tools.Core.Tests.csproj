@@ -24,6 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="System.Buffers.Binary" />
+    <Using Include="System.Security.Cryptography" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\TS4Tools.Core\TS4Tools.Core.csproj" />
     <ProjectReference Include="..\..\src\TS4Tools.Wrappers\TS4Tools.Wrappers.csproj" />
   </ItemGroup>
