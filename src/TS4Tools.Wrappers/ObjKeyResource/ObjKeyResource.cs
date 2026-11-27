@@ -112,8 +112,9 @@ public sealed class ObjKeyResource : TypedResource
         _tgiBlocks.Clear();
         if (tgiSize > 0 && tgiPosn < data.Length)
         {
+            // The read loop stops at the end of the data, so never reserve more blocks than the data can hold.
             int tgiBlockCount = (int)(tgiSize / 16);
-            _tgiBlocks.EnsureCapacity(tgiBlockCount);
+            _tgiBlocks.EnsureCapacity((int)Math.Min(tgiBlockCount, (data.Length - tgiPosn) / 16));
 
             int tgiReadOffset = (int)tgiPosn;
             for (int i = 0; i < tgiBlockCount && tgiReadOffset + 16 <= data.Length; i++)

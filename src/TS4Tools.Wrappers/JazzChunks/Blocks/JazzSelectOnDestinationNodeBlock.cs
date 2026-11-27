@@ -55,6 +55,7 @@ public sealed class JazzSelectOnDestinationNodeBlock : RcolBlock
         // Read matches
         int matchCount = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(matchCount, data.Length - pos, 8, "destination match");
         Matches = new List<JazzDestinationMatch>(matchCount);
         for (int i = 0; i < matchCount; i++)
         {

@@ -95,6 +95,7 @@ public sealed class JazzStateMachineBlock : RcolBlock
         // Read animations list
         int animCount = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(animCount, data.Length - pos, 8, "animation");
         Animations = new List<JazzAnimation>(animCount);
         for (int i = 0; i < animCount; i++)
         {

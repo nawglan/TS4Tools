@@ -92,8 +92,9 @@ public sealed class ModularResource : TypedResource
         if (tgiSize > 0 && tgiPosn < data.Length)
         {
             // Each TGI block is 16 bytes (4 type + 4 group + 8 instance)
+            // The read loop stops at the end of the data, so never reserve more blocks than the data can hold.
             int tgiBlockCount = (int)(tgiSize / 16);
-            _tgiBlocks.EnsureCapacity(tgiBlockCount);
+            _tgiBlocks.EnsureCapacity((int)Math.Min(tgiBlockCount, (data.Length - tgiPosn) / 16));
 
             int tgiReadOffset = (int)tgiPosn;
             for (int i = 0; i < tgiBlockCount && tgiReadOffset + 16 <= data.Length; i++)

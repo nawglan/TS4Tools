@@ -41,6 +41,33 @@ public sealed class PackageAdapterTests : IDisposable
     }
 
     [Fact]
+    public void IndexEntryClone_IsIndependentCopy()
+    {
+        // Source: ResourceIndexEntry.cs lines 153, 198 (Clone copies the entry bytes)
+        using var pkg = Package.NewPackage(0);
+        var original = pkg.AddResource(Key(RawType, 1), new MemoryStream(Data(16, 3)), true)!;
+
+        var copy = (IResourceIndexEntry)((AHandlerElement)original).Clone(null);
+        copy.Instance = 2;
+        copy.Compressed = 0x5A42;
+        copy.IsDeleted = true;
+
+        original.Instance.Should().Be(1);
+        original.Compressed.Should().Be(0);
+        original.IsDeleted.Should().BeFalse();
+        pkg.GetResourceList.Should().ContainSingle().Which.Instance.Should().Be(1);
+
+        // A clone still reads the original data, but is not an index entry of the package.
+        var read = new MemoryStream();
+        ((Package)pkg).GetResource(copy)!.CopyTo(read);
+        read.ToArray().Should().Equal(Data(16, 3));
+        copy.IsDeleted = false;
+        var delete = () => pkg.DeleteResource(copy);
+        delete.Should().Throw<ArgumentException>();
+        pkg.GetResourceList.Should().ContainSingle().Which.IsDeleted.Should().BeFalse();
+    }
+
+    [Fact]
     public void NewPackage_HasLegacyHeader()
     {
         using var pkg = Package.NewPackage(0);

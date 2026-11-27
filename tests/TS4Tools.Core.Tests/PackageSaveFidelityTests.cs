@@ -83,6 +83,41 @@ public sealed class PackageSaveFidelityTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_LeavesNoTempFileBehind()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.ReplaceResource(package.Find(new ResourceKey(TypeA, 0, 1))!, Compressible(5, 3000));
+            await package.SaveAsync();
+        }
+
+        Directory.GetFiles(_tempDir).Should().Equal(path);
+    }
+
+    [Fact]
+    public async Task SaveAsync_Cancelled_LeavesOriginalIntact()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+        var before = await File.ReadAllBytesAsync(path);
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.ReplaceResource(package.Find(new ResourceKey(TypeA, 0, 1))!, Compressible(5, 3000));
+            using var cts = new CancellationTokenSource();
+            await cts.CancelAsync();
+
+            var act = async () => await package.SaveAsync(cts.Token);
+
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+
+        (await File.ReadAllBytesAsync(path)).Should().Equal(before);
+        Directory.GetFiles(_tempDir).Should().Equal(path);
+    }
+
+    [Fact]
     public async Task SaveAsync_Twice_ProducesValidPackage()
     {
         var (path, data) = await CreatePackageFileAsync();

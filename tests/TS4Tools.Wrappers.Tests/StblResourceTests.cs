@@ -273,4 +273,18 @@ public class StblResourceTests
 
         stbl.Data.ToArray().Should().Equal(data);
     }
+
+    [Fact]
+    public void Parse_EntryCountLargerThanData_ThrowsBeforeAllocating()
+    {
+        // 21-byte header claiming 0x7FFFFFC0 entries and no entry data.
+        var data = new byte[21];
+        "STBL"u8.CopyTo(data);
+        BinaryPrimitives.WriteUInt16LittleEndian(data.AsSpan(4), StblResource.CurrentVersion);
+        BinaryPrimitives.WriteUInt64LittleEndian(data.AsSpan(7), 0x7FFFFFC0);
+
+        var act = () => new StblResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*STBL entry count*");
+    }
 }

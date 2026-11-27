@@ -146,6 +146,7 @@ public static class JazzHelper
     {
         int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
+        CountGuard.Check(count, data.Length - offset, 4, "chunk reference");
 
         var list = new List<uint>(count);
         for (int i = 0; i < count; i++)

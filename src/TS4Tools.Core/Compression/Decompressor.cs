@@ -74,7 +74,17 @@ internal static class Decompressor
 
         while (totalRead < expectedSize)
         {
-            int bytesRead = zlibStream.Read(result, totalRead, expectedSize - totalRead);
+            int bytesRead;
+            try
+            {
+                bytesRead = zlibStream.Read(result, totalRead, expectedSize - totalRead);
+            }
+            catch (InvalidDataException ex)
+            {
+                // Corrupt deflate data; report it as a package format error like every other decompression failure.
+                throw new PackageFormatException(
+                    $"Corrupt ZLIB data after {totalRead} of {expectedSize} bytes: {ex.Message}", ex);
+            }
             if (bytesRead == 0)
                 throw new PackageFormatException(
                     $"Unexpected end of compressed data. Expected {expectedSize} bytes, got {totalRead}.");
@@ -214,6 +224,11 @@ internal static class Decompressor
         int offset, int count)
     {
         int sourcePos = position - offset;
+        // A back-reference may only point into output already written.
+        // Legacy (Compression.cs OldDecompress) indexes the array the same way and fails on a bad offset.
+        if (sourcePos < 0)
+            throw new PackageFormatException(
+                $"Corrupt RefPack data: back-reference offset {offset} at output position {position}.");
         for (int i = 0; i < count && position < buffer.Length; i++)
         {
             buffer[position++] = buffer[sourcePos + i];

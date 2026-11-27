@@ -60,6 +60,7 @@ public sealed class JazzSelectOnParameterNodeBlock : RcolBlock
         // Read matches
         int matchCount = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(matchCount, data.Length - pos, 8, "parameter match");
         Matches = new List<JazzParameterMatch>(matchCount);
         for (int i = 0; i < matchCount; i++)
         {

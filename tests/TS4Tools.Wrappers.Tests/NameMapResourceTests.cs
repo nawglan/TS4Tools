@@ -266,4 +266,16 @@ public class NameMapResourceTests
         nameMap[0x120000000000E882UL].Should().Be("caf\u00e9!");
         nameMap.Data.ToArray().Should().Equal(data);
     }
+
+    [Fact]
+    public void Parse_EntryCountLargerThanData_ThrowsBeforeAllocating()
+    {
+        var data = new byte[8];
+        BinaryPrimitives.WriteUInt32LittleEndian(data, NameMapResource.CurrentVersion);
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(4), 50_000_000);
+
+        var act = () => new NameMapResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*NameMap entry count*");
+    }
 }

@@ -39,6 +39,16 @@ public class ResourceHandlerPrecedenceTests
     }
 
     [Fact]
+    public void FaultyProvider_DoesNotStopDiscovery()
+    {
+        // Source: WrapperDealer.cs line 112 (a failing plugin never stops the others from loading)
+        var registry = CreateTestRegistry();
+
+        registry.GetFactory(ListOnlyType).Should().BeOfType<ListFactory>();
+        registry.TypeMap.Select(kv => kv.Value).Should().NotContain(typeof(ThrowingListFactory));
+    }
+
+    [Fact]
     public void HigherPriority_Wins()
     {
         var registry = CreateTestRegistry();
@@ -214,6 +224,12 @@ internal sealed class AlphaFactory : MarkerFactoryBase;
 // Zulu must win PriorityType despite sorting after Alpha.
 [ResourceHandler(ResourceHandlerPrecedenceTests.PriorityType, Priority = 5)]
 internal sealed class ZuluPriorityFactory : MarkerFactoryBase;
+
+/// <summary>A faulty plugin factory: its type list throws an exception type the host does not expect.</summary>
+internal sealed class ThrowingListFactory : MarkerFactoryBase, IResourceTypeProvider
+{
+    public IReadOnlyCollection<uint> ResourceTypes => throw new KeyNotFoundException("plugin bug");
+}
 
 internal sealed class ListFactory : MarkerFactoryBase, IResourceTypeProvider
 {

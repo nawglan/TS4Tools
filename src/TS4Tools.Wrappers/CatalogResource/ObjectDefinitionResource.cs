@@ -284,6 +284,7 @@ public sealed class ObjectDefinitionResource : TypedResource
             case ObjectDefinitionPropertyId.Components:
                 int componentCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
                 offset += 4;
+                CountGuard.Check(componentCount, data.Length - offset, 4, "OBJD component");
                 Components = new List<uint>(componentCount);
                 for (int j = 0; j < componentCount; j++)
                 {
@@ -319,6 +320,7 @@ public sealed class ObjectDefinitionResource : TypedResource
             case ObjectDefinitionPropertyId.EnvironmentScoreEmotionTags:
                 int tagCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
                 offset += 4;
+                CountGuard.Check(tagCount, data.Length - offset, 2, "OBJD environment score emotion tag");
                 EnvironmentScoreEmotionTags = new List<ushort>(tagCount);
                 for (int j = 0; j < tagCount; j++)
                 {
@@ -329,6 +331,7 @@ public sealed class ObjectDefinitionResource : TypedResource
             case ObjectDefinitionPropertyId.EnvironmentScores:
                 int scoreCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
                 offset += 4;
+                CountGuard.Check(scoreCount, data.Length - offset, 4, "OBJD environment score");
                 EnvironmentScores = new List<float>(scoreCount);
                 for (int j = 0; j < scoreCount; j++)
                 {

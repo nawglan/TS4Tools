@@ -251,7 +251,7 @@ public class Package : APackage
 
     private ResourceIndexEntry View(CoreEntry entry) => views.GetValue(entry, e => new ResourceIndexEntry(e, Core.IndexType));
 
-    private static CoreEntry CoreOf(IResourceIndexEntry rie) => rie is ResourceIndexEntry view
+    private static CoreEntry CoreOf(IResourceIndexEntry rie) => rie is ResourceIndexEntry { IsDetached: false } view
         ? view.Core
         : throw new ArgumentException("The index entry does not belong to this package.", nameof(rie));
 
@@ -421,9 +421,9 @@ public class Package : APackage
     {
         if (rie is not ResourceIndexEntry view) return null;
         if (view.HasNoData) return null;
-        if (view.Core.FileSize == 1 && view.Core.MemorySize == 0xFFFFFFFF) return null;
+        if (view.DataSource.FileSize == 1 && view.DataSource.MemorySize == 0xFFFFFFFF) return null;
 
-        var data = Run(Core.GetResourceDataAsync(view.Core));
+        var data = Run(Core.GetResourceDataAsync(view.DataSource));
         var ms = new MemoryStream();
         ms.Write(data.Span);
         ms.Position = 0;

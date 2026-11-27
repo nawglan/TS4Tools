@@ -60,8 +60,8 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
         int entryCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
 
-        if (entryCount < 0)
-            throw new ResourceFormatException($"Invalid NameMap entry count: {entryCount}");
+        // Each entry is at least 12 bytes (hash + string length)
+        CountGuard.Check(entryCount, data.Length - offset, 12, "NameMap entry");
 
         _entries.Clear();
         _entries.EnsureCapacity(entryCount);

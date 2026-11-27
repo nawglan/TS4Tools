@@ -248,7 +248,7 @@ await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
     await package.SaveAsAsync(copy);        // writes a new file; package stays dirty, original untouched
     package.IsDirty.Should().BeTrue();
 
-    await package.SaveAsync();              // atomic temp-file save back to `path`; IsDirty -> false
+    await package.SaveAsync();              // temp-file save back to `path`; IsDirty -> false
     package.IsDirty.Should().BeFalse();
 
     using var ms = new MemoryStream();

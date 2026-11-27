@@ -92,9 +92,10 @@ public sealed class StblResource : TypedResource
         uint stringDataLength = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
         offset += 4;
 
-        // Validate entry count
+        // Validate entry count: each entry is at least 7 bytes (key hash, flags, length)
         if (entryCount > int.MaxValue)
             throw new ResourceFormatException($"STBL entry count too large: {entryCount}");
+        CountGuard.Check((long)entryCount, data.Length - offset, 7, "STBL entry");
 
         _entries.Clear();
         _entries.Capacity = (int)entryCount;

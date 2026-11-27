@@ -141,6 +141,7 @@ public sealed class JazzPlayAnimationNodeBlock : RcolBlock
         pos += 4;
 
         // Read actor slots (count was read earlier)
+        CountGuard.Check(actorSlotCount, data.Length - pos, 8, "actor slot");
         ActorSlots = new List<JazzActorSlot>(actorSlotCount);
         for (int i = 0; i < actorSlotCount; i++)
         {
@@ -150,6 +151,7 @@ public sealed class JazzPlayAnimationNodeBlock : RcolBlock
         // Read actor suffixes (has its own count)
         int suffixCount = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(suffixCount, data.Length - pos, 8, "actor suffix");
         ActorSuffixes = new List<JazzActorSuffix>(suffixCount);
         for (int i = 0; i < suffixCount; i++)
         {
