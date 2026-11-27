@@ -17,6 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Source: legacy_references/Sims4Tools/s4pi Extras/Extensions/Extensions.txt -->
+    <EmbeddedResource Include="Extensions/Extensions.txt" LogicalName="TS4Tools.Extensions.Extensions.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="TS4Tools.Core.Tests" />
   </ItemGroup>
 

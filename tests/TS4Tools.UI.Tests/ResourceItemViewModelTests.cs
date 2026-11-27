@@ -99,6 +99,26 @@ public class ResourceItemViewModelTests
 
         // Act & Assert
         vm.TypeName.Should().Be("Unknown (0xDEADBEEF)");
+        vm.Tag.Should().Be("UNKN");
+    }
+
+    [Theory]
+    [InlineData(0x01661233u, "MODL (0x01661233)", "MODL")]
+    [InlineData(0x6B20C4F3u, "CLIP (0x6B20C4F3)", "CLIP")]
+    public void TypeName_LegacyExtensionType_ReturnsLegacyTag(uint type, string expectedName, string expectedTag)
+    {
+        var vm = new ResourceItemViewModel(new ResourceKey(type, 0, 0), 100);
+
+        vm.TypeName.Should().Be(expectedName);
+        vm.Tag.Should().Be(expectedTag);
+    }
+
+    [Fact]
+    public void TypeName_Mlod_IsNotMislabelledAsRig()
+    {
+        var vm = new ResourceItemViewModel(new ResourceKey(0x01D10F34, 0, 0), 100);
+
+        vm.TypeName.Should().Be("Model LOD (MLOD)");
     }
 
     [Fact]
