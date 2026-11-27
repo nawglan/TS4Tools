@@ -68,11 +68,19 @@ public sealed class DbpfPackage : IMutablePackage
 
     /// <summary>Package header: unused (offset 0x14).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 288</remarks>
-    public int Unused1 => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x14));
+    public int Unused1
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x14));
+        set => SetHeaderInt32(0x14, value);
+    }
 
     /// <summary>Package header: unused (offset 0x20).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 303</remarks>
-    public int Unused2 => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x20));
+    public int Unused2
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x20));
+        set => SetHeaderInt32(0x20, value);
+    }
 
     /// <summary>Package header: index record position low (offset 40; 0 when the position is at offset 64).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 313</remarks>
@@ -80,15 +88,38 @@ public sealed class DbpfPackage : IMutablePackage
 
     /// <summary>Package header: unused (first int of the 12 bytes at offset 48).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 323</remarks>
-    public int Unused3 => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(48));
+    public int Unused3
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(48));
+        set => SetHeaderInt32(48, value);
+    }
 
     /// <summary>Package header: offset 60, always 3.</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 328</remarks>
-    public int Unused4 => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(60));
+    public int Unused4
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(60));
+        set => SetHeaderInt32(60, value);
+    }
 
     /// <summary>Package header: unused 28 bytes at offset 68.</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 338</remarks>
-    public ReadOnlyMemory<byte> Unused5 => _header.AsSpan(68, 28).ToArray();
+    /// <exception cref="ArgumentException">Setting a value that is not exactly 28 bytes.</exception>
+    public ReadOnlyMemory<byte> Unused5
+    {
+        get => _header.AsSpan(68, 28).ToArray();
+        set
+        {
+            if (value.Length != Unused5Length)
+                throw new ArgumentException($"Unused5 must be exactly {Unused5Length} bytes, got {value.Length}.", nameof(value));
+            ThrowIfNotWritable();
+            value.Span.CopyTo(_header.AsSpan(68, Unused5Length));
+            IsDirty = true;
+        }
+    }
+
+    /// <summary>Length in bytes of <see cref="Unused5"/>.</summary>
+    public const int Unused5Length = 28;
 
     /// <summary>Package index: the index type flags read from the index (0 for a new package).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 352; PackageIndex.cs lines 35-36, 57</remarks>
@@ -104,19 +135,35 @@ public sealed class DbpfPackage : IMutablePackage
 
     /// <summary>User version major (typically 0).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 278</remarks>
-    public int UserVersionMajor => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x0C));
+    public int UserVersionMajor
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x0C));
+        set => SetHeaderInt32(0x0C, value);
+    }
 
     /// <summary>User version minor (typically 0).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 283</remarks>
-    public int UserVersionMinor => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x10));
+    public int UserVersionMinor
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x10));
+        set => SetHeaderInt32(0x10, value);
+    }
 
     /// <summary>Creation timestamp (typically not set).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 293</remarks>
-    public int CreationTime => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x18));
+    public int CreationTime
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x18));
+        set => SetHeaderInt32(0x18, value);
+    }
 
     /// <summary>Last update timestamp (typically not set).</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 298</remarks>
-    public int UpdatedTime => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x1C));
+    public int UpdatedTime
+    {
+        get => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(0x1C));
+        set => SetHeaderInt32(0x1C, value);
+    }
 
     /// <summary>Number of entries in the package index.</summary>
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs line 308</remarks>
@@ -135,6 +182,28 @@ public sealed class DbpfPackage : IMutablePackage
             int pos = BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(64));
             return pos != 0 ? pos : BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(40));
         }
+    }
+
+    /// <summary>
+    /// Writes a 32-bit header field (user version, unused fields, timestamps) and marks the package dirty.
+    /// The index fields (count, size, positions) are not settable: the writer always recomputes them.
+    /// </summary>
+    /// <remarks>
+    /// Legacy exposes these fields read-only (legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 278-338)
+    /// but SaveAs writes the in-memory header verbatim (line 99), so values carried in the header survive a save.
+    /// The setters let a rebuilt package (e.g. the CLI <c>pack</c> command) restore them on a new package.
+    /// </remarks>
+    private void SetHeaderInt32(int offset, int value)
+    {
+        ThrowIfNotWritable();
+        BinaryPrimitives.WriteInt32LittleEndian(_header.AsSpan(offset), value);
+        IsDirty = true;
+    }
+
+    private void ThrowIfNotWritable()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (IsReadOnly) throw new InvalidOperationException("Package is read-only.");
     }
 
     private int IndexCount => BinaryPrimitives.ReadInt32LittleEndian(_header.AsSpan(36));
@@ -670,6 +739,32 @@ public sealed class DbpfPackage : IMutablePackage
         if (entry is not ResourceIndexEntry rie)
             throw new ArgumentException("Entry is not from this package.", nameof(entry));
         rie.CompressionType = compressionType;
+    }
+
+    /// <summary>Gets an entry's Unknown2 field (normally 0x0001); the entry must come from a <see cref="DbpfPackage"/>.</summary>
+    /// <param name="entry">An entry of this package.</param>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs lines 123-130</remarks>
+    public static ushort GetUnknown2(IResourceIndexEntry entry)
+    {
+        if (entry is not ResourceIndexEntry rie)
+            throw new ArgumentException("Entry is not from this package.", nameof(entry));
+        return rie.Unknown2;
+    }
+
+    /// <summary>
+    /// Sets the index entry's Unknown2 field. It is written verbatim on save; the resource data is not re-encoded.
+    /// </summary>
+    /// <param name="entry">An entry of this package.</param>
+    /// <param name="value">The new value.</param>
+    /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/ResourceIndexEntry.cs lines 123-130 (setter raises OnElementChanged)</remarks>
+    public void SetUnknown2(IResourceIndexEntry entry, ushort value)
+    {
+        ThrowIfNotWritable();
+        if (entry is not ResourceIndexEntry rie)
+            throw new ArgumentException("Entry is not from this package.", nameof(entry));
+        if (rie.Unknown2 == value) return;
+        rie.Unknown2 = value;
+        IsDirty = true;
     }
 
     /// <summary>Replaces the data for an existing resource.</summary>
