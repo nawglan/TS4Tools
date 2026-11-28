@@ -112,7 +112,8 @@ public sealed class ThumbnailResource : TypedResource
         // Source: ThumbnailResource.cs lines 122-123
         var length = BinaryPrimitives.ReadInt32BigEndian(data[(AlfaOffset + 4)..]);
 
-        if (length <= 0 || AlfaOffset + 8 + length > data.Length)
+        // Compared without adding to length, so a huge length cannot overflow past the check.
+        if (length <= 0 || length > data.Length - (AlfaOffset + 8))
         {
             // Invalid length, ignore alpha
             return;

@@ -940,8 +940,13 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var path = await _dialogs.PickSavePackagePathAsync("Save Package As");
         if (string.IsNullOrEmpty(path)) return false;
 
-        if (!string.IsNullOrEmpty(PackagePath) && !IsReadOnly &&
-            string.Equals(Path.GetFullPath(path), Path.GetFullPath(PackagePath), StringComparison.Ordinal))
+        var match = string.IsNullOrEmpty(PackagePath) ? FileMatch.Different : FileIdentity.Compare(path, PackagePath);
+        if (match == FileMatch.Unknown)
+        {
+            StatusMessage = $"Cannot tell whether {_fileSystem.GetFileName(path)} is the open package; choose another file.";
+            return false;
+        }
+        if (match == FileMatch.Same && !IsReadOnly)
         {
             return await SavePackageAsync();
         }
@@ -999,6 +1004,15 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
                 : "copy.package");
 
         if (string.IsNullOrEmpty(copyPath)) return;
+
+        // A copy cannot replace the open file: the package would save in place behind the resource list's back
+        // (its entries are re-read on save), so the list would show stale entries and later edits could be lost.
+        if (!string.IsNullOrEmpty(PackagePath) &&
+            FileIdentity.Compare(copyPath, PackagePath) != FileMatch.Different)
+        {
+            StatusMessage = "A copy cannot replace the open package; use Save to save it in place.";
+            return;
+        }
 
         try
         {

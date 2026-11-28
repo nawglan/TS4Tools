@@ -211,4 +211,50 @@ public class ScriptResourceTests
 
         parsed.AssemblyData.ToArray().Should().BeEquivalentTo(assemblyData);
     }
+
+    [Fact]
+    public void Parse_SkippedBlock_DoesNotConsumeStoredData()
+    {
+        // Source: legacy ScriptResource.cs lines 69-97: md5data holds only the encrypted (even-entry) blocks;
+        // an odd table entry emits a zero block without reading from md5data.
+        byte[] table = new byte[16];
+        table[0] = 1; // block 0 skipped
+        table[8] = 0; // block 1 encrypted
+        byte[] stored = new byte[512];
+        for (int i = 0; i < stored.Length; i++) stored[i] = (byte)(i * 7 + 3);
+
+        using var ms = new MemoryStream();
+        using (var w = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true))
+        {
+            w.Write((byte)1);          // version (no game version)
+            w.Write(0x2BC4F79Fu);      // unknown2
+            w.Write(new byte[64]);     // md5sum
+            w.Write((ushort)2);        // block count
+            w.Write(table);
+            w.Write(stored);           // only one block stored
+        }
+
+        var resource = new ScriptResource(TestKey, ms.ToArray());
+
+        var clear = resource.AssemblyData.ToArray();
+        clear.Should().HaveCount(1024);
+        clear.AsSpan(0, 512).ToArray().Should().OnlyContain(b => b == 0);
+        clear.AsSpan(512).ToArray().Should().Equal(LegacyDecryptBlock(table, stored));
+    }
+
+    // Port of legacy decrypt() for one encrypted block following skipped ones (seed is unchanged by skipped blocks).
+    private static byte[] LegacyDecryptBlock(byte[] table, byte[] block)
+    {
+        ulong seed = 0;
+        for (int i = 0; i < table.Length; i += 8) seed += BitConverter.ToUInt64(table, i);
+        seed = (ulong)(table.Length - 1) & seed;
+        var buffer = (byte[])block.Clone();
+        for (int j = 0; j < buffer.Length; j++)
+        {
+            byte value = buffer[j];
+            buffer[j] ^= table[seed];
+            seed = (seed + value) % (ulong)table.Length;
+        }
+        return buffer;
+    }
 }

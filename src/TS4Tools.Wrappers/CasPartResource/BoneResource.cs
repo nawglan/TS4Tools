@@ -22,12 +22,17 @@ public sealed class BoneResource : TypedResource
     private const int MatrixSize = 48; // 4 rows * 3 floats * 4 bytes
 
     private byte[] _rawData = [];
+
+    // Data that did not parse is written back verbatim (see Serialize), so an edit would be silently lost: refuse it.
+    private readonly UnparsedDataGuard _unparsed = new();
+
+    private void ThrowIfUnparsed() => _unparsed.ThrowIfEditing(IsValid, _rawData.Length, GetType().Name);
     private readonly List<BoneData> _bones = [];
 
     /// <summary>
     /// Resource version.
     /// </summary>
-    public uint Version { get; set; }
+    public uint Version { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// List of bones with names and inverse bind pose matrices.
@@ -49,58 +54,70 @@ public sealed class BoneResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
-        _rawData = data.ToArray();
-        _bones.Clear();
-        IsValid = false;
-
-        if (data.Length < MinHeaderSize)
-            return;
-
+        _unparsed.Parsing = true;
         try
         {
-            using var ms = new MemoryStream(data.ToArray());
-            using var reader = new BinaryReader(ms, Encoding.BigEndianUnicode);
-
-            // Read version
-            // Source: BoneResource.cs line 46
-            Version = reader.ReadUInt32();
-
-            // Read bone names
-            // Source: BoneResource.cs lines 48-50
-            int nameCount = reader.ReadInt32();
-            if (nameCount < 0 || nameCount > 10000)
-                return;
-
-            var names = new string[nameCount];
-            for (int i = 0; i < nameCount; i++)
-            {
-                names[i] = ReadBigEndianUnicodeString(ms);
-            }
-
-            // Read matrix count and verify it matches name count
-            // Source: BoneResource.cs lines 52-55
-            int matrixCount = reader.ReadInt32();
-            if (matrixCount != nameCount)
-                return; // Mismatched counts
-
-            // Verify we have enough data for all matrices
-            long remainingBytes = ms.Length - ms.Position;
-            if (remainingBytes < matrixCount * MatrixSize)
-                return;
-
-            // Read matrices and create bones
-            // Source: BoneResource.cs lines 57-61
-            for (int i = 0; i < matrixCount; i++)
-            {
-                var matrix = ReadMatrix4x3(reader);
-                _bones.Add(new BoneData(names[i], matrix));
-            }
-
-            IsValid = true;
-        }
-        catch
-        {
+            _rawData = data.ToArray();
+            _bones.Clear();
             IsValid = false;
+
+            if (data.Length < MinHeaderSize)
+                return;
+
+            try
+            {
+                using var ms = new MemoryStream(data.ToArray());
+                using var reader = new BinaryReader(ms, Encoding.BigEndianUnicode);
+
+                // Read version
+                // Source: BoneResource.cs line 46
+                Version = reader.ReadUInt32();
+
+                // Read bone names
+                // Source: BoneResource.cs lines 48-50
+                int nameCount = reader.ReadInt32();
+                if (nameCount < 0 || nameCount > 10000)
+                    return;
+
+                var names = new string[nameCount];
+                for (int i = 0; i < nameCount; i++)
+                {
+                    names[i] = ReadBigEndianUnicodeString(ms);
+                }
+
+                // Read matrix count and verify it matches name count
+                // Source: BoneResource.cs lines 52-55
+                int matrixCount = reader.ReadInt32();
+                if (matrixCount != nameCount)
+                    return; // Mismatched counts
+
+                // Verify we have enough data for all matrices
+                long remainingBytes = ms.Length - ms.Position;
+                if (remainingBytes < matrixCount * MatrixSize)
+                    return;
+
+                // Read matrices and create bones
+                // Source: BoneResource.cs lines 57-61
+                for (int i = 0; i < matrixCount; i++)
+                {
+                    var matrix = ReadMatrix4x3(reader);
+                    _bones.Add(new BoneData(names[i], matrix));
+                }
+
+                IsValid = true;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                IsValid = false;
+            }
+    
+        }
+        finally
+        {
+            _unparsed.Parsing = false;
+            // Also on the early returns above: remember the partly parsed state to detect nested edits later.
+            if (!IsValid && _rawData.Length > 0)
+                _unparsed.Capture(SerializeParsedState);
         }
     }
 
@@ -116,6 +133,9 @@ public sealed class BoneResource : TypedResource
         byte b;
         do
         {
+            // At most five 7-bit groups encode an Int32 (legacy BinaryReader.Read7BitEncodedInt).
+            if (shift > 28)
+                throw new InvalidDataException("Invalid 7-bit encoded string length.");
             int read = s.ReadByte();
             if (read == -1)
                 throw new EndOfStreamException();
@@ -126,6 +146,8 @@ public sealed class BoneResource : TypedResource
 
         if (length == 0)
             return string.Empty;
+        if (length < 0 || length > s.Length - s.Position)
+            throw new EndOfStreamException();
 
         // Read the bytes and decode as BigEndianUnicode (UTF-16BE)
         byte[] bytes = new byte[length];
@@ -152,6 +174,19 @@ public sealed class BoneResource : TypedResource
 
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
+    {
+        // Data that did not parse is kept verbatim rather than replaced by the (partial) parsed state; an edit that
+        // would be lost by that is refused.
+        if (!IsValid && _rawData.Length > 0)
+        {
+            _unparsed.ThrowIfChanged(SerializeParsedState, GetType().Name);
+            return _rawData;
+        }
+
+        return SerializeParsedState();
+    }
+
+    private ReadOnlyMemory<byte> SerializeParsedState()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms, Encoding.BigEndianUnicode);
@@ -224,20 +259,29 @@ public sealed class BoneResource : TypedResource
     /// <summary>
     /// Adds a bone.
     /// </summary>
-    public void AddBone(BoneData bone) => _bones.Add(bone);
+    public void AddBone(BoneData bone)
+    {
+        ThrowIfUnparsed();
+        _bones.Add(bone);
+    }
 
     /// <summary>
     /// Adds a bone with name and identity matrix.
     /// </summary>
     public void AddBone(string name)
     {
+        ThrowIfUnparsed();
         _bones.Add(new BoneData(name, BoneMatrix4x3.Identity));
     }
 
     /// <summary>
     /// Removes all bones.
     /// </summary>
-    public void ClearBones() => _bones.Clear();
+    public void ClearBones()
+    {
+        ThrowIfUnparsed();
+        _bones.Clear();
+    }
 
     /// <inheritdoc/>
     protected override void InitializeDefaults()

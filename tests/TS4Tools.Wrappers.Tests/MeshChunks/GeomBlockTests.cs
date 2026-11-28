@@ -693,4 +693,30 @@ public class GeomBlockTests
     }
 
     #endregion
+
+    /// <summary>
+    /// The vertex count comes from the data. With no vertex formats a vertex reads no bytes, so a huge count used to
+    /// spin creating empty vertices; it must be bounded by the remaining data (legacy GEOM.cs line 152 reads vertices
+    /// with BinaryReader, which would hit the end of the stream instead).
+    /// </summary>
+    [Fact]
+    public void GeomBlock_Parse_HugeVertexCountWithNoFormats_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write("GEOM"u8.ToArray());
+        writer.Write(5u); // version
+        writer.Write(0u); // TGI offset
+        writer.Write(0u); // TGI size
+        writer.Write(0u); // shader: none
+        writer.Write(0u); // merge group
+        writer.Write(0u); // sort order
+        writer.Write(1_000_000); // vertex count
+        writer.Write(0); // vertex format count: none
+        writer.Write(new byte[16]); // a few trailing bytes, far fewer than the count
+
+        var action = () => new GeomBlock(ms.ToArray());
+
+        action.Should().Throw<ResourceFormatException>().WithMessage("*GEOM vertex count 1000000*");
+    }
 }

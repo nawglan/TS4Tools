@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using TS4Tools.UI.Services;
 using TS4Tools.UI.ViewModels;
 using TS4Tools.UI.Views;
@@ -27,8 +28,51 @@ public partial class App : Application
             var window = new MainWindow();
             desktop.MainWindow = window;
             (window.DataContext as MainWindowViewModel)?.ReportWrapperLoadErrors(wrappers.LoadErrors);
+
+            // Last-chance handlers: an exception no command caught (for example one thrown by plugin code) is
+            // reported instead of terminating the app and losing unsaved edits. Legacy s4pe (WinForms) got this
+            // from the default ThreadException dialog, which lets the user continue.
+            Dispatcher.UIThread.UnhandledException += OnUnhandledException;
+            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+            SettingsService.Instance.SaveFailed += OnSettingsSaveFailed;
+            desktop.Exit += OnExit;
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void OnUnhandledException(object? sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        // Running out of memory leaves the process in an unknown state; let it terminate.
+        if (e.Exception is OutOfMemoryException) return;
+        Trace.TraceError("Unhandled exception: {0}", e.Exception);
+        e.Handled = true;
+        ReportError(e.Exception);
+    }
+
+    private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        Trace.TraceError("Unobserved task exception: {0}", e.Exception);
+        e.SetObserved();
+        var error = e.Exception.InnerExceptions.Count == 1 ? e.Exception.InnerExceptions[0] : e.Exception;
+        Dispatcher.UIThread.Post(() => ReportError(error));
+    }
+
+    private void OnSettingsSaveFailed(object? sender, Exception e) =>
+        Dispatcher.UIThread.Post(() => ReportError(new IOException($"Could not save settings: {e.Message}", e)));
+
+    private void ReportError(Exception error)
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow.DataContext: MainWindowViewModel vm })
+            vm.ReportUnhandledError(error);
+    }
+
+    private void OnExit(object? sender, ControlledApplicationLifetimeExitEventArgs e)
+    {
+        Dispatcher.UIThread.UnhandledException -= OnUnhandledException;
+        TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+        SettingsService.Instance.SaveFailed -= OnSettingsSaveFailed;
+        if (sender is IClassicDesktopStyleApplicationLifetime desktop)
+            desktop.Exit -= OnExit;
     }
 }

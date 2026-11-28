@@ -163,10 +163,11 @@ public sealed class TxtcResource : TypedResource
 
             case 0x0D: // String
             {
+                // Source: legacy TxtcResource.cs line 473: new String(r.ReadChars(r.ReadUInt16())), UTF-8 chars
                 int strLen = BinaryPrimitives.ReadUInt16LittleEndian(data);
-                // String is stored as char[] (2 bytes per char in legacy, but we'll handle as ASCII for safety)
-                string str = Encoding.Unicode.GetString(data.Slice(2, strLen * 2));
-                return (new TxtcEntryString(property, unknown, str), 2 + strLen * 2);
+                int strOffset = 2;
+                string str = LegacyChars.ReadUtf8Chars(data, ref strOffset, strLen, "TXTC string entry");
+                return (new TxtcEntryString(property, unknown, str), strOffset);
             }
 
             default:
@@ -284,8 +285,9 @@ public sealed class TxtcResource : TypedResource
 
             case TxtcEntryString e:
                 writer.Write((byte)0x0D);
+                // Source: legacy TxtcResource.cs line 1000: char count, then the chars as UTF-8
                 writer.Write((ushort)e.Value.Length);
-                writer.Write(Encoding.Unicode.GetBytes(e.Value));
+                writer.Write(Encoding.UTF8.GetBytes(e.Value));
                 break;
         }
     }

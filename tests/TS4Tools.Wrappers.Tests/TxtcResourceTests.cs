@@ -233,6 +233,29 @@ public class TxtcResourceTests
     }
 
     [Fact]
+    public void StringEntry_UsesLegacyCharCountAndUtf8Bytes()
+    {
+        // Source: legacy TxtcResource.cs lines 473, 1000: UInt16 char count, then the chars as UTF-8.
+        var original = new TxtcResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        original.Version = 8;
+        original.AddEntryBlock(new TxtcEntryBlock(new List<TxtcEntry>
+        {
+            new TxtcEntryString(4, 0, "abc\u00e9"),
+            new TxtcEntryUInt32(5, 0, 0xDEADBEEF),
+        }));
+
+        var bytes = original.Data.ToArray();
+
+        // property 4, unknown 0, type 0x0D, char count 4, "abc" + U+00E9 as UTF-8 (C3 A9)
+        byte[] expected = [0x04, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x04, 0x00, 0x61, 0x62, 0x63, 0xC3, 0xA9];
+        bytes.AsSpan().IndexOf(expected).Should().BeGreaterThan(0);
+
+        var parsed = new TxtcResource(TestKey, bytes);
+        (parsed.Entries[0].Entries[0] as TxtcEntryString)!.Value.Should().Be("abc\u00e9");
+        (parsed.Entries[0].Entries[1] as TxtcEntryUInt32)!.Value.Should().Be(0xDEADBEEF);
+    }
+
+    [Fact]
     public void TgiBlocks_IGTOrder_Works()
     {
         // TGI blocks in TXTC use IGT order (Instance, Group, Type)

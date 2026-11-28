@@ -112,8 +112,9 @@ public sealed class ObjKeyResource : TypedResource
         _tgiBlocks.Clear();
         if (tgiSize > 0 && tgiPosn < data.Length)
         {
+            // The read loop stops at the end of the data, so never reserve more blocks than the data can hold.
             int tgiBlockCount = (int)(tgiSize / 16);
-            _tgiBlocks.EnsureCapacity(tgiBlockCount);
+            _tgiBlocks.EnsureCapacity((int)Math.Min(tgiBlockCount, (data.Length - tgiPosn) / 16));
 
             int tgiReadOffset = (int)tgiPosn;
             for (int i = 0; i < tgiBlockCount && tgiReadOffset + 16 <= data.Length; i++)
@@ -143,8 +144,8 @@ public sealed class ObjKeyResource : TypedResource
         if (keyLength < 0 || offset + keyLength > data.Length)
             return (null, 0);
 
-        string key = Encoding.ASCII.GetString(data.Slice(offset, keyLength));
-        offset += keyLength;
+        // Legacy ObjKeyResource.cs lines 219, 223, 226: new string(r.ReadChars(r.ReadInt32())) - a char count, UTF-8 chars
+        string key = LegacyChars.ReadUtf8Chars(data, ref offset, keyLength, "ObjKey component key");
 
         if (offset >= data.Length)
             return (null, 0);
@@ -166,8 +167,7 @@ public sealed class ObjKeyResource : TypedResource
                 if (strLength < 0 || offset + strLength > data.Length)
                     return (null, 0);
 
-                string strValue = Encoding.ASCII.GetString(data.Slice(offset, strLength));
-                offset += strLength;
+                string strValue = LegacyChars.ReadUtf8Chars(data, ref offset, strLength, "ObjKey component string");
 
                 result = controlCode == 0x00
                     ? new ComponentDataString(key, strValue)
@@ -263,25 +263,23 @@ public sealed class ObjKeyResource : TypedResource
     private static void WriteComponentData(BinaryWriter writer, ComponentData compData)
     {
         // Write key
-        byte[] keyBytes = Encoding.ASCII.GetBytes(compData.Key);
-        writer.Write(keyBytes.Length);
-        writer.Write(keyBytes);
+        // Legacy ObjKeyResource.cs lines 239-240 and 306-307: char count, then the chars as UTF-8
+        writer.Write(compData.Key.Length);
+        writer.Write(Encoding.UTF8.GetBytes(compData.Key));
 
         // Write control code and data
         switch (compData)
         {
             case ComponentDataString str:
                 writer.Write((byte)0x00);
-                byte[] strBytes = Encoding.ASCII.GetBytes(str.Data);
-                writer.Write(strBytes.Length);
-                writer.Write(strBytes);
+                writer.Write(str.Data.Length);
+                writer.Write(Encoding.UTF8.GetBytes(str.Data));
                 break;
 
             case ComponentDataSteeringInstance steering:
                 writer.Write((byte)0x03);
-                byte[] steerBytes = Encoding.ASCII.GetBytes(steering.Data);
-                writer.Write(steerBytes.Length);
-                writer.Write(steerBytes);
+                writer.Write(steering.Data.Length);
+                writer.Write(Encoding.UTF8.GetBytes(steering.Data));
                 break;
 
             case ComponentDataAssetResourceName asset:

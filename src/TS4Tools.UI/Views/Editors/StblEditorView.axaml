@@ -27,13 +27,16 @@
 
         <!-- Add New Entry -->
         <Border DockPanel.Dock="Bottom" Padding="8" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-            <Grid ColumnDefinitions="Auto,150,*,Auto,Auto" RowDefinitions="Auto">
+            <Grid ColumnDefinitions="Auto,150,*,Auto,Auto" RowDefinitions="Auto,Auto">
                 <TextBlock Grid.Column="0" Text="Key:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBox Grid.Column="1" Text="{Binding NewKeyText}" PlaceholderText="0x... or text" />
                 <TextBox Grid.Column="2" Text="{Binding NewValueText}" PlaceholderText="String value..." Margin="8,0" />
                 <Button Grid.Column="3" Content="Add" Command="{Binding AddEntryCommand}" Margin="0,0,8,0" />
                 <Button Grid.Column="4" Content="Delete" Command="{Binding DeleteEntryCommand}"
                         IsEnabled="{Binding SelectedEntry, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="5" Margin="0,4,0,0" Foreground="OrangeRed"
+                           Text="{Binding InputError}"
+                           IsVisible="{Binding InputError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
             </Grid>
         </Border>
 

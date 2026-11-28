@@ -130,40 +130,56 @@ public static class LegacyWrapperBridge
 
         foreach (var type in types.OrderBy(t => t.FullName, StringComparer.Ordinal))
         {
-            if (type.IsAbstract || !type.IsSubclassOf(typeof(AResourceHandler))) continue;
-            var ctor = type.GetConstructor(Type.EmptyTypes);
-            if (ctor == null) continue;
-
-            AResourceHandler handler;
+            // Plugin code can throw anything; one bad handler must not stop the others or the host.
+            // Source: legacy_references/Sims4Tools/s4pi/WrapperDealer/WrapperDealer.cs line 112 (swallows every failure)
+            var found = new List<(string, uint, Type)>();
             try
             {
-                handler = (AResourceHandler)ctor.Invoke(null);
+                CollectHandlerPairs(type, source, found, errors);
+                pairs.AddRange(found);
             }
-            catch (TargetInvocationException ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                errors.Add(new WrapperLoadError(source, type.FullName,
-                    $"Could not create legacy handler: {(ex.InnerException ?? ex).Message}", ex, false));
-                continue;
+                errors.Add(new WrapperLoadError(source, type.FullName, $"Could not load legacy handler: {ex.Message}", ex, false));
             }
+        }
+    }
 
-            foreach (var (wrapper, typeStrings) in handler)
+    private static void CollectHandlerPairs(Type type, string source, List<(string, uint, Type)> pairs, List<WrapperLoadError> errors)
+    {
+        if (type.IsAbstract || !type.IsSubclassOf(typeof(AResourceHandler))) return;
+        var ctor = type.GetConstructor(Type.EmptyTypes);
+        if (ctor == null) return;
+
+        AResourceHandler handler;
+        try
+        {
+            handler = (AResourceHandler)ctor.Invoke(null);
+        }
+        catch (TargetInvocationException ex)
+        {
+            errors.Add(new WrapperLoadError(source, type.FullName,
+                $"Could not create legacy handler: {(ex.InnerException ?? ex).Message}", ex, false));
+            return;
+        }
+
+        foreach (var (wrapper, typeStrings) in handler)
+        {
+            foreach (var typeString in typeStrings)
             {
-                foreach (var typeString in typeStrings)
+                if (typeString.Trim() == "*")
                 {
-                    if (typeString.Trim() == "*")
-                    {
-                        errors.Add(new WrapperLoadError(source, wrapper.FullName,
-                            "Legacy default (\"*\") wrapper not used: the TS4Tools default wrapper is kept.", null, false));
-                    }
-                    else if (TryParseType(typeString, out var resourceType))
-                    {
-                        pairs.Add((source, resourceType, wrapper));
-                    }
-                    else
-                    {
-                        errors.Add(new WrapperLoadError(source, wrapper.FullName,
-                            $"Invalid resource type \"{typeString}\" in {type.FullName}.", null, false));
-                    }
+                    errors.Add(new WrapperLoadError(source, wrapper.FullName,
+                        "Legacy default (\"*\") wrapper not used: the TS4Tools default wrapper is kept.", null, false));
+                }
+                else if (TryParseType(typeString, out var resourceType))
+                {
+                    pairs.Add((source, resourceType, wrapper));
+                }
+                else
+                {
+                    errors.Add(new WrapperLoadError(source, wrapper.FullName,
+                        $"Invalid resource type \"{typeString}\" in {type.FullName}.", null, false));
                 }
             }
         }

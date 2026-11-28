@@ -376,4 +376,57 @@ public class RigResourceTests
         resource.IkChains[0].RootIndex.Should().Be(7);
         resource.Data.ToArray().Should().Equal(data);
     }
+
+    /// <summary>
+    /// Legacy RigResource.cs lines 94, 142-143, 213 and 230-231 read/write the bone and skeleton names as
+    /// <c>new String(r.ReadChars(r.ReadInt32()))</c> / <c>w.Write(Name.Length); w.Write(Name.ToCharArray())</c>:
+    /// an Int32 char count followed by the chars as UTF-8, not a byte count.
+    /// </summary>
+    [Fact]
+    public void RigResource_NonAsciiNames_UseCharCountPrefix()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(4u); // Major
+        writer.Write(2u); // Minor
+        writer.Write(1); // bone count
+        foreach (float f in new[] { 0f, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 1f, 1f })
+            writer.Write(f); // Position, Orientation, Scaling
+        writer.Write(1); // bone name: 1 char ...
+        writer.Write(new byte[] { 0xC3, 0xA9 }); // ... "é" as UTF-8
+        writer.Write(-1); // OpposingBoneIndex
+        writer.Write(-1); // ParentBoneIndex
+        writer.Write(0x12345678u); // Hash
+        writer.Write(0u); // Unknown2
+        writer.Write(1); // skeleton name: 1 char ...
+        writer.Write(new byte[] { 0xC3, 0xA9 }); // ... "é"
+        writer.Write(0); // IK chain count
+        var data = ms.ToArray();
+
+        var resource = new RigResource(new ResourceKey(RigResource.TypeId, 0, 0), data);
+
+        resource.Bones.Should().ContainSingle().Which.Name.Should().Be("é");
+        resource.Bones[0].Hash.Should().Be(0x12345678u);
+        resource.SkeletonName.Should().Be("é");
+        resource.Data.ToArray().Should().Equal(data);
+    }
+
+    [Fact]
+    public void RigResource_NewNonAsciiNames_SerializeCharCount()
+    {
+        var resource = new RigResource(new ResourceKey(RigResource.TypeId, 0, 0), ReadOnlyMemory<byte>.Empty);
+        resource.SkeletonName = "é";
+        resource.AddBone(new RigBone { Name = "é", Hash = 1 });
+
+        byte[] serialized = resource.Data.ToArray();
+
+        byte[] charCountThenUtf8 = [0x01, 0x00, 0x00, 0x00, 0xC3, 0xA9];
+        int first = serialized.AsSpan().IndexOf(charCountThenUtf8);
+        first.Should().BeGreaterThan(0, "the bone name is written as char count 1 + C3 A9");
+        serialized.AsSpan(first + 1).IndexOf(charCountThenUtf8).Should().BeGreaterThan(0,
+            "the skeleton name is written the same way");
+        var parsed = new RigResource(new ResourceKey(RigResource.TypeId, 0, 0), serialized);
+        parsed.Bones[0].Name.Should().Be("é");
+        parsed.SkeletonName.Should().Be("é");
+    }
 }

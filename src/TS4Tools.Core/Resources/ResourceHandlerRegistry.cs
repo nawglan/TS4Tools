@@ -488,73 +488,89 @@ public sealed class ResourceHandlerRegistry : IResourceHandlerRegistry
         // Deterministic order regardless of metadata order
         foreach (var type in types.OrderBy(t => t.FullName, StringComparer.Ordinal))
         {
-            if (type.IsAbstract || type.IsInterface || type.ContainsGenericParameters || !typeof(IResourceFactory).IsAssignableFrom(type))
-                continue;
-
-            var attributes = type.GetCustomAttributes<ResourceHandlerAttribute>(inherit: false).ToList();
-            bool isProvider = typeof(IResourceTypeProvider).IsAssignableFrom(type);
-            if (attributes.Count == 0 && !isProvider)
-                continue;
-
-            lock (_sync)
-            {
-                if (!_discoveredTypes.Add(type))
-                    continue;
-            }
-
-            IResourceFactory? factory;
+            // Plugin code (attributes, constructors, type lists) can throw anything; one bad type must not stop the
+            // rest from loading or the host from starting.
+            // Source: legacy_references/Sims4Tools/s4pi/WrapperDealer/WrapperDealer.cs line 112 (swallows every failure)
             try
             {
-                factory = (IResourceFactory?)Activator.CreateInstance(type);
+                DiscoverHandlerType(type, source, errors);
             }
-            catch (Exception ex) when (ex is TargetInvocationException or MissingMethodException or MemberAccessException or TypeLoadException or NotSupportedException)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                errors?.Add(new WrapperLoadError(source, type.FullName, $"Could not load handler: {ex.Message}", ex, false));
+            }
+        }
+    }
+
+    private void DiscoverHandlerType(Type type, string source, List<WrapperLoadError>? errors)
+    {
+        if (type.IsAbstract || type.IsInterface || type.ContainsGenericParameters || !typeof(IResourceFactory).IsAssignableFrom(type))
+            return;
+
+        var attributes = type.GetCustomAttributes<ResourceHandlerAttribute>(inherit: false).ToList();
+        bool isProvider = typeof(IResourceTypeProvider).IsAssignableFrom(type);
+        if (attributes.Count == 0 && !isProvider)
+            return;
+
+        lock (_sync)
+        {
+            if (!_discoveredTypes.Add(type))
+                return;
+        }
+
+        IResourceFactory? factory;
+        try
+        {
+            factory = (IResourceFactory?)Activator.CreateInstance(type);
+        }
+        catch (Exception ex) when (ex is TargetInvocationException or MissingMethodException or MemberAccessException or TypeLoadException or NotSupportedException)
+        {
+            errors?.Add(new WrapperLoadError(source, type.FullName,
+                $"Could not create factory: {(ex.InnerException ?? ex).Message}", ex, false));
+            return;
+        }
+
+        if (factory is null)
+            return;
+
+        IReadOnlyCollection<uint> listedTypes = [];
+        int listPriority = 0;
+        if (factory is IResourceTypeProvider provider)
+        {
+            try
+            {
+                // Materialised here so a lazy list that throws is reported, not thrown mid-registration.
+                listedTypes = [.. provider.ResourceTypes];
+                listPriority = provider.ResourceTypePriority;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 errors?.Add(new WrapperLoadError(source, type.FullName,
-                    $"Could not create factory: {(ex.InnerException ?? ex).Message}", ex, false));
-                continue;
+                    $"Could not read resource type list: {ex.Message}", ex, false));
+            }
+        }
+
+        lock (_sync)
+        {
+            foreach (var attr in attributes)
+            {
+                if (attr.ResourceType == 0)
+                {
+                    if (attr.ReplacesDefault)
+                        _defaultFactory = factory;
+                    else if (type != _defaultFactory.GetType())
+                        _ignoredDefaultHandlers.Add(type);
+                    continue;
+                }
+                AddClaim(new Claim(attr.ResourceType, factory, ClaimSource.Attribute, attr.Priority, _sequence++));
             }
 
-            if (factory is null)
-                continue;
-
-            IReadOnlyCollection<uint> listedTypes = [];
-            int listPriority = 0;
-            if (factory is IResourceTypeProvider provider)
+            foreach (var resourceType in listedTypes)
             {
-                try
-                {
-                    listedTypes = provider.ResourceTypes;
-                    listPriority = provider.ResourceTypePriority;
-                }
-                catch (Exception ex) when (ex is InvalidOperationException or IOException or FormatException)
-                {
-                    errors?.Add(new WrapperLoadError(source, type.FullName,
-                        $"Could not read resource type list: {ex.Message}", ex, false));
-                }
-            }
-
-            lock (_sync)
-            {
-                foreach (var attr in attributes)
-                {
-                    if (attr.ResourceType == 0)
-                    {
-                        if (attr.ReplacesDefault)
-                            _defaultFactory = factory;
-                        else if (type != _defaultFactory.GetType())
-                            _ignoredDefaultHandlers.Add(type);
-                        continue;
-                    }
-                    AddClaim(new Claim(attr.ResourceType, factory, ClaimSource.Attribute, attr.Priority, _sequence++));
-                }
-
-                foreach (var resourceType in listedTypes)
-                {
-                    // An attribute on the same factory for the same type already covers it.
-                    if (_claims.TryGetValue(resourceType, out var existing) && existing.Exists(c => ReferenceEquals(c.Factory, factory)))
-                        continue;
-                    AddClaim(new Claim(resourceType, factory, ClaimSource.TypeList, listPriority, _sequence++));
-                }
+                // An attribute on the same factory for the same type already covers it.
+                if (_claims.TryGetValue(resourceType, out var existing) && existing.Exists(c => ReferenceEquals(c.Factory, factory)))
+                    continue;
+                AddClaim(new Claim(resourceType, factory, ClaimSource.TypeList, listPriority, _sequence++));
             }
         }
     }

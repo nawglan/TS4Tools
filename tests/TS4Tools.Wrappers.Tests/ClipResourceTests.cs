@@ -448,4 +448,68 @@ public class ClipResourceTests
         clip.ClipEvents[2].Should().BeOfType<ClipEventUnknown>();
         clip.Data.ToArray().Should().Equal(data);
     }
+
+    // Data that did not parse is written back verbatim (Serialize returns the raw bytes), so an edit to such a
+    // resource would be silently lost on save. Mutators must refuse instead.
+
+    [Theory]
+    [InlineData(10)] // shorter than the fixed header
+    [InlineData(40)] // header parsed, rest truncated
+    public void UnparsedClip_RejectsEdits(int length)
+    {
+        byte[] data = CreateMinimalClipV14()[..length];
+        var key = new ResourceKey(ClipResource.TypeId, 0, 0);
+        var clip = new ClipResource(key, data);
+        clip.IsValid.Should().BeFalse();
+
+        ((Action)(() => clip.AddEvent(new ClipEventScript()))).Should().Throw<InvalidOperationException>()
+            .WithMessage("*could not be parsed*");
+        ((Action)(() => clip.ClearEvents())).Should().Throw<InvalidOperationException>();
+        ((Action)(() => clip.AddExplicitNamespace("ns"))).Should().Throw<InvalidOperationException>();
+        ((Action)(() => clip.ClipName = "renamed")).Should().Throw<InvalidOperationException>();
+        ((Action)(() => clip.Version = 15)).Should().Throw<InvalidOperationException>();
+        ((Action)(() => clip.Duration = 2f)).Should().Throw<InvalidOperationException>();
+        clip.Data.ToArray().Should().Equal(data, "the unparsed bytes are kept unchanged");
+    }
+
+    [Fact]
+    public void ValidAndEmptyClips_AcceptEdits()
+    {
+        var key = new ResourceKey(ClipResource.TypeId, 0, 0);
+        var clip = new ClipResource(key, CreateMinimalClipV14());
+        clip.IsValid.Should().BeTrue();
+
+        clip.ClipName = "renamed";
+        clip.AddExplicitNamespace("ns");
+
+        var reparsed = new ClipResource(key, clip.Data);
+        reparsed.IsValid.Should().BeTrue();
+        reparsed.ClipName.Should().Be("renamed");
+        reparsed.ExplicitNamespaces.Should().Contain("ns");
+
+        var empty = new ClipResource(key, ReadOnlyMemory<byte>.Empty);
+        empty.ClipName = "new";
+        empty.AddEvent(new ClipEventScript());
+        empty.ClipName.Should().Be("new");
+    }
+
+    [Fact]
+    public void UnparsedClip_NestedEdit_IsRefusedOnSave()
+    {
+        // A clip that parses up to its codec data, whose length runs past the end: the events are parsed but the
+        // clip is kept as raw bytes. Editing an event cannot be intercepted by a setter on the clip, so the save
+        // must refuse it instead of silently writing the original bytes.
+        var data = CreateClipWithEvents();
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(data.Length - 4), 1000);
+        var clip = new ClipResource(new ResourceKey(ClipResource.TypeId, 0, 0), data);
+        clip.IsValid.Should().BeFalse();
+        clip.ClipEvents.Should().NotBeEmpty();
+
+        clip.Data.ToArray().Should().Equal(data, "an unedited unparsed clip is written back unchanged");
+
+        clip.ClipEvents[0].Timecode = 9f;
+
+        var save = () => clip.Data;
+        save.Should().Throw<InvalidOperationException>().WithMessage("*cannot be edited*");
+    }
 }

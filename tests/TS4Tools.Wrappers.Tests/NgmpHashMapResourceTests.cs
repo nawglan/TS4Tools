@@ -180,4 +180,17 @@ public class NgmpHashMapResourceTests
         pair1.Should().Be(pair2);
         pair1.Should().NotBe(pair3);
     }
+
+    [Fact]
+    public void Parse_CountThatOverflowsSizeCheck_Throws()
+    {
+        // 8 + 0x10000000 * 16 overflows int to 8, which used to pass the length check.
+        var data = new byte[8];
+        BinaryPrimitives.WriteUInt32LittleEndian(data, NgmpHashMapResource.CurrentVersion);
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(4), 0x10000000);
+
+        var act = () => new NgmpHashMapResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*too short*");
+    }
 }

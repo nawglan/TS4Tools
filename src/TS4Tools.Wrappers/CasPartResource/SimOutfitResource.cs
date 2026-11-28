@@ -333,7 +333,7 @@ public sealed class SimOutfitResource : TypedResource
         BinaryPrimitives.WriteUInt64LittleEndian(buffer.AsSpan(offset), SkinToneReference); offset += 8;
 
         // Unknown9
-        buffer[offset++] = (byte)Unknown9.Count;
+        buffer[offset++] = CountByte(Unknown9.Count, "Unknown9");
         foreach (var b in Unknown9)
             buffer[offset++] = b;
 
@@ -342,14 +342,13 @@ public sealed class SimOutfitResource : TypedResource
         WriteSliderReferenceList(buffer.AsSpan(), ref offset, SliderReferences2);
 
         // Unknown10
-        Unknown10.CopyTo(buffer.AsSpan(offset));
-        offset += 24;
+        WriteFixed(buffer.AsSpan(), ref offset, Unknown10, 24, "Unknown10");
 
         // Unknown11
         WriteUnknownBlockList(buffer.AsSpan(), ref offset, Unknown11);
 
         // UnknownByteList
-        buffer[offset++] = (byte)UnknownByteList.Count;
+        buffer[offset++] = CountByte(UnknownByteList.Count, "UnknownByteList");
         foreach (var b in UnknownByteList)
             buffer[offset++] = b;
 
@@ -358,19 +357,17 @@ public sealed class SimOutfitResource : TypedResource
         WriteSliderReferenceList(buffer.AsSpan(), ref offset, SliderReferences4);
 
         // Unknown12
-        Unknown12.CopyTo(buffer.AsSpan(offset));
-        offset += 16;
+        WriteFixed(buffer.AsSpan(), ref offset, Unknown12, 16, "Unknown12");
 
         // SliderReferences5
         WriteSliderReferenceList(buffer.AsSpan(), ref offset, SliderReferences5);
 
         // Unknown13
-        Unknown13.CopyTo(buffer.AsSpan(offset));
-        offset += 9;
+        WriteFixed(buffer.AsSpan(), ref offset, Unknown13, 9, "Unknown13");
 
         // CaspReference and DataReferenceList
         BinaryPrimitives.WriteUInt64LittleEndian(buffer.AsSpan(offset), CaspReference); offset += 8;
-        buffer[offset++] = (byte)DataReferenceList.Count;
+        buffer[offset++] = CountByte(DataReferenceList.Count, "DataReferenceList");
         foreach (var dataRef in DataReferenceList)
         {
             BinaryPrimitives.WriteUInt64LittleEndian(buffer.AsSpan(offset), dataRef);
@@ -382,7 +379,7 @@ public sealed class SimOutfitResource : TypedResource
 
         // Write TGI list at end (IGT order: Instance, Group, Type)
         // Source: SimOutfitResource.cs lines 168-174
-        buffer[offset++] = (byte)TgiList.Count;
+        buffer[offset++] = CountByte(TgiList.Count, "TgiList");
         foreach (var tgi in TgiList)
         {
             BinaryPrimitives.WriteUInt64LittleEndian(buffer.AsSpan(offset), tgi.Instance);
@@ -396,9 +393,28 @@ public sealed class SimOutfitResource : TypedResource
         return buffer;
     }
 
+    /// <summary>
+    /// Returns a list count for a one-byte count field. Writing a truncated count would make the output misparse,
+    /// so larger lists are refused (as CasPartResource does for its byte-counted lists).
+    /// </summary>
+    private static byte CountByte(int count, string what) => count <= byte.MaxValue
+        ? (byte)count
+        : throw new InvalidOperationException($"{what} has {count} entries; the format allows at most 255");
+
+    /// <summary>
+    /// Writes a fixed-length field. A value of the wrong length would shift or overwrite the following fields.
+    /// </summary>
+    private static void WriteFixed(Span<byte> buffer, ref int offset, byte[] value, int length, string what)
+    {
+        if (value.Length != length)
+            throw new InvalidOperationException($"{what} must be exactly {length} bytes, got {value.Length}");
+        value.CopyTo(buffer[offset..]);
+        offset += length;
+    }
+
     private static void WriteSliderReferenceList(Span<byte> buffer, ref int offset, List<SliderReference> list)
     {
-        buffer[offset++] = (byte)list.Count;
+        buffer[offset++] = CountByte(list.Count, "slider reference list");
         foreach (var slider in list)
         {
             buffer[offset++] = slider.Index;
@@ -534,6 +550,8 @@ public sealed class OutfitUnknownReference
     /// </summary>
     public void WriteTo(Span<byte> buffer, ref int offset)
     {
+        if (UnknownBlob.Length != 17)
+            throw new InvalidOperationException($"UnknownBlob must be exactly 17 bytes, got {UnknownBlob.Length}");
         UnknownBlob.CopyTo(buffer[offset..]);
         offset += 17;
 

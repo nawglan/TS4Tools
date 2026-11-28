@@ -74,11 +74,12 @@ public sealed class ComplateResource : TypedResource
         if (charCount < 0)
             throw new ResourceFormatException($"Invalid Complate character count: {charCount}");
 
-        // Validate we have enough data for the string and unknown2
-        int bytesForString = charCount * 2;
-        int requiredLength = 8 + bytesForString + 4;
+        // Validate we have enough data for the string and unknown2 (in long arithmetic: a huge count must not
+        // overflow past the check)
+        long requiredLength = 8 + (charCount * 2L) + 4;
         if (data.Length < requiredLength)
             throw new ResourceFormatException($"Complate data too short. Expected {requiredLength} bytes, got {data.Length}.");
+        int bytesForString = charCount * 2;
 
         // Read the UTF-16 LE string
         if (charCount > 0)

@@ -99,6 +99,23 @@ public sealed class SampleResourceHandler : AResourceHandler
 }
 
 /// <summary>
+/// A faulty legacy plugin handler: when <see cref="Enabled"/> is set on the creating thread, it lists a wrapper
+/// with a null type-string list, so enumerating it throws. Otherwise it lists nothing, so other tests that scan this
+/// assembly are unaffected.
+/// </summary>
+public sealed class NullTypeListHandler : AResourceHandler
+{
+    [ThreadStatic]
+    internal static bool Enabled;
+
+    public NullTypeListHandler()
+    {
+        if (Enabled)
+            Add(typeof(SampleResource), null!);
+    }
+}
+
+/// <summary>
 /// A TS4Tools-native factory, for testing the native bridge.
 /// </summary>
 public sealed class ReversingFactory : TS4Tools.IResourceFactory

@@ -171,7 +171,7 @@ public sealed class ClipCodecData
                 codec.ResetStructure();
             }
         }
-        catch
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             codec.IsValid = false;
         }

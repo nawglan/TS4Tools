@@ -52,11 +52,11 @@ public sealed class NgmpHashMapResource : TypedResource
         int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
 
+        // Validate we have enough data for all entries (16 bytes each: 2x ulong), in long arithmetic so a
+        // huge count cannot overflow past the check.
         if (count < 0)
             throw new ResourceFormatException($"Invalid NGMP entry count: {count}");
-
-        // Validate we have enough data for all entries (16 bytes each: 2x ulong)
-        int requiredLength = 8 + (count * 16);
+        long requiredLength = 8 + (count * 16L);
         if (data.Length < requiredLength)
             throw new ResourceFormatException($"NGMP data too short. Expected {requiredLength} bytes, got {data.Length}.");
 

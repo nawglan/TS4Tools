@@ -243,7 +243,8 @@ internal static partial class ScanEngine
         {
             package = await DbpfPackage.OpenAsync(path, readWrite: false, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is PackageFormatException or IOException or UnauthorizedAccessException)
+        // One unreadable package is reported and the scan goes on, whatever it throws.
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
             return $"{ex.GetType().Name}: {ex.Message}";
         }

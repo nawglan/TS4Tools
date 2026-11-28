@@ -67,11 +67,9 @@ public sealed class RigBone : IEquatable<RigBone>
         if (nameLength < 0 || nameLength > 1024)
             throw new InvalidDataException($"Invalid bone name length: {nameLength}");
 
+        // Legacy RigResource.cs line 213: new String(r.ReadChars(r.ReadInt32())) - a char count, UTF-8 chars
         if (nameLength > 0)
-        {
-            bone.Name = Encoding.UTF8.GetString(data.Slice(position, nameLength));
-            position += nameLength;
-        }
+            bone.Name = LegacyChars.ReadUtf8Chars(data, ref position, nameLength, "RIG bone name");
 
         bone.OpposingBoneIndex = BinaryPrimitives.ReadInt32LittleEndian(data[position..]);
         position += 4;
@@ -101,8 +99,9 @@ public sealed class RigBone : IEquatable<RigBone>
         Scaling.Write(buffer, ref position);
 
         // Write length-prefixed string
+        // Legacy RigResource.cs lines 230-231: char count, then the chars as UTF-8
         byte[] nameBytes = Encoding.UTF8.GetBytes(Name ?? "");
-        BinaryPrimitives.WriteInt32LittleEndian(buffer[position..], nameBytes.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(buffer[position..], (Name ?? "").Length);
         position += 4;
 
         if (nameBytes.Length > 0)

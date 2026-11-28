@@ -32,10 +32,27 @@ public class ResourceIndexEntry : AResourceIndexEntry
     {
         this.core = core;
         this.indexType = indexType;
+        DataSource = core;
     }
 
-    /// <summary>The TS4Tools.Core entry this view wraps.</summary>
+    private ResourceIndexEntry(DetachedEntry copy, CoreEntry dataSource, uint indexType)
+    {
+        core = copy;
+        this.indexType = indexType;
+        DataSource = dataSource;
+    }
+
+    /// <summary>The TS4Tools.Core entry this view wraps (a private copy for an entry made by <see cref="Clone"/>).</summary>
     internal CoreEntry Core => core;
+
+    /// <summary>True for an entry made by <see cref="Clone"/>: a copy that is not part of any package index.</summary>
+    internal bool IsDetached => core is DetachedEntry;
+
+    /// <summary>
+    /// The package entry whose data this entry reads: the wrapped entry, or for a clone the entry it was copied from
+    /// (legacy clones keep the chunk offset, so reading through them still reads the original data).
+    /// </summary>
+    internal CoreEntry DataSource { get; } = null!;
 
     /// <summary>
     /// True for an entry added with a null stream (legacy <c>AddResource(rk, null, ...)</c>) whose data has not been
@@ -142,7 +159,7 @@ public class ResourceIndexEntry : AResourceIndexEntry
     [MaximumVersion(recommendedApiVersion)]
     public override ushort Unknown2
     {
-        get => Unknown2Property?.GetValue(core) is ushort u ? u : (ushort)1;
+        get => core is DetachedEntry d ? d.Unknown2 : Unknown2Property?.GetValue(core) is ushort u ? u : (ushort)1;
         set => throw new NotSupportedException("Unknown2 is preserved by the package.");
     }
 
@@ -189,14 +206,33 @@ public class ResourceIndexEntry : AResourceIndexEntry
     }
 
     /// <summary>
-    /// Returns a new view of the same TS4Tools index entry.
+    /// Returns an independent copy of this index entry.
     /// </summary>
     /// <param name="handler">Ignored (index entries report changes through <see cref="AResourceIndexEntry.ResourceIndexEntryChanged"/>).</param>
-    /// <returns>A new <see cref="ResourceIndexEntry"/> over the same entry.</returns>
-    /// <remarks>Legacy copies its private byte buffer; here the TS4Tools entry is the single source of truth.</remarks>
+    /// <returns>A new <see cref="ResourceIndexEntry"/> holding a copy of the entry's values.</returns>
+    /// <remarks>
+    /// Source: ResourceIndexEntry.cs lines 153, 198 (legacy copies its private 32-byte buffer). Changing the copy's
+    /// key, compression or deleted flag does not change the package; the copy is not in the package index, so
+    /// <see cref="Package.ReplaceResource"/> and <see cref="Package.DeleteResource"/> reject it, while
+    /// <see cref="Package.GetResource"/> still reads the original entry's data.
+    /// </remarks>
     [MinimumVersion(1)]
     [MaximumVersion(recommendedApiVersion)]
-    public override AHandlerElement Clone(EventHandler? handler) => new ResourceIndexEntry(core, indexType) { HasNoData = HasNoData };
+    public override AHandlerElement Clone(EventHandler? handler) =>
+        new ResourceIndexEntry(new DetachedEntry(core, Unknown2), DataSource, indexType) { HasNoData = HasNoData };
+
+    /// <summary>A snapshot of an index entry's values that belongs to no package.</summary>
+    private sealed class DetachedEntry(CoreEntry source, ushort unknown2) : MutableCoreEntry
+    {
+        public TS4Tools.ResourceKey Key { get; set; } = source.Key;
+        public uint ChunkOffset { get; } = source.ChunkOffset;
+        public uint FileSize { get; } = source.FileSize;
+        public uint MemorySize { get; } = source.MemorySize;
+        public ushort CompressionType { get; set; } = source.CompressionType;
+        public bool IsCompressed { get; } = source.IsCompressed;
+        public bool IsDeleted { get; set; } = source.IsDeleted;
+        public ushort Unknown2 { get; } = unknown2;
+    }
     #endregion
 
     #region IEquatable<IResourceIndexEntry>

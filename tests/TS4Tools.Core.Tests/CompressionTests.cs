@@ -174,4 +174,26 @@ public class CompressionTests
         Compressor.ZlibCompressionType.Should().Be(0x5A42); // "ZB"
         Compressor.NoCompression.Should().Be(0x0000);
     }
+
+    [Fact]
+    public void Decompress_CorruptZlib_ThrowsPackageFormatException()
+    {
+        // ZLIB header followed by a deflate block with the reserved block type (invalid).
+        byte[] data = [0x78, 0x9C, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+
+        var act = () => Decompressor.Decompress(data, 64);
+
+        act.Should().Throw<PackageFormatException>().WithMessage("*ZLIB*");
+    }
+
+    [Fact]
+    public void Decompress_RefPackBackReferenceBeforeStart_ThrowsPackageFormatException()
+    {
+        // Type 0x10, 0xFB marker, 3-byte size 4, then a 2-byte command copying 3 bytes from offset 1 at position 0.
+        byte[] data = [0x10, 0xFB, 0x00, 0x00, 0x04, 0x00, 0x00];
+
+        var act = () => Decompressor.Decompress(data, 4);
+
+        act.Should().Throw<PackageFormatException>().WithMessage("*back-reference*");
+    }
 }

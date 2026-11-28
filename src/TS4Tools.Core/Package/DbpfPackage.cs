@@ -41,6 +41,16 @@ public sealed class DbpfPackage : IMutablePackage
     private uint _indexType;
     private bool _disposed;
 
+    // Set when an in-place save failed after it started overwriting the backing file: the file then no longer
+    // matches the in-memory index, so reading or saving from it would produce garbage. Holds the recovery copy.
+    private string? _damagedRecoveryPath;
+
+    /// <summary>
+    /// Test seam: invoked by <see cref="SaveAsync"/> just before it starts overwriting the backing file, so tests can
+    /// simulate a failure there (an <see cref="IOException"/> thrown here is handled like a failed overwrite).
+    /// </summary>
+    internal Action? BeforeOverwriteForTesting { get; set; }
+
     // Header data
     private byte[] _header = new byte[PackageLimits.HeaderSize];
 
@@ -591,6 +601,8 @@ public sealed class DbpfPackage : IMutablePackage
     /// <remarks>Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 649-673</remarks>
     internal async ValueTask<ReadOnlyMemory<byte>> ReadResourceDataAsync(ResourceIndexEntry rie, CancellationToken cancellationToken)
     {
+        ThrowIfBackingDamaged();
+
         // Check for invalid offset (new resource not yet written)
         if (rie.ChunkOffset == 0xFFFFFFFF)
             return ReadOnlyMemory<byte>.Empty;
@@ -803,17 +815,21 @@ public sealed class DbpfPackage : IMutablePackage
     }
 
     /// <summary>
-    /// Saves the package to its original file using atomic temp file pattern.
+    /// Saves the package to its original file: the new image is written to a temporary file next to it, then
+    /// copied over the original.
     /// </summary>
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 54-88
     ///
     /// Safety measures:
-    /// - Save to temp file first (line 64, 67)
+    /// - Save to temp file first (line 64, 67). The temp file sits next to the package (same volume, not a small
+    ///   tmpfs) so it can serve as a recovery copy.
     /// - Lock header bytes on original stream (line 69)
-    /// - Copy temp contents to original (lines 71-74)
+    /// - Copy temp contents to original (lines 71-74). Once the original starts being overwritten the copy is not
+    ///   cancellable: cancelling halfway would leave a half-written package.
     /// - Truncate stream to new length (line 75)
-    /// - Delete temp file and unlock (line 79)
+    /// - Delete temp file and unlock (line 79). If overwriting the original fails, the temp file is kept and its
+    ///   path is reported in the thrown <see cref="IOException"/>.
     /// </remarks>
     public async ValueTask SaveAsync(CancellationToken cancellationToken = default)
     {
@@ -828,19 +844,35 @@ public sealed class DbpfPackage : IMutablePackage
         if (!_stream.CanWrite)
             throw new InvalidOperationException("Package is read-only.");
 
-        // Use atomic save pattern: write to temp file first, then copy back
+        ThrowIfBackingDamaged();
+
+        // Write to a temp file first, then copy back
         // Source: s4pi/Package/Package.cs lines 64-79
-        string tmpFile = Path.GetTempFileName();
+        string fullPath = Path.GetFullPath(FilePath);
+        string tmpFile = fullPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
         FileStream? fs = _stream as FileStream;
         bool locked = false;
         bool streamLocked = false;
+        bool keepTemp = false;
 
         try
         {
-            // Write to temp file first
-            await using (var tempStream = new FileStream(tmpFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
+            // Write to temp file first. Fall back to the system temp folder when the package's folder does not
+            // allow creating files (the package itself may still be writable).
+            FileStream tempStream;
+            try
+            {
+                tempStream = new FileStream(tmpFile, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                tmpFile = Path.GetTempFileName();
+                tempStream = new FileStream(tmpFile, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+            }
+            await using (tempStream)
             {
                 await SaveToStreamAsync(tempStream, cancellationToken).ConfigureAwait(false);
+                await tempStream.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
 
             // Hold the stream lock while the backing stream is rewritten so no concurrent read sees it half-written.
@@ -856,23 +888,38 @@ public sealed class DbpfPackage : IMutablePackage
                 locked = true;
             }
 
-            // Copy temp file contents back to original stream
-            // Source: s4pi/Package/Package.cs lines 71-74
-            _stream.Position = 0;
-            await using (var tempReadStream = new FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+            // From here on the original file is being overwritten: no cancellation, and on failure keep the
+            // complete new image in the temp file so the user can recover it.
+            try
             {
-                await tempReadStream.CopyToAsync(_stream, cancellationToken).ConfigureAwait(false);
-            }
+                BeforeOverwriteForTesting?.Invoke();
 
-            // Truncate to new length to prevent trailing garbage
-            // Source: s4pi/Package/Package.cs line 75
-            _stream.SetLength(_stream.Position);
-            await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                // Copy temp file contents back to original stream
+                // Source: s4pi/Package/Package.cs lines 71-74
+                _stream.Position = 0;
+                await using (var tempReadStream = new FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous | FileOptions.SequentialScan))
+                {
+                    await tempReadStream.CopyToAsync(_stream, CancellationToken.None).ConfigureAwait(false);
+                }
+
+                // Truncate to new length to prevent trailing garbage
+                // Source: s4pi/Package/Package.cs line 75
+                _stream.SetLength(_stream.Position);
+                await _stream.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
+            {
+                keepTemp = true;
+                _damagedRecoveryPath = tmpFile;
+                throw new IOException(
+                    $"Saving {fullPath} failed while overwriting it ({ex.Message}); the file may be damaged. " +
+                    $"The complete saved package was kept at {tmpFile}.", ex);
+            }
 
             // Re-read header to sync internal state
             // Source: s4pi/Package/Package.cs lines 81-82
             _stream.Position = 0;
-            await ReadExactlyAsync(_stream, _header, "header after save", cancellationToken).ConfigureAwait(false);
+            await ReadExactlyAsync(_stream, _header, "header after save", CancellationToken.None).ConfigureAwait(false);
             ValidateHeader();
 
             // Discard the in-memory index and re-read it from the saved file, so entries
@@ -880,7 +927,7 @@ public sealed class DbpfPackage : IMutablePackage
             // and cached data are cleared. Without this, later reads (and a second save)
             // would use stale offsets into the rewritten file.
             // Source: s4pi/Package/Package.cs lines 81-86 (index = null; re-read on demand)
-            await ReadIndexAsync(cancellationToken).ConfigureAwait(false);
+            await ReadIndexAsync(CancellationToken.None).ConfigureAwait(false);
 
             IsDirty = false;
             OnResourceIndexInvalidated();
@@ -897,13 +944,17 @@ public sealed class DbpfPackage : IMutablePackage
             if (streamLocked)
                 _streamLock.Release();
 
-            try { File.Delete(tmpFile); } catch { /* Ignore cleanup errors */ }
+            if (!keepTemp)
+            {
+                try { File.Delete(tmpFile); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Ignore cleanup errors */ }
+            }
         }
     }
 
     /// <summary>
     /// Saves the package to a new file path. The package keeps its original backing file and stays dirty
-    /// (legacy SaveAs does not reset any state).
+    /// (legacy SaveAs does not reset any state). Saving onto the package's own file is an in-place
+    /// <see cref="SaveAsync"/> (which does clear <see cref="IsDirty"/>).
     /// </summary>
     /// <remarks>
     /// Source: legacy_references/Sims4Tools/s4pi/Package/Package.cs lines 155-160
@@ -913,8 +964,54 @@ public sealed class DbpfPackage : IMutablePackage
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(path);
 
-        await using var fs = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
-        await SaveToStreamAsync(fs, cancellationToken).ConfigureAwait(false);
+        ThrowIfBackingDamaged();
+
+        // Saving onto the package's own file: writing a new file there would either truncate the file this package
+        // still reads from or (on Linux/macOS, where the move is a rename) leave this package attached to the old,
+        // unlinked file so that later saves never reach disk. Save in place instead.
+        string fullPath = Path.GetFullPath(path);
+        var match = FilePath != null && _stream != null ? FileIdentity.Compare(fullPath, FilePath) : FileMatch.Different;
+        if (match == FileMatch.Unknown)
+            throw new IOException(
+                $"Cannot tell whether {fullPath} is this package's own file (a folder could not be listed); not saving.");
+        if (match == FileMatch.Same)
+        {
+            if (!_stream!.CanWrite)
+                throw new InvalidOperationException(
+                    $"Cannot save over {fullPath}: the package is open read-only from that file.");
+            await SaveAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // Write next to the target and move into place, so a failure or cancel never destroys an existing file
+        // (legacy Package.cs lines 155-160 truncates the target first).
+        string tmpFile = fullPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
+        FileStream tempStream;
+        try
+        {
+            tempStream = new FileStream(tmpFile, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+        }
+        catch (UnauthorizedAccessException) when (File.Exists(fullPath))
+        {
+            // The folder does not allow new files but the existing target may be writable: write it directly.
+            await using var direct = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous);
+            await SaveToStreamAsync(direct, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        try
+        {
+            await using (tempStream)
+            {
+                await SaveToStreamAsync(tempStream, cancellationToken).ConfigureAwait(false);
+            }
+            File.Move(tmpFile, fullPath, overwrite: true);
+        }
+        finally
+        {
+            try { if (File.Exists(tmpFile)) File.Delete(tmpFile); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* Ignore cleanup errors */ }
+        }
     }
 
     /// <summary>Saves the package to a stream. Does not change <see cref="IsDirty"/> (legacy SaveAs(Stream)).</summary>
@@ -927,9 +1024,18 @@ public sealed class DbpfPackage : IMutablePackage
         ArgumentNullException.ThrowIfNull(stream);
         if (ReferenceEquals(stream, _stream))
             throw new ArgumentException("Cannot save a package onto its own backing stream; use SaveAsync.", nameof(stream));
+        ThrowIfBackingDamaged();
 
         var writer = new PackageWriter(this, _resources, _stream, _streamLock);
         await writer.WriteAsync(stream, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void ThrowIfBackingDamaged()
+    {
+        if (_damagedRecoveryPath != null)
+            throw new IOException(
+                $"An earlier save of {FilePath} failed while overwriting it, so the file may be damaged and this " +
+                $"package can no longer read from it. Close it and recover from {_damagedRecoveryPath}.");
     }
 
     /// <inheritdoc />

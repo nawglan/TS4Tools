@@ -80,6 +80,7 @@ public static class JazzHelper
         if (charCount == 0)
             return string.Empty;
 
+        CountGuard.Check(charCount, data.Length - offset, 2, "Unicode string char");
         int byteCount = charCount * 2;
         string result = Encoding.Unicode.GetString(data.Slice(offset, byteCount));
         offset += byteCount;
@@ -146,6 +147,7 @@ public static class JazzHelper
     {
         int count = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
         offset += 4;
+        CountGuard.Check(count, data.Length - offset, 4, "chunk reference");
 
         var list = new List<uint>(count);
         for (int i = 0; i < count; i++)

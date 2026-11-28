@@ -87,6 +87,16 @@ public partial class MainWindowViewModel
         }
     }
 
+    /// <summary>
+    /// Shows an error that no command handled (reported by the application's last-chance handler) in the status bar,
+    /// so the app keeps running and unsaved work is not lost.
+    /// </summary>
+    public void ReportUnhandledError(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        StatusMessage = $"Error: {exception.Message}";
+    }
+
     #region Tool availability
 
     /// <summary>Whether the DDS export applies to the current resource.</summary>

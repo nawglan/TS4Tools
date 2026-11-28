@@ -33,6 +33,10 @@ public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewMod
     [ObservableProperty]
     private string _newValueText = string.Empty;
 
+    /// <summary>Why the last Add was refused (shown under the add row), or null.</summary>
+    [ObservableProperty]
+    private string? _inputError;
+
     public ObservableCollection<StblEntryViewModel> Entries { get; } = [];
     public ObservableCollection<StblEntryViewModel> FilteredEntries { get; } = [];
 
@@ -100,7 +104,10 @@ public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewMod
         {
             if (_resource != null && e.PropertyName == nameof(StblEntryViewModel.Value) && sender is StblEntryViewModel changedEntry)
             {
-                _resource[changedEntry.KeyHash] = changedEntry.Value;
+                // Rows mirror the wrapper's entry list in order; keys may repeat, so address the entry by position.
+                int index = Entries.IndexOf(changedEntry);
+                if (index >= 0)
+                    _resource.SetValueAt(index, changedEntry.Value);
             }
         };
         vm.PropertyChanged += handler;
@@ -138,7 +145,11 @@ public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewMod
         }
         else if (NewKeyText.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
         {
-            keyHash = uint.Parse(NewKeyText[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (!uint.TryParse(NewKeyText.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out keyHash))
+            {
+                InputError = $"\"{NewKeyText}\" is not a valid 32-bit hex key.";
+                return;
+            }
         }
         else
         {
@@ -146,6 +157,7 @@ public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewMod
             keyHash = FnvHash.Fnv32Lower(NewKeyText);
         }
 
+        InputError = null;
         _resource.Add(keyHash, NewValueText);
         var vm = CreateTrackedEntry(keyHash, NewValueText);
         Entries.Add(vm);
@@ -161,7 +173,9 @@ public partial class StblEditorViewModel : ViewModelBase, IResourceEditorViewMod
     {
         if (_resource == null || SelectedEntry == null) return;
 
-        _resource.Remove(SelectedEntry.KeyHash);
+        int index = Entries.IndexOf(SelectedEntry);
+        if (index >= 0)
+            _resource.RemoveAt(index);
         UntrackEntry(SelectedEntry);
         Entries.Remove(SelectedEntry);
         FilteredEntries.Remove(SelectedEntry);

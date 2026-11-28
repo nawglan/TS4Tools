@@ -243,4 +243,33 @@ public class ObjKeyResourceTests
         resKey1.Should().Be(resKey2);
         resKey1.Should().NotBe(resKey3);
     }
+
+    /// <summary>
+    /// Legacy ObjKeyResource.cs lines 219-226 and 239-240 read/write component keys and string values as
+    /// <c>new string(r.ReadChars(r.ReadInt32()))</c> / <c>w.Write(count); w.Write(chars)</c>: an Int32 char count
+    /// followed by the chars as UTF-8. Non-ASCII text must survive and the prefix must count chars, not bytes.
+    /// </summary>
+    [Fact]
+    public void ComponentData_NonAscii_UsesCharCountAndUtf8()
+    {
+        var resource = new ObjKeyResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        resource.AddComponentData(new ComponentDataString("é", "é"));
+        resource.AddComponentData(new ComponentDataSteeringInstance("k", "é"));
+
+        byte[] serialized = resource.Data.ToArray();
+
+        // key: count 1, C3 A9; control code 0x00; value: count 1, C3 A9
+        byte[] stringEntry = [0x01, 0x00, 0x00, 0x00, 0xC3, 0xA9, 0x00, 0x01, 0x00, 0x00, 0x00, 0xC3, 0xA9];
+        serialized.AsSpan().IndexOf(stringEntry).Should().BeGreaterThan(0);
+        // key "k": count 1; control code 0x03; value: count 1, C3 A9
+        byte[] steeringEntry = [0x01, 0x00, 0x00, 0x00, (byte)'k', 0x03, 0x01, 0x00, 0x00, 0x00, 0xC3, 0xA9];
+        serialized.AsSpan().IndexOf(steeringEntry).Should().BeGreaterThan(0);
+
+        var parsed = new ObjKeyResource(TestKey, serialized);
+        parsed.GetComponentData("é").Should().BeOfType<ComponentDataString>()
+            .Which.Data.Should().Be("é");
+        parsed.GetComponentData("k").Should().BeOfType<ComponentDataSteeringInstance>()
+            .Which.Data.Should().Be("é");
+        parsed.Data.ToArray().Should().Equal(serialized);
+    }
 }

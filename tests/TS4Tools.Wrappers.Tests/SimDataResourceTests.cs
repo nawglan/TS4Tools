@@ -798,4 +798,71 @@ public class SimDataResourceTests
     }
 
     #endregion
+
+    /// <summary>
+    /// One table (1 row of a 4-byte schema with one FloatValue field at offset 0) laid out as
+    /// header (0x00) | data entry (0x18) | row data (0x34) | structure entry (0x38) | field entry (0x50).
+    /// Offsets are relative to the position they are read from (legacy DataResource.cs).
+    /// </summary>
+    private static byte[] CreateOneRowSimData()
+    {
+        const uint Null = 0x80000000;
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        // Header
+        w.Write(SimDataResource.Magic);
+        w.Write(0x100u);
+        w.Write(0x18u - 0x08u); // data table at 0x18
+        w.Write(1u);
+        w.Write(0x38u - 0x10u); // structure table at 0x38
+        w.Write(1u);
+        // 0x18: data entry
+        w.Write(Null); // name
+        w.Write(0u); // name hash
+        w.Write(0x38u - 0x20u); // structure at 0x38
+        w.Write(0u);
+        w.Write(0u);
+        w.Write(0x34u - 0x2Cu); // row data at 0x34
+        w.Write(1u); // row count
+        // 0x34: row data
+        w.Write(0u);
+        // 0x38: structure entry
+        w.Write(Null);
+        w.Write(0u);
+        w.Write(0u);
+        w.Write(4u); // row size
+        w.Write(0x50u - 0x48u); // field table at 0x50
+        w.Write(1u); // field count
+        // 0x50: field entry
+        w.Write(Null);
+        w.Write(0u);
+        w.Write((uint)SimDataFieldType.FloatValue);
+        w.Write(0u); // data offset
+        w.Write(Null);
+        return ms.ToArray();
+    }
+
+    /// <summary>
+    /// A cell edit on a table must be reported through IResource (Changed, IsDirty) so the package/UI notice it,
+    /// not only through SimData's internal dirty flag.
+    /// </summary>
+    [Fact]
+    public void TableCellEdit_RaisesChangedAndSetsIsDirty()
+    {
+        var resource = new SimDataResource(TestKey, CreateOneRowSimData());
+        resource.IsValid.Should().BeTrue();
+        var table = resource.Tables.Should().ContainSingle().Subject;
+        table.Schema.Should().NotBeNull();
+        var field = table.Schema!.Fields.Should().ContainSingle().Subject;
+        int changed = 0;
+        resource.Changed += (_, _) => changed++;
+        ((IResource)resource).IsDirty.Should().BeFalse();
+
+        table.SetUInt32(0, field, 0x3F800000);
+
+        changed.Should().Be(1);
+        ((IResource)resource).IsDirty.Should().BeTrue();
+        var reparsed = new SimDataResource(TestKey, resource.Data);
+        reparsed.Tables[0].GetUInt32(0, reparsed.Tables[0].Schema!.Fields[0]).Should().Be(0x3F800000);
+    }
 }

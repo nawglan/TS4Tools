@@ -83,6 +83,100 @@ public sealed class PackageSaveFidelityTests : IDisposable
     }
 
     [Fact]
+    public async Task SaveAsync_LeavesNoTempFileBehind()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.ReplaceResource(package.Find(new ResourceKey(TypeA, 0, 1))!, Compressible(5, 3000));
+            await package.SaveAsync();
+        }
+
+        Directory.GetFiles(_tempDir).Should().Equal(path);
+    }
+
+    [Fact]
+    public async Task SaveAsync_Cancelled_LeavesOriginalIntact()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+        var before = await File.ReadAllBytesAsync(path);
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.ReplaceResource(package.Find(new ResourceKey(TypeA, 0, 1))!, Compressible(5, 3000));
+            using var cts = new CancellationTokenSource();
+            await cts.CancelAsync();
+
+            var act = async () => await package.SaveAsync(cts.Token);
+
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+
+        (await File.ReadAllBytesAsync(path)).Should().Equal(before);
+        Directory.GetFiles(_tempDir).Should().Equal(path);
+    }
+
+    [Fact]
+    public async Task SaveAsAsync_Cancelled_LeavesExistingTargetIntact()
+    {
+        var (source, _) = await CreatePackageFileAsync();
+        var target = Path.Combine(_tempDir, "existing.package");
+        byte[] existing = [1, 2, 3, 4];
+        await File.WriteAllBytesAsync(target, existing);
+
+        await using (var package = await DbpfPackage.OpenAsync(source))
+        {
+            using var cts = new CancellationTokenSource();
+            await cts.CancelAsync();
+
+            var act = async () => await package.SaveAsAsync(target, cts.Token);
+
+            await act.Should().ThrowAsync<OperationCanceledException>();
+        }
+
+        (await File.ReadAllBytesAsync(target)).Should().Equal(existing);
+        Directory.GetFiles(_tempDir).Should().BeEquivalentTo([source, target]);
+    }
+
+    [Fact]
+    public async Task SaveAsAsync_OntoOwnFile_ThenSave_KeepsLaterEdits()
+    {
+        // Saving "as" the package's own file must not detach the package from it (on Linux/macOS a rename would
+        // leave the package writing to the unlinked old file).
+        var (path, data) = await CreatePackageFileAsync();
+        var added1 = new ResourceKey(TypeA, 0, 10);
+        var added2 = new ResourceKey(TypeA, 0, 11);
+
+        await using (var package = await DbpfPackage.OpenAsync(path, readWrite: true))
+        {
+            package.AddResource(added1, Compressible(4, 500));
+            await package.SaveAsAsync(path);
+            package.AddResource(added2, Compressible(5, 500));
+            await package.SaveAsync();
+        }
+
+        await using var reloaded = await DbpfPackage.OpenAsync(path);
+        reloaded.ResourceCount.Should().Be(data.Count + 2);
+        reloaded.Find(added2).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task SaveAsAsync_OntoOwnFile_ReadOnly_Throws()
+    {
+        var (path, _) = await CreatePackageFileAsync();
+        var before = await File.ReadAllBytesAsync(path);
+
+        await using (var package = await DbpfPackage.OpenAsync(path))
+        {
+            var act = async () => await package.SaveAsAsync(path);
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        (await File.ReadAllBytesAsync(path)).Should().Equal(before);
+    }
+
+    [Fact]
     public async Task SaveAsync_Twice_ProducesValidPackage()
     {
         var (path, data) = await CreatePackageFileAsync();
@@ -210,5 +304,51 @@ public sealed class PackageSaveFidelityTests : IDisposable
                 .Should().Equal(exp.Stored, $"stored bytes of clean resource {key} must be copied verbatim");
             (await reloaded.GetResourceDataAsync(entry)).ToArray().Should().Equal(exp.Plain);
         }
+    }
+
+    /// <summary>
+    /// If an in-place save fails after it started overwriting the backing file, the file no longer matches the
+    /// in-memory index. The complete new image is kept as a recovery file, and every later operation that would read
+    /// from (or save over) the damaged file must refuse and point at that recovery file instead of producing garbage.
+    /// </summary>
+    [Fact]
+    public async Task SaveAsync_FailsWhileOverwriting_KeepsRecoveryFileAndRefusesLaterUse()
+    {
+        var (path, data) = await CreatePackageFileAsync();
+        var key1 = new ResourceKey(TypeA, 0, 1);
+        var key3 = new ResourceKey(TypeA, 0, 3);
+        var replacement = Compressible(9, 20000);
+
+        await using var package = await DbpfPackage.OpenAsync(path, readWrite: true);
+        package.ReplaceResource(package.Find(key1)!, replacement);
+        package.BeforeOverwriteForTesting = () => throw new IOException("simulated disk failure");
+
+        var save = async () => await package.SaveAsync();
+        var failure = (await save.Should().ThrowAsync<IOException>()).Which;
+        failure.Message.Should().Contain("simulated disk failure");
+
+        string recovery = Directory.GetFiles(_tempDir, Path.GetFileName(path) + ".tmp-*").Should().ContainSingle().Subject;
+        failure.Message.Should().Contain(recovery);
+
+        // The kept file is the complete saved package.
+        await using (var recovered = await DbpfPackage.OpenAsync(recovery))
+        {
+            (await recovered.GetResourceDataAsync(recovered.Find(key1)!)).ToArray().Should().Equal(replacement);
+            (await recovered.GetResourceDataAsync(recovered.Find(key3)!)).ToArray().Should().Equal(data[key3]);
+        }
+
+        package.BeforeOverwriteForTesting = null;
+        // key3 is clean, so reading it would go to the (damaged) backing file.
+        var read = async () => await package.GetResourceDataAsync(package.Find(key3)!);
+        (await read.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        var saveAgain = async () => await package.SaveAsync();
+        (await saveAgain.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        var toStream = async () => await package.SaveToStreamAsync(new MemoryStream());
+        (await toStream.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        string other = Path.Combine(_tempDir, "other.package");
+        var saveAs = async () => await package.SaveAsAsync(other);
+        (await saveAs.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        File.Exists(other).Should().BeFalse();
+        File.Exists(recovery).Should().BeTrue("the recovery file is never deleted by the package");
     }
 }

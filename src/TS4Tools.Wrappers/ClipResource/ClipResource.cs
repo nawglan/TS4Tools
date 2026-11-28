@@ -19,63 +19,68 @@ public sealed class ClipResource : TypedResource
     public const uint TypeId = 0x6B20C4F3;
 
     private byte[] _rawData = [];
+
+    // Data that did not parse is written back verbatim (see Serialize), so an edit would be silently lost: refuse it.
+    private readonly UnparsedDataGuard _unparsed = new();
+
+    private void ThrowIfUnparsed() => _unparsed.ThrowIfEditing(IsValid, _rawData.Length, GetType().Name);
     private readonly List<ClipEvent> _clipEvents = [];
     private readonly List<string> _explicitNamespaces = [];
 
     /// <summary>
     /// Clip format version (typically 4-14+).
     /// </summary>
-    public uint Version { get; set; } = 14;
+    public uint Version { get; set { ThrowIfUnparsed(); field = value; } } = 14;
 
     /// <summary>
     /// Clip flags.
     /// </summary>
-    public uint Flags { get; set; }
+    public uint Flags { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Duration of the animation in seconds.
     /// </summary>
-    public float Duration { get; set; }
+    public float Duration { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Initial rotation offset (quaternion: X, Y, Z, W).
     /// </summary>
-    public (float X, float Y, float Z, float W) InitialOffsetQ { get; set; } = (0f, 0f, 0f, 1f);
+    public (float X, float Y, float Z, float W) InitialOffsetQ { get; set { ThrowIfUnparsed(); field = value; } } = (0f, 0f, 0f, 1f);
 
     /// <summary>
     /// Initial translation offset (X, Y, Z).
     /// </summary>
-    public (float X, float Y, float Z) InitialOffsetT { get; set; }
+    public (float X, float Y, float Z) InitialOffsetT { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Reference namespace hash (version 5+).
     /// </summary>
-    public uint ReferenceNamespaceHash { get; set; }
+    public uint ReferenceNamespaceHash { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Surface namespace hash (version 10+).
     /// </summary>
-    public uint SurfaceNamespaceHash { get; set; }
+    public uint SurfaceNamespaceHash { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Surface joint name hash (version 10+).
     /// </summary>
-    public uint SurfaceJointNameHash { get; set; }
+    public uint SurfaceJointNameHash { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Surface child namespace hash (version 11+).
     /// </summary>
-    public uint SurfaceChildNamespaceHash { get; set; }
+    public uint SurfaceChildNamespaceHash { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Clip name (version 7+).
     /// </summary>
-    public string ClipName { get; set; } = string.Empty;
+    public string ClipName { get; set { ThrowIfUnparsed(); field = value; } } = string.Empty;
 
     /// <summary>
     /// Rig namespace.
     /// </summary>
-    public string RigNamespace { get; set; } = string.Empty;
+    public string RigNamespace { get; set { ThrowIfUnparsed(); field = value; } } = string.Empty;
 
     /// <summary>
     /// Explicit namespaces (version 4+).
@@ -111,7 +116,7 @@ public sealed class ClipResource : TypedResource
     /// <summary>
     /// Unknown 64-bit value stored after the clip events (version 18+, see <see cref="PostEventsValueVersion"/>).
     /// </summary>
-    public ulong PostEventsValue { get; set; }
+    public ulong PostEventsValue { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Whether this resource was successfully parsed.
@@ -128,132 +133,160 @@ public sealed class ClipResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
-        _rawData = data.ToArray();
-        _clipEvents.Clear();
-        _explicitNamespaces.Clear();
-        IsValid = false;
-
-        if (data.Length < 36) // Minimum: version + flags + duration + quaternion + vector3
-            return;
-
+        _unparsed.Parsing = true;
         try
         {
-            int offset = 0;
-
-            // Version and flags
-            Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            Flags = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            // Duration
-            Duration = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
-            offset += 4;
-
-            // Initial offset quaternion (X, Y, Z, W)
-            float qx = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
-            float qy = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 4)..]);
-            float qz = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 8)..]);
-            float qw = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 12)..]);
-            InitialOffsetQ = (qx, qy, qz, qw);
-            offset += 16;
-
-            // Initial offset translation (X, Y, Z)
-            float tx = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
-            float ty = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 4)..]);
-            float tz = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 8)..]);
-            InitialOffsetT = (tx, ty, tz);
-            offset += 12;
-
-            // Version-specific fields
-            if (Version >= 5)
-            {
-                ReferenceNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-            }
-
-            if (Version >= 10)
-            {
-                SurfaceNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-
-                SurfaceJointNameHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-            }
-
-            if (Version >= 11)
-            {
-                SurfaceChildNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-            }
-
-            if (Version >= 7)
-            {
-                ClipName = ReadString32(data, ref offset);
-            }
-
-            // Rig namespace (always present)
-            RigNamespace = ReadString32(data, ref offset);
-
-            // Explicit namespaces (version 4+)
-            if (Version >= 4)
-            {
-                int nsCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-                offset += 4;
-
-                for (int i = 0; i < nsCount; i++)
-                {
-                    _explicitNamespaces.Add(ReadString32(data, ref offset));
-                }
-            }
-
-            // IK configuration
-            SlotAssignments = ClipIkConfiguration.Parse(data, ref offset);
-
-            // Clip events
-            int eventCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            for (int i = 0; i < eventCount; i++)
-            {
-                var typeId = (ClipEventType)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-
-                uint size = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-                offset += 4;
-
-                var evt = ClipEvent.Create(typeId, size, data, offset);
-                _clipEvents.Add(evt);
-
-                offset += (int)size;
-            }
-
-            if (Version >= PostEventsValueVersion)
-            {
-                PostEventsValue = BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
-                offset += 8;
-            }
-
-            // Codec data length and content
-            int codecDataLength = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            if (codecDataLength > 0 && offset + codecDataLength <= data.Length)
-            {
-                CodecData = ClipCodecData.Parse(data[offset..], codecDataLength);
-            }
-
-            IsValid = true;
-        }
-        catch
-        {
+            _rawData = data.ToArray();
+            _clipEvents.Clear();
+            _explicitNamespaces.Clear();
             IsValid = false;
+
+            if (data.Length < 36) // Minimum: version + flags + duration + quaternion + vector3
+                return;
+
+            try
+            {
+                int offset = 0;
+
+                // Version and flags
+                Version = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                Flags = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                // Duration
+                Duration = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
+                offset += 4;
+
+                // Initial offset quaternion (X, Y, Z, W)
+                float qx = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
+                float qy = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 4)..]);
+                float qz = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 8)..]);
+                float qw = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 12)..]);
+                InitialOffsetQ = (qx, qy, qz, qw);
+                offset += 16;
+
+                // Initial offset translation (X, Y, Z)
+                float tx = BinaryPrimitives.ReadSingleLittleEndian(data[offset..]);
+                float ty = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 4)..]);
+                float tz = BinaryPrimitives.ReadSingleLittleEndian(data[(offset + 8)..]);
+                InitialOffsetT = (tx, ty, tz);
+                offset += 12;
+
+                // Version-specific fields
+                if (Version >= 5)
+                {
+                    ReferenceNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+                }
+
+                if (Version >= 10)
+                {
+                    SurfaceNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+
+                    SurfaceJointNameHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+                }
+
+                if (Version >= 11)
+                {
+                    SurfaceChildNamespaceHash = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+                }
+
+                if (Version >= 7)
+                {
+                    ClipName = ReadString32(data, ref offset);
+                }
+
+                // Rig namespace (always present)
+                RigNamespace = ReadString32(data, ref offset);
+
+                // Explicit namespaces (version 4+)
+                if (Version >= 4)
+                {
+                    int nsCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
+                    offset += 4;
+
+                    for (int i = 0; i < nsCount; i++)
+                    {
+                        _explicitNamespaces.Add(ReadString32(data, ref offset));
+                    }
+                }
+
+                // IK configuration
+                SlotAssignments = ClipIkConfiguration.Parse(data, ref offset);
+
+                // Clip events
+                int eventCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                for (int i = 0; i < eventCount; i++)
+                {
+                    var typeId = (ClipEventType)BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+
+                    uint size = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                    offset += 4;
+
+                    var evt = ClipEvent.Create(typeId, size, data, offset);
+                    _clipEvents.Add(evt);
+
+                    offset += (int)size;
+                }
+
+                if (Version >= PostEventsValueVersion)
+                {
+                    PostEventsValue = BinaryPrimitives.ReadUInt64LittleEndian(data[offset..]);
+                    offset += 8;
+                }
+
+                // Codec data length and content
+                int codecDataLength = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                if (codecDataLength < 0 || codecDataLength > data.Length - offset)
+                    return; // Codec data runs past the end: keep the raw bytes (IsValid stays false)
+
+                if (codecDataLength > 0)
+                {
+                    CodecData = ClipCodecData.Parse(data[offset..], codecDataLength);
+                }
+
+                IsValid = true;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                IsValid = false;
+            }
+    
+        }
+        finally
+        {
+            _unparsed.Parsing = false;
+            // Also on the early returns above: remember the partly parsed state to detect nested edits later.
+            if (!IsValid && _rawData.Length > 0)
+                _unparsed.Capture(SerializeParsedState);
         }
     }
 
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
+    {
+        // Data that did not parse is kept verbatim rather than replaced by the (partial) parsed state; an edit that
+        // would be lost by that is refused.
+        if (!IsValid && _rawData.Length > 0)
+        {
+            _unparsed.ThrowIfChanged(SerializeParsedState, GetType().Name);
+            return _rawData;
+        }
+
+        return SerializeParsedState();
+    }
+
+    private ReadOnlyMemory<byte> SerializeParsedState()
     {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
@@ -338,6 +371,7 @@ public sealed class ClipResource : TypedResource
     /// </summary>
     public void AddEvent(ClipEvent evt)
     {
+        ThrowIfUnparsed();
         _clipEvents.Add(evt);
     }
 
@@ -346,6 +380,7 @@ public sealed class ClipResource : TypedResource
     /// </summary>
     public void ClearEvents()
     {
+        ThrowIfUnparsed();
         _clipEvents.Clear();
     }
 
@@ -354,6 +389,7 @@ public sealed class ClipResource : TypedResource
     /// </summary>
     public void AddExplicitNamespace(string ns)
     {
+        ThrowIfUnparsed();
         _explicitNamespaces.Add(ns);
     }
 
@@ -362,6 +398,7 @@ public sealed class ClipResource : TypedResource
     /// </summary>
     public void ClearExplicitNamespaces()
     {
+        ThrowIfUnparsed();
         _explicitNamespaces.Clear();
     }
 

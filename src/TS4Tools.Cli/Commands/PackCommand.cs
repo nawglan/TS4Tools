@@ -181,21 +181,15 @@ internal static class PackCommand
         return await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>Writes to a temporary file next to <paramref name="output"/> and moves it into place.</summary>
+    /// <summary>
+    /// Writes the package to <paramref name="output"/>. <see cref="DbpfPackage.SaveAsAsync"/> writes a temporary file
+    /// next to the output and moves it into place, so a failure never leaves a partial output.
+    /// </summary>
     internal static async Task SaveAtomicallyAsync(DbpfPackage package, string output, CancellationToken cancellationToken)
     {
         string fullOutput = Path.GetFullPath(output);
         string? parent = Path.GetDirectoryName(fullOutput);
         if (!string.IsNullOrEmpty(parent)) Directory.CreateDirectory(parent);
-        string temp = fullOutput + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
-        try
-        {
-            await package.SaveAsAsync(temp, cancellationToken).ConfigureAwait(false);
-            File.Move(temp, fullOutput, overwrite: true);
-        }
-        finally
-        {
-            if (File.Exists(temp)) File.Delete(temp);
-        }
+        await package.SaveAsAsync(fullOutput, cancellationToken).ConfigureAwait(false);
     }
 }

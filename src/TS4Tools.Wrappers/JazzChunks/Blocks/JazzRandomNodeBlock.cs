@@ -58,6 +58,7 @@ public sealed class JazzRandomNodeBlock : RcolBlock
         // Read outcomes
         int outcomeCount = BinaryPrimitives.ReadInt32LittleEndian(data[pos..]);
         pos += 4;
+        CountGuard.Check(outcomeCount, data.Length - pos, 8, "outcome");
         Outcomes = new List<JazzOutcome>(outcomeCount);
         for (int i = 0; i < outcomeCount; i++)
         {
