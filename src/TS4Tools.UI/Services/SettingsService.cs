@@ -16,6 +16,8 @@ public sealed class SettingsService
 
     private static SettingsService? _instance;
     private AppSettings _settings;
+    // Process-wide: there is one settings file. Static, so it lives as long as the process (no Dispose needed).
+    private static readonly SemaphoreSlim SaveLock = new(1, 1);
 
     /// <summary>
     /// Gets the settings service. Returns defaults until <see cref="InitializeAsync"/> has loaded
@@ -86,7 +88,10 @@ public sealed class SettingsService
     /// </remarks>
     public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
-        string tempPath = SettingsPath + ".tmp";
+        // Saves can overlap (several UI handlers and the background update check call this without coordinating).
+        // Run them one at a time, each with its own temp file, so they cannot collide and the last one wins.
+        await SaveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string tempPath = SettingsPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
         try
         {
             var dir = Path.GetDirectoryName(SettingsPath);
@@ -102,8 +107,13 @@ public sealed class SettingsService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to save settings: {ex.Message}");
-            try { File.Delete(tempPath); } catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
             SaveFailed?.Invoke(this, ex);
+        }
+        finally
+        {
+            try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            SaveLock.Release();
         }
     }
 

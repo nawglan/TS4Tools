@@ -30,16 +30,41 @@ public static class FileIdentity
         if (!string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        // Only the letter case differs. On a case-sensitive file system at most one of them may exist, or both exist
-        // as two separate folder entries.
+        // Only the letter case differs, in the file name and/or in folder names. On a case-sensitive file system at
+        // most one of the two may exist, or the differing names are separate entries of their folder.
         if (!File.Exists(a) || !File.Exists(b))
             return false;
+        return SameEntryIgnoringCase(a, b);
+    }
 
-        string? folder = Path.GetDirectoryName(a);
-        if (string.IsNullOrEmpty(folder))
-            return true;
-        string nameA = Path.GetFileName(a);
-        string nameB = Path.GetFileName(b);
+    /// <summary>
+    /// For two existing paths equal except for letter case, decides from the folder listings whether every component
+    /// that differs in case names the same entry (the file system folds case) or two separate entries.
+    /// </summary>
+    private static bool SameEntryIgnoringCase(string a, string b)
+    {
+        while (!string.Equals(a, b, StringComparison.Ordinal))
+        {
+            string? parentA = Path.GetDirectoryName(a);
+            string? parentB = Path.GetDirectoryName(b);
+            string nameA = Path.GetFileName(a);
+            string nameB = Path.GetFileName(b);
+
+            // Roots (e.g. "C:\" vs "c:\") differing only in case are the same volume.
+            if (parentA is null || parentB is null || nameA.Length == 0)
+                return true;
+
+            if (!string.Equals(nameA, nameB, StringComparison.Ordinal) && BothNamesListed(parentA, nameA, nameB))
+                return false;
+
+            a = parentA;
+            b = parentB;
+        }
+        return true;
+    }
+
+    private static bool BothNamesListed(string folder, string nameA, string nameB)
+    {
         bool sawA = false, sawB = false;
         try
         {
@@ -52,10 +77,10 @@ public static class FileIdentity
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Cannot list the folder: assume the same file, the safe answer for "may I write a new file over it?".
-            return true;
+            // Cannot list the folder: assume one entry, the safe answer for "may I write a new file over it?".
+            return false;
         }
-        return !(sawA && sawB);
+        return sawA && sawB;
     }
 
     private static string Resolve(string path)

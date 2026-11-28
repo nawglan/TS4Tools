@@ -102,4 +102,33 @@ public sealed class FileIdentityTests : IDisposable
         FileIdentity.IsSameFile(Path.Combine(_dir, "none.package"), Path.Combine(_dir, "NONE.package"))
             .Should().BeFalse();
     }
+
+    [SkippableFact]
+    public void CaseInsensitiveFileSystem_FolderDifferingOnlyByCase_IsSame()
+    {
+        // Same file name, folder spelled differently: the case-folding decision must look at the folder component.
+        string folder = Path.Combine(_dir, "Mods");
+        Directory.CreateDirectory(folder);
+        string path = Path.Combine(folder, "a.package");
+        File.WriteAllText(path, "x");
+        string otherSpelling = Path.Combine(_dir, "mods", "a.package");
+        Skip.IfNot(File.Exists(otherSpelling), "temp directory is on a case-sensitive file system");
+
+        FileIdentity.IsSameFile(otherSpelling, path).Should().BeTrue();
+    }
+
+    [SkippableFact]
+    public void CaseSensitiveFileSystem_FoldersDifferingOnlyByCase_AreNotSame()
+    {
+        Directory.CreateDirectory(Path.Combine(_dir, "Mods"));
+        string upper = Path.Combine(_dir, "Mods", "a.package");
+        File.WriteAllText(upper, "upper");
+        Directory.CreateDirectory(Path.Combine(_dir, "mods"));
+        string lower = Path.Combine(_dir, "mods", "a.package");
+        Skip.If(File.Exists(lower) && File.ReadAllText(lower) == "upper",
+            "temp directory is on a case-insensitive file system");
+        File.WriteAllText(lower, "lower");
+
+        FileIdentity.IsSameFile(lower, upper).Should().BeFalse();
+    }
 }
