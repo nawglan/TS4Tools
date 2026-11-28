@@ -39,11 +39,14 @@ public sealed class FileIdentityTests : IDisposable
     public void RelativeAndAbsolutePaths_AreSame()
     {
         string path = CreateFile("a.package");
-        string relative = Path.GetRelativePath(Environment.CurrentDirectory, path);
-        relative.Should().NotBe(path);
-
-        FileIdentity.Compare(relative, path).Should().Be(FileMatch.Same);
         FileIdentity.Compare(Path.Combine(_dir, ".", "a.package"), path).Should().Be(FileMatch.Same);
+        FileIdentity.Compare(Path.Combine(_dir, "sub", "..", "a.package"), path).Should().Be(FileMatch.Same);
+
+        // A path relative to the working directory exists only when both are on the same volume (on Windows CI the
+        // checkout is on D: and the temp folder on C:, where GetRelativePath returns the absolute path).
+        string relative = Path.GetRelativePath(Environment.CurrentDirectory, path);
+        if (!Path.IsPathRooted(relative))
+            FileIdentity.Compare(relative, path).Should().Be(FileMatch.Same);
     }
 
     [Fact]
