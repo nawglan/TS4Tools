@@ -67,7 +67,7 @@ internal static class ResourceCommands
         string target = source;
         if (output != null)
         {
-            if (FileIdentity.IsSameFile(output, source))
+            if (FileIdentity.Compare(output, source) != FileMatch.Different)
                 throw new UsageException("--output is the same file as <package>; omit --output to replace in place");
             if (File.Exists(output) && !args.Has("--force"))
                 throw new CliException($"output package exists: {output} (use --force to overwrite)");

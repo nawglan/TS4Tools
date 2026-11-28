@@ -20,18 +20,10 @@ public sealed class ClipResource : TypedResource
 
     private byte[] _rawData = [];
 
-    // Set while Parse runs: parsing assigns the properties itself, before IsValid is known.
-    private bool _parsing;
+    // Data that did not parse is written back verbatim (see Serialize), so an edit would be silently lost: refuse it.
+    private readonly UnparsedDataGuard _unparsed = new();
 
-    /// <summary>
-    /// Data that did not parse is written back verbatim (see Serialize), so an edit would be silently lost: refuse it.
-    /// </summary>
-    private void ThrowIfUnparsed()
-    {
-        if (!_parsing && !IsValid && _rawData.Length > 0)
-            throw new InvalidOperationException(
-                $"{GetType().Name} could not be parsed; it is kept unchanged and cannot be edited.");
-    }
+    private void ThrowIfUnparsed() => _unparsed.ThrowIfEditing(IsValid, _rawData.Length, GetType().Name);
     private readonly List<ClipEvent> _clipEvents = [];
     private readonly List<string> _explicitNamespaces = [];
 
@@ -141,7 +133,7 @@ public sealed class ClipResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
-        _parsing = true;
+        _unparsed.Parsing = true;
         try
         {
             _rawData = data.ToArray();
@@ -273,17 +265,29 @@ public sealed class ClipResource : TypedResource
         }
         finally
         {
-            _parsing = false;
+            _unparsed.Parsing = false;
+            // Also on the early returns above: remember the partly parsed state to detect nested edits later.
+            if (!IsValid && _rawData.Length > 0)
+                _unparsed.Capture(SerializeParsedState);
         }
     }
 
     /// <inheritdoc/>
     protected override ReadOnlyMemory<byte> Serialize()
     {
-        // Data that did not parse is kept verbatim rather than replaced by the (empty) parsed state.
+        // Data that did not parse is kept verbatim rather than replaced by the (partial) parsed state; an edit that
+        // would be lost by that is refused.
         if (!IsValid && _rawData.Length > 0)
+        {
+            _unparsed.ThrowIfChanged(SerializeParsedState, GetType().Name);
             return _rawData;
+        }
 
+        return SerializeParsedState();
+    }
+
+    private ReadOnlyMemory<byte> SerializeParsedState()
+    {
         using var ms = new MemoryStream();
         using var writer = new BinaryWriter(ms);
 

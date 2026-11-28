@@ -144,7 +144,7 @@ public sealed class ObjKeyResource : TypedResource
         if (keyLength < 0 || offset + keyLength > data.Length)
             return (null, 0);
 
-        // Legacy ObjKeyResource.cs line 217: new string(r.ReadChars(r.ReadInt32())) - a char count, UTF-8 chars
+        // Legacy ObjKeyResource.cs lines 219, 223, 226: new string(r.ReadChars(r.ReadInt32())) - a char count, UTF-8 chars
         string key = LegacyChars.ReadUtf8Chars(data, ref offset, keyLength, "ObjKey component key");
 
         if (offset >= data.Length)

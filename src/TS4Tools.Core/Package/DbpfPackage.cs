@@ -970,9 +970,13 @@ public sealed class DbpfPackage : IMutablePackage
         // still reads from or (on Linux/macOS, where the move is a rename) leave this package attached to the old,
         // unlinked file so that later saves never reach disk. Save in place instead.
         string fullPath = Path.GetFullPath(path);
-        if (FilePath != null && _stream != null && FileIdentity.IsSameFile(fullPath, FilePath))
+        var match = FilePath != null && _stream != null ? FileIdentity.Compare(fullPath, FilePath) : FileMatch.Different;
+        if (match == FileMatch.Unknown)
+            throw new IOException(
+                $"Cannot tell whether {fullPath} is this package's own file (a folder could not be listed); not saving.");
+        if (match == FileMatch.Same)
         {
-            if (!_stream.CanWrite)
+            if (!_stream!.CanWrite)
                 throw new InvalidOperationException(
                     $"Cannot save over {fullPath}: the package is open read-only from that file.");
             await SaveAsync(cancellationToken).ConfigureAwait(false);

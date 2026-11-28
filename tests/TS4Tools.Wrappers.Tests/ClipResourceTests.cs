@@ -492,4 +492,24 @@ public class ClipResourceTests
         empty.AddEvent(new ClipEventScript());
         empty.ClipName.Should().Be("new");
     }
+
+    [Fact]
+    public void UnparsedClip_NestedEdit_IsRefusedOnSave()
+    {
+        // A clip that parses up to its codec data, whose length runs past the end: the events are parsed but the
+        // clip is kept as raw bytes. Editing an event cannot be intercepted by a setter on the clip, so the save
+        // must refuse it instead of silently writing the original bytes.
+        var data = CreateClipWithEvents();
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(data.Length - 4), 1000);
+        var clip = new ClipResource(new ResourceKey(ClipResource.TypeId, 0, 0), data);
+        clip.IsValid.Should().BeFalse();
+        clip.ClipEvents.Should().NotBeEmpty();
+
+        clip.Data.ToArray().Should().Equal(data, "an unedited unparsed clip is written back unchanged");
+
+        clip.ClipEvents[0].Timecode = 9f;
+
+        var save = () => clip.Data;
+        save.Should().Throw<InvalidOperationException>().WithMessage("*cannot be edited*");
+    }
 }

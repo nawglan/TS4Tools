@@ -239,6 +239,7 @@ public sealed class RigResource : TypedResource
         // Write skeleton name (version 4+)
         if (Major >= 4)
         {
+            // Legacy RigResource.cs lines 142-143: char count, then the chars as UTF-8
             byte[] nameBytes = Encoding.UTF8.GetBytes(SkeletonName ?? "");
             BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(position), (SkeletonName ?? "").Length);
             position += 4;

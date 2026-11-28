@@ -99,7 +99,7 @@ public sealed class RigBone : IEquatable<RigBone>
         Scaling.Write(buffer, ref position);
 
         // Write length-prefixed string
-        // Legacy RigResource.cs lines 226-227: char count, then the chars as UTF-8
+        // Legacy RigResource.cs lines 230-231: char count, then the chars as UTF-8
         byte[] nameBytes = Encoding.UTF8.GetBytes(Name ?? "");
         BinaryPrimitives.WriteInt32LittleEndian(buffer[position..], (Name ?? "").Length);
         position += 4;

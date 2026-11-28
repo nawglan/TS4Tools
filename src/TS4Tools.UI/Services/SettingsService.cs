@@ -8,9 +8,12 @@ namespace TS4Tools.UI.Services;
 /// </remarks>
 public sealed class SettingsService
 {
-    private static readonly string SettingsPath = Path.Combine(
+    private static readonly string DefaultSettingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "TS4Tools", "settings.json");
+
+    // The settings file this instance reads and writes (the user's file, or a test's).
+    private readonly string _settingsPath;
 
     private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -23,13 +26,28 @@ public sealed class SettingsService
     /// Gets the settings service. Returns defaults until <see cref="InitializeAsync"/> has loaded
     /// the persisted settings, so accessing it never performs blocking file I/O.
     /// </summary>
-    public static SettingsService Instance => _instance ??= new SettingsService(new AppSettings());
+    public static SettingsService Instance => _instance ??= new SettingsService(DefaultSettingsPath, new AppSettings());
 
     public AppSettings Settings => _settings;
 
-    private SettingsService(AppSettings settings)
+    private SettingsService(string settingsPath, AppSettings settings)
     {
+        _settingsPath = settingsPath;
         _settings = settings;
+    }
+
+    /// <summary>
+    /// Creates a service over <paramref name="settingsPath"/> (not the user's settings file), so tests can exercise
+    /// loading and saving.
+    /// </summary>
+    internal static SettingsService CreateForTesting(string settingsPath, AppSettings? settings = null) =>
+        new(settingsPath, settings ?? new AppSettings());
+
+    /// <summary>Loads the settings file of a test instance (see <see cref="CreateForTesting"/>).</summary>
+    internal async Task LoadForTestingAsync(CancellationToken cancellationToken = default)
+    {
+        RemoveStaleTempFiles(_settingsPath);
+        _settings = await LoadSettingsAsync(_settingsPath, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -40,10 +58,11 @@ public sealed class SettingsService
     /// </remarks>
     public static async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        var settings = await LoadSettingsAsync(cancellationToken).ConfigureAwait(false);
+        RemoveStaleTempFiles(DefaultSettingsPath);
+        var settings = await LoadSettingsAsync(DefaultSettingsPath, cancellationToken).ConfigureAwait(false);
         if (_instance == null)
         {
-            _instance = new SettingsService(settings);
+            _instance = new SettingsService(DefaultSettingsPath, settings);
         }
         else
         {
@@ -51,13 +70,35 @@ public sealed class SettingsService
         }
     }
 
-    private static async Task<AppSettings> LoadSettingsAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Deletes temp files left by saves that were interrupted (process killed between writing and moving), which
+    /// would otherwise accumulate because every save uses its own temp name.
+    /// </summary>
+    private static void RemoveStaleTempFiles(string settingsPath)
+    {
+        string? dir = Path.GetDirectoryName(settingsPath);
+        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
+        try
+        {
+            foreach (var stale in Directory.EnumerateFiles(dir, Path.GetFileName(settingsPath) + ".tmp-*"))
+            {
+                try { File.Delete(stale); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* in use or locked */ }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Cannot list the folder: nothing to clean up that we could delete anyway.
+        }
+    }
+
+    private static async Task<AppSettings> LoadSettingsAsync(string settingsPath, CancellationToken cancellationToken)
     {
         try
         {
-            if (File.Exists(SettingsPath))
+            if (File.Exists(settingsPath))
             {
-                await using var stream = new FileStream(SettingsPath, FileMode.Open, FileAccess.Read,
+                await using var stream = new FileStream(settingsPath, FileMode.Open, FileAccess.Read,
                     FileShare.Read, 4096, FileOptions.Asynchronous);
                 var settings = await System.Text.Json.JsonSerializer
                     .DeserializeAsync<AppSettings>(stream, cancellationToken: cancellationToken)
@@ -90,19 +131,31 @@ public sealed class SettingsService
     {
         // Saves can overlap (several UI handlers and the background update check call this without coordinating).
         // Run them one at a time, each with its own temp file, so they cannot collide and the last one wins.
-        await SaveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-        string tempPath = SettingsPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
+        // Snapshot the settings on the caller's thread (the UI thread, which is the only one that changes them),
+        // before waiting: after the wait this method may continue on a thread-pool thread while the UI keeps editing
+        // the lists. The lock hands out turns in call order, so the newest snapshot is still written last.
+        string json;
         try
         {
-            var dir = Path.GetDirectoryName(SettingsPath);
+            json = System.Text.Json.JsonSerializer.Serialize(_settings, JsonOptions);
+        }
+        catch (NotSupportedException ex)
+        {
+            SaveFailed?.Invoke(this, ex);
+            return;
+        }
+        await SaveLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string tempPath = _settingsPath + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
+        try
+        {
+            var dir = Path.GetDirectoryName(_settingsPath);
             if (!string.IsNullOrEmpty(dir))
             {
                 Directory.CreateDirectory(dir);
             }
 
-            var json = System.Text.Json.JsonSerializer.Serialize(_settings, JsonOptions);
             await File.WriteAllTextAsync(tempPath, json, cancellationToken).ConfigureAwait(false);
-            File.Move(tempPath, SettingsPath, overwrite: true);
+            File.Move(tempPath, _settingsPath, overwrite: true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {

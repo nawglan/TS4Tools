@@ -378,7 +378,7 @@ public class RigResourceTests
     }
 
     /// <summary>
-    /// Legacy RigResource.cs lines 94, 213 and 226-227 read/write the bone and skeleton names as
+    /// Legacy RigResource.cs lines 94, 142-143, 213 and 230-231 read/write the bone and skeleton names as
     /// <c>new String(r.ReadChars(r.ReadInt32()))</c> / <c>w.Write(Name.Length); w.Write(Name.ToCharArray())</c>:
     /// an Int32 char count followed by the chars as UTF-8, not a byte count.
     /// </summary>

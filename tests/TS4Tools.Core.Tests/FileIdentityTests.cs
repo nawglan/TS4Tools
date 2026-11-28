@@ -5,7 +5,7 @@ using Xunit;
 namespace TS4Tools.Core.Tests;
 
 /// <summary>
-/// FileIdentity.IsSameFile decides whether "save as" targets the open package. A string comparison (legacy s4pe
+/// FileIdentity.Compare decides whether "save as" targets the open package. A string comparison (legacy s4pe
 /// MainForm.cs FileSaveAs) misses links and gets case folding wrong on case-sensitive file systems.
 /// </summary>
 public sealed class FileIdentityTests : IDisposable
@@ -32,7 +32,7 @@ public sealed class FileIdentityTests : IDisposable
     {
         string path = CreateFile("a.package");
 
-        FileIdentity.IsSameFile(path, path).Should().BeTrue();
+        FileIdentity.Compare(path, path).Should().Be(FileMatch.Same);
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public sealed class FileIdentityTests : IDisposable
         string relative = Path.GetRelativePath(Environment.CurrentDirectory, path);
         relative.Should().NotBe(path);
 
-        FileIdentity.IsSameFile(relative, path).Should().BeTrue();
-        FileIdentity.IsSameFile(Path.Combine(_dir, ".", "a.package"), path).Should().BeTrue();
+        FileIdentity.Compare(relative, path).Should().Be(FileMatch.Same);
+        FileIdentity.Compare(Path.Combine(_dir, ".", "a.package"), path).Should().Be(FileMatch.Same);
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class FileIdentityTests : IDisposable
         string a = CreateFile("a.package");
         string b = CreateFile("b.package");
 
-        FileIdentity.IsSameFile(a, b).Should().BeFalse();
+        FileIdentity.Compare(a, b).Should().Be(FileMatch.Different);
     }
 
     [SkippableFact]
@@ -69,8 +69,8 @@ public sealed class FileIdentityTests : IDisposable
             Skip.If(true, $"symbolic links not supported here: {ex.Message}");
         }
 
-        FileIdentity.IsSameFile(link, target).Should().BeTrue();
-        FileIdentity.IsSameFile(target, link).Should().BeTrue();
+        FileIdentity.Compare(link, target).Should().Be(FileMatch.Same);
+        FileIdentity.Compare(target, link).Should().Be(FileMatch.Same);
     }
 
     [SkippableFact]
@@ -82,7 +82,7 @@ public sealed class FileIdentityTests : IDisposable
         // On a case-insensitive file system the second write replaced the first file's content.
         Skip.If(File.ReadAllText(lower) == "upper", "temp directory is on a case-insensitive file system");
 
-        FileIdentity.IsSameFile(lower, upper).Should().BeFalse();
+        FileIdentity.Compare(lower, upper).Should().Be(FileMatch.Different);
     }
 
     [SkippableFact]
@@ -92,15 +92,15 @@ public sealed class FileIdentityTests : IDisposable
         string upper = Path.Combine(_dir, "FOLD.package");
         Skip.IfNot(File.Exists(upper), "temp directory is on a case-sensitive file system");
 
-        FileIdentity.IsSameFile(lower, upper).Should().BeTrue();
+        FileIdentity.Compare(lower, upper).Should().Be(FileMatch.Same);
     }
 
     [Fact]
     public void MissingFilesDifferingOnlyByCase_AreNotSame()
     {
         // Neither exists, so they cannot be shown to be one file.
-        FileIdentity.IsSameFile(Path.Combine(_dir, "none.package"), Path.Combine(_dir, "NONE.package"))
-            .Should().BeFalse();
+        FileIdentity.Compare(Path.Combine(_dir, "none.package"), Path.Combine(_dir, "NONE.package"))
+            .Should().Be(FileMatch.Different);
     }
 
     [SkippableFact]
@@ -114,7 +114,7 @@ public sealed class FileIdentityTests : IDisposable
         string otherSpelling = Path.Combine(_dir, "mods", "a.package");
         Skip.IfNot(File.Exists(otherSpelling), "temp directory is on a case-sensitive file system");
 
-        FileIdentity.IsSameFile(otherSpelling, path).Should().BeTrue();
+        FileIdentity.Compare(otherSpelling, path).Should().Be(FileMatch.Same);
     }
 
     [SkippableFact]
@@ -129,6 +129,49 @@ public sealed class FileIdentityTests : IDisposable
             "temp directory is on a case-insensitive file system");
         File.WriteAllText(lower, "lower");
 
-        FileIdentity.IsSameFile(lower, upper).Should().BeFalse();
+        FileIdentity.Compare(lower, upper).Should().Be(FileMatch.Different);
+    }
+
+    [SkippableFact]
+    public void CaseInsensitiveFileSystem_FolderAndFileDifferingOnlyByCase_AreSame()
+    {
+        string folder = Path.Combine(_dir, "Mods");
+        Directory.CreateDirectory(folder);
+        string path = Path.Combine(folder, "A.package");
+        File.WriteAllText(path, "x");
+        string otherSpelling = Path.Combine(_dir, "mods", "a.package");
+        Skip.IfNot(File.Exists(otherSpelling), "temp directory is on a case-sensitive file system");
+
+        FileIdentity.Compare(otherSpelling, path).Should().Be(FileMatch.Same);
+    }
+
+    [SkippableFact]
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
+    public void UnlistableFolder_CaseOnlyDifference_IsUnknown()
+    {
+        Skip.If(OperatingSystem.IsWindows(), "folder permissions are set with Unix file modes");
+        string folder = Path.Combine(_dir, "locked");
+        Directory.CreateDirectory(folder);
+        string upper = Path.Combine(folder, "A.package");
+        string lower = Path.Combine(folder, "a.package");
+        File.WriteAllText(upper, "upper");
+        File.WriteAllText(lower, "lower");
+        Skip.If(File.ReadAllText(upper) == "lower", "temp directory is on a case-insensitive file system");
+
+        // Search (execute) but no read permission: files can be opened, the folder cannot be listed.
+        File.SetUnixFileMode(folder, UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        try
+        {
+            bool canList;
+            try { _ = Directory.EnumerateFileSystemEntries(folder).Any(); canList = true; }
+            catch (UnauthorizedAccessException) { canList = false; }
+            Skip.If(canList, "the folder can still be listed (running as root?)");
+
+            FileIdentity.Compare(upper, lower).Should().Be(FileMatch.Unknown);
+        }
+        finally
+        {
+            File.SetUnixFileMode(folder, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
     }
 }

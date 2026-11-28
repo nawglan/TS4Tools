@@ -245,7 +245,7 @@ public class ObjKeyResourceTests
     }
 
     /// <summary>
-    /// Legacy ObjKeyResource.cs lines 217 and 239-240 read/write component keys and string values as
+    /// Legacy ObjKeyResource.cs lines 219-226 and 239-240 read/write component keys and string values as
     /// <c>new string(r.ReadChars(r.ReadInt32()))</c> / <c>w.Write(count); w.Write(chars)</c>: an Int32 char count
     /// followed by the chars as UTF-8. Non-ASCII text must survive and the prefix must count chars, not bytes.
     /// </summary>

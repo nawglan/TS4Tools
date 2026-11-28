@@ -4,21 +4,38 @@
 
 namespace TS4Tools.Package;
 
+/// <summary>The result of comparing two paths with <see cref="FileIdentity.Compare"/>.</summary>
+public enum FileMatch
+{
+    /// <summary>The paths name different files (or at least one of them does not exist).</summary>
+    Different,
+
+    /// <summary>The paths name the same file.</summary>
+    Same,
+
+    /// <summary>
+    /// The paths differ only in letter case and a folder that would decide it could not be listed. Callers about to
+    /// write should refuse rather than guess.
+    /// </summary>
+    Unknown,
+}
+
 /// <summary>
 /// Decides whether two paths name the same file.
 /// </summary>
 public static class FileIdentity
 {
     /// <summary>
-    /// Returns true when <paramref name="first"/> and <paramref name="second"/> refer to the same file.
+    /// Compares <paramref name="first"/> and <paramref name="second"/>.
     /// </summary>
     /// <remarks>
-    /// <para>Symbolic links to files are followed. Paths that differ only in letter case are the same file when the
-    /// file system folds case (both names exist, but the folder lists only one of them), whatever the operating
-    /// system: case-sensitive macOS/Windows folders and case-insensitive Linux mounts are both handled.</para>
+    /// <para>Symbolic links to files are followed. Paths that differ only in letter case (in the file name or in any
+    /// folder name) name the same file when the file system folds case: both spellings exist, but the folder lists
+    /// only one of them. This is decided per path component, whatever the operating system, so case-sensitive
+    /// macOS/Windows folders and case-insensitive Linux mounts are both handled.</para>
     /// <para>Hard links and symbolic links in parent folders are not detected.</para>
     /// </remarks>
-    public static bool IsSameFile(string first, string second)
+    public static FileMatch Compare(string first, string second)
     {
         ArgumentNullException.ThrowIfNull(first);
         ArgumentNullException.ThrowIfNull(second);
@@ -26,22 +43,22 @@ public static class FileIdentity
         string a = Resolve(first);
         string b = Resolve(second);
         if (string.Equals(a, b, StringComparison.Ordinal))
-            return true;
+            return FileMatch.Same;
         if (!string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
-            return false;
+            return FileMatch.Different;
 
-        // Only the letter case differs, in the file name and/or in folder names. On a case-sensitive file system at
-        // most one of the two may exist, or the differing names are separate entries of their folder.
+        // Only the letter case differs. On a case-sensitive file system at most one of the two may exist, or the
+        // differing names are separate entries of their folder.
         if (!File.Exists(a) || !File.Exists(b))
-            return false;
-        return SameEntryIgnoringCase(a, b);
+            return FileMatch.Different;
+        return CompareIgnoringCase(a, b);
     }
 
     /// <summary>
     /// For two existing paths equal except for letter case, decides from the folder listings whether every component
     /// that differs in case names the same entry (the file system folds case) or two separate entries.
     /// </summary>
-    private static bool SameEntryIgnoringCase(string a, string b)
+    private static FileMatch CompareIgnoringCase(string a, string b)
     {
         while (!string.Equals(a, b, StringComparison.Ordinal))
         {
@@ -52,18 +69,27 @@ public static class FileIdentity
 
             // Roots (e.g. "C:\" vs "c:\") differing only in case are the same volume.
             if (parentA is null || parentB is null || nameA.Length == 0)
-                return true;
+                return FileMatch.Same;
 
-            if (!string.Equals(nameA, nameB, StringComparison.Ordinal) && BothNamesListed(parentA, nameA, nameB))
-                return false;
+            if (!string.Equals(nameA, nameB, StringComparison.Ordinal))
+            {
+                bool? both = BothNamesListed(parentA, nameA, nameB);
+                if (both is null)
+                    return FileMatch.Unknown;
+                if (both.Value)
+                    return FileMatch.Different;
+            }
 
             a = parentA;
             b = parentB;
         }
-        return true;
+        return FileMatch.Same;
     }
 
-    private static bool BothNamesListed(string folder, string nameA, string nameB)
+    /// <summary>
+    /// Whether <paramref name="folder"/> lists both spellings as separate entries; null when it cannot be listed.
+    /// </summary>
+    private static bool? BothNamesListed(string folder, string nameA, string nameB)
     {
         bool sawA = false, sawB = false;
         try
@@ -77,8 +103,7 @@ public static class FileIdentity
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // Cannot list the folder: assume one entry, the safe answer for "may I write a new file over it?".
-            return false;
+            return null;
         }
         return sawA && sawB;
     }
