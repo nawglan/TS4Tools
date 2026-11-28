@@ -1001,6 +1001,16 @@ public partial class MainWindowViewModel : ViewModelBase, IAsyncDisposable
 
         if (string.IsNullOrEmpty(copyPath)) return;
 
+        // A copy cannot replace the open file: the package would save in place behind the resource list's back
+        // (its entries are re-read on save), so the list would show stale entries and later edits could be lost.
+        if (!string.IsNullOrEmpty(PackagePath) &&
+            string.Equals(Path.GetFullPath(copyPath), Path.GetFullPath(PackagePath),
+                OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = "A copy cannot replace the open package; use Save to save it in place.";
+            return;
+        }
+
         try
         {
             await _package.SaveAsAsync(copyPath);

@@ -174,8 +174,13 @@ public interface IMutablePackage : IPackage
     ValueTask SaveAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Saves the package to a new location.
+    /// Saves the package to a new location. The package keeps its own file and stays dirty.
     /// </summary>
+    /// <remarks>
+    /// If <paramref name="path"/> is the package's own file, this is <see cref="SaveAsync"/>: the file is rewritten in
+    /// place, the index is re-read (previously obtained index entries are stale) and the package is no longer dirty.
+    /// A package opened read-only cannot be saved over its own file (<see cref="InvalidOperationException"/>).
+    /// </remarks>
     ValueTask SaveAsAsync(string path, CancellationToken cancellationToken = default);
 
     /// <summary>

@@ -16,29 +16,48 @@ internal static class Program
         // Buffered stdout: list/scan can print hundreds of thousands of lines.
         var stdout = new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false), 1 << 16) { AutoFlush = false };
         var stderr = new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true };
+        IOException? stdoutError = null;
+        int exitCode;
         try
         {
-            return await CliApp.RunAsync(args, stdout, stderr, cts.Token).ConfigureAwait(false);
+            exitCode = await CliApp.RunAsync(args, stdout, stderr, cts.Token).ConfigureAwait(false);
         }
         finally
         {
-            // A reader that closed the pipe early (`ts4tools list x | head`) makes the flush fail with EPIPE.
-            // That is not an error of the command: keep its exit code instead of crashing with a stack trace.
+            // Output that fits the buffer is only written here. A write failure (disk full, I/O error) must not be
+            // reported as success, and must not crash with a stack trace either: report it and exit 1.
             try
             {
                 await stdout.FlushAsync(CancellationToken.None).ConfigureAwait(false);
-                await stdout.DisposeAsync().ConfigureAwait(false);
             }
-            catch (IOException)
+            catch (IOException ex)
             {
-            }
-            try
-            {
-                await stderr.DisposeAsync().ConfigureAwait(false);
-            }
-            catch (IOException)
-            {
+                stdoutError = ex;
             }
         }
+
+        if (stdoutError != null)
+        {
+            try { await stderr.WriteLineAsync("error: writing output: " + stdoutError.Message).ConfigureAwait(false); }
+            catch (IOException) { /* nowhere left to report it */ }
+            exitCode = ExitCodes.Failure;
+        }
+
+        try
+        {
+            await stdout.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (IOException)
+        {
+            // Already reported (or nothing left to flush).
+        }
+        try
+        {
+            await stderr.DisposeAsync().ConfigureAwait(false);
+        }
+        catch (IOException)
+        {
+        }
+        return exitCode;
     }
 }
