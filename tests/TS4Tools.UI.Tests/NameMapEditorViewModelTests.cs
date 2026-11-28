@@ -327,4 +327,42 @@ public class NameMapEditorViewModelTests
         entry.Name.Should().Be("Modified");
         propertyChanged.Should().BeTrue();
     }
+
+    [Fact]
+    public void AddEntry_ExistingHash_UpdatesThatRowInsteadOfAddingOne()
+    {
+        // A NameMap holds one name per hash (legacy NameMapResource.cs is a Dictionary<ulong, string>), so a second
+        // row for the same hash would show an entry that does not exist.
+        var vm = new NameMapEditorViewModel();
+        var resource = new NameMapResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        resource.Add(0x00000000DEADBEEF, "old");
+        resource.Add(0x0000000000000001, "other");
+        vm.LoadResource(resource);
+
+        vm.NewHashText = "0xDEADBEEF";
+        vm.NewNameText = "new";
+        vm.AddEntryCommand.Execute(null);
+
+        vm.Entries.Should().HaveCount(2);
+        vm.Entries.Where(e => e.Hash == 0xDEADBEEF).Should().ContainSingle().Which.Name.Should().Be("new");
+        vm.FilteredEntries.Where(e => e.Hash == 0xDEADBEEF).Should().ContainSingle();
+        resource.Count.Should().Be(2);
+        resource[0xDEADBEEF].Should().Be("new");
+    }
+
+    [Fact]
+    public void AddEntry_InvalidHexHash_SetsInputErrorAndAddsNothing()
+    {
+        var vm = new NameMapEditorViewModel();
+        var resource = new NameMapResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        vm.LoadResource(resource);
+        vm.NewHashText = "0xZZ";
+        vm.NewNameText = "name";
+
+        vm.AddEntryCommand.Execute(null);
+
+        vm.InputError.Should().Contain("0xZZ");
+        vm.Entries.Should().BeEmpty();
+        resource.Count.Should().Be(0);
+    }
 }

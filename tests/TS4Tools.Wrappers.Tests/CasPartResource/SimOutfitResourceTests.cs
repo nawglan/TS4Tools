@@ -246,4 +246,99 @@ public class SimOutfitResourceTests
 
         act.Should().Throw<ResourceFormatException>().WithMessage("*count*");
     }
+
+    // Legacy SimOutfitResource.cs writes these list counts as a single byte (UnParse lines 143, 150, 161, 168, 238)
+    // and reads the blobs as fixed sizes (lines 101, 114, 116, 259: 24, 16, 9 and 17 bytes). A 256-entry list would
+    // be written with count 0 and a wrong-length blob would shift every following field, so the output would not
+    // re-parse: Serialize must refuse both.
+
+    public static TheoryData<string> ByteCountedLists => new()
+    {
+        "Unknown9", "UnknownByteList", "SliderReferences1", "SliderReferences5", "DataReferenceList", "TgiList",
+    };
+
+    [Theory]
+    [MemberData(nameof(ByteCountedLists))]
+    public void Serialize_ByteCountedListOver255_Throws(string list)
+    {
+        var resource = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        for (int i = 0; i < 256; i++)
+        {
+            switch (list)
+            {
+                case "Unknown9": resource.Unknown9.Add((byte)i); break;
+                case "UnknownByteList": resource.UnknownByteList.Add((byte)i); break;
+                case "SliderReferences1": resource.SliderReferences1.Add(new SliderReference((byte)i, 0f)); break;
+                case "SliderReferences5": resource.SliderReferences5.Add(new SliderReference((byte)i, 0f)); break;
+                case "DataReferenceList": resource.DataReferenceList.Add((ulong)i); break;
+                case "TgiList": resource.TgiList.Add(new TgiReference((ulong)i, 0, 0)); break;
+            }
+        }
+
+        var act = () => resource.Data;
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*256 entries*255*");
+    }
+
+    [Fact]
+    public void Serialize_ByteCountedListOf255_Succeeds()
+    {
+        var resource = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        for (int i = 0; i < 255; i++)
+            resource.TgiList.Add(new TgiReference((ulong)i, 0, 0));
+
+        var parsed = new SimOutfitResource(TestKey, resource.Data);
+
+        parsed.TgiList.Should().HaveCount(255);
+    }
+
+    [Theory]
+    [InlineData("Unknown10", 23)]
+    [InlineData("Unknown10", 25)]
+    [InlineData("Unknown12", 15)]
+    [InlineData("Unknown13", 8)]
+    public void Serialize_FixedBlobWrongLength_Throws(string field, int length)
+    {
+        var resource = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        switch (field)
+        {
+            case "Unknown10": resource.Unknown10 = new byte[length]; break;
+            case "Unknown12": resource.Unknown12 = new byte[length]; break;
+            case "Unknown13": resource.Unknown13 = new byte[length]; break;
+        }
+
+        var act = () => resource.Data;
+
+        act.Should().Throw<InvalidOperationException>().WithMessage($"{field} must be exactly *");
+    }
+
+    [Theory]
+    [InlineData(16)]
+    [InlineData(18)]
+    public void Serialize_UnknownBlobWrongLength_Throws(int length)
+    {
+        var resource = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        var block = new OutfitUnknownBlock { BlockIndex = 1 };
+        block.UnknownReferenceList.Add(new OutfitUnknownReference { UnknownBlob = new byte[length] });
+        resource.Unknown11.Add(block);
+
+        var act = () => resource.Data;
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("UnknownBlob must be exactly 17 bytes*");
+    }
+
+    [Fact]
+    public void Serialize_UnknownBlobOf17Bytes_RoundTrips()
+    {
+        var resource = new SimOutfitResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        var block = new OutfitUnknownBlock { BlockIndex = 1 };
+        byte[] blob = Enumerable.Range(1, 17).Select(i => (byte)i).ToArray();
+        block.UnknownReferenceList.Add(new OutfitUnknownReference { UnknownBlob = blob });
+        resource.Unknown11.Add(block);
+
+        var parsed = new SimOutfitResource(TestKey, resource.Data);
+
+        parsed.Unknown11.Should().ContainSingle().Which.UnknownReferenceList.Should().ContainSingle()
+            .Which.UnknownBlob.Should().Equal(blob);
+    }
 }

@@ -49,6 +49,32 @@ public class ResourceHandlerPrecedenceTests
     }
 
     [Fact]
+    public void HandlerTypeThatThrowsTypeInitializationException_IsSkipped_AndOthersStillRegister()
+    {
+        // Source: WrapperDealer.cs line 112 (a failing plugin never stops the others from loading). Reading this
+        // type's attributes throws TypeInitializationException (as a plugin type with a broken static constructor
+        // can), outside the narrower catches around factory creation and type lists; the per-type catch around
+        // discovery must absorb it.
+        var broken = new TypeInitFailingType();
+        // Preconditions: discovery gets as far as reading the attributes of the broken type.
+        typeof(IResourceFactory).IsAssignableFrom(broken).Should().BeTrue();
+        broken.IsAbstract.Should().BeFalse();
+        var readAttributes = () => broken.GetCustomAttributes<ResourceHandlerAttribute>(inherit: false);
+        readAttributes.Should().Throw<TypeInitializationException>();
+
+        var assembly = new FakeAssembly([broken, typeof(ListFactory), typeof(ZuluPriorityFactory)]);
+        var registry = new ResourceHandlerRegistry();
+
+        var discover = () => registry.DiscoverHandlers(assembly);
+
+        discover.Should().NotThrow();
+        registry.GetFactory(PriorityType).Should().BeOfType<ZuluPriorityFactory>();
+        registry.GetFactory(ListOnlyType).Should().BeOfType<ListFactory>();
+        (registry.GetFactory(ContestedType) is AlphaFactory).Should().BeFalse(
+            "the failing type (wrapping AlphaFactory) must not have registered");
+    }
+
+    [Fact]
     public void HigherPriority_Wins()
     {
         var registry = CreateTestRegistry();
@@ -235,6 +261,30 @@ internal sealed class ListFactory : MarkerFactoryBase, IResourceTypeProvider
 {
     public IReadOnlyCollection<uint> ResourceTypes =>
         [ResourceHandlerPrecedenceTests.ContestedType, ResourceHandlerPrecedenceTests.ListOnlyType];
+}
+
+/// <summary>An in-memory assembly listing the given types, for discovery tests.</summary>
+internal sealed class FakeAssembly(Type[] types) : Assembly
+{
+    public override Type[] GetTypes() => types;
+    public override string FullName => "FakePluginAssembly";
+    public override string Location => string.Empty;
+}
+
+/// <summary>
+/// A plugin handler type (looks like <see cref="AlphaFactory"/>) whose metadata cannot be read: every attribute
+/// query throws TypeInitializationException.
+/// </summary>
+internal sealed class TypeInitFailingType() : TypeDelegator(typeof(AlphaFactory))
+{
+    public override string FullName => "FakePlugin.BrokenFactory";
+
+    public override object[] GetCustomAttributes(bool inherit) => throw Failure();
+
+    public override object[] GetCustomAttributes(Type attributeType, bool inherit) => throw Failure();
+
+    private static TypeInitializationException Failure() =>
+        new("FakePlugin.BrokenFactory", new InvalidOperationException("plugin static constructor bug"));
 }
 
 [ResourceHandler(0)]

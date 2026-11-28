@@ -119,4 +119,29 @@ public class LegacyWrapperBridgeTests
         // SampleResource has no "Value" content field, so the ValueBuilder dump (ToString) is shown.
         adapter.GetValueText().Should().Contain("Version: 0x00000003");
     }
+
+    [Fact]
+    public void Register_HandlerThatThrowsWhileEnumerated_IsReported_AndOthersStillRegister()
+    {
+        // Source: WrapperDealer.cs line 112 (a failing plugin never stops the others from loading). The faulty
+        // handler's type-string list is null, so enumerating it throws NullReferenceException.
+        var registry = new ResourceHandlerRegistry();
+        IReadOnlyList<TS4Tools.Resources.WrapperLoadError> errors;
+        IReadOnlyList<KeyValuePair<uint, Type>> registered;
+        NullTypeListHandler.Enabled = true;
+        try
+        {
+            errors = LegacyWrapperBridge.Register(registry, [typeof(NullTypeListHandler).Assembly], out registered);
+        }
+        finally
+        {
+            NullTypeListHandler.Enabled = false;
+        }
+
+        errors.Should().ContainSingle(e => e.TypeName == typeof(NullTypeListHandler).FullName)
+            .Which.Message.Should().Contain("Could not load legacy handler");
+        registered.Should().ContainSingle()
+            .Which.Should().Be(new KeyValuePair<uint, Type>(SampleResource.TypeId, typeof(SampleResource)));
+        registry.GetFactory(SampleResource.TypeId).Should().BeOfType<LegacyResourceFactory>();
+    }
 }

@@ -220,6 +220,31 @@ public sealed class StblResource : TypedResource
     }
 
     /// <summary>
+    /// Replaces the value of the entry at <paramref name="index"/>, keeping its key and flags. STBL entries are a list
+    /// (legacy StblResource.cs StringEntryList) and key hashes may repeat, so editors address entries by position.
+    /// </summary>
+    public void SetValueAt(int index, string value)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _entries.Count);
+        ArgumentNullException.ThrowIfNull(value);
+        var entry = _entries[index];
+        _entries[index] = new StringEntry(entry.KeyHash, entry.Flags, value);
+        OnChanged();
+    }
+
+    /// <summary>
+    /// Removes the entry at <paramref name="index"/> (see <see cref="SetValueAt"/>).
+    /// </summary>
+    public void RemoveAt(int index)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _entries.Count);
+        _entries.RemoveAt(index);
+        OnChanged();
+    }
+
+    /// <summary>
     /// Tries to get a string value by key hash.
     /// </summary>
     /// <param name="keyHash">The FNV-32 hash to look up.</param>

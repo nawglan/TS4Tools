@@ -34,6 +34,7 @@ public partial class App : Application
             // from the default ThreadException dialog, which lets the user continue.
             Dispatcher.UIThread.UnhandledException += OnUnhandledException;
             TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+            SettingsService.Instance.SaveFailed += OnSettingsSaveFailed;
             desktop.Exit += OnExit;
         }
 
@@ -57,6 +58,9 @@ public partial class App : Application
         Dispatcher.UIThread.Post(() => ReportError(error));
     }
 
+    private void OnSettingsSaveFailed(object? sender, Exception e) =>
+        Dispatcher.UIThread.Post(() => ReportError(new IOException($"Could not save settings: {e.Message}", e)));
+
     private void ReportError(Exception error)
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow.DataContext: MainWindowViewModel vm })
@@ -67,6 +71,7 @@ public partial class App : Application
     {
         Dispatcher.UIThread.UnhandledException -= OnUnhandledException;
         TaskScheduler.UnobservedTaskException -= OnUnobservedTaskException;
+        SettingsService.Instance.SaveFailed -= OnSettingsSaveFailed;
         if (sender is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.Exit -= OnExit;
     }

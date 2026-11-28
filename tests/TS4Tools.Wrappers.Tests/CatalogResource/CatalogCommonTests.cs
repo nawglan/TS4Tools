@@ -149,6 +149,35 @@ public class CatalogCommonTests
         parsed.ProductStyles[0].Type.Should().Be(0x12345678);
         parsed.ProductStyles[0].Group.Should().Be(0x00000001);
     }
+
+    /// <summary>
+    /// Legacy CatalogCommon.cs reads ReservedBytes as a fixed 9-byte field from version 10 (line 358). Legacy writes
+    /// whatever array it holds (lines 408-412), so a shorter or longer array would shift every following field and
+    /// the result would not re-parse: it is refused.
+    /// </summary>
+    [Theory]
+    [InlineData(0x0A, 8)]
+    [InlineData(0x0B, 3)]
+    [InlineData(0x0B, 10)]
+    public void WriteTo_ReservedBytesWrongLength_Throws(uint version, int length)
+    {
+        var common = new CatalogCommon { CommonBlockVersion = version, ReservedBytes = new byte[length] };
+
+        var act = () => common.WriteTo(new byte[common.GetSerializedSize() + 16]);
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("ReservedBytes must be exactly 9 bytes*");
+    }
+
+    [Fact]
+    public void WriteTo_ReservedBytesBeforeVersion10_AreNotWrittenOrChecked()
+    {
+        var common = new CatalogCommon { CommonBlockVersion = 0x09, ReservedBytes = new byte[3] };
+
+        var buffer = new byte[common.GetSerializedSize()];
+        int written = common.WriteTo(buffer);
+
+        written.Should().Be(buffer.Length);
+    }
 }
 
 /// <summary>

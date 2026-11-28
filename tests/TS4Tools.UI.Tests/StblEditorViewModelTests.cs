@@ -309,4 +309,63 @@ public class StblEditorViewModelTests
         entry.Value.Should().Be("Modified");
         propertyChanged.Should().BeTrue();
     }
+
+    // STBL entries are a list and key hashes may repeat (legacy StblResource.cs StringEntryList), so rows must be
+    // addressed by position, not by key.
+
+    private static StblResource DuplicateKeyResource()
+    {
+        var resource = new StblResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        resource.Add(0x12345678, "first");
+        resource.Add(0x12345678, "second");
+        resource.Entries.Should().HaveCount(2, "the wrapper keeps both entries with the same key");
+        return resource;
+    }
+
+    [Fact]
+    public void EntryValueChanged_DuplicateKey_EditsTheEditedRow()
+    {
+        var vm = new StblEditorViewModel();
+        var resource = DuplicateKeyResource();
+        vm.LoadResource(resource);
+
+        vm.Entries[1].Value = "edited";
+
+        resource.Entries.Select(e => e.Value).Should().Equal("first", "edited");
+    }
+
+    [Fact]
+    public void DeleteEntry_DuplicateKey_RemovesTheSelectedRow()
+    {
+        var vm = new StblEditorViewModel();
+        var resource = DuplicateKeyResource();
+        vm.LoadResource(resource);
+
+        vm.SelectedEntry = vm.Entries[1];
+        vm.DeleteEntryCommand.Execute(null);
+
+        resource.Entries.Should().ContainSingle().Which.Value.Should().Be("first");
+        vm.Entries.Should().ContainSingle().Which.Value.Should().Be("first");
+    }
+
+    [Fact]
+    public void AddEntry_InvalidHexKey_SetsInputErrorAndAddsNothing()
+    {
+        var vm = new StblEditorViewModel();
+        var resource = new StblResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        vm.LoadResource(resource);
+        vm.NewKeyText = "0xZZ";
+        vm.NewValueText = "value";
+
+        vm.AddEntryCommand.Execute(null);
+
+        vm.InputError.Should().Contain("0xZZ");
+        vm.Entries.Should().BeEmpty();
+        resource.Entries.Should().BeEmpty();
+
+        vm.NewKeyText = "0x1";
+        vm.AddEntryCommand.Execute(null);
+        vm.InputError.Should().BeNull("a successful add clears the error");
+        resource.Entries.Should().ContainSingle();
+    }
 }

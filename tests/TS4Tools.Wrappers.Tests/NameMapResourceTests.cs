@@ -278,4 +278,27 @@ public class NameMapResourceTests
 
         act.Should().Throw<ResourceFormatException>().WithMessage("*NameMap entry count*");
     }
+
+    /// <summary>
+    /// Legacy NameMapResource.cs line 61 adds entries with Dictionary.Add, which throws on a repeated hash. Keeping
+    /// the last value would silently drop the first entry on the next save.
+    /// </summary>
+    [Fact]
+    public void Parse_DuplicateHash_Throws()
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        w.Write(NameMapResource.CurrentVersion);
+        w.Write(2);
+        w.Write(0x1122334455667788UL);
+        w.Write(3);
+        w.Write("one"u8.ToArray());
+        w.Write(0x1122334455667788UL);
+        w.Write(3);
+        w.Write("two"u8.ToArray());
+
+        var act = () => new NameMapResource(TestKey, ms.ToArray());
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*Duplicate NameMap hash*");
+    }
 }

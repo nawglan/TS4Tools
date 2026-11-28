@@ -66,4 +66,23 @@ public class ThumbnailAlphaTests
         thumb.HasEmbeddedAlpha.Should().BeTrue();
         thumb.GetAlphaPngData().ToArray().Should().Equal(png);
     }
+
+    /// <summary>
+    /// Legacy ThumbnailResource.cs lines 122-125 only uses the ALFA block when the PNG fits in the data. A length near
+    /// int.MaxValue used to overflow "offset + 8 + length" to a negative number, pass the check and claim alpha.
+    /// </summary>
+    [Theory]
+    [InlineData(int.MaxValue)]
+    [InlineData(int.MaxValue - 20)]
+    public void HugeAlfaLength_IsIgnored(int length)
+    {
+        var data = new byte[24 + 8 + 16];
+        BitConverter.GetBytes(0x41464C41u).CopyTo(data, 24);
+        BinaryPrimitives.WriteInt32BigEndian(data.AsSpan(28), length);
+
+        var thumb = new ThumbnailResource(new ResourceKey(0x3C1AF1F2, 0, 1), data);
+
+        thumb.HasEmbeddedAlpha.Should().BeFalse();
+        thumb.GetAlphaPngData().IsEmpty.Should().BeTrue();
+    }
 }

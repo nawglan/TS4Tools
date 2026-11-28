@@ -341,4 +341,61 @@ public class GeomListResourceTests
         // Assert
         GeomListResource.TypeId.Should().Be(0xAC16FBEC);
     }
+
+    // Data that did not parse is written back verbatim (Serialize returns the raw bytes), so an edit to such a
+    // resource would be silently lost on save. Mutators must refuse instead.
+
+    private static byte[] UnreasonableCountData()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(1u);
+        writer.Write(100001u); // publicKeyCount over the limit
+        writer.Write(0u);
+        writer.Write(0u);
+        writer.Write(0u);
+        return ms.ToArray();
+    }
+
+    [Fact]
+    public void UnparsedResource_RejectsEdits()
+    {
+        var resource = new GeomListResource(TestKey, UnreasonableCountData());
+        resource.IsValid.Should().BeFalse();
+
+        ((Action)(() => resource.AddPublicKey(new ResourceKey(1, 2, 3)))).Should().Throw<InvalidOperationException>()
+            .WithMessage("*could not be parsed*");
+        ((Action)(() => resource.AddExternalKey(new ResourceKey(1, 2, 3)))).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.AddDelayLoadKey(new ResourceKey(1, 2, 3)))).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.AddReferenceBlock(new GeomReferenceBlock()))).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.Clear())).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.ContextVersion = 2)).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.ObjectVersion = 2)).Should().Throw<InvalidOperationException>();
+        resource.Data.ToArray().Should().Equal(UnreasonableCountData(), "the unparsed bytes are kept unchanged");
+    }
+
+    [Fact]
+    public void ValidResource_AcceptsEdits()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(1u); // ContextVersion
+        writer.Write(0u);
+        writer.Write(0u);
+        writer.Write(0u);
+        writer.Write(0u);
+        writer.Write(0u); // objectPosition
+        writer.Write(0u); // objectLength
+        writer.Write(1u); // objectVersion
+        writer.Write(0); // blockCount
+        var resource = new GeomListResource(TestKey, ms.ToArray());
+
+        resource.ContextVersion = 2;
+        resource.AddPublicKey(new ResourceKey(1, 2, 3));
+
+        var reparsed = new GeomListResource(TestKey, resource.Data);
+        reparsed.IsValid.Should().BeTrue();
+        reparsed.ContextVersion.Should().Be(2);
+        reparsed.PublicKeys.Should().ContainSingle().Which.Should().Be(new ResourceKey(1, 2, 3));
+    }
 }

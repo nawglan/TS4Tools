@@ -150,11 +150,9 @@ public sealed class RigResource : TypedResource
             if (nameLength < 0 || nameLength > 1024)
                 throw new InvalidDataException($"Invalid skeleton name length: {nameLength}");
 
+            // Legacy RigResource.cs line 94: new String(r.ReadChars(r.ReadInt32())) - a char count, UTF-8 chars
             if (nameLength > 0)
-            {
-                SkeletonName = Encoding.UTF8.GetString(data.Slice(position, nameLength));
-                position += nameLength;
-            }
+                SkeletonName = LegacyChars.ReadUtf8Chars(data, ref position, nameLength, "RIG skeleton name");
         }
 
         // Read IK chains. Source: RigResource.cs lines 33, 95-96 - legacy reads them when
@@ -242,7 +240,7 @@ public sealed class RigResource : TypedResource
         if (Major >= 4)
         {
             byte[] nameBytes = Encoding.UTF8.GetBytes(SkeletonName ?? "");
-            BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(position), nameBytes.Length);
+            BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(position), (SkeletonName ?? "").Length);
             position += 4;
 
             if (nameBytes.Length > 0)

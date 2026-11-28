@@ -45,6 +45,12 @@ public sealed class DbpfPackage : IMutablePackage
     // matches the in-memory index, so reading or saving from it would produce garbage. Holds the recovery copy.
     private string? _damagedRecoveryPath;
 
+    /// <summary>
+    /// Test seam: invoked by <see cref="SaveAsync"/> just before it starts overwriting the backing file, so tests can
+    /// simulate a failure there (an <see cref="IOException"/> thrown here is handled like a failed overwrite).
+    /// </summary>
+    internal Action? BeforeOverwriteForTesting { get; set; }
+
     // Header data
     private byte[] _header = new byte[PackageLimits.HeaderSize];
 
@@ -886,6 +892,8 @@ public sealed class DbpfPackage : IMutablePackage
             // complete new image in the temp file so the user can recover it.
             try
             {
+                BeforeOverwriteForTesting?.Invoke();
+
                 // Copy temp file contents back to original stream
                 // Source: s4pi/Package/Package.cs lines 71-74
                 _stream.Position = 0;
@@ -962,8 +970,7 @@ public sealed class DbpfPackage : IMutablePackage
         // still reads from or (on Linux/macOS, where the move is a rename) leave this package attached to the old,
         // unlinked file so that later saves never reach disk. Save in place instead.
         string fullPath = Path.GetFullPath(path);
-        if (FilePath != null && _stream != null && string.Equals(fullPath, Path.GetFullPath(FilePath),
-                OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+        if (FilePath != null && _stream != null && FileIdentity.IsSameFile(fullPath, FilePath))
         {
             if (!_stream.CanWrite)
                 throw new InvalidOperationException(

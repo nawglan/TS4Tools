@@ -357,4 +357,63 @@ public class BoneResourceTests
         resource.IsValid.Should().BeFalse();
         resource.Data.ToArray().Should().Equal(data, "data that did not parse must not be replaced by an empty bone list");
     }
+
+    // Data that did not parse is written back verbatim (Serialize returns the raw bytes), so an edit to such a
+    // resource would be silently lost on save. Mutators must refuse instead.
+
+    private static byte[] MismatchedCountData()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(1u); // Version
+        writer.Write(1); // Name count
+        WriteBigEndianUnicodeString(ms, "Test");
+        writer.Write(2); // Matrix count (mismatch)
+        return ms.ToArray();
+    }
+
+    [Fact]
+    public void UnparsedResource_RejectsEdits()
+    {
+        var resource = new BoneResource(TestKey, MismatchedCountData());
+        resource.IsValid.Should().BeFalse();
+
+        ((Action)(() => resource.AddBone("Extra"))).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.AddBone(new BoneData("Extra", BoneMatrix4x3.Identity))))
+            .Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.ClearBones())).Should().Throw<InvalidOperationException>();
+        ((Action)(() => resource.Version = 2)).Should().Throw<InvalidOperationException>();
+        resource.Data.ToArray().Should().Equal(MismatchedCountData(), "the unparsed bytes are kept unchanged");
+    }
+
+    [Fact]
+    public void TruncatedResource_RejectsEdits()
+    {
+        var resource = new BoneResource(TestKey, new byte[4]);
+
+        ((Action)(() => resource.AddBone("Extra"))).Should().Throw<InvalidOperationException>()
+            .WithMessage("*could not be parsed*");
+    }
+
+    [Fact]
+    public void ValidAndEmptyResources_AcceptEdits()
+    {
+        using var ms = new MemoryStream();
+        using var writer = new BinaryWriter(ms);
+        writer.Write(1u);
+        writer.Write(0);
+        writer.Write(0);
+        var valid = new BoneResource(TestKey, ms.ToArray());
+        valid.Version = 2;
+        valid.AddBone("Added");
+        var reparsed = new BoneResource(TestKey, valid.Data);
+        reparsed.Version.Should().Be(2);
+        reparsed.Bones.Should().ContainSingle().Which.Name.Should().Be("Added");
+
+        var empty = new BoneResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        empty.Version = 3;
+        empty.AddBone("A");
+        empty.ClearBones();
+        empty.Bones.Should().BeEmpty();
+    }
 }

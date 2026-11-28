@@ -23,6 +23,19 @@ public sealed class GeomListResource : TypedResource
     private const int TgiBlockSize = 16; // Type (4) + Group (4) + Instance (8) in ITG order
 
     private byte[] _rawData = [];
+
+    // Set while Parse runs: parsing assigns the properties itself, before IsValid is known.
+    private bool _parsing;
+
+    /// <summary>
+    /// Data that did not parse is written back verbatim (see Serialize), so an edit would be silently lost: refuse it.
+    /// </summary>
+    private void ThrowIfUnparsed()
+    {
+        if (!_parsing && !IsValid && _rawData.Length > 0)
+            throw new InvalidOperationException(
+                $"{GetType().Name} could not be parsed; it is kept unchanged and cannot be edited.");
+    }
     private readonly List<ResourceKey> _publicKeys = [];
     private readonly List<ResourceKey> _externalKeys = [];
     private readonly List<ResourceKey> _delayLoadKeys = [];
@@ -31,28 +44,28 @@ public sealed class GeomListResource : TypedResource
     /// <summary>
     /// Context version.
     /// </summary>
-    public uint ContextVersion { get; set; }
+    public uint ContextVersion { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Object position in bytes.
     /// </summary>
-    public uint ObjectPosition { get; set; }
+    public uint ObjectPosition { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Object length in bytes.
     /// </summary>
-    public uint ObjectLength { get; set; }
+    public uint ObjectLength { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Object version.
     /// </summary>
-    public uint ObjectVersion { get; set; }
+    public uint ObjectVersion { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Object count from the header, preserved verbatim (legacy writes the parsed value back,
     /// GEOMListResource.cs lines 67 and 98; it is not the reference block count).
     /// </summary>
-    public uint ObjectCount { get; set; }
+    public uint ObjectCount { get; set { ThrowIfUnparsed(); field = value; } }
 
     /// <summary>
     /// Public TGI keys.
@@ -89,110 +102,119 @@ public sealed class GeomListResource : TypedResource
     /// <inheritdoc/>
     protected override void Parse(ReadOnlySpan<byte> data)
     {
-        _rawData = data.ToArray();
-        _publicKeys.Clear();
-        _externalKeys.Clear();
-        _delayLoadKeys.Clear();
-        _referenceBlocks.Clear();
-        IsValid = false;
-
-        if (data.Length < MinHeaderSize)
-            return;
-
+        _parsing = true;
         try
         {
-            int offset = 0;
-
-            // Read header counts
-            // Source: GEOMListResource.cs lines 63-67
-            ContextVersion = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            uint publicKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            uint externalKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            uint delayLoadKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            // Object count (stored but not directly used - it's for the reference block list)
-            uint objectCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            ObjectCount = objectCount;
-            offset += 4;
-
-            // Validate counts
-            // Security: prevent unreasonable array sizes
-            if (publicKeyCount > 10000 || externalKeyCount > 10000 || delayLoadKeyCount > 10000 || objectCount > 10000)
-                return;
-
-            int expectedKeySize = (int)(publicKeyCount + externalKeyCount + delayLoadKeyCount) * TgiBlockSize;
-            if (offset + expectedKeySize > data.Length)
-                return;
-
-            // Read public keys (ITG order)
-            // Source: GEOMListResource.cs lines 68-72
-            for (int i = 0; i < publicKeyCount; i++)
-            {
-                var key = ReadTgiBlock(data, ref offset);
-                _publicKeys.Add(key);
-            }
-
-            // Read external keys
-            // Source: GEOMListResource.cs lines 73-77
-            for (int i = 0; i < externalKeyCount; i++)
-            {
-                var key = ReadTgiBlock(data, ref offset);
-                _externalKeys.Add(key);
-            }
-
-            // Read delay-load keys
-            // Source: GEOMListResource.cs lines 78-82
-            for (int i = 0; i < delayLoadKeyCount; i++)
-            {
-                var key = ReadTgiBlock(data, ref offset);
-                _delayLoadKeys.Add(key);
-            }
-
-            // Read object position, length, version
-            // Source: GEOMListResource.cs lines 83-86
-            if (offset + 12 > data.Length)
-                return;
-
-            ObjectPosition = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            ObjectLength = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            ObjectVersion = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            // Read reference block list
-            // Source: GEOMListResource.cs lines 196-205
-            if (offset + 4 > data.Length)
-                return;
-
-            int blockCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
-            offset += 4;
-
-            if (blockCount < 0 || blockCount > 10000)
-                return;
-
-            for (int i = 0; i < blockCount; i++)
-            {
-                var block = ParseReferenceBlock(data, ref offset);
-                if (block == null)
-                    return; // Parse failed
-                _referenceBlocks.Add(block);
-            }
-
-            IsValid = true;
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
+            _rawData = data.ToArray();
+            _publicKeys.Clear();
+            _externalKeys.Clear();
+            _delayLoadKeys.Clear();
+            _referenceBlocks.Clear();
             IsValid = false;
+
+            if (data.Length < MinHeaderSize)
+                return;
+
+            try
+            {
+                int offset = 0;
+
+                // Read header counts
+                // Source: GEOMListResource.cs lines 63-67
+                ContextVersion = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                uint publicKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                uint externalKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                uint delayLoadKeyCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                // Object count (stored but not directly used - it's for the reference block list)
+                uint objectCount = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                ObjectCount = objectCount;
+                offset += 4;
+
+                // Validate counts
+                // Security: prevent unreasonable array sizes
+                if (publicKeyCount > 10000 || externalKeyCount > 10000 || delayLoadKeyCount > 10000 || objectCount > 10000)
+                    return;
+
+                int expectedKeySize = (int)(publicKeyCount + externalKeyCount + delayLoadKeyCount) * TgiBlockSize;
+                if (offset + expectedKeySize > data.Length)
+                    return;
+
+                // Read public keys (ITG order)
+                // Source: GEOMListResource.cs lines 68-72
+                for (int i = 0; i < publicKeyCount; i++)
+                {
+                    var key = ReadTgiBlock(data, ref offset);
+                    _publicKeys.Add(key);
+                }
+
+                // Read external keys
+                // Source: GEOMListResource.cs lines 73-77
+                for (int i = 0; i < externalKeyCount; i++)
+                {
+                    var key = ReadTgiBlock(data, ref offset);
+                    _externalKeys.Add(key);
+                }
+
+                // Read delay-load keys
+                // Source: GEOMListResource.cs lines 78-82
+                for (int i = 0; i < delayLoadKeyCount; i++)
+                {
+                    var key = ReadTgiBlock(data, ref offset);
+                    _delayLoadKeys.Add(key);
+                }
+
+                // Read object position, length, version
+                // Source: GEOMListResource.cs lines 83-86
+                if (offset + 12 > data.Length)
+                    return;
+
+                ObjectPosition = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                ObjectLength = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                ObjectVersion = BinaryPrimitives.ReadUInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                // Read reference block list
+                // Source: GEOMListResource.cs lines 196-205
+                if (offset + 4 > data.Length)
+                    return;
+
+                int blockCount = BinaryPrimitives.ReadInt32LittleEndian(data[offset..]);
+                offset += 4;
+
+                if (blockCount < 0 || blockCount > 10000)
+                    return;
+
+                for (int i = 0; i < blockCount; i++)
+                {
+                    var block = ParseReferenceBlock(data, ref offset);
+                    if (block == null)
+                        return; // Parse failed
+                    _referenceBlocks.Add(block);
+                }
+
+                IsValid = true;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                IsValid = false;
+            }
+    
+        }
+        finally
+        {
+            _parsing = false;
         }
     }
 
@@ -365,28 +387,45 @@ public sealed class GeomListResource : TypedResource
     /// <summary>
     /// Adds a public key.
     /// </summary>
-    public void AddPublicKey(ResourceKey key) => _publicKeys.Add(key);
+    public void AddPublicKey(ResourceKey key)
+    {
+        ThrowIfUnparsed();
+        _publicKeys.Add(key);
+    }
 
     /// <summary>
     /// Adds an external key.
     /// </summary>
-    public void AddExternalKey(ResourceKey key) => _externalKeys.Add(key);
+    public void AddExternalKey(ResourceKey key)
+    {
+        ThrowIfUnparsed();
+        _externalKeys.Add(key);
+    }
 
     /// <summary>
     /// Adds a delay-load key.
     /// </summary>
-    public void AddDelayLoadKey(ResourceKey key) => _delayLoadKeys.Add(key);
+    public void AddDelayLoadKey(ResourceKey key)
+    {
+        ThrowIfUnparsed();
+        _delayLoadKeys.Add(key);
+    }
 
     /// <summary>
     /// Adds a reference block.
     /// </summary>
-    public void AddReferenceBlock(GeomReferenceBlock block) => _referenceBlocks.Add(block);
+    public void AddReferenceBlock(GeomReferenceBlock block)
+    {
+        ThrowIfUnparsed();
+        _referenceBlocks.Add(block);
+    }
 
     /// <summary>
     /// Clears all keys and reference blocks.
     /// </summary>
     public void Clear()
     {
+        ThrowIfUnparsed();
         _publicKeys.Clear();
         _externalKeys.Clear();
         _delayLoadKeys.Clear();

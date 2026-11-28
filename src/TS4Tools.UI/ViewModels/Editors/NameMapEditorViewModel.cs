@@ -33,6 +33,10 @@ public partial class NameMapEditorViewModel : ViewModelBase, IResourceEditorView
     [ObservableProperty]
     private string _newNameText = string.Empty;
 
+    /// <summary>Why the last Add was refused (shown under the add row), or null.</summary>
+    [ObservableProperty]
+    private string? _inputError;
+
     public ObservableCollection<NameMapEntryViewModel> Entries { get; } = [];
     public ObservableCollection<NameMapEntryViewModel> FilteredEntries { get; } = [];
 
@@ -138,7 +142,11 @@ public partial class NameMapEditorViewModel : ViewModelBase, IResourceEditorView
         }
         else if (NewHashText.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase))
         {
-            hash = ulong.Parse(NewHashText[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            if (!ulong.TryParse(NewHashText.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out hash))
+            {
+                InputError = $"\"{NewHashText}\" is not a valid 64-bit hex hash.";
+                return;
+            }
         }
         else
         {
@@ -146,10 +154,21 @@ public partial class NameMapEditorViewModel : ViewModelBase, IResourceEditorView
             hash = FnvHash.Fnv64Lower(NewHashText);
         }
 
-        _resource[hash] = NewNameText;
-        var vm = CreateTrackedEntry(hash, NewNameText);
-        Entries.Add(vm);
-        ApplyFilter();
+        InputError = null;
+        // A NameMap holds one name per hash: adding an existing hash updates that row instead of adding a second
+        // row for the same entry. Setting Name writes through to the wrapper.
+        var existing = Entries.FirstOrDefault(e => e.Hash == hash);
+        if (existing != null)
+        {
+            existing.Name = NewNameText;
+        }
+        else
+        {
+            _resource[hash] = NewNameText;
+            var vm = CreateTrackedEntry(hash, NewNameText);
+            Entries.Add(vm);
+            ApplyFilter();
+        }
 
         NewHashText = string.Empty;
         NewNameText = string.Empty;

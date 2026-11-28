@@ -344,4 +344,118 @@ public class UnpackPackTests
         lines.Should().HaveCount(6);
         lines[0].Should().StartWith("220557DA 80000000 0123456789ABCDEF STBL 4000 0x5A42");
     }
+
+    private static string[] TempFilesIn(string dir) => Directory.GetFiles(dir, "*.tmp-*");
+
+    [Fact]
+    public async Task Replace_Output_Force_OverwritesExistingOutput_AndLeavesNoTempFile()
+    {
+        using var scratch = new Scratch();
+        string original = await TestPackages.CreateAsync(scratch.PathOf("p.package"), SampleResources());
+        string output = scratch.PathOf("out.package");
+        await File.WriteAllBytesAsync(output, [1, 2, 3]);
+        byte[] replacement = TestPackages.Compressible(777, 13);
+        string file = scratch.PathOf("r.bin");
+        await File.WriteAllBytesAsync(file, replacement);
+
+        var run = await CliRunner.RunAsync("replace", original, "220557DA:80000000:0123456789ABCDEF", file,
+            "--output", output, "--force");
+
+        run.ExitCode.Should().Be(0, run.Err);
+        await using (var p = await DbpfPackage.OpenAsync(output))
+            (await p.GetResourceDataAsync(p.Find(StblKey)!)).ToArray().Should().Equal(replacement);
+        TempFilesIn(scratch.Root).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Replace_Output_MissingKey_LeavesExistingOutputUnchanged()
+    {
+        using var scratch = new Scratch();
+        string original = await TestPackages.CreateAsync(scratch.PathOf("p.package"), SampleResources());
+        string output = scratch.PathOf("out.package");
+        await File.WriteAllBytesAsync(output, [1, 2, 3]);
+        string file = scratch.PathOf("r.bin");
+        await File.WriteAllBytesAsync(file, [9]);
+
+        var run = await CliRunner.RunAsync("replace", original, "00000001:00000002:0000000000000003", file,
+            "--output", output, "--force");
+
+        run.ExitCode.Should().Be(1);
+        run.Err.Should().Contain("not found");
+        (await File.ReadAllBytesAsync(output)).Should().Equal(1, 2, 3);
+        TempFilesIn(scratch.Root).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Replace_Output_FailureMovingIntoPlace_LeavesTargetAndNoTempFile()
+    {
+        using var scratch = new Scratch();
+        string original = await TestPackages.CreateAsync(scratch.PathOf("p.package"), SampleResources());
+        // A directory where the output file should go: the edited copy cannot be moved over it.
+        string output = scratch.PathOf("out.package");
+        Directory.CreateDirectory(output);
+        string marker = Path.Combine(output, "keep.txt");
+        await File.WriteAllTextAsync(marker, "keep");
+        string file = scratch.PathOf("r.bin");
+        await File.WriteAllBytesAsync(file, [9]);
+
+        var run = await CliRunner.RunAsync("replace", original, "220557DA:80000000:0123456789ABCDEF", file,
+            "--output", output, "--force");
+
+        run.ExitCode.Should().NotBe(0);
+        Directory.Exists(output).Should().BeTrue();
+        (await File.ReadAllTextAsync(marker)).Should().Be("keep");
+        TempFilesIn(scratch.Root).Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// The edited copy inherits a read-only source's permissions; it must still be writable, or the replace fails
+    /// after the output was already overwritten with an unedited copy.
+    /// </summary>
+    [Fact]
+    public async Task Replace_Output_ReadOnlySource_Succeeds()
+    {
+        using var scratch = new Scratch();
+        string original = await TestPackages.CreateAsync(scratch.PathOf("p.package"), SampleResources());
+        string output = scratch.PathOf("out.package");
+        await File.WriteAllBytesAsync(output, [1, 2, 3]);
+        byte[] replacement = TestPackages.Compressible(555, 17);
+        string file = scratch.PathOf("r.bin");
+        await File.WriteAllBytesAsync(file, replacement);
+        byte[] sourceBytes = await File.ReadAllBytesAsync(original);
+        MakeReadOnly(original);
+        try
+        {
+            var run = await CliRunner.RunAsync("replace", original, "220557DA:80000000:0123456789ABCDEF", file,
+                "--output", output, "--force");
+
+            run.ExitCode.Should().Be(0, run.Err);
+            await using (var p = await DbpfPackage.OpenAsync(output))
+                (await p.GetResourceDataAsync(p.Find(StblKey)!)).ToArray().Should().Equal(replacement);
+            (await File.ReadAllBytesAsync(original)).Should().Equal(sourceBytes);
+            TempFilesIn(scratch.Root).Should().BeEmpty();
+        }
+        finally
+        {
+            MakeWritable(original);
+            if (File.Exists(output))
+                MakeWritable(output);
+        }
+    }
+
+    private static void MakeReadOnly(string path)
+    {
+        if (OperatingSystem.IsWindows())
+            File.SetAttributes(path, File.GetAttributes(path) | FileAttributes.ReadOnly);
+        else
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+    }
+
+    private static void MakeWritable(string path)
+    {
+        if (OperatingSystem.IsWindows())
+            File.SetAttributes(path, File.GetAttributes(path) & ~FileAttributes.ReadOnly);
+        else
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+    }
 }

@@ -817,6 +817,9 @@ public sealed class SimDataResource : TypedResource
     private void OnTableDataChanged(object? sender, EventArgs e)
     {
         MarkDirty();
+        // Report the edit through IResource (IsDirty, Changed) too, so consumers that watch the resource rather than
+        // its tables see cell edits.
+        OnChanged();
     }
 
     /// <inheritdoc/>

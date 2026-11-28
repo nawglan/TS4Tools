@@ -323,4 +323,28 @@ public class ObjectDefinitionResourceTests
         resource.Should().NotBeNull();
         resource!.Version.Should().Be(1);
     }
+
+    /// <summary>
+    /// Swapped-TGI lists (Icon, Rig, Slot, Model, Footprint; legacy ObjectDefinitionResource.cs lines 298-326) store
+    /// a count read from the data. A negative or oversized count must be rejected before it sizes the list.
+    /// </summary>
+    [Theory]
+    [InlineData(-4)]
+    [InlineData(0x7FFFFFFC)]
+    public void Parse_SwappedTgiCountTooLarge_Throws(int countValue)
+    {
+        var resource = new ObjectDefinitionResource(TestKey, ReadOnlyMemory<byte>.Empty);
+        resource.AddProperty(ObjectDefinitionPropertyId.Model);
+        resource.Model = [new TgiReference(0x1111111122222222, 0x33333333, 0x44444444)];
+        byte[] data = resource.Data.ToArray();
+        // The instance is written with its 32-bit halves swapped, little-endian, right after the count.
+        int instance = data.AsSpan().IndexOf(new byte[] { 0x11, 0x11, 0x11, 0x11, 0x22, 0x22, 0x22, 0x22 });
+        instance.Should().BeGreaterThan(4);
+        BinaryPrimitives.ReadInt32LittleEndian(data.AsSpan(instance - 4)).Should().Be(4, "count is stored as count * 4");
+        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(instance - 4), countValue);
+
+        var act = () => new ObjectDefinitionResource(TestKey, data);
+
+        act.Should().Throw<ResourceFormatException>().WithMessage("*OBJD TGI count*");
+    }
 }

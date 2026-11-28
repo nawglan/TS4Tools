@@ -72,10 +72,21 @@ public sealed class SettingsService
     }
 
     /// <summary>
+    /// Raised (possibly on a background thread) when <see cref="SaveAsync"/> could not write the settings file, so the
+    /// app can tell the user instead of losing their changes silently.
+    /// </summary>
+    public event EventHandler<Exception>? SaveFailed;
+
+    /// <summary>
     /// Persists the current settings asynchronously.
     /// </summary>
+    /// <remarks>
+    /// The file is written to a temporary file next to it and moved into place, so a crash or full disk during the
+    /// write never leaves a truncated settings.json (which would reset every setting on the next start).
+    /// </remarks>
     public async Task SaveAsync(CancellationToken cancellationToken = default)
     {
+        string tempPath = SettingsPath + ".tmp";
         try
         {
             var dir = Path.GetDirectoryName(SettingsPath);
@@ -85,11 +96,14 @@ public sealed class SettingsService
             }
 
             var json = System.Text.Json.JsonSerializer.Serialize(_settings, JsonOptions);
-            await File.WriteAllTextAsync(SettingsPath, json, cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(tempPath, json, cancellationToken).ConfigureAwait(false);
+            File.Move(tempPath, SettingsPath, overwrite: true);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             System.Diagnostics.Debug.WriteLine($"[TS4Tools] Failed to save settings: {ex.Message}");
+            try { File.Delete(tempPath); } catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            SaveFailed?.Invoke(this, ex);
         }
     }
 

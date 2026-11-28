@@ -82,7 +82,11 @@ public sealed class NameMapResource : TypedResource, IDictionary<ulong, string>
             if (stringLength < 0 || stringLength > data.Length - offset)
                 throw new ResourceFormatException($"Invalid string length at entry {i}: {stringLength}");
 
-            _entries[hash] = LegacyChars.ReadUtf8Chars(data, ref offset, stringLength, $"name of NameMap entry {i}");
+            string name = LegacyChars.ReadUtf8Chars(data, ref offset, stringLength, $"name of NameMap entry {i}");
+            // Legacy (NameMapResource.cs line 61) uses Dictionary.Add, which rejects a repeated hash. Keeping the last
+            // value instead would silently drop an entry on save.
+            if (!_entries.TryAdd(hash, name))
+                throw new ResourceFormatException($"Duplicate NameMap hash 0x{hash:X16} at entry {i}");
         }
     }
 

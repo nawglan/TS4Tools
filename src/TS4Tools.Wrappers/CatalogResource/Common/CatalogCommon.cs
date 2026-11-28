@@ -306,6 +306,8 @@ public sealed class CatalogCommon
             buffer[offset++] = (byte)PackOptions;
 
             ReservedBytes ??= new byte[9];
+            if (ReservedBytes.Length != 9)
+                throw new InvalidOperationException($"ReservedBytes must be exactly 9 bytes, got {ReservedBytes.Length}");
             ReservedBytes.CopyTo(buffer[offset..]);
             offset += 9;
         }

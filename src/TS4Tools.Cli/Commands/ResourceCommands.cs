@@ -67,8 +67,7 @@ internal static class ResourceCommands
         string target = source;
         if (output != null)
         {
-            if (string.Equals(Path.GetFullPath(output), Path.GetFullPath(source),
-                    OperatingSystem.IsLinux() ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase))
+            if (FileIdentity.IsSameFile(output, source))
                 throw new UsageException("--output is the same file as <package>; omit --output to replace in place");
             if (File.Exists(output) && !args.Has("--force"))
                 throw new CliException($"output package exists: {output} (use --force to overwrite)");
@@ -78,18 +77,43 @@ internal static class ResourceCommands
                 if (check.Find(key) is null)
                     throw new CliException($"resource {KeyFormat.Compact(key)} not found");
             }
-            File.Copy(source, output, overwrite: true);
+            // Edit a copy next to the output and move it into place only when the save succeeded, so a failure or
+            // Ctrl-C never leaves a half-written output or destroys an existing one.
+            string fullOutput = Path.GetFullPath(output);
+            string temp = fullOutput + ".tmp-" + Guid.NewGuid().ToString("N")[..8];
+            try
+            {
+                File.Copy(source, temp);
+                // The copy inherits a read-only source's attributes; the copy itself must be writable.
+                File.SetAttributes(temp, File.GetAttributes(temp) & ~FileAttributes.ReadOnly);
+                await ReplaceInPlaceAsync(temp, key, data, ct).ConfigureAwait(false);
+                File.Move(temp, fullOutput, overwrite: true);
+            }
+            finally
+            {
+                try { if (File.Exists(temp)) File.Delete(temp); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* best effort */ }
+            }
             target = output;
         }
+        else
+        {
+            await ReplaceInPlaceAsync(target, key, data, ct).ConfigureAwait(false);
+        }
+        context.Out.WriteLine($"Replaced {KeyFormat.Compact(key)} with {data.Length:N0} bytes from {file} in {target}");
+        return ExitCodes.Success;
+    }
 
+    private static async Task ReplaceInPlaceAsync(string path, ResourceKey key, byte[] data, CancellationToken ct)
+    {
         DbpfPackage package;
         try
         {
-            package = await DbpfPackage.OpenAsync(target, readWrite: true, ct).ConfigureAwait(false);
+            package = await DbpfPackage.OpenAsync(path, readWrite: true, ct).ConfigureAwait(false);
         }
         catch (PackageFormatException ex)
         {
-            throw new CliException($"{target}: not a valid package: {ex.Message}");
+            throw new CliException($"{path}: not a valid package: {ex.Message}");
         }
         await using (package.ConfigureAwait(false))
         {
@@ -97,7 +121,5 @@ internal static class ResourceCommands
             package.ReplaceResource(entry, data);
             await package.SaveAsync(ct).ConfigureAwait(false);
         }
-        context.Out.WriteLine($"Replaced {KeyFormat.Compact(key)} with {data.Length:N0} bytes from {file} in {target}");
-        return ExitCodes.Success;
     }
 }

@@ -305,4 +305,50 @@ public sealed class PackageSaveFidelityTests : IDisposable
             (await reloaded.GetResourceDataAsync(entry)).ToArray().Should().Equal(exp.Plain);
         }
     }
+
+    /// <summary>
+    /// If an in-place save fails after it started overwriting the backing file, the file no longer matches the
+    /// in-memory index. The complete new image is kept as a recovery file, and every later operation that would read
+    /// from (or save over) the damaged file must refuse and point at that recovery file instead of producing garbage.
+    /// </summary>
+    [Fact]
+    public async Task SaveAsync_FailsWhileOverwriting_KeepsRecoveryFileAndRefusesLaterUse()
+    {
+        var (path, data) = await CreatePackageFileAsync();
+        var key1 = new ResourceKey(TypeA, 0, 1);
+        var key3 = new ResourceKey(TypeA, 0, 3);
+        var replacement = Compressible(9, 20000);
+
+        await using var package = await DbpfPackage.OpenAsync(path, readWrite: true);
+        package.ReplaceResource(package.Find(key1)!, replacement);
+        package.BeforeOverwriteForTesting = () => throw new IOException("simulated disk failure");
+
+        var save = async () => await package.SaveAsync();
+        var failure = (await save.Should().ThrowAsync<IOException>()).Which;
+        failure.Message.Should().Contain("simulated disk failure");
+
+        string recovery = Directory.GetFiles(_tempDir, Path.GetFileName(path) + ".tmp-*").Should().ContainSingle().Subject;
+        failure.Message.Should().Contain(recovery);
+
+        // The kept file is the complete saved package.
+        await using (var recovered = await DbpfPackage.OpenAsync(recovery))
+        {
+            (await recovered.GetResourceDataAsync(recovered.Find(key1)!)).ToArray().Should().Equal(replacement);
+            (await recovered.GetResourceDataAsync(recovered.Find(key3)!)).ToArray().Should().Equal(data[key3]);
+        }
+
+        package.BeforeOverwriteForTesting = null;
+        // key3 is clean, so reading it would go to the (damaged) backing file.
+        var read = async () => await package.GetResourceDataAsync(package.Find(key3)!);
+        (await read.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        var saveAgain = async () => await package.SaveAsync();
+        (await saveAgain.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        var toStream = async () => await package.SaveToStreamAsync(new MemoryStream());
+        (await toStream.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        string other = Path.Combine(_tempDir, "other.package");
+        var saveAs = async () => await package.SaveAsAsync(other);
+        (await saveAs.Should().ThrowAsync<IOException>()).Which.Message.Should().Contain(recovery);
+        File.Exists(other).Should().BeFalse();
+        File.Exists(recovery).Should().BeTrue("the recovery file is never deleted by the package");
+    }
 }
